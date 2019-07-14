@@ -64,18 +64,18 @@ public class ModelingSubmissionIntegrationTest {
 
     private ModelingExercise useCaseExercise;
 
-    ModelingSubmission submittedSubmission;
+    private ModelingSubmission submittedSubmission;
 
-    ModelingSubmission unsubmittedSubmission;
+    private ModelingSubmission unsubmittedSubmission;
 
-    String emptyModel;
+    private String emptyModel;
 
-    String validModel;
+    private String validModel;
 
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(3, 1);
+        database.addUsers(3, 1, 0);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
@@ -93,12 +93,12 @@ public class ModelingSubmissionIntegrationTest {
         database.addParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         checkDetailsHidden(returnedSubmission, true);
 
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -109,13 +109,13 @@ public class ModelingSubmissionIntegrationTest {
         String emptyActivityModel = database.loadFileFromResources("test-data/model-submission/empty-activity-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validActivityModel = database.loadFileFromResources("test-data/model-submission/activity-model.json");
         submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
         returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -126,13 +126,13 @@ public class ModelingSubmissionIntegrationTest {
         String emptyObjectModel = database.loadFileFromResources("test-data/model-submission/empty-object-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
         submission = ModelFactory.generateModelingSubmission(validObjectModel, true);
         returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -143,13 +143,13 @@ public class ModelingSubmissionIntegrationTest {
         String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
         submission = ModelFactory.generateModelingSubmission(validUseCaseModel, true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -159,12 +159,12 @@ public class ModelingSubmissionIntegrationTest {
         database.addParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
         submission = ModelFactory.generateModelingSubmission(validModel, false);
         request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
 
-        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
     }
 
     @Test
@@ -244,7 +244,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getModelSubmission_lockLimitNotReached_success() throws Exception {
+    public void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = database.getUserByLogin("tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);

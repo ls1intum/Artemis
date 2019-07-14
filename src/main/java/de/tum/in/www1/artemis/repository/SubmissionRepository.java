@@ -36,4 +36,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Checks if a submission for the given participation exists.
+     *
+     * @param participationId the id of the participation to check
+     * @return true if a submission for the given participation exists, false otherwise
+     */
+    boolean existsByParticipationId(long participationId);
 }
