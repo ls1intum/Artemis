@@ -63,7 +63,10 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
         return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(this.handleErrorResponse());
     };
 
-    // TODO: Maybe we don't have to check for the error here?
+    /**
+     * We don't check for conflict errors here on purpose!
+     * This is the method that is used to resolve conflicts.
+     */
     resetRepository = () => {
         return this.http.post<void>(`${this.restResourceUrl}/reset`, {});
     };
@@ -142,7 +145,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
             .pipe(this.handleErrorResponse());
     };
 
-    // TODO: We also have to handle receiving the conflict from the websocket
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
