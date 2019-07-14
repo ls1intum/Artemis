@@ -78,16 +78,23 @@ For more information, review [Working with Angular](https://www.jhipster.tech/de
 
 ### Using docker-compose
 
-A full functioning development environment can also be set up using docker-compose: `docker-compose up`. But first configure the file `application-artemis.yml` in the folder `src/main/resources/config` as described above.
+A full functioning development environment can also be set up using docker-compose: 
 
-Requirements:
+1. Install [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/)
+2. Configure the credentials in `application-artemis.yml` in the folder `src/main/resources/config` as described above
+3. Run `docker-compose up`
+4. Go to [http://localhost:9000](http://localhost:9000)
 
-* [docker](https://docs.docker.com/install/)
-* [docker-compose](https://docs.docker.com/compose/install/)
+The client and the server will run in different containers. As yarn is used with its live reload mode to build and run the client, any change in the client's codebase will trigger a rebuild automatically. In case of changes in the codebase of the server one has to restart the `artemis-server` container via `docker-compose restart artemis-server`.
 
-Currently the client and the server are running in the same container. Client-based changes will be applied without reloading. For server-side changes you need to stop the setup via `docker-compose stop` and restart it again with `docker-compose up`.
+(Native) Running and Debugging from IDEs is currently not supported.
 
-Get a shell into the containers:
+**Get a shell into the containers:**
 
 * app container: `docker exec -it $(docker-compose ps -q artemis-app) sh`
 * mysql container: `docker exec -it $(docker-compose ps -q artemis-mysql) mysql`
+
+**Other useful commands:**
+
+* Stop the server: `docker-compose stop artemis-server` (restart via `docker-compose start artemis-server`)
+* Stop the client: `docker-compose stop artemis-client` (restart via `docker-compose start artemis-client`)
