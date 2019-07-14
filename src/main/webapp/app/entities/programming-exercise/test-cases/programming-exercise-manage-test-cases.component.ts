@@ -93,6 +93,11 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
         const editedTestCase = this.editing;
         const weight = event.target.value;
+        // If the weight has not changed, don't execute an unnecessary REST call.
+        if (weight === editedTestCase.weight) {
+            this.editing = null;
+            return;
+        }
         this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe(
             (updatedTestCase: ProgrammingExerciseTestCase) => {
                 this.editing = null;
