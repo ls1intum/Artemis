@@ -13,6 +13,7 @@ import { ProgrammingExerciseUpdateComponent } from './programming-exercise-updat
 import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
+import { PendingChangesGuard } from 'app/shared';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -81,6 +82,7 @@ export const programmingExerciseRoute: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
     },
 ];
 

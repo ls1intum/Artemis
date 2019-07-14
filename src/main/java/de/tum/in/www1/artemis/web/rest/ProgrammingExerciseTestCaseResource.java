@@ -63,11 +63,11 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     /**
-     * Update the weight of the specified test case.
+     * Update the weights of the provided test case dtos. We don't transfer the whole test case object here, because we need to make sure that only weights can be updated! Will
+     * only return test case objects in the response that could be updated.
      *
-     * @param exerciseId
-     * @param testCaseId
-     * @param testCaseWeightUpdates
+     * @param exerciseId            of exercise the test cases belong to.
+     * @param testCaseWeightUpdates of the test cases to update the weights of.
      * @return
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-case-weights")

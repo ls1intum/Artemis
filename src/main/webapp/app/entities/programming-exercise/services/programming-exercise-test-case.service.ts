@@ -11,7 +11,7 @@ export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number };
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
-    updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase>;
+    updateWeights(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
@@ -72,7 +72,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     }
 
     /**
-     * Update the weight with the provided value of the provieded test case.
+     * Update the weights with the provided values of the test cases.
      * Needs the exercise to verify permissions on the server.
      *
      * @param exerciseId

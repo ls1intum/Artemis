@@ -49,22 +49,22 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Update the weight of the provided test case.
+     * Update the weights of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
-     * @param testCaseId
-     * @param weight
-     * @return the test case with the updated weight.
+     * @param exerciseId            of exercise the test cases belong to.
+     * @param testCaseWeightUpdates of the test cases to update the weights of.
+     * @return the updated test cases.
      */
     @Transactional
-    public Set<ProgrammingExerciseTestCase> updateWeights(Long exerciseId, Set<WeightUpdate> weightUpdates) throws EntityNotFoundException, IllegalAccessException {
+    public Set<ProgrammingExerciseTestCase> updateWeights(Long exerciseId, Set<WeightUpdate> testCaseWeightUpdates) throws EntityNotFoundException, IllegalAccessException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
 
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
-        for (WeightUpdate weightUpdate : weightUpdates) {
+        for (WeightUpdate weightUpdate : testCaseWeightUpdates) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(weightUpdate.getId())).findFirst();
             if (!matchingTestCaseOpt.isPresent())
-                throw new IllegalArgumentException();
+                continue;
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(weightUpdate.getWeight());
@@ -72,7 +72,6 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         return updatedTests;
-
     }
 
     /**

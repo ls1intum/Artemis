@@ -1,19 +1,21 @@
-import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { differenceWith as _differenceWith, intersectionBy as _intersectionBy, differenceBy as _differenceBy, unionBy as _unionBy } from 'lodash';
+import { of, Subscription } from 'rxjs';
+import { distinctUntilChanged, tap, catchError } from 'rxjs/operators';
+import { differenceWith as _differenceWith, intersectionWith as _intersectionWith, differenceBy as _differenceBy, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { ComponentCanDeactivate } from 'app/shared';
 
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
 })
-export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
     exerciseId: number;
     editing: ProgrammingExerciseTestCase | null = null;
@@ -47,7 +49,12 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.updateTestCaseFilter();
     }
 
-    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private route: ActivatedRoute, private alertService: JhiAlertService) {}
+    constructor(
+        private testCaseService: ProgrammingExerciseTestCaseService,
+        private route: ActivatedRoute,
+        private alertService: JhiAlertService,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Subscribes to the route params to get the current exerciseId.
@@ -96,7 +103,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     /**
-     * Update the weight of the edited test case.
+     * Update the weight of the edited test case in the component state (does not persist the value on the server!).
+     * Adds the currently edited weight to the list of unsaved changes.
+     *
      * @param event
      */
     updateWeight(event: any) {
@@ -115,39 +124,43 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.editing = null;
     }
 
+    /**
+     * Save the unsaved (edited) weights of the test cases.
+     */
     saveWeights() {
+        this.editing = null;
         this.isSaving = true;
 
-        const testCasesToUpdate = _differenceWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
+        const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
         const weightUpdates = testCasesToUpdate.map(({ id, weight }) => ({ id, weight }));
 
-        this.testCaseService.updateWeights(this.exerciseId, weightUpdates).subscribe(
-            (updatedTestCases: ProgrammingExerciseTestCase[]) => {
-                this.editing = null;
-                this.isSaving = false;
-                // From successfully updated test cases from dirty checking list.
-                this.changedTestCaseIds = _differenceWith(
-                    Array.from(this.changedTestCaseIds),
-                    updatedTestCases,
-                    (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id,
-                );
+        this.testCaseService
+            .updateWeights(this.exerciseId, weightUpdates)
+            .pipe(
+                tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
+                    // From successfully updated test cases from dirty checking list.
+                    this.changedTestCaseIds = _differenceWith(this.changedTestCaseIds, updatedTestCases, (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id);
 
-                // Generate the new list of test cases with the updated weights and notify the test case service.
-                const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
-                this.testCaseService.notifyTestCases(this.exerciseId, newTestCases);
+                    // Generate the new list of test cases with the updated weights and notify the test case service.
+                    const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
+                    this.testCaseService.notifyTestCases(this.exerciseId, newTestCases);
 
-                // Find out if there are test cases that were not updated, show an error.
-                const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
-                if (notUpdatedTestCases.length) {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
-                }
-            },
-            (err: HttpErrorResponse) => {
-                this.editing = null;
+                    // Find out if there are test cases that were not updated, show an error.
+                    const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
+                    if (notUpdatedTestCases.length) {
+                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                    } else {
+                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsUpdated`);
+                    }
+                }),
+                catchError((err: HttpErrorResponse) => {
+                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: testCasesToUpdate });
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
                 this.isSaving = false;
-                this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: testCasesToUpdate });
-            },
-        );
+            });
     }
 
     /**
@@ -155,9 +168,23 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     resetWeights() {
         this.editing = null;
-        this.testCaseService.resetWeights(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
-            this.testCaseService.notifyTestCases(this.exerciseId, testCases);
-        });
+        this.isSaving = true;
+        this.testCaseService
+            .resetWeights(this.exerciseId)
+            .pipe(
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
+                    this.testCaseService.notifyTestCases(this.exerciseId, testCases);
+                }),
+                catchError((err: HttpErrorResponse) => {
+                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+                this.changedTestCaseIds = [];
+            });
     }
 
     /**
@@ -174,5 +201,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     getRowClass(row: ProgrammingExerciseTestCase) {
         return !row.active ? 'test-case--inactive' : '';
+    }
+
+    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
+    }
+
+    canDeactivate() {
+        return !this.changedTestCaseIds.length;
     }
 }
