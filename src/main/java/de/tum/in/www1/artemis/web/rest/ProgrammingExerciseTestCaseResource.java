@@ -98,7 +98,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeight(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<ProgrammingExerciseTestCase>> resetWeights(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         try {
             // Retrieve programming exercise to check availability & permissions.
