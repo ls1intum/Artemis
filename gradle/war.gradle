@@ -1,7 +1,7 @@
 apply plugin: "war"
 
 bootWar {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
+    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
     includes = ["WEB-INF/**", "META-INF/**"]
 }
 // Command for production build: './gradlew -Pprod bootWar'
