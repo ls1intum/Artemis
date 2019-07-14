@@ -40,7 +40,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
             this.currentUserCallback(user!);
         });
         this.registerAuthenticationSuccess();
-        this.guidedTourService.getGuidedTourSettings();
     }
 
     registerAuthenticationSuccess() {

@@ -34,7 +34,7 @@ public class GuidedTourSettingsResourceTest {
     @Before
     public void initTestCase() {
         database.resetDatabase();
-        database.addUsers(1, 0);
+        database.addUsers(1, 0, 0);
     }
 
     @Test

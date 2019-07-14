@@ -1,4 +1,6 @@
 export class GuidedTourSettings {
+    [key: string]: boolean;
+    /*
     public showCourseOverviewTour: boolean;
     public showNavigationTour: boolean;
     public showProgrammingExerciseTour: boolean;
@@ -20,5 +22,5 @@ export class GuidedTourSettings {
         this.showQuizExerciseTour = showQuizExerciseTour;
         this.showModelingExerciseTour = showModelingExerciseTour;
         this.showTextExerciseTour = showTextExerciseTour;
-    }
+    }*/
 }

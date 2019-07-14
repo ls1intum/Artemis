@@ -27,7 +27,7 @@ export interface TourStep {
 
 export interface GuidedTour {
     /** Identifier for tour */
-    tourId: string;
+    settingsId: string;
     /** Use orb to start tour */
     useOrb?: boolean;
     /** Steps fo the tour */

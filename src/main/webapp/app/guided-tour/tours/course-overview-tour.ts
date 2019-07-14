@@ -1,7 +1,7 @@
 import { GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
 
 export const courseOverviewTour: GuidedTour = {
-    tourId: 'course-overview-tour',
+    settingsId: 'showCourseOverviewTour',
     useOrb: false,
     minimumScreenSize: 600,
     steps: [
@@ -72,9 +72,6 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.course-overview.8.content',
             selector: '.footer .col-sm-6',
             orientation: Orientation.TopLeft,
-            closeAction: () => {
-                // TODO: add settings to DB
-            },
         },
     ],
 };
