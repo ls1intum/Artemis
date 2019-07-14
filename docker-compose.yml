@@ -2,7 +2,7 @@ version: '3'
 
 services:
   artemis-server:
-    command: sh -c "./gradlew build -xwebpackBuildDev -xwebpack -xtest
+    command: sh -c "./gradlew buildJarForDocker
                     && java -jar build/libs/ArTEMiS-*.jar"
     depends_on:
       - artemis-mysql
