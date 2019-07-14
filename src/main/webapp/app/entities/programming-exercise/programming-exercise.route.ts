@@ -77,7 +77,7 @@ export const programmingExerciseRoute: Routes = [
         path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
         component: ProgrammingExerciseManageTestCasesComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
