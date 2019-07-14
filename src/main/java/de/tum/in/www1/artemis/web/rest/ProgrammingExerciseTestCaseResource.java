@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -84,10 +83,10 @@ public class ProgrammingExerciseTestCaseResource {
             return ResponseEntity.ok(testCase);
         }
         catch (IllegalAccessException ex) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return forbidden();
         }
         catch (EntityNotFoundException ex) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return notFound();
         }
     }
 
@@ -108,10 +107,10 @@ public class ProgrammingExerciseTestCaseResource {
             return ResponseEntity.ok(testCases);
         }
         catch (IllegalAccessException ex) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return forbidden();
         }
         catch (NoSuchElementException ex) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return notFound();
         }
     }
 
