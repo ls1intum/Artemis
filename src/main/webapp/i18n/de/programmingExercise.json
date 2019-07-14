@@ -68,7 +68,8 @@
                 "title": "Verwalte Testfälle",
                 "hideInactive": "Inaktive Testfälle verbergen",
                 "showInactive": "Inaktive Testfälle anzeigen",
-                "resetWeights": "Gewichtung zurücksetzen"
+                "resetWeights": "Gewichtung zurücksetzen",
+                "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}."
             }
         }
     }

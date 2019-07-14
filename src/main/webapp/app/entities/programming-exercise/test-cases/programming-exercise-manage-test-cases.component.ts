@@ -1,7 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 
@@ -32,7 +34,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.updateTestCaseFilter();
     }
 
-    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private route: ActivatedRoute) {}
+    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private route: ActivatedRoute, private alertService: JhiAlertService) {}
 
     /**
      * Subscribes to the route params to get the current exerciseId.
@@ -91,11 +93,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
         const editedTestCase = this.editing;
         const weight = event.target.value;
-        this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe((updatedTestCase: ProgrammingExerciseTestCase) => {
-            this.editing = null;
-            const updatedTestCases = this.testCases.map(testCase => (testCase.id === updatedTestCase.id ? updatedTestCase : testCase));
-            this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
-        });
+        this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe(
+            (updatedTestCase: ProgrammingExerciseTestCase) => {
+                this.editing = null;
+                const updatedTestCases = this.testCases.map(testCase => (testCase.id === updatedTestCase.id ? updatedTestCase : testCase));
+                this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
+            },
+            (err: HttpErrorResponse) => {
+                this.editing = null;
+                this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { id: editedTestCase.id, error: err.message });
+            },
+        );
     }
 
     /**
