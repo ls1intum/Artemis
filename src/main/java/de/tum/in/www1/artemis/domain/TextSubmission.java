@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
+import javax.persistence.*;
 
 /**
  * A TextSubmission.
@@ -35,6 +32,7 @@ public class TextSubmission extends Submission implements Serializable {
     public void setText(String text) {
         this.text = text;
     }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
@@ -59,6 +57,6 @@ public class TextSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "TextSubmission{" + "id=" + getId() + ", text='" + getText() + "'" + "}";
+        return "TextSubmission{" + "id=" + getId() + ", text='" + getText() + "'" + ", language='" + getLanguage() + "'" + "}";
     }
 }

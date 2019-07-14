@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -161,7 +162,7 @@ public class ResultService {
      *
      * @param result
      */
-    public void createNewResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public void createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -193,6 +194,11 @@ public class ResultService {
             }
 
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+
+            if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
+                Hibernate.initialize(savedResult.getParticipation().getExercise());
+            }
+
             ltiService.onNewBuildResult(savedResult.getParticipation());
         }
     }

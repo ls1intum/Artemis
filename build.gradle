@@ -105,12 +105,14 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.3.0'
+version = '3.4.0'
 description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
 }
+
+// Execute the test cases: ./gradlew executeTests
 
 test {
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"

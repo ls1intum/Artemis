@@ -14,6 +14,8 @@ export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
+    private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
+    private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
     private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
@@ -197,6 +199,21 @@ export class ModelingAssessmentService {
             }
         }
         return assessmentsNames;
+    }
+
+    /**
+     * Checks if the feedback text and detail text of every feedback item is smaller than the configured maximum length. Returns true if the length of the texts is valid or if
+     * there is no feedback, false otherwise.
+     */
+    isFeedbackTextValid(feedback: Feedback[]): boolean {
+        if (!feedback) {
+            return true;
+        }
+        return feedback.every(
+            feedbackItem =>
+                (!feedbackItem.text || feedbackItem.text.length <= this.MAX_FEEDBACK_TEXT_LENGTH) &&
+                (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
+        );
     }
 
     /**

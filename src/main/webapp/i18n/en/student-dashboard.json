@@ -77,7 +77,8 @@
                 "exerciseNotGraded": "{{ exercise }} has not yet been graded.",
                 "exerciseNotParticipated": "You have not participated in {{ exercise }}.",
                 "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
-                "noPointsForExercise": "You can't receive points for this exercise."
+                "noPointsForExercise": "You can't receive points for this exercise.",
+                "description": "Here you see all results that influence your score of the course, where the assessment due date is over."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
