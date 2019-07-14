@@ -47,7 +47,13 @@
             "numberOfTotalSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
-            "nextAssessment": "Assess next submission"
+            "nextAssessment": "Assess next submission",
+            "language": "Language",
+            "languages": {
+                "ENGLISH": "English",
+                "GERMAN": "German",
+                "UNKNOWN": "Unknown"
+            }
         }
     }
 }

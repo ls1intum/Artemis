@@ -154,8 +154,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         )(feedbacks),
                     ),
                 )
-                .subscribe((testCases: string[]) => {
-                    this.exerciseTestCases = testCases;
+                .subscribe((_testCases: string[]) => {
+                    this.exerciseTestCases = _testCases;
                     this.testCaseCommand.setValues(this.exerciseTestCases);
                 });
         }

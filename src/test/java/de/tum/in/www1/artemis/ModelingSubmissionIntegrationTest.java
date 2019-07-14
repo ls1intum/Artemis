@@ -244,7 +244,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getModelSubmission_lockLimitNotReached_success() throws Exception {
+    public void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = database.getUserByLogin("tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);

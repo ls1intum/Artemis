@@ -17,10 +17,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -39,6 +43,9 @@ public class ParticipationIntegrationTest {
     ExerciseRepository exerciseRepo;
 
     @Autowired
+    ParticipationRepository participationRepo;
+
+    @Autowired
     UserRepository userRepo;
 
     @Autowired
@@ -47,23 +54,61 @@ public class ParticipationIntegrationTest {
     @Autowired
     DatabaseUtilService database;
 
+    private Course course;
+
+    private ModelingExercise modelingExercise;
+
+    private TextExercise textExercise;
+
     @Before
     public void initTestCase() {
         database.resetDatabase();
         database.addUsers(2, 0, 0);
-        database.addCourseWithDifferentModelingExercises();
+        database.addCourseWithModelingAndTextExercise();
+        course = courseRepo.findAll().get(0);
+        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        textExercise = (TextExercise) exerciseRepo.findAll().get(1);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void participateInExercise() throws Exception {
-        Course course = courseRepo.findAll().get(0);
-        Exercise exercise = exerciseRepo.findAll().get(0);
-        URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/participations", null, HttpStatus.CREATED);
+    @WithMockUser(username = "student1")
+    public void participateInModelingExercise() throws Exception {
+        URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
+
         Participation participation = request.get(location.getPath(), HttpStatus.OK, Participation.class);
-        assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(exercise);
-        assertThat(participation.getSubmissions()).as("no submissions on initialization").isEmpty();
+        assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student1");
+        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
+        assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
+        assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void participateInTextExercise() throws Exception {
+        URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+
+        Participation participation = request.get(location.getPath(), HttpStatus.OK, Participation.class);
+        assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
+        assertThat(participation.getStudent()).as("Student got set").isNotNull();
+        assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student2");
+        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
+        assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
+        assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateTwiceInModelingExercise_badRequest() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateTwiceInTextExercise_badRequest() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
     }
 }
