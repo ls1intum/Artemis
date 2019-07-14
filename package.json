@@ -183,6 +183,7 @@
         "cleanup": "rimraf build/{aot,www}",
         "clean-www": "rimraf build//www/app/{src,build/}",
         "start": "yarn run webpack:dev --hot",
+        "start-docker": "yarn run webpack:dev --hot --env.docker",
         "start-cold": "yarn run webpack:dev",
         "start-tls": "yarn run webpack:dev --hot --env.tls",
         "serve": "yarn run start",
