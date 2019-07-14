@@ -38,6 +38,23 @@ export interface IBuildLogService {
     getBuildLogs: () => Observable<BuildLogEntry[]>;
 }
 
+// TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
+/**
+ * Check a HttpErrorResponse for specific status codes that are relevant for the code-editor.
+ * Atm we only check the conflict status code (409) and inform the conflictService about it.
+ *
+ * @param conflictService
+ */
+const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService): UnaryFunction<Observable<T>, Observable<T>> =>
+    pipe(
+        catchError((err: HttpErrorResponse) => {
+            if (err.status === 409) {
+                conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+            }
+            return throwError(err);
+        }),
+    );
+
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryService extends DomainDependentEndpoint implements ICodeEditorRepositoryService {
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
@@ -46,7 +63,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
 
     getStatus = () => {
         return this.http.get<any>(this.restResourceUrl!).pipe(
-            this.handleErrorResponse<{ repositoryStatus: string }>(),
+            handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
             tap(({ repositoryStatus }) => {
                 if (repositoryStatus !== CommitState.CONFLICT) {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
@@ -56,11 +73,11 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
     };
 
     commit = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(this.handleErrorResponse());
+        return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(this.handleErrorResponse());
+        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**
@@ -70,16 +87,6 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
     resetRepository = () => {
         return this.http.post<void>(`${this.restResourceUrl}/reset`, {});
     };
-
-    private handleErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
-        pipe(
-            catchError((err: HttpErrorResponse) => {
-                if (err.status === 409) {
-                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                }
-                return throwError(err);
-            }),
-        );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -119,22 +126,22 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     }
 
     getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(this.handleErrorResponse<{ [fileName: string]: FileType }>());
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
     getFile = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map(data => ({ fileContent: data })),
-            this.handleErrorResponse<{ fileContent: string }>(),
+            handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
     };
 
     createFile = (fileName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(this.handleErrorResponse());
+        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     createFolder = (folderName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(this.handleErrorResponse());
+        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
@@ -142,7 +149,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
             .put(`${this.restResourceUrl}/file`, fileContent, {
                 params: new HttpParams().set('file', fileName),
             })
-            .pipe(this.handleErrorResponse());
+            .pipe(handleErrorResponse(this.conflictService));
     };
 
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
@@ -164,22 +171,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(this.handleErrorResponse());
+        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(handleErrorResponse(this.conflictService));
     };
 
     deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(this.handleErrorResponse());
+        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
-
-    private handleErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
-        pipe(
-            catchError((err: HttpErrorResponse) => {
-                if (err.status === 409) {
-                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                }
-                return throwError(err);
-            }),
-        );
 
     private handleWebsocketErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
         pipe(
