@@ -1,12 +1,11 @@
-import { Component, HostBinding, Input, OnInit, OnDestroy } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import * as moment from 'moment';
-import { Subscription } from 'rxjs/Subscription';
-
 import { Moment } from 'moment';
+import { Subscription } from 'rxjs/Subscription';
 import { Course } from 'app/entities/course';
 import { AccountService, WindowRef } from 'app/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -137,8 +136,29 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
+            if (participation.initializationState === InitializationState.INITIALIZED) {
+                if (this.isExerciseInDuedate(exercise)) {
+                    return ParticipationStatus.EXERCISE_ACTIVE;
+                } else {
+                    return ParticipationStatus.EXERCISE_MISSED;
+                }
+            } else if (participation.initializationState === InitializationState.FINISHED) {
+                if (this.isParticipationInDuetime(participation, exercise)) {
+                    if (this.hasResults(participation)) {
+                        console.log(participation);
+                        return ParticipationStatus.EXERCISE_GRADED;
+                    } else {
+                        return ParticipationStatus.EXERCISE_SUBMITTED;
+                    }
+                } else {
+                    if (this.hasResults(participation)) {
+                        return ParticipationStatus.EXERCISE_LATE;
+                    } else {
+                        return ParticipationStatus.EXERCISE_LATE_NO_FEEDBACK;
+                    }
+                }
+            } else {
+                return ParticipationStatus.UNINITIALIZED;
             }
         }
 
@@ -156,6 +176,14 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
+    }
+
+    isParticipationInDuetime(participation: Participation, exercise: Exercise): boolean {
+        return participation.initializationDate.isBefore(exercise.dueDate);
+    }
+
+    isExerciseInDuedate(exercise: Exercise): boolean {
+        return exercise.dueDate.isAfter(moment());
     }
 
     showDetails(event: any) {
