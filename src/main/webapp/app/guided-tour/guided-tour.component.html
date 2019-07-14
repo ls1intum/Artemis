@@ -25,19 +25,25 @@
     >
         <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
         <div class="tour-block">
-            <div class="headline">
-                <h3 jhiTranslate="{{ currentTourStep.titleTranslateKey }}" class="tour-title" *ngIf="currentTourStep.title && currentTourStep.selector">
-                    {{ currentTourStep.title }}
-                </h3>
-                <h3 jhiTranslate="{{ currentTourStep.titleTranslateKey }}" class="tour-title" *ngIf="currentTourStep.title && !currentTourStep.selector">
-                    {{ currentTourStep.title }}
+            <div class="tour-block__header">
+                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headline">
+                    {{ currentTourStep.headline }}
                 </h3>
                 <div class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
-            <div class="tour-content">
+            <div class="tour-block__content">
+                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadline">
+                    {{ currentTourStep.subHeadline }}
+                </h5>
                 <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}">{{ currentTourStep.content }}</span>
+                <div *ngIf="currentTourStep.contentType === ContentType.IMAGE">
+                    <img src="{{ currentTourStep.imageUrl }}" />
+                </div>
+                <div *ngIf="currentTourStep.contentType === ContentType.VIDEO">
+                    <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
+                </div>
             </div>
-            <div class="tour-buttons">
+            <div class="tour-block__buttons">
                 <button [disabled]="guidedTourService.onFirstStep || guidedTourService.onResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span>{{ backText }}</span>

@@ -1,10 +1,24 @@
 export interface TourStep {
     /** Selector for element that will be highlighted */
     selector?: string | undefined;
-    /** Tour title text */
-    title: string;
-    /** Tour step text */
+    /** Tour headline text */
+    headline: string;
+    /** Translation key for the title **/
+    headlineTranslateKey: string;
+    /** Tour sub headline text */
+    subHeadline?: string;
+    /** Translation key for the title **/
+    subHeadlineTranslateKey?: string;
+    /** Define whether only text or text/image or text/video should be included as the tour content **/
+    contentType: ContentType;
+    /** Tour step content text */
     content: string;
+    /** Translation key for the content **/
+    contentTranslateKey: string;
+    /** Image url **/
+    imageUrl?: string;
+    /** Embed video url **/
+    videoUrl?: string;
     /** Where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */
@@ -19,10 +33,6 @@ export interface TourStep {
     useHighlightPadding?: boolean;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;
-    /** translation key for the title **/
-    titleTranslateKey: string;
-    /** translation key for the content **/
-    contentTranslateKey: string;
 }
 
 export interface GuidedTour {
@@ -62,4 +72,10 @@ export class Orientation {
     public static readonly Top = 'top';
     public static readonly TopLeft = 'top-left';
     public static readonly TopRight = 'top-right';
+}
+
+export enum ContentType {
+    TEXT,
+    IMAGE,
+    VIDEO,
 }

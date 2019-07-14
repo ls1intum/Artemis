@@ -1,14 +1,14 @@
 import { ErrorHandler, Injectable } from '@angular/core';
-import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable, Subject, fromEvent, of } from 'rxjs';
+import { fromEvent, Observable, of, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
-import { GuidedTour, TourStep, Orientation, OrientationConfiguration } from './guided-tour.constants';
+import { ContentType, GuidedTour, Orientation, OrientationConfiguration, TourStep } from './guided-tour.constants';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
@@ -41,8 +41,9 @@ export class GuidedTourService {
                     if (this._currentTour.minimumScreenSize && this._currentTour.minimumScreenSize >= window.innerWidth) {
                         this._onResizeMessage = true;
                         this._guidedTourCurrentStepSubject.next({
-                            title: 'Please resize',
-                            titleTranslateKey: '',
+                            headline: 'Please resize',
+                            headlineTranslateKey: '',
+                            contentType: ContentType.TEXT,
                             content:
                                 'You have resized the tour to a size that is too small to continue. Please resize the browser to a larger size to continue the tour or close the tour.',
                             contentTranslateKey: '',

@@ -132,7 +132,7 @@ jhi-guided-tour {
         z-index: $tour-zindex + 2;
 
         &.page-tour-step {
-            max-width: 400px;
+            // max-width: 400px;
             width: 50%;
             left: 50%;
             top: 50%;
@@ -148,19 +148,16 @@ jhi-guided-tour {
             -webkit-border-radius: 5px;
             -moz-border-radius: 5px;
 
-            .headline {
+            &__header {
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
 
-                .tour-title {
+                .headline {
+                    display: block;
                     font-size: 20px;
                     text-transform: uppercase;
-                    padding-bottom: 20px;
-
-                    fa-icon {
-                        padding-right: 10px;
-                    }
+                    padding-bottom: 10px;
                 }
 
                 .close {
@@ -191,13 +188,29 @@ jhi-guided-tour {
                 }
             }
 
-            .tour-content {
+            &__content {
                 min-height: 80px;
                 font-size: 16px;
                 padding-bottom: 28px;
+
+                div > * {
+                    display: block;
+                    margin-top: 10px;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                img {
+                    max-width: 100%;
+                }
+
+                iframe {
+                    width: 560px;
+                    height: 315px;
+                }
             }
 
-            .tour-buttons {
+            &__buttons {
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;

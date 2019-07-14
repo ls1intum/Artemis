@@ -1,7 +1,8 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { Orientation, TourStep } from './guided-tour.constants';
+import { ContentType, Orientation, TourStep } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 
 @Component({
@@ -27,7 +28,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    constructor(public guidedTourService: GuidedTourService) {}
+    private ContentType = ContentType;
+
+    constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService) {}
 
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
