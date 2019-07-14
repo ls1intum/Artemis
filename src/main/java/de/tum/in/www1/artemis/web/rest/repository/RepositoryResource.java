@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
+import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
@@ -78,20 +79,11 @@ public abstract class RepositoryResource {
     public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) throws IOException, InterruptedException {
         log.debug("REST request to files for domainId : {}", domainId);
 
-        try {
+        return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, true);
             HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        });
     }
 
     /**
@@ -102,32 +94,16 @@ public abstract class RepositoryResource {
      * @return
      * @throws IOException
      */
-    public ResponseEntity<String> getFile(Long domainId, String filename) throws IOException, InterruptedException {
+    public ResponseEntity<byte[]> getFile(Long domainId, String filename) throws IOException, InterruptedException {
         log.debug("REST request to file {} for domainId : {}", filename, domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
             byte[] out = repositoryService.getFile(repository, filename);
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
-        }
-        catch (FileNotFoundException ex) {
-            return notFound();
-        }
+            return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
+        });
     }
 
     /**
@@ -139,81 +115,34 @@ public abstract class RepositoryResource {
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
         log.debug("REST request to create file {} for domainId : {}", filename, domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        InputStream inputStream = request.getInputStream();
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
+            InputStream inputStream = request.getInputStream();
             repositoryService.createFile(repository, filename, inputStream);
-        }
-        catch (FileAlreadyExistsException ex) {
-            // File already existing. Conflict.
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (IllegalArgumentException ex) {
-            // Invalid file
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
-     * Create new folder
+     * Create new folder.
      *
      * @param domainId
      * @param folderName
      * @param request
      * @return
-     * @throws IOException
      */
-    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
         log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        InputStream inputStream = request.getInputStream();
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
+            InputStream inputStream = request.getInputStream();
             repositoryService.createFolder(repository, folderName, inputStream);
-        }
-        catch (FileAlreadyExistsException ex) {
-            // File already existing. Conflict.
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (IllegalArgumentException ex) {
-            // Invalid file
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -222,42 +151,15 @@ public abstract class RepositoryResource {
      * @param domainId id of the participation the git repository belongs to.
      * @param fileMove defines current and new path in git repository.
      * @return
-     * @throws IOException
-     * @throws InterruptedException
      */
-    public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
             repositoryService.renameFile(repository, fileMove);
-        }
-        catch (FileNotFoundException ex) {
-            return notFound();
-        }
-        catch (FileAlreadyExistsException ex) {
-            // File already existing. Conflict.
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (IllegalArgumentException ex) {
-            // Invalid file
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -268,33 +170,14 @@ public abstract class RepositoryResource {
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> deleteFile(Long domainId, String filename) throws IOException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(Long domainId, String filename) {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
             repositoryService.deleteFile(repository, filename);
-        }
-        catch (FileNotFoundException ex) {
-            return notFound();
-        }
-        catch (IllegalArgumentException ex) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -304,26 +187,14 @@ public abstract class RepositoryResource {
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> pullChanges(Long domainId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> pullChanges(Long domainId) {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        repositoryService.pullChanges(repository);
-
-        return new ResponseEntity<>(HttpStatus.OK);
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
+            repositoryService.pullChanges(repository);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -334,34 +205,14 @@ public abstract class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    public ResponseEntity<Void> commitChanges(Long domainId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> commitChanges(Long domainId) {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId, true);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        try {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, true);
             repositoryService.commitChanges(repository);
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-        catch (GitAPIException ex) {
-            // TODO: Properly catch specific git errors
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -372,21 +223,12 @@ public abstract class RepositoryResource {
      * @throws IOException
      * @throws InterruptedException
      */
-    public ResponseEntity<Void> resetToLastCommit(Long domainId) throws IOException, InterruptedException {
-        Repository repository;
-        try {
-            repository = getRepository(domainId, false);
+    public ResponseEntity<Void> resetToLastCommit(Long domainId) {
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, false);
             gitService.get().resetToOriginMaster(repository);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
-
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     /**
@@ -418,5 +260,34 @@ public abstract class RepositoryResource {
         }
 
         return new ResponseEntity<>(repositoryStatus, HttpStatus.OK);
+    }
+
+    /**
+     * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
+     * 
+     * @param executor
+     * @return the appropriate ResponseEntity (OK if the executor was successful or another error status code fitting the Exception).
+     */
+    private ResponseEntity executeAndCheckForExceptions(RepositoryExecutor executor) {
+        ResponseEntity responseEntitySuccess;
+        try {
+            responseEntitySuccess = executor.exec();
+        }
+        catch (IllegalArgumentException ex) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        catch (FileAlreadyExistsException | CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (FileNotFoundException ex) {
+            return notFound();
+        }
+        catch (GitAPIException | IOException | InterruptedException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return responseEntitySuccess;
     }
 }
