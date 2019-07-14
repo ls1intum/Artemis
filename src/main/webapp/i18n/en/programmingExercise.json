@@ -69,7 +69,7 @@
                 "hideInactive": "Hide inactive test cases",
                 "showInactive": "Show inactivate test cases",
                 "resetWeights": "Reset weights",
-                "weightCouldNotBeUpdated": "The weight for test case {{id}} could not be updated: {{error}}."
+                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
             }
         }
     }

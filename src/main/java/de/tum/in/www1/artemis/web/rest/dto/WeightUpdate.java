@@ -5,7 +5,17 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class WeightUpdate {
 
+    private Long id;
+
     private Integer weight;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Integer getWeight() {
         return weight;

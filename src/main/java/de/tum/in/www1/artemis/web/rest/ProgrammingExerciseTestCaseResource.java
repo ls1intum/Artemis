@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -68,19 +67,20 @@ public class ProgrammingExerciseTestCaseResource {
      *
      * @param exerciseId
      * @param testCaseId
-     * @param testCaseWeightUpdate
+     * @param testCaseWeightUpdates
      * @return
      */
-    @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
+    @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-case-weights")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @RequestBody WeightUpdate testCaseWeightUpdate) {
-        log.debug("REST request to update the weight of test case {} to {}", testCaseId, testCaseWeightUpdate.getWeight());
+    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeights(@PathVariable Long exerciseId, @RequestBody Set<WeightUpdate> testCaseWeightUpdates) {
+        log.debug("REST request to update the weights {} of the exercise {}", testCaseWeightUpdates, exerciseId);
         try {
-            // Retrieve programming exercise to check availability & permissions.
-            ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
-            programmingExercise.getTestCases().stream().filter(testCase -> testCase.getId().equals(testCaseId)).findFirst().orElseThrow(NoSuchElementException::new);
-            ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseService.updateWeight(testCaseId, testCaseWeightUpdate.getWeight());
-            return ResponseEntity.ok(testCase);
+            Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.updateWeights(exerciseId, testCaseWeightUpdates);
+            // We don't need the linked exercise here.
+            for (ProgrammingExerciseTestCase testCase : updatedTests) {
+                testCase.setExercise(null);
+            }
+            return ResponseEntity.ok(updatedTests);
         }
         catch (IllegalAccessException ex) {
             return forbidden();

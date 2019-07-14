@@ -6,6 +6,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
 
+export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number };
+
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
@@ -77,8 +79,8 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param testCaseId
      * @param weight
      */
-    public updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase> {
-        return this.http.patch<ProgrammingExerciseTestCase>(`${this.testCaseUrl}/${exerciseId}/test-cases/${testCaseId}/update-weight`, { weight });
+    public updateWeights(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/update-test-case-weights`, updates);
     }
 
     /**
