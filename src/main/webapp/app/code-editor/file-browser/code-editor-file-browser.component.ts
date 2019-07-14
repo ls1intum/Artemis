@@ -203,13 +203,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
         return this.repositoryService.getStatus().pipe(
             rxMap(res => {
-                return res.repositoryStatus === 'CLEAN'
-                    ? CommitState.CLEAN
-                    : res.repositoryStatus === 'UNCOMMITTED_CHANGES'
-                    ? CommitState.UNCOMMITTED_CHANGES
-                    : res.repositoryStatus === 'CONFLICT'
-                    ? CommitState.CONFLICT
-                    : CommitState.COULD_NOT_BE_RETRIEVED;
+                // The server sends us the CommitState, however we need to type it here by finding it in the client commitStates.
+                const mappedCommitState = Object.values(CommitState).find(commitState => commitState === res.repositoryStatus);
+                // This should not happen, but needs to be done so that the compiler is satisfied.
+                return mappedCommitState || CommitState.COULD_NOT_BE_RETRIEVED;
             }),
             catchError(() => Observable.of(CommitState.COULD_NOT_BE_RETRIEVED)),
         );
