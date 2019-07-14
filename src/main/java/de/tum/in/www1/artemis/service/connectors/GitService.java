@@ -100,15 +100,15 @@ public class GitService {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
-        try {
-            Repository repository = getRepositoryByLocalPath(localPath);
+        Repository repository = getRepositoryByLocalPath(localPath);
+        if (repository != null) {
             if (pullOnGet) {
                 pull(repository);
             }
             return repository;
         }
         // If the git repository can't be found on our server, clone it from the remote.
-        catch (IOException ex) {
+        else {
             int numberOfAttempts = 5;
             // Make sure that multiple clone operations for the same repository cannot happen at the same time.
             while (cloneInProgressOperations.containsKey(localPath)) {
@@ -148,33 +148,39 @@ public class GitService {
      * cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
      * @param localPath to git repo on server.
-     * @return the git repository in the localPath (if exists!)
-     * @throws IOException if the the filepath can't be found or does not contain a git repository.
+     * @return the git repository in the localPath or null if it does not exist on the server.
      */
-    private Repository getRepositoryByLocalPath(Path localPath) throws IOException {
+    private Repository getRepositoryByLocalPath(Path localPath) {
+        // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
             cachedRepositories.remove(localPath);
-            throw new IOException();
+            return null;
         }
-
+        // Check if the repository is already cached in the server's session.
         Repository cachedRepository = cachedRepositories.get(localPath);
         if (cachedRepository != null) {
             return cachedRepository;
         }
-        // Open the repository from the filesystem
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
-                .findGitDir().setup();
-        // Create the JGit repository object
-        Repository repository = new Repository(builder);
-        repository.setLocalPath(localPath);
-        // disable auto garbage collection because it can lead to problems
-        repository.getConfig().setString("gc", null, "auto", "0");
-        // Cache the JGit repository object for later use
-        // Avoids the expensive re-opening of local repositories
-        cachedRepositories.put(localPath, repository);
-        return repository;
+        // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
+        try {
+            // Open the repository from the filesystem
+            FileRepositoryBuilder builder = new FileRepositoryBuilder();
+            builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
+                    .findGitDir().setup();
+            // Create the JGit repository object
+            Repository repository = new Repository(builder);
+            repository.setLocalPath(localPath);
+            // disable auto garbage collection because it can lead to problems
+            repository.getConfig().setString("gc", null, "auto", "0");
+            // Cache the JGit repository object for later use
+            // Avoids the expensive re-opening of local repositories
+            cachedRepositories.put(localPath, repository);
+            return repository;
+        }
+        catch (IOException ex) {
+            return null;
+        }
     }
 
     /**
