@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.DAYS_TO_KEEP_UNUSED_ENGINE;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.NUMBER_OF_OPTIMAL_MODELS;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.NUMBER_OF_NEW_OPTIMAL_MODELS;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.OPTIMAL_MODEL_THRESHOLD;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -97,17 +98,17 @@ public class CompassService {
     }
 
     /**
-     * Get the id of the next optimal modeling submission for the given exercise. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass
-     * which can be used for automatic assessments. This method will return a new Entry with a new Id for every call.
+     * Get a configured number of ids of the next optimal modeling submissions for the given exercise. Optimal means that an assessment for these models result in the biggest
+     * knowledge gain for Compass which can be used for automatic assessments. The number of new optimal models that should be load is defined by NUMBER_OF_NEW_OPTIMAL_MODELS.
      *
-     * @param exerciseId the id of the exercise the modeling submission should belong to
-     * @return new Id of the next optimal model, null if all models have been assessed for the given exercise
+     * @param exerciseId the id of the exercise the modeling submissions should belong to
+     * @return Ids of the next optimal models, an empty list if all models have been assessed for the given exercise
      */
-    private Long getNextOptimalModel(long exerciseId) {
+    private List<Long> getNextOptimalModels(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
             return null;
         }
-        return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
+        return compassCalculationEngines.get(exerciseId).getNextOptimalModels(NUMBER_OF_NEW_OPTIMAL_MODELS);
     }
 
     /**
@@ -124,11 +125,12 @@ public class CompassService {
     }
 
     /**
-     * Get the (cached) list of models that need to be assessed next. If the number of models in the list is smaller than the configured NUMBER_OF_OPTIMAL_MODELS a new "optimal"
-     * model is added to the list. The models in the list are optimal in the sense of knowledge gain for Compass, helping to automatically assess as many other models as possible.
+     * Get the (cached) list of optimal models that need to be assessed next. The models in the list are optimal in the sense of knowledge gain for Compass, helping to
+     * automatically assess as many other models as possible. If the number of models in the list is smaller than the configured OPTIMAL_MODEL_THRESHOLD, new "optimal" models will
+     * be added to the list.
      *
-     * @param exerciseId the exerciseId
-     * @return List of model Ids waiting for an assessment by an assessor
+     * @param exerciseId the id of the exercise the models should belong to
+     * @return a list of optimal model Ids waiting for an assessment by an assessor
      */
     public List<Long> getModelsWaitingForAssessment(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
@@ -136,13 +138,12 @@ public class CompassService {
         }
 
         List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        while (optimalModelIds.size() < NUMBER_OF_OPTIMAL_MODELS) {
-            Long nextOptimalModelId = getNextOptimalModel(exerciseId);
-            if (nextOptimalModelId == null) {
-                break;
-            }
 
-            optimalModelIds.add(nextOptimalModelId);
+        if (optimalModelIds.size() < OPTIMAL_MODEL_THRESHOLD) {
+            List<Long> nextOptimalModelIds = getNextOptimalModels(exerciseId);
+            if (nextOptimalModelIds != null) {
+                optimalModelIds.addAll(nextOptimalModelIds);
+            }
         }
 
         removeManuallyAssessedModels(optimalModelIds, exerciseId);

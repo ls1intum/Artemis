@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 
 public class ModelSelector {
 
     private static final int MAX_CANDIDATE_LIST_SIZE = 50;
+
+    private static final double EPSILON = 0.0000001;
 
     /**
      * Tracks which models have been selected for assessment. Typically these models are the ones where Compass learns the most, when they are assessed. All models in this set do
@@ -17,34 +20,36 @@ public class ModelSelector {
     private Set<Long> modelsWaitingForAssessment = ConcurrentHashMap.newKeySet();
 
     /**
-     * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though). Models
-     * that are in this set are not considered by the ModelSelector when selecting the next optimal model. The key is the ModelSubmission id.
+     * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though).
+     * Basically this set contains all modelsWaitingForAssessment + all models that are already assessed. Models that are in this set are not considered by the ModelSelector when
+     * selecting the next optimal model. The key is the ModelSubmission id.
      */
-    private Set<Long> alreadyAssessedModels = ConcurrentHashMap.newKeySet();
+    private Set<Long> alreadyHandledModels = ConcurrentHashMap.newKeySet();
 
     /**
-     * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process The selected model is currently unassessed and not queued into
-     * assessment (i.e. in alreadyAssessedModels)
+     * Calculate the given number of models which would mean the biggest knowledge gain to support the automatic assessment process. The selected models are currently unassessed
+     * and not queued for assessment (i.e. in alreadyHandledModels). Which models mean the biggest knowledge gain is decided based on the coverage and the mean similarity of the
+     * models, i.e. models that have a low coverage but a high mean similarity with reference to all other models are considered "optimal" and will be returned.
      *
-     * @param modelIndex manages the models
-     * @return the id of the model which should be assessed next by an assessor
+     * @param modelIndex     contains and manages all the models
+     * @param numberOfModels the number of models that should be loaded
+     * @return the ids of the models which should be assessed next by an assessor, or an empty list if there are no unhandled models
      */
-    public Long selectNextModel(ModelIndex modelIndex) {
+    public List<Long> selectNextModels(ModelIndex modelIndex, int numberOfModels) {
         double threshold = 0.15;
         int maxCandidateListSize = 10;
 
-        List<UMLClassDiagram> partiallyAssessed = new ArrayList<>();
+        // Get all models that have not already been handled by the model selector
+        List<UMLClassDiagram> unhandledModels = new ArrayList<>();
         for (UMLClassDiagram umlModel : modelIndex.getModelCollection()) {
-            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId())) {
-                partiallyAssessed.add(umlModel);
+            if (!alreadyHandledModels.contains(umlModel.getModelSubmissionId())) {
+                unhandledModels.add(umlModel);
             }
         }
 
-        // Make sure that the candidate list is not too big
-        List<UMLClassDiagram> candidates = partiallyAssessed;
-
+        List<UMLClassDiagram> candidates = unhandledModels;
         candidates.sort(Comparator.comparingDouble(UMLClassDiagram::getLastAssessmentCoverage));
-
+        // Make sure that the candidate list is not too big
         if (!candidates.isEmpty()) {
             double smallestCoverage = candidates.get(0).getLastAssessmentCoverage();
 
@@ -58,63 +63,79 @@ public class ModelSelector {
             }
         }
 
-        // select a model which covers many other models (= high similarity to others)
-        Long selectedCandidateId = null;
-        double lastMeanSimilarity = 0;
+        List<Long> nextOptimalModels = computeModelsWithHighestSimilarity(numberOfModels, candidates, unhandledModels);
+
+        if (!nextOptimalModels.isEmpty()) {
+            alreadyHandledModels.addAll(nextOptimalModels);
+            modelsWaitingForAssessment.addAll(nextOptimalModels);
+
+            return nextOptimalModels;
+        }
+
+        // Fallback: if no optimal models could be determined by similarity, select any unassessed models
+        for (UMLClassDiagram model : modelIndex.getModelCollection()) {
+            if (model.isUnassessed() && !alreadyHandledModels.contains(model.getModelSubmissionId())) {
+                alreadyHandledModels.add(model.getModelSubmissionId());
+                modelsWaitingForAssessment.add(model.getModelSubmissionId());
+
+                return Collections.singletonList(model.getModelSubmissionId());
+            }
+        }
+
+        return new ArrayList<>();
+    }
+
+    /**
+     * Computes and returns the given number of candidate models with the highest mean similarity, i.e. for every model in the given list of candidate models, it calculates the
+     * mean similarity compared to all models in the given list of unhandled models and sorts the candidate models according to the calculated mean similarity. I then returns the
+     * given number of candidate models with the highest mean similarity.
+     *
+     * @param numberOfModels  the number of models that should be returned
+     * @param candidates      the candidate models for which to calculate the mean similarity
+     * @param unhandledModels the unhandled models used to calculate the mean similarity of the candidate models
+     * @return the given number of candidate models with the highest mean similarity
+     */
+    private List<Long> computeModelsWithHighestSimilarity(int numberOfModels, List<UMLClassDiagram> candidates, List<UMLClassDiagram> unhandledModels) {
+        if (numberOfModels == 0 || candidates == null || candidates.isEmpty() || unhandledModels == null || unhandledModels.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Map similarity -> submissionId that is sorted by the similarity. Note, that the map is sorted in reverse order, i.e. highest similarity comes first.
+        SortedMap<Double, Long> sortedSimilarityMap = new TreeMap<>(Collections.reverseOrder());
+        double epsilon = EPSILON;
+
         for (UMLClassDiagram candidate : candidates) {
             double similarity = 0;
-            for (UMLClassDiagram model : partiallyAssessed) {
+
+            for (UMLClassDiagram model : unhandledModels) {
                 similarity += model.similarity(candidate);
             }
 
-            // similarity /= modelIndex.getModelList().size();
-            similarity /= partiallyAssessed.size();
+            similarity /= unhandledModels.size();
+            // We add a small amount to every similarity to prevent duplicates. E.g if all models are exactly the same, their similarity is exactly the same as well. This would
+            // result in only one element in the sorted map as duplicate keys are not permitted. So we add a small amount that does not impact the order of the similarities.
+            similarity += epsilon;
+            sortedSimilarityMap.put(similarity, candidate.getModelSubmissionId());
 
-            if (similarity > lastMeanSimilarity) {
-                selectedCandidateId = candidate.getModelSubmissionId();
-                lastMeanSimilarity = similarity;
-            }
+            epsilon += EPSILON;
         }
 
-        if (selectedCandidateId != null) {
-            alreadyAssessedModels.add(selectedCandidateId);
-            modelsWaitingForAssessment.add(selectedCandidateId);
-            return selectedCandidateId;
-        }
-
-        // if none exists, select any unassessed model
-        for (UMLClassDiagram model : modelIndex.getModelCollection()) {
-            if (model.isUnassessed() && !alreadyAssessedModels.contains(model.getModelSubmissionId())) {
-                alreadyAssessedModels.add(model.getModelSubmissionId());
-                modelsWaitingForAssessment.add(model.getModelSubmissionId());
-                return model.getModelSubmissionId();
-            }
-        }
-
-        // Do not reassess already assessed models as this will lead to confusion
-        // if all models are assessed, select any poorly assessed model
-        /*
-         * for (UMLModel model : modelIndex.getModelCollection()) { if (model.getLastAssessmentConfidence() < CompassConfiguration.POORLY_ASSESSED_MODEL_THRESHOLD &&
-         * !alreadyAssessedModels.contains(model.getModelSubmissionId())) { alreadyAssessedModels.add(model.getModelSubmissionId());
-         * modelsWaitingForAssessment.add(model.getModelSubmissionId()); return model.getModelSubmissionId(); } }
-         */
-        return null;
+        return sortedSimilarityMap.values().stream().limit(numberOfModels).collect(Collectors.toList());
     }
 
     public List<Long> getModelsWaitingForAssessment() {
         return new ArrayList<>(modelsWaitingForAssessment);
     }
 
-    public void addAlreadyAssessedModel(long modelId) {
-        alreadyAssessedModels.add(modelId);
+    public void addAlreadyHandledModel(long modelId) {
+        alreadyHandledModels.add(modelId);
     }
 
     public void removeModelWaitingForAssessment(long modelId) {
         modelsWaitingForAssessment.remove(modelId);
     }
 
-    public void removeAlreadyAssessedModel(long modelId) {
-        alreadyAssessedModels.remove(modelId);
+    public void removeAlreadyHandledModel(long modelId) {
+        alreadyHandledModels.remove(modelId);
     }
-
 }
