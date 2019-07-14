@@ -53,7 +53,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long exerciseId, boolean pullOnGet) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
+        String testRepoName = exercise.getTestRepositoryName();
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
         return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnGet);
     }
