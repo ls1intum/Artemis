@@ -56,7 +56,7 @@
                 id="assessNextButton"
                 (click)="assessNextOptimal()"
                 [disabled]="!assessmentsAreValid"
-                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor) && !hasComplaint"
+                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor) && !complaint"
                 jhiTranslate="artemisApp.tutorExerciseDashboard.nextAssessment"
             ></button>
         </div>
