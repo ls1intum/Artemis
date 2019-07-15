@@ -282,22 +282,14 @@ public class CourseResource {
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForDashboard(Principal principal, @RequestParam(name = "userId", required = false) String userId) {
+    public List<Course> getAllCoursesForDashboard(Principal principal) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         log.debug("/courses/for-dashboard.start");
-        Boolean usesOtherLogin = false;
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (authCheckService.isAdmin() && userId != null) {
-            Optional<User> userByLogin = userService.getUserWithAuthoritiesByLogin(userId);
-            if (userByLogin.isPresent()) {
-                user = userByLogin.get();
-                usesOtherLogin = true;
-            }
-        }
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user, usesOtherLogin);
+        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
         log.debug("/courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user

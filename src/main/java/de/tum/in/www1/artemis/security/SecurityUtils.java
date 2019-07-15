@@ -9,6 +9,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import de.tum.in.www1.artemis.service.UserService;
+
 /**
  * Utility class for Spring Security.
  */
@@ -23,6 +25,10 @@ public final class SecurityUtils {
      * @return the login of the current user
      */
     public static Optional<String> getCurrentUserLogin() {
+        String customUserName = UserService.customUserName();
+        if (customUserName != null) {
+            return Optional.of(customUserName);
+        }
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication()).map(authentication -> {
             if (authentication.getPrincipal() instanceof UserDetails) {

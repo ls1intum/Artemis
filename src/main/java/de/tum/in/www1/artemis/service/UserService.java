@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpSession;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -395,5 +399,41 @@ public class UserService {
 
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * Returns if a custom user is currently saved in the session
+     * 
+     * @return isCustomUserNameActive
+     */
+    public static Boolean isCustomUserNameActive() {
+        String customUserName = customUserName();
+
+        if (customUserName == null) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Checks if the actually logged in user is admin If user is admin it returns the custom user name saved in the session if it exsits
+     * 
+     * @return customUserName if exists or null
+     */
+    public static String customUserName() {
+        boolean isAdmin = SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
+        if (!isAdmin) {
+            return null;
+        }
+        String customUserName = null;
+        try {
+            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpSession session = requestAttributes.getRequest().getSession();
+            customUserName = (String) session.getAttribute("customUser");
+            return customUserName;
+        }
+        catch (Exception e) {
+            return null;
+        }
     }
 }

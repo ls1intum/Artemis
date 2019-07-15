@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.security.CustomUserConfigurer;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.InitializingBean;
@@ -138,10 +139,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/info").permitAll()
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
         .and()
-            .apply(securityConfigurerAdapter());
+            .apply(securityConfigurerAdapter())
+        .and()
+            .apply(customUserConfigurerAdapter());
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
+    }
+
+    private CustomUserConfigurer customUserConfigurerAdapter() {
+        return new CustomUserConfigurer();
     }
 }
