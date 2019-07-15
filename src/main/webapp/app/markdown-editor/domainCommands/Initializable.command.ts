@@ -1,3 +1,7 @@
+/**
+ * Will be called by the markdown editor on initialization.
+ * Can be used to e.g. set certain properties of the markdown editor.
+ */
 export interface InitializableCommand {
     initializeEditor: () => void;
 }
