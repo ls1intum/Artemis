@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
@@ -27,7 +28,7 @@ import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/dom
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { InitializableCommand, instanceOfInitializableCommand } from 'app/markdown-editor/domainCommands/Initializable.command';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -164,14 +165,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
         });
         this.aceEditorContainer.getEditor().completers = [];
 
-        const commands = [...(this.domainCommands || []), ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands];
-        commands.forEach(command => {
-            command.setEditor(this.aceEditorContainer);
-            command.setMarkdownWrapper(this.wrapper);
-            if (instanceOfInitializableCommand(command)) {
-                (command as InitializableCommand).initializeEditor();
-            }
-        });
+        if (this.domainCommands == null || this.domainCommands.length === 0) {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
+                command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
+            });
+        } else {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
+                command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
+            });
+        }
         this.setupMarkdownEditor();
 
         if (this.enableResize) {
