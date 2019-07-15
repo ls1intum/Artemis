@@ -342,6 +342,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
+    // TODO: document the implementation of this method --> it is not really obvious
+    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;

@@ -318,9 +318,9 @@ public class ProgrammingExerciseService {
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName); // template build
                                                                                                                                                                // plan
@@ -330,7 +330,7 @@ public class ProgrammingExerciseService {
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
 
         return programmingExercise;
     }
@@ -466,7 +466,7 @@ public class ProgrammingExerciseService {
     public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
-        repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
     /**

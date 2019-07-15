@@ -58,6 +58,9 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
     ModelAssessmentConflictRepository conflictRepo;
 
     @Autowired
@@ -93,6 +96,7 @@ public class DatabaseUtilService {
         feedbackRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
+        textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
@@ -162,6 +166,19 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
+    public void addCourseWithOneTextExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        course.addExercises(textExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(textExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+    }
+
     public void addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -199,6 +216,22 @@ public class DatabaseUtilService {
 
         assertThat(programmingExerciseRepository.findAll()).as("programming exercise is initialized").hasSize(1);
         assertThat(testCaseRepository.findAll()).as("test case is initialized").hasSize(3);
+    }
+
+    public void addCourseWithModelingAndTextExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        course.addExercises(textExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
     /**
