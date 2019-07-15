@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { map as rxMap, filter as rxFilter } from 'rxjs/operators';
 import { catchError, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
@@ -59,6 +59,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+    generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -137,6 +138,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
         }
+    }
+
+    generateHtml() {
+        this.generateHtmlSubject.next();
     }
 
     updateTestCases = (testCases: ProgrammingExerciseTestCase[]) => {

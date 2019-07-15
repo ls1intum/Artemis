@@ -63,6 +63,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
+    @Input() generateHtmlEvents: Observable<void>;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
@@ -86,6 +87,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private listenerRemoveFunctions: Function[] = [];
 
     testCaseSubscription: Subscription;
+    generateHtmlSubscription: Subscription;
 
     constructor(
         private editorService: CodeEditorService,
@@ -126,6 +128,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         if (participationHasChanged) {
             this.isInitial = true;
+            if (this.generateHtmlSubscription) {
+                this.generateHtmlSubscription.unsubscribe();
+            }
+            this.generateHtmlEvents.subscribe(() => this.updateMarkdown());
             this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
@@ -154,10 +160,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 )
                 .subscribe();
         } else if (this.exercise && problemStatementHasChanged(changes)) {
-            // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
-            // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.problemStatement = this.exercise.problemStatement!;
-            this.updateMarkdown();
         }
     }
 
