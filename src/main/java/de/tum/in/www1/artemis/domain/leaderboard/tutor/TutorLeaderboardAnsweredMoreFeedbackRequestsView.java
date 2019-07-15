@@ -5,7 +5,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import jdk.nashorn.internal.ir.annotations.Immutable;
+import org.hibernate.annotations.Immutable;
 
 @Entity
 @Table(name = "view_tutor_leaderboard_answered_more_feedback_requests")
