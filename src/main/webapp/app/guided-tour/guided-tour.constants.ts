@@ -1,21 +1,12 @@
 export interface TourStep {
     /** Selector for element that will be highlighted */
     selector?: string | undefined;
-    /** Tour headline text
-    headline: string;
-     */
     /** Translation key for the title **/
     headlineTranslateKey: string;
-    /** Tour sub headline text
-    subHeadline?: string;
-     */
     /** Translation key for the title **/
     subHeadlineTranslateKey?: string;
     /** Define whether only text or text/image or text/video should be included as the tour content **/
     contentType: ContentType;
-    /** Tour step content text
-    content: string;
-     */
     /** Translation key for the content **/
     contentTranslateKey: string;
     /** Button text for external link **/
