@@ -4,7 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../programming-exercise.model';
@@ -33,6 +32,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
+    @Input() generateHtmlEvents: Observable<void>;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
@@ -49,6 +49,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public renderedMarkdown: SafeHtml;
 
     private markdownExtensions: ShowdownExtension[];
+    generateHtmlSubscription: Subscription;
 
     constructor(
         private translateService: TranslateService,
@@ -73,6 +74,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         // It is possible that the exercise does not have an id in case it is being created now.
         if (participationHasChanged) {
             this.isInitial = true;
+            if (this.generateHtmlSubscription) {
+                this.generateHtmlSubscription.unsubscribe();
+            }
+            this.generateHtmlEvents.subscribe(() => {
+                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+            });
             this.setupResultWebsocket();
             this.programmingExerciseTaskFactory.subscribeForTestForTasks().subscribe((testsForTasks: TestsForTasks) => {
                 this.steps = testsForTasks.map(([, taskName, tests]) => ({
@@ -112,10 +119,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 )
                 .subscribe();
         } else if (this.exercise && problemStatementHasChanged(changes)) {
-            // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
-            // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.problemStatement = this.exercise.problemStatement!;
-            this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
         }
     }
 

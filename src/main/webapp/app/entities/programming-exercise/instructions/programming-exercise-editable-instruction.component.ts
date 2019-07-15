@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
@@ -60,6 +60,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+    generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -144,6 +145,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
         }
+    }
+
+    generateHtml() {
+        this.generateHtmlSubject.next();
     }
 
     private setupTestCaseSubscription() {
