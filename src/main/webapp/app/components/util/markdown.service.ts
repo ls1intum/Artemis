@@ -123,7 +123,8 @@ export class ArtemisMarkdown {
     }
 
     /**
-     * converts markdown into html
+     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
+     *
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
