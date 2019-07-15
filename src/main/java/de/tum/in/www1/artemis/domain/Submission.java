@@ -11,6 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -52,6 +53,10 @@ public abstract class Submission implements Serializable {
 
     @Column(name = "example_submission")
     private Boolean exampleSubmission;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    private Language language;
 
     @ManyToOne
     private Participation participation;
@@ -138,6 +143,19 @@ public abstract class Submission implements Serializable {
     public Submission exampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
         return this;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public Submission language(Language language) {
+        this.language = language;
+        return this;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
     }
 
     public void setExampleSubmission(Boolean exampleSubmission) {

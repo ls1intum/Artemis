@@ -23,9 +23,9 @@ import io.github.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
 @EnableConfigurationProperties({ LiquibaseProperties.class, ApplicationProperties.class })
-public class ArTEMiSApp implements InitializingBean {
+public class ArtemisApp implements InitializingBean {
 
-    private static final Logger log = LoggerFactory.getLogger(ArTEMiSApp.class);
+    private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
 
     private final Environment env;
 
@@ -33,14 +33,14 @@ public class ArTEMiSApp implements InitializingBean {
 
     private final AutomaticSubmissionService automaticSubmissionService;
 
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
+    public ArtemisApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
         this.automaticSubmissionService = automaticSubmissionService;
     }
 
     /**
-     * Initializes ArTEMiS.
+     * Initializes Artemis.
      * <p>
      * Spring profiles can be configured with a program arguments --spring.profiles.active=your-active-profile
      * <p>
@@ -66,7 +66,7 @@ public class ArTEMiSApp implements InitializingBean {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        SpringApplication app = new SpringApplication(ArTEMiSApp.class);
+        SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
         Environment env = app.run(args).getEnvironment();
         logApplicationStartup(env);
