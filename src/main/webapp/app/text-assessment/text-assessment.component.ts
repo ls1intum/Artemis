@@ -107,8 +107,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.paramSub.unsubscribe();
         }
         this.paramSub = this.route.params.subscribe(params => {
-            const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-            const submissionValue = this.route.snapshot.paramMap.get('submissionId');
+            const exerciseId = Number(params['exerciseId']);
+            const submissionValue = params['submissionId'];
 
             if (submissionValue === 'new') {
                 this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(

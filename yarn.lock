@@ -679,7 +679,7 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
 
-"@ls1intum/apollon@^2.0.0-rc.11":
+"@ls1intum/apollon@2.0.0-rc.11":
   version "2.0.0-rc.11"
   resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.11.tgz#07521af3adc0e3c223d6251c5f69940e6f9ffee4"
   integrity sha512-cPlQk+5mPL5kFRHDQot3nidNgMM67gkiThqYF0OqJSaWyeq3NZmoYYjcOKpbHudohG8lPlelfm8d49C8AF+d2Q==
@@ -3009,6 +3009,11 @@ codelyzer@5.1.0:
     source-map "^0.5.7"
     sprintf-js "^1.1.2"
 
+collapse-white-space@^1.0.3:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/collapse-white-space/-/collapse-white-space-1.0.5.tgz#c2495b699ab1ed380d29a1091e01063e75dbbe3a"
+  integrity sha512-703bOOmytCYAX9cXYqoikYIx6twmFCXsnzRQheBcTG3nzKYBR4P/+wkYeH+Mvj7qUz8zZDtdyzbxfnEi/kYzRQ==
+
 collection-visit@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/collection-visit/-/collection-visit-1.0.0.tgz#4bc0373c164bc3291b4d368c829cf1a80a59dca0"
@@ -4998,10 +5003,10 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=
 
-fork-ts-checker-webpack-plugin@1.3.7:
-  version "1.3.7"
-  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-1.3.7.tgz#2b9d50f1abcafe2c0b9c6e8cce76ee384fa661a1"
-  integrity sha512-n55O6fIIZrPdWFSQ0WYBs6Umdx0EatCvCM7xstegycDucnDQJmyUO9tc1lvabTh8ojL6a9aN/Sh0iFXZxq4mfA==
+fork-ts-checker-webpack-plugin@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-1.4.0.tgz#56a91667dfd7746248557d4f533772892e9ec474"
+  integrity sha512-Sy8rowZZJuGbu5NoBhk+XiSFpspxt9vJO6XOvPNonajm+8SFddUM375697Sn5b3RVVu/xPD9fZyNHCIbFUGnRA==
   dependencies:
     babel-code-frame "^6.22.0"
     chalk "^2.4.1"
@@ -5032,6 +5037,13 @@ fragment-cache@^0.2.1:
   integrity sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=
   dependencies:
     map-cache "^0.2.2"
+
+franc-min@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/franc-min/-/franc-min-4.1.0.tgz#d23e6945fbfe7a1ebcfe61791db904201ac1a793"
+  integrity sha512-Rlkc3QaVNNnvWjEhhcLs6PnwH4CqSAxxStUSSly6XNYWTSRRYqSLvQmIDBOBz6cP5uOKFwU1b7rk8rQDn85IrQ==
+  dependencies:
+    trigram-utils "^1.0.0"
 
 fresh@0.5.2, fresh@^0.5.2:
   version "0.5.2"
@@ -7645,7 +7657,7 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
-lodash._reinterpolate@~3.0.0:
+lodash._reinterpolate@^3.0.0, lodash._reinterpolate@~3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz#0ccf2d89166af03b3663c796538b75ac6e114d9d"
   integrity sha1-DM8tiRZq8Ds2Y8eWU4t1rG4RTZ0=
@@ -7699,6 +7711,14 @@ lodash.tail@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/lodash.tail/-/lodash.tail-4.1.1.tgz#d2333a36d9e7717c8ad2f7cacafec7c32b444664"
   integrity sha1-0jM6NtnncXyK0vfKyv7HwytERmQ=
+
+lodash.template@4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.template/-/lodash.template-4.5.0.tgz#f976195cf3f347d0d5f52483569fe8031ccce8ab"
+  integrity sha512-84vYFxIkmidUiFxidA/KjjH9pAycqW+h980j7Fuz5qxRtO9pgB7MDFTdys1N7A5mcucRiDyEq4fusljItR1T/A==
+  dependencies:
+    lodash._reinterpolate "^3.0.0"
+    lodash.templatesettings "^4.0.0"
 
 lodash.template@^4.4.0:
   version "4.4.0"
@@ -8390,6 +8410,11 @@ mute-stream@0.0.7:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
 
+n-gram@^1.0.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/n-gram/-/n-gram-1.1.1.tgz#a374dc176a9063a2388d1be18ed7c35828be2a97"
+  integrity sha512-qibRqvUghLIVsq+RTwVuwOzgOxf0l4DDZKVYAK0bMam5sG9ZzaJ6BUSJyG2Td8kTc7c/HcMUtjiN5ShobZA2bA==
+
 nan@^2.12.1, nan@^2.13.2:
   version "2.14.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.0.tgz#7818f722027b2459a86f0295d434d1fc2336c52c"
@@ -8448,7 +8473,7 @@ ng-jhipster@0.10.1:
   dependencies:
     tslib "^1.9.0"
 
-ng-mocks@^8.0.0:
+ng-mocks@8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-8.0.0.tgz#cc6e2e67b18166fe5282c0f255930037375bdffa"
   integrity sha512-FsuB6DSsg48026LFZQy/KtY+uQ/aFzzyA5ys4yBjUMcN+6dUocIsKGaqZR/Cu5KL56rvusmGv8YqKVX1KHqtsg==
@@ -10935,10 +10960,10 @@ sass@1.22.2:
   dependencies:
     chokidar ">=2.0.0 <4.0.0"
 
-sass@1.22.3:
-  version "1.22.3"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.22.3.tgz#b3591191ab0f3caece39ed9384c90caccacf471c"
-  integrity sha512-9ECcSAEgGStxZkpOCT+Z8F6jEJq+jjPonxgX52QVNeJbRL1CmrjN9qcoO78gob6M1bY4ocGVwPWjGDNMeOgvbg==
+sass@1.22.4:
+  version "1.22.4"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.22.4.tgz#00b433055f00a25ed5f060ca4abc332facaf02fc"
+  integrity sha512-gQFNzYKlAn9ee6Qy1UhTxy0G24QR5BWP61AN61jAEqwauzVCP5qjUveO/WkIj72po0ljncdVXo96EQR+ig2lRw==
   dependencies:
     chokidar ">=2.0.0 <4.0.0"
 
@@ -12371,6 +12396,15 @@ tree-kill@1.2.1:
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.1.tgz#5398f374e2f292b9dcc7b2e71e30a5c3bb6c743a"
   integrity sha512-4hjqbObwlh2dLyW4tcz0Ymw0ggoaVDMveUB9w8kFSQScdRLo0gxO9J7WFcUBo+W3C1TLdFIEwNOWebgZZ0RH9Q==
 
+trigram-utils@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/trigram-utils/-/trigram-utils-1.0.2.tgz#47574b7fade636e0fc06515788cbbd61786d2292"
+  integrity sha512-4/DmYtegpRAyTHPpL+asfLHfTdrTZ5N0FNaixyb4L6Bx3mi+g1wgsFJNixZ9Ycsjs3+FrK4zJoWW86cdMaL8RA==
+  dependencies:
+    collapse-white-space "^1.0.3"
+    n-gram "^1.0.0"
+    trim "0.0.1"
+
 trim-newlines@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/trim-newlines/-/trim-newlines-1.0.0.tgz#5887966bb582a4503a41eb524f7d35011815a613"
@@ -12385,6 +12419,11 @@ trim-right@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
   integrity sha1-yy4SAwZ+DI3h9hQJS5/kVwTqYAM=
+
+trim@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/trim/-/trim-0.0.1.tgz#5858547f6b290757ee95cccc666fb50084c460dd"
+  integrity sha1-WFhUf2spB1fulczMZm+1AITEYN0=
 
 triple-beam@^1.2.0, triple-beam@^1.3.0:
   version "1.3.0"
@@ -13771,10 +13810,10 @@ yargs@^7.0.0:
     y18n "^3.2.1"
     yargs-parser "^5.0.0"
 
-yarn@1.16.0:
-  version "1.16.0"
-  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.16.0.tgz#5701b58ac555ff91f7b889b7d791b3dc86f8f999"
-  integrity sha512-cfemyGlnWKA1zopUUgebTPf8C4WkPIZ+TJmklwcEAJ4u6oWPtJeAzrsamaGGh/+b1XWe8W51yzAImC4AWbWR1g==
+yarn@1.17.3:
+  version "1.17.3"
+  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.17.3.tgz#60e0b77d079eb78e753bb616f7592b51b6a9adce"
+  integrity sha512-CgA8o7nRZaQvmeF/WBx2FC7f9W/0X59T2IaLYqgMo6637wfp5mMEsM3YXoJtKUspnpmDJKl/gGFhnqS+sON7hA==
 
 yauzl@2.4.1:
   version "2.4.1"
