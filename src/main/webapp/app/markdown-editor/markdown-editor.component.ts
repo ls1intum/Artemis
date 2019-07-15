@@ -28,13 +28,30 @@ import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/dom
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+
+import 'brace/mode/latex';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
 }
+
+export enum EditorMode {
+    NONE = 'none',
+    LATEX = 'latex',
+}
+
+const getAceMode = (mode: EditorMode) => {
+    switch (mode) {
+        case EditorMode.LATEX:
+            return 'ace/mode/latex';
+        case EditorMode.NONE:
+            return null;
+        default:
+            return null;
+    }
+};
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -56,8 +73,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input()
-    markdown: string;
+    @Input() markdown: string;
+    @Input() editorMode = EditorMode.NONE;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string | null>();
 
@@ -177,6 +194,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
             });
         }
         this.setupMarkdownEditor();
+
+        const selectedAceMode = getAceMode(this.editorMode);
+        if (selectedAceMode) {
+            this.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .setMode(selectedAceMode);
+        }
 
         if (this.enableResize) {
             this.setupResizable();

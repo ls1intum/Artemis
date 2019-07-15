@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -22,6 +23,8 @@ import { KatexCommand } from 'app/markdown-editor/commands';
     styleUrls: ['./text-exercise-dialog.scss'],
 })
 export class TextExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     textExercise: TextExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large

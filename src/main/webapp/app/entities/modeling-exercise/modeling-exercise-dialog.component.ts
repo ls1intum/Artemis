@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -22,6 +23,8 @@ import { KatexCommand } from 'app/markdown-editor/commands';
     styleUrls: ['./modeling-exercise-dialog.scss'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     dueDateError: boolean;
