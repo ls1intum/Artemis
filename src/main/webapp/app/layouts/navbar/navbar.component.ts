@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, Event, NavigationStart, NavigationEnd, NavigationError } from '@angular/router';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -20,6 +20,7 @@ import { OverviewComponent } from 'app/overview';
 export class NavbarComponent implements OnInit {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
+    isTourAvailable: boolean;
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
@@ -38,6 +39,12 @@ export class NavbarComponent implements OnInit {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
+
+        this.router.events.subscribe((event: Event) => {
+            if (event instanceof NavigationEnd) {
+                this.checkGuidedTour();
+            }
+        });
     }
 
     ngOnInit() {
@@ -96,7 +103,18 @@ export class NavbarComponent implements OnInit {
         return this.isAuthenticated() ? this.accountService.getImageUrl() : null;
     }
 
-    startOverviewTour() {
-        this.overviewComponent.startTour();
+    checkGuidedTour() {
+        if (this.router.url === '/overview') {
+            this.isTourAvailable = true;
+        } else {
+            this.isTourAvailable = false;
+        }
+        console.log('tour available: ', this.isTourAvailable);
+    }
+
+    startGuidedTour() {
+        if (this.router.url === '/overview') {
+            this.overviewComponent.startTour();
+        }
     }
 }

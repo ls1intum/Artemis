@@ -94,8 +94,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "guidedtour": "Anleitungstour",
-            "starttour": "Tour starten",
+            "guidedTour": "Anleitungstour",
+            "startTour": "Tour starten",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },

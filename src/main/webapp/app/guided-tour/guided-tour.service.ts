@@ -30,7 +30,6 @@ export class GuidedTourService {
     private _onResizeMessage = false;
 
     constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService) {
-        console.log('Guided Tour Service INIT');
         this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
         this.guidedTourOrbShowingStream = this._guidedTourOrbShowingSubject.asObservable();
 
