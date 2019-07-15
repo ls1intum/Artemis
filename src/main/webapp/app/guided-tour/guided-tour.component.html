@@ -32,10 +32,10 @@
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
                 <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
-                <div *ngIf="currentTourStep.contentType === ContentType.IMAGE">
+                <div *ngIf="currentTourStep.contentType === IMAGE">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
-                <div *ngIf="currentTourStep.contentType === ContentType.VIDEO">
+                <div *ngIf="currentTourStep.contentType === VIDEO">
                     <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>

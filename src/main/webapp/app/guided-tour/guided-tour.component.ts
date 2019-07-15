@@ -24,7 +24,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    private ContentType = ContentType;
+    readonly TEXT = ContentType.TEXT;
+    readonly IMAGE = ContentType.IMAGE;
+    readonly VIDEO = ContentType.VIDEO;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService) {}
 
