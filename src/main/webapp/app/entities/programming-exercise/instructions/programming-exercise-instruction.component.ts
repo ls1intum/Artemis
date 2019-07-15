@@ -35,6 +35,7 @@ import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -79,7 +80,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public latestResult: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
-    public apollonUMLs: UMLModel[] = [];
+    public apollonUMLs = new Set<number>();
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
@@ -99,6 +100,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private componentFactoryResolver: ComponentFactoryResolver,
         private appRef: ApplicationRef,
         private injector: Injector,
+        private apollonService: ApollonDiagramService,
     ) {
         // Enabled for color picker of markdown editor that inserts spans into the markdown,
         this.markdown = new Remarkable({ html: true });
@@ -220,6 +222,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.plantUMLs = {};
+        this.apollonUMLs = new Set<number>();
         this.renderedMarkdown = this.markdown.render(this.problemStatement);
         // Wait for re-render of component
         setTimeout(() => {
@@ -341,19 +344,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Instantiate a readonly rendering component for each apollon diagram found.
      */
     public loadAndInsertApollonUmls() {
-        this.apollonUMLs.forEach((diagram, id) => {
-            if (document.getElementById('apollon-' + id)) {
-                const componentRef = this.componentFactoryResolver.resolveComponentFactory(ModelingEditorComponent).create(this.injector);
-                componentRef.instance.readOnly = true;
-                componentRef.instance.umlModel = diagram;
-                this.appRef.attachView(componentRef.hostView);
-                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                const apollonContainer = document.getElementById(`apollon-${id}`);
-                if (apollonContainer) {
-                    apollonContainer.innerHTML = '';
-                    apollonContainer.append(domElem);
-                }
-            }
+        this.apollonUMLs.forEach((id: number) => {
+            this.apollonService
+                .find(id)
+                .map(({ body }) => body)
+                .subscribe((diagram: ApollonDiagram) => {
+                    if (document.getElementById('apollon-' + id)) {
+                        const componentRef = this.componentFactoryResolver.resolveComponentFactory(ModelingEditorComponent).create(this.injector);
+                        componentRef.instance.readOnly = true;
+                        componentRef.instance.umlModel = JSON.parse(diagram.jsonRepresentation);
+                        this.appRef.attachView(componentRef.hostView);
+                        const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                        const apollonContainer = document.getElementById(`apollon-${id}`);
+                        if (apollonContainer) {
+                            apollonContainer.innerHTML = '';
+                            apollonContainer.append(domElem);
+                        }
+                    }
+                });
         });
     }
 
@@ -459,13 +467,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const regex = /^\[apollon\](.*)\[\/apollon\]/;
         const match = regex.exec(state.src.slice(state.pos));
         if (match) {
-            const diagram: UMLModel = JSON.parse(match[1]);
-            this.apollonUMLs.push(diagram);
+            const diagramId: number = Number(JSON.parse(match[1]));
+            this.apollonUMLs.add(diagramId);
             state.tokens.push({
                 type: 'apollon',
                 level: state.level,
                 lines: [startLine, state.line],
-                content: `apollon-${this.apollonUMLs.length - 1}`,
+                content: `apollon-${diagramId}`,
             });
             state.pos += match[0].length;
             return true;
