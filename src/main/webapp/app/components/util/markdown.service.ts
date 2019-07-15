@@ -5,6 +5,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { ApollonExtension } from 'app/markdown-editor/extensions/apollon.extension';
 
 const Range = ace.acequire('ace/range').Range;
 
@@ -125,7 +126,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForMarkdown(markdownText: string | null) {
+    htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
         if (markdownText == null || markdownText === '') {
             return '';
         }
@@ -138,6 +139,7 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
+            extensions,
         });
         const html = converter.makeHtml(markdownText);
         return this.sanitizer.sanitize(SecurityContext.HTML, html);

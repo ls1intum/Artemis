@@ -1,9 +1,11 @@
+import { Injectable } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingEditorDialogComponent } from 'app/modeling-editor';
 import { ApollonDiagram } from 'app/entities/apollon-diagram';
 
+@Injectable()
 export class ApollonCommand extends DomainTagCommand {
     buttonTranslationString = 'arTeMiSApp.apollonDiagram.command.apollonCommand';
 

@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Observable } from 'rxjs/Observable';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,6 +15,8 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { ApollonCommand } from 'app/markdown-editor/domainCommands/apollon.command';
+import { DomainCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -32,6 +35,8 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     courses: Course[];
 
+    domainCommands: DomainCommand[];
+
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
@@ -40,6 +45,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
+        private apollonCommand: ApollonCommand,
     ) {}
 
     ngOnInit() {
@@ -47,6 +53,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.dueDateError = false;
         this.assessmentDueDateError = false;
         this.notificationText = null;
+        this.domainCommands = [this.apollonCommand];
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;

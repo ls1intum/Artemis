@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
@@ -24,7 +23,7 @@ import { Result, ResultService } from 'app/entities/result';
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit {
+export class ProgrammingExerciseEditableInstructionComponent implements OnInit, AfterViewInit {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
@@ -33,9 +32,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    apollonCommand = new ApollonCommand(this.modalService);
 
-    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand, this.apollonCommand];
+    domainCommands: DomainCommand[];
 
     savingInstructions = false;
     unsavedChanges = false;
@@ -75,11 +73,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     constructor(
-        private modalService: NgbModal,
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: JhiAlertService,
         private resultService: ResultService,
+        // commands
+        private apollonCommand: ApollonCommand,
     ) {}
+
+    ngOnInit(): void {
+        this.domainCommands = [this.taskCommand, this.testCaseCommand, this.apollonCommand];
+    }
 
     ngAfterViewInit() {
         this.interactResizable = interact('.editable-instruction-container')
