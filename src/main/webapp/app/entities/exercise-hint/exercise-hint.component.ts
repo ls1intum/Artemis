@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -7,22 +8,40 @@ import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { AccountService } from 'app/core';
 import { ExerciseHintService } from './exercise-hint.service';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
+    exerciseId: number;
     exerciseHints: IExerciseHint[];
-    currentAccount: any;
     eventSubscriber: Subscription;
 
+    paramSub: Subscription;
+
     constructor(
+        private route: ActivatedRoute,
         protected exerciseHintService: ExerciseHintService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
-        protected accountService: AccountService,
     ) {}
+
+    ngOnInit() {
+        this.paramSub = this.route.params.subscribe(params => {
+            this.exerciseId = params['exerciseId'];
+            this.loadAll();
+            this.registerChangeInExerciseHints();
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
+        this.eventManager.destroy(this.eventSubscriber);
+    }
 
     loadAll() {
         this.exerciseHintService
@@ -37,18 +56,6 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 },
                 (res: HttpErrorResponse) => this.onError(res.message),
             );
-    }
-
-    ngOnInit() {
-        this.loadAll();
-        this.accountService.identity().then(account => {
-            this.currentAccount = account;
-        });
-        this.registerChangeInExerciseHints();
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
     }
 
     trackId(index: number, item: IExerciseHint) {

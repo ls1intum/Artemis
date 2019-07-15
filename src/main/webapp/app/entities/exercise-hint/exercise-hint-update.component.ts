@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
@@ -14,10 +14,10 @@ import { ExerciseService } from 'app/entities/exercise';
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
 })
-export class ExerciseHintUpdateComponent implements OnInit {
-    isSaving: boolean;
-
+export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     exercises: Exercise[];
+
+    isSaving: boolean;
 
     editForm = this.fb.group({
         id: [],
@@ -26,7 +26,10 @@ export class ExerciseHintUpdateComponent implements OnInit {
         exercise: [],
     });
 
+    paramSub: Subscription;
+
     constructor(
+        private route: ActivatedRoute,
         protected jhiAlertService: JhiAlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
@@ -35,17 +38,29 @@ export class ExerciseHintUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.isSaving = false;
-        this.activatedRoute.data.subscribe(({ exerciseHint }) => {
-            this.updateForm(exerciseHint);
+        this.paramSub = this.route.params.subscribe(params => {
+            const exerciseId = params['exerciseId'];
+            this.isSaving = false;
+            this.activatedRoute.data.subscribe(({ exerciseHint }) => {
+                this.updateForm(exerciseHint);
+            });
+            this.exerciseService
+                .find(exerciseId)
+                .map(({ body }) => body)
+                .subscribe(
+                    (res: Exercise) => {
+                        this.exercises = [res];
+                        this.editForm.patchValue({ exercise: res });
+                    },
+                    (res: HttpErrorResponse) => this.onError(res.message),
+                );
         });
-        /*        this.exerciseService
-            .query()
-            .pipe(
-                filter((mayBeOk: HttpResponse<IExercise[]>) => mayBeOk.ok),
-                map((response: HttpResponse<IExercise[]>) => response.body),
-            )
-            .subscribe((res: IExercise[]) => (this.exercises = res), (res: HttpErrorResponse) => this.onError(res.message));*/
+    }
+
+    ngOnDestroy(): void {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
     }
 
     updateForm(exerciseHint: IExerciseHint) {

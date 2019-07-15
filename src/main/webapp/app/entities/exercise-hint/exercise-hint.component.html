@@ -1,7 +1,7 @@
 <div>
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.exerciseHint.home.title">Exercise Hints</span>
-        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-exercise-hint" [routerLink]="['/exercise-hint/new']">
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-exercise-hint" routerLink="/exercise/{{ exerciseId }}/hints/new">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.exerciseHint.home.createLabel">
                 Create new Exercise Hint
@@ -27,7 +27,7 @@
             <tbody>
                 <tr *ngFor="let exerciseHint of exerciseHints; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/exercise-hint', exerciseHint.id, 'view']">{{ exerciseHint.id }}</a>
+                        <a [routerLink]="['/exercise', exerciseId, 'hints', exerciseHint.id, 'view']">{{ exerciseHint.id }}</a>
                     </td>
                     <td>{{ exerciseHint.title }}</td>
                     <td>{{ exerciseHint.content }}</td>
@@ -38,17 +38,17 @@
                     </td>
                     <td class="text-right">
                         <div class="btn-group">
-                            <button type="submit" [routerLink]="['/exercise-hint', exerciseHint.id, 'view']" class="btn btn-info btn-sm">
+                            <button type="submit" [routerLink]="['/exercise', exerciseId, 'hints', exerciseHint.id, 'view']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
-                            <button type="submit" [routerLink]="['/exercise-hint', exerciseHint.id, 'edit']" class="btn btn-primary btn-sm">
+                            <button type="submit" [routerLink]="['/exercise', exerciseId, 'hints', exerciseHint.id, 'edit']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
                                 type="submit"
-                                [routerLink]="['/', 'exercise-hint', { outlets: { popup: exerciseHint.id + '/delete' } }]"
+                                [routerLink]="['/', { outlets: { popup: ['exercise', exerciseId, 'hints', exerciseHint.id, 'delete'] } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm"

@@ -30,7 +30,7 @@ export class ExerciseHintResolve implements Resolve<IExerciseHint | null> {
 
 export const exerciseHintRoute: Routes = [
     {
-        path: '',
+        path: 'exercise/:exerciseId/hints',
         component: ExerciseHintComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -39,7 +39,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':id/view',
+        path: 'exercise/:exerciseId/hints/:id/view',
         component: ExerciseHintDetailComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -51,7 +51,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'new',
+        path: 'exercise/:exerciseId/hints/new',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -63,7 +63,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':id/edit',
+        path: 'exercise/:exerciseId/hints/:id/edit',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -78,7 +78,7 @@ export const exerciseHintRoute: Routes = [
 
 export const exerciseHintPopupRoute: Routes = [
     {
-        path: ':id/delete',
+        path: 'exercise/:exerciseId/hints/:id/delete',
         component: ExerciseHintDeletePopupComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
