@@ -16,16 +16,9 @@ import { ExerciseService } from 'app/entities/exercise';
 })
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     exercises: Exercise[];
+    exerciseHint = new ExerciseHint();
 
     isSaving: boolean;
-
-    editForm = this.fb.group({
-        id: [],
-        title: [],
-        content: [],
-        exercise: [],
-    });
-
     paramSub: Subscription;
 
     constructor(
@@ -34,7 +27,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
         protected activatedRoute: ActivatedRoute,
-        private fb: FormBuilder,
     ) {}
 
     ngOnInit() {
@@ -42,7 +34,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             const exerciseId = params['exerciseId'];
             this.isSaving = false;
             this.activatedRoute.data.subscribe(({ exerciseHint }) => {
-                this.updateForm(exerciseHint);
+                this.exerciseHint = exerciseHint;
             });
             this.exerciseService
                 .find(exerciseId)
@@ -50,7 +42,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                 .subscribe(
                     (res: Exercise) => {
                         this.exercises = [res];
-                        this.editForm.patchValue({ exercise: res });
+                        this.exerciseHint.exercise = res;
                     },
                     (res: HttpErrorResponse) => this.onError(res.message),
                 );
@@ -78,22 +70,11 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     save() {
         this.isSaving = true;
-        const exerciseHint = this.createFromForm();
-        if (exerciseHint.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseHintService.update(exerciseHint));
+        if (this.exerciseHint.id !== undefined) {
+            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseHint));
         } else {
-            this.subscribeToSaveResponse(this.exerciseHintService.create(exerciseHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseHint));
         }
-    }
-
-    private createFromForm(): IExerciseHint {
-        return {
-            ...new ExerciseHint(),
-            id: (this.editForm.get(['id']) || { value: null }).value,
-            title: (this.editForm.get(['title']) || { value: null }).value,
-            content: (this.editForm.get(['content']) || { value: null }).value,
-            exercise: (this.editForm.get(['exercise']) || { value: null }).value,
-        };
     }
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<IExerciseHint>>) {
