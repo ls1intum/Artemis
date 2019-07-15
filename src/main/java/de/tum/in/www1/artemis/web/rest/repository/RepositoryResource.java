@@ -268,8 +268,8 @@ public abstract class RepositoryResource {
      * @param executor
      * @return the appropriate ResponseEntity (OK if the executor was successful or another error status code fitting the Exception).
      */
-    private ResponseEntity executeAndCheckForExceptions(RepositoryExecutor executor) {
-        ResponseEntity responseEntitySuccess;
+    private <T> ResponseEntity<T> executeAndCheckForExceptions(RepositoryExecutor<T> executor) {
+        ResponseEntity<T> responseEntitySuccess;
         try {
             responseEntitySuccess = executor.exec();
         }

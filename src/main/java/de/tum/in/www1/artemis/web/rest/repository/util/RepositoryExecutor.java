@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.ResponseEntity;
 
-public interface RepositoryExecutor {
+public interface RepositoryExecutor<T> {
 
-    ResponseEntity exec() throws IOException, InterruptedException, IllegalAccessException, GitAPIException, IllegalArgumentException;
+    ResponseEntity<T> exec() throws IOException, InterruptedException, IllegalAccessException, GitAPIException, IllegalArgumentException;
 }
