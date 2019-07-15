@@ -140,6 +140,7 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
+            // TODO: This is ok for now, but in the long term we need a mechanism to load extensions dynamically
             extensions: [showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);

@@ -1,5 +1,4 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-expandable-paragraph',
@@ -8,7 +7,7 @@ import { SafeHtml } from '@angular/platform-browser';
 })
 export class ExpandableParagraphComponent implements OnInit {
     @Input() header = 'Toggle paragraph';
-    @Input() text: SafeHtml;
+    @Input() text: any;
     @Input() isCollapsed = false;
     constructor() {}
 
