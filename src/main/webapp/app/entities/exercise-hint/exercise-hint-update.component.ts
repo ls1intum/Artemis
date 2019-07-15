@@ -9,12 +9,16 @@ import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise
 import { ExerciseHintService } from './exercise-hint.service';
 import { Exercise } from 'app/entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
+import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
+    styleUrls: ['./exercise-hint.scss'],
 })
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
+    MarkdownEditorHeight = MarkdownEditorHeight;
+
     exercises: Exercise[];
     exerciseHint = new ExerciseHint();
 
@@ -55,13 +59,8 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
-    updateForm(exerciseHint: IExerciseHint) {
-        this.editForm.patchValue({
-            id: exerciseHint.id,
-            title: exerciseHint.title,
-            content: exerciseHint.content,
-            exercise: exerciseHint.exercise,
-        });
+    updateHintContent(newContent: string) {
+        this.exerciseHint.content = newContent;
     }
 
     previousState() {

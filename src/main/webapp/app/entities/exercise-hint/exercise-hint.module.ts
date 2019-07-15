@@ -14,11 +14,12 @@ import {
     exerciseHintRoute,
     exerciseHintPopupRoute,
 } from './';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArTEMiSMarkdownEditorModule],
     declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent],
     entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
