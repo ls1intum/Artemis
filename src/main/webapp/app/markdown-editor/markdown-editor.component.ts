@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ShowdownExtension } from 'showdown';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
@@ -32,6 +33,10 @@ export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
+}
+
+export enum MarkdownExtension {
+    APOLLON = 'APOLLON',
 }
 
 @Component({
@@ -88,6 +93,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/
     headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
+
+    @Input() extensions: ShowdownExtension[] = [];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
     @Input() domainCommands: Array<DomainCommand>;
@@ -246,7 +253,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         /** check if domainCommands are passed on from the parent component */
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
-            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown, this.extensions);
             this.html.emit(this.previewTextAsHtml);
             return;
         } else {

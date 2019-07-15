@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ApplicationRef, Component, ComponentFactoryResolver, Injector, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ShowdownExtension } from 'showdown';
 
 import { Observable } from 'rxjs/Observable';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
@@ -17,6 +17,8 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { ApollonCommand } from 'app/markdown-editor/domainCommands/apollon.command';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { ApollonExtension } from 'app/markdown-editor/extensions/apollon.extension';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -36,6 +38,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     courses: Course[];
 
     domainCommands: DomainCommand[];
+    extensions: ShowdownExtension[] = [];
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -46,6 +49,10 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private apollonCommand: ApollonCommand,
+        private componentFactoryResolver: ComponentFactoryResolver,
+        private appRef: ApplicationRef,
+        private injector: Injector,
+        private apollonService: ApollonDiagramService,
     ) {}
 
     ngOnInit() {
@@ -54,6 +61,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.assessmentDueDateError = false;
         this.notificationText = null;
         this.domainCommands = [this.apollonCommand];
+        this.extensions = [ApollonExtension(this.componentFactoryResolver, this.appRef, this.injector, this.apollonService)];
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;

@@ -97,6 +97,7 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
+                [extensions]="extensions"
                 [(markdown)]="modelingExercise.problemStatement"
                 [domainCommands]="domainCommands"
             ></jhi-markdown-editor>
