@@ -112,6 +112,11 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         if (!this.editing) {
             return;
         }
+        // Don't allow an empty string as a value!
+        if (!event.target.value) {
+            this.editing = null;
+            return;
+        }
         const editedTestCase = this.editing;
         const weight = event.target.value;
         // If the weight has not changed, don't do anything besides closing the input.
