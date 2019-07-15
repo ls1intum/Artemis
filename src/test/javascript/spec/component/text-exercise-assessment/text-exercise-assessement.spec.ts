@@ -29,6 +29,9 @@ import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { MockComplaintService } from '../../mocks/mock-complaint.service';
+import { MoreFeedbackForTutorComponent } from 'app/more-feedback-for-tutor';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,6 +57,7 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(TextAssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(MoreFeedbackForTutorComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -61,6 +65,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
             .compileComponents()
