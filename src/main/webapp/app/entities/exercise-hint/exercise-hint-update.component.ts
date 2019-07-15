@@ -7,7 +7,7 @@ import { filter, map } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
-import { IExercise } from 'app/shared/model/exercise.model';
+import { Exercise } from 'app/entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
 
 @Component({
@@ -17,7 +17,7 @@ import { ExerciseService } from 'app/entities/exercise';
 export class ExerciseHintUpdateComponent implements OnInit {
     isSaving: boolean;
 
-    exercises: IExercise[];
+    exercises: Exercise[];
 
     editForm = this.fb.group({
         id: [],
@@ -39,13 +39,13 @@ export class ExerciseHintUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ exerciseHint }) => {
             this.updateForm(exerciseHint);
         });
-        this.exerciseService
+        /*        this.exerciseService
             .query()
             .pipe(
                 filter((mayBeOk: HttpResponse<IExercise[]>) => mayBeOk.ok),
                 map((response: HttpResponse<IExercise[]>) => response.body),
             )
-            .subscribe((res: IExercise[]) => (this.exercises = res), (res: HttpErrorResponse) => this.onError(res.message));
+            .subscribe((res: IExercise[]) => (this.exercises = res), (res: HttpErrorResponse) => this.onError(res.message));*/
     }
 
     updateForm(exerciseHint: IExerciseHint) {
@@ -74,10 +74,10 @@ export class ExerciseHintUpdateComponent implements OnInit {
     private createFromForm(): IExerciseHint {
         return {
             ...new ExerciseHint(),
-            id: this.editForm.get(['id']).value,
-            title: this.editForm.get(['title']).value,
-            content: this.editForm.get(['content']).value,
-            exercise: this.editForm.get(['exercise']).value,
+            id: (this.editForm.get(['id']) || { value: null }).value,
+            title: (this.editForm.get(['title']) || { value: null }).value,
+            content: (this.editForm.get(['content']) || { value: null }).value,
+            exercise: (this.editForm.get(['exercise']) || { value: null }).value,
         };
     }
 
@@ -94,10 +94,10 @@ export class ExerciseHintUpdateComponent implements OnInit {
         this.isSaving = false;
     }
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, null);
+        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 
-    trackExerciseById(index: number, item: IExercise) {
+    trackExerciseById(index: number, item: Exercise) {
         return item.id;
     }
 }

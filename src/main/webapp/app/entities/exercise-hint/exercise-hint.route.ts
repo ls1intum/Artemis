@@ -13,10 +13,10 @@ import { ExerciseHintDeletePopupComponent } from './exercise-hint-delete-dialog.
 import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseHintResolve implements Resolve<IExerciseHint> {
+export class ExerciseHintResolve implements Resolve<IExerciseHint | null> {
     constructor(private service: ExerciseHintService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<IExerciseHint> {
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<IExerciseHint | null> {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
             return this.service.find(id).pipe(

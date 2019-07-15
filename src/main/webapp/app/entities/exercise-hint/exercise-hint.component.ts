@@ -56,10 +56,10 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInExerciseHints() {
-        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', response => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', (response: any) => this.loadAll());
     }
 
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, null);
+        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 }
