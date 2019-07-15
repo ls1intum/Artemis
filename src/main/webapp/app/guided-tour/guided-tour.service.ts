@@ -40,12 +40,9 @@ export class GuidedTourService {
                     if (this._currentTour.minimumScreenSize && this._currentTour.minimumScreenSize >= window.innerWidth) {
                         this._onResizeMessage = true;
                         this._guidedTourCurrentStepSubject.next({
-                            headline: 'Please resize',
-                            headlineTranslateKey: '',
+                            headlineTranslateKey: 'tour.resize.headline',
                             contentType: ContentType.TEXT,
-                            content:
-                                'You have resized the tour to a size that is too small to continue. Please resize the browser to a larger size to continue the tour or close the tour.',
-                            contentTranslateKey: '',
+                            contentTranslateKey: 'tour.resize.content',
                         });
                     } else {
                         this._onResizeMessage = false;

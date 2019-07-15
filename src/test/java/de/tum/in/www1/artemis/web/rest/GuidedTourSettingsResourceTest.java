@@ -41,12 +41,12 @@ public class GuidedTourSettingsResourceTest {
     @WithMockUser(value = "student1")
     public void getDefaultGuidedTourSettings() throws Exception {
         GuidedTourSettings guidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, GuidedTourSettings.class);
-        assertThat(guidedTourSettings.isShowCourseOverviewTour()).as("show course overview tour").isTrue();
-        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("show modeling exercise tour").isTrue();
-        assertThat(guidedTourSettings.isShowProgrammingExerciseTour()).as("show programming exercise tour").isTrue();
-        assertThat(guidedTourSettings.isShowQuizExerciseTour()).as("show quiz exercise tour").isTrue();
-        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("show modeling exercise tour").isTrue();
-        assertThat(guidedTourSettings.isShowTextExerciseTour()).as("show text exercise tour").isTrue();
+        assertThat(guidedTourSettings.isShowCourseOverviewTour()).as("don't show course overview tour").isFalse();
+        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("don't show modeling exercise tour").isFalse();
+        assertThat(guidedTourSettings.isShowProgrammingExerciseTour()).as("don't show programming exercise tour").isFalse();
+        assertThat(guidedTourSettings.isShowQuizExerciseTour()).as("don't show quiz exercise tour").isFalse();
+        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("don't show modeling exercise tour").isFalse();
+        assertThat(guidedTourSettings.isShowTextExerciseTour()).as("don't show text exercise tour").isFalse();
     }
 
     @Test

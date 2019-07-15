@@ -15,10 +15,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @Input() public topOfPageAdjustment = 0;
     @Input() public tourStepWidth = 300;
     @Input() public minimalTourStepWidth = 200;
-    @Input() public nextText = 'Next';
-    @Input() public doneText = 'Done';
-    @Input() public closeText = 'Close';
-    @Input() public backText = 'Back';
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
     public highlightPadding = 4;
     public currentTourStep: TourStep | null;
@@ -391,7 +387,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return paddingAdjustment;
     }
 
-    // This calculates a value to add or subtract so the step should not be off screen.
+    /**
+     * This calculates a value to add or subtract so the step should not be off screen.
+     */
     private getStepScreenAdjustment(): number {
         if (!this.currentTourStep) {
             return 0;

@@ -26,16 +26,12 @@
         <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
         <div class="tour-block">
             <div class="tour-block__header">
-                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headline">
-                    {{ currentTourStep.headline }}
-                </h3>
+                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
                 <div class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
-                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadline">
-                    {{ currentTourStep.subHeadline }}
-                </h5>
-                <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}">{{ currentTourStep.content }}</span>
+                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
+                <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
                 <div *ngIf="currentTourStep.contentType === ContentType.IMAGE">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
@@ -46,7 +42,7 @@
             <div class="tour-block__buttons">
                 <button [disabled]="guidedTourService.onFirstStep || guidedTourService.onResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
-                    <span>{{ backText }}</span>
+                    <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle-scaleup">
                     <ul>
@@ -59,15 +55,11 @@
                     </ul>
                 </div>
                 <button *ngIf="!guidedTourService.onLastStep && !guidedTourService.onResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
-                    <span>{{ nextText }}</span>
+                    <span jhiTranslate="tour.navigation.next"></span>
                     <fa-icon icon="chevron-right"></fa-icon>
                 </button>
-                <button *ngIf="guidedTourService.onLastStep" class="next-button" (click)="guidedTourService.nextStep()">
-                    {{ doneText }}
-                </button>
-                <button *ngIf="guidedTourService.onResizeMessage" class="next-button" (click)="guidedTourService.resetTour()">
-                    {{ closeText }}
-                </button>
+                <button *ngIf="guidedTourService.onLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
+                <button *ngIf="guidedTourService.onResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
             </div>
         </div>
     </div>

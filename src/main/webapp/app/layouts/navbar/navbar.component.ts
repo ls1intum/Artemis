@@ -42,7 +42,7 @@ export class NavbarComponent implements OnInit {
 
         this.router.events.subscribe((event: Event) => {
             if (event instanceof NavigationEnd) {
-                this.checkGuidedTour();
+                this.checkGuidedTourAvailability();
             }
         });
     }
@@ -103,15 +103,21 @@ export class NavbarComponent implements OnInit {
         return this.isAuthenticated() ? this.accountService.getImageUrl() : null;
     }
 
-    checkGuidedTour() {
+    /**
+     * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
+     * that provide tours.
+     */
+    checkGuidedTourAvailability() {
         if (this.router.url === '/overview') {
             this.isTourAvailable = true;
         } else {
             this.isTourAvailable = false;
         }
-        console.log('tour available: ', this.isTourAvailable);
     }
 
+    /**
+     * Starts the guided tour of the current component
+     * */
     startGuidedTour() {
         if (this.router.url === '/overview') {
             this.overviewComponent.startTour();
