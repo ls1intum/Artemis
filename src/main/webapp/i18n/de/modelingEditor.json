@@ -56,7 +56,7 @@
                 },
                 "duplicate": {
                     "title": "Elemente duplizieren",
-                    "text": "Mit <code>Strg + D</code> kannst du aktuell selektierte Element mit all ihren Eigenschaften duplizieren."
+                    "text": "Mit <code>Strg + C</code> kannst du aktuell selektierte Element mit all ihren Eigenschaften kopieren. <code>Strg + V</code> wird eine Kopie der Elemente erstellt."
                 },
                 "undo": {
                     "title": "Rückgängig machen & Wiederherstellen",
