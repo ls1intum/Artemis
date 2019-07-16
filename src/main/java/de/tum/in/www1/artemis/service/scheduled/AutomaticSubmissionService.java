@@ -55,8 +55,8 @@ public class AutomaticSubmissionService {
     /**
      * Check for every un-submitted modeling and text submission if the corresponding exercise has finished (i.e. due date < now) and the submission was saved before the exercise
      * due date.
-     * - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
-     * of the corresponding participation to FINISHED.
+     * - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the
+     * corresponding participation to FINISHED.
      * - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
     @Scheduled(cron = "0 0 1 * * *")
