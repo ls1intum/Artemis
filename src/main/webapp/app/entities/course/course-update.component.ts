@@ -75,7 +75,7 @@ export class CourseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (this.course.id !== undefined) {
+        if (this.course.id) {
             this.subscribeToSaveResponse(this.courseService.update(this.courseForm.value));
         } else {
             this.subscribeToSaveResponse(this.courseService.create(this.courseForm.value));
