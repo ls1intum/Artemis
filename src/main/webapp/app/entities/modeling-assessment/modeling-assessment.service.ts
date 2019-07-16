@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../result';
-import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
@@ -95,7 +95,7 @@ export class ModelingAssessmentService {
         }
         for (const feedback of result.feedbacks) {
             if (feedback.reference) {
-                feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
+                feedback.referenceType = feedback.reference.split(':')[0] as UMLModelElementType;
                 feedback.referenceId = feedback.reference.split(':')[1];
             }
         }
