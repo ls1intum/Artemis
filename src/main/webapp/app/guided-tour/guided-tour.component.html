@@ -32,6 +32,9 @@
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
                 <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
+                <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
+                    <a jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}" [href]="currentTourStep.externalUrl" target="_blank"></a>
+                </div>
                 <div *ngIf="currentTourStep.contentType === IMAGE && currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>

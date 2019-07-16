@@ -2,8 +2,9 @@ import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild, View
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { ContentType, Orientation, TourStep } from './guided-tour.constants';
+import { ContentType, LinkType, Orientation, TourStep } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -13,8 +14,8 @@ import { GuidedTourService } from './guided-tour.service';
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @Input() public topOfPageAdjustment = 0;
-    @Input() public tourStepWidth = 300;
-    @Input() public minimalTourStepWidth = 200;
+    @Input() public tourStepWidth = 500;
+    @Input() public minimalTourStepWidth = 400;
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
     public highlightPadding = 4;
     public currentTourStep: TourStep | null;
@@ -24,11 +25,14 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly TEXT = ContentType.TEXT;
     readonly IMAGE = ContentType.IMAGE;
+    readonly TEXT = ContentType.TEXT;
     readonly VIDEO = ContentType.VIDEO;
 
-    constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService) {}
+    readonly LINK = LinkType.LINK;
+    readonly BUTTON = LinkType.BUTTON;
+
+    constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
@@ -63,21 +67,28 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     public get calculatedTourStepWidth() {
+        // console.log('this.tourStepWidth: ', this.tourStepWidth);
         return this.tourStepWidth - this.widthAdjustmentForScreenBound;
     }
 
     public ngAfterViewInit(): void {
         this.guidedTourService.guidedTourCurrentStepStream.subscribe((step: TourStep) => {
             this.currentTourStep = step;
-            if (step && step.selector) {
-                const selectedElement = document.querySelector(step.selector);
-                if (selectedElement) {
-                    this.scrollToAndSetElement();
+            if (step) {
+                let hasPermission = true;
+                if (step.permission) {
+                    hasPermission = this.accountService.hasAnyAuthorityDirect(step.permission);
+                }
+                if (step.selector && hasPermission) {
+                    const selectedElement = document.querySelector(step.selector);
+                    if (selectedElement) {
+                        this.scrollToAndSetElement();
+                    } else {
+                        this.selectedElementRect = null;
+                    }
                 } else {
                     this.selectedElementRect = null;
                 }
-            } else {
-                this.selectedElementRect = null;
             }
         });
 
@@ -266,7 +277,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
 
             if (this.currentTourStep.orientation === Orientation.Left) {
-                return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment - 100;
+                return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment;
             }
 
             if (this.currentTourStep.orientation === Orientation.Right) {

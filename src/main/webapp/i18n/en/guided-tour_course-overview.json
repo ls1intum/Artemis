@@ -1,38 +1,51 @@
 {
     "tour": {
         "course-overview": {
-            "1": {
+            "welcome": {
                 "headline": "Welcome to Artemis",
-                "subHeadline": "This is a subheadline",
+                "subHeadline": "An Automatic Assessment Management System for Interactive Learning",
                 "content": "Artemis is a learning platform where you can solve programming exercises in interactive learning sessions."
             },
-            "2": {
+            "overview-menu": {
                 "headline": "Course overview",
                 "content": "On this page you can see an overview of all courses which you are signed up for."
             },
-            "3": {
-                "headline": "Your current courses",
-                "content": "This is a course you are signed up to. Please check out the course details afterwards by clicking on the panel."
+            "course-admin-menu": {
+                "headline": "Course administration",
+                "content": "Administer and manage your courses and exercises here."
             },
-            "4": {
-                "headline": "Next due exercise",
-                "content": "See what exercise has to be completed in the next few days."
+            "admin-menu": {
+                "headline": "Server administration",
+                "content": "Get an insight in the application administration."
             },
-            "5": {
-                "headline": "Sign up for other courses",
-                "content": "You can click here and see whether you can sign up for other courses additionally."
-            },
-            "6": {
+            "notification-menu": {
                 "headline": "Your notifications",
                 "content": "Get notified about new exercises from this notification dropdown."
             },
-            "7": {
+            "account-menu": {
                 "headline": "Personal settings",
                 "content": "In your account menu you can change your display language and restart the guided tour at any other time."
             },
-            "8": {
+            "course": {
+                "headline": "Your current courses",
+                "content": "This is a course you are signed up to. Please check out the course details afterwards by clicking on the panel."
+            },
+            "course-footer": {
+                "headline": "Next due exercise",
+                "content": "See what exercise has to be completed in the next few days."
+            },
+            "register": {
+                "headline": "Sign up for other courses",
+                "content": "You can click here and see whether you can sign up for other courses additionally."
+            },
+            "contact": {
                 "headline": "Contact the Artemis team",
                 "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application."
+            },
+            "team": {
+                "headline": "Meet the team",
+                "content": "Are you curious who is behind Artemis and the LS1 chair? ",
+                "link-text": "Click here"
             }
         }
     }

@@ -92,7 +92,7 @@ jhi-guided-tour {
 
     .guided-tour-spotlight-overlay {
         position: fixed;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3), 0 0 1.5rem rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 1.5rem rgba(0, 0, 0, 0.5);
         z-index: $tour-zindex + 1;
     }
 
@@ -157,7 +157,7 @@ jhi-guided-tour {
                     display: block;
                     font-size: 20px;
                     text-transform: uppercase;
-                    padding-bottom: 10px;
+                    padding-bottom: 5px;
                 }
 
                 .close {
@@ -198,6 +198,10 @@ jhi-guided-tour {
                     margin-top: 10px;
                     margin-left: auto;
                     margin-right: auto;
+                }
+
+                .subHeadline {
+                    padding-bottom: 10px;
                 }
 
                 img {

@@ -9,6 +9,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
 import { ContentType, GuidedTour, Orientation, OrientationConfiguration, TourStep } from './guided-tour.constants';
+import { AccountService } from 'app/core';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
@@ -29,7 +30,7 @@ export class GuidedTourService {
     private _onLastStep = true;
     private _onResizeMessage = false;
 
-    constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService) {
+    constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService) {
         this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
         this.guidedTourOrbShowingStream = this._guidedTourOrbShowingSubject.asObservable();
 
@@ -150,6 +151,14 @@ export class GuidedTourService {
 
     public startTour(tour: GuidedTour): void {
         this.currentTourSteps = tour.steps;
+
+        // adjust tour steps according to permissions
+        tour.steps.forEach((step, index) => {
+            if (step.permission && !this.accountService.hasAnyAuthorityDirect(step.permission)) {
+                this.currentTourSteps.splice(index, 1);
+            }
+        });
+
         this._currentTour = cloneDeep(tour);
         this._currentTour.steps = this._currentTour.steps.filter(step => !step.skipStep);
         this._currentTourStepIndex = 0;

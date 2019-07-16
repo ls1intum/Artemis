@@ -9,8 +9,12 @@ export interface TourStep {
     contentType: ContentType;
     /** Translation key for the content **/
     contentTranslateKey: string;
-    /** Button text for external link **/
-    buttonTranslateKey?: string;
+    /** External url **/
+    externalUrl?: string;
+    /** Text for external url **/
+    externalUrlTranslateKey?: string;
+    /** Link type, either link or button **/
+    linkType?: LinkType;
     /** Image url **/
     imageUrl?: string;
     /** Embed video url **/
@@ -29,6 +33,10 @@ export interface TourStep {
     useHighlightPadding?: boolean;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;
+    /** Permission to view step, if no permission is set then the tour step is visible to ROLE_USER
+     * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
+     */
+    permission?: string[];
 }
 
 export interface GuidedTour {
@@ -74,4 +82,9 @@ export enum ContentType {
     TEXT,
     IMAGE,
     VIDEO,
+}
+
+export enum LinkType {
+    LINK,
+    BUTTON,
 }
