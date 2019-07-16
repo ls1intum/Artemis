@@ -253,17 +253,12 @@ public class ComplaintResource {
     }
 
     /**
-     * Filter out all complaints that are not of a specified type. Since enum can't be null and we have only two enum values, we filter always by more feedback value
+     * Filter out all complaints that are not of a specified type.
      *
      * @param complaints    list of complaints
      * @param complaintType the type of complaints we want to get
      */
     private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
-        if (complaintType == ComplaintType.MORE_FEEDBACK) {
-            return complaints.stream().filter(complaint -> complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK).collect(Collectors.toList());
-        }
-        else {
-            return complaints.stream().filter(complaint -> complaint.getComplaintType() != ComplaintType.MORE_FEEDBACK).collect(Collectors.toList());
-        }
+        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).collect(Collectors.toList());
     }
 }

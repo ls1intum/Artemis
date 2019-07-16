@@ -395,12 +395,10 @@ public class CourseResource {
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfAllComplaints = complaintService.countAllComplaintsByCourseId(courseId);
-
         Long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
+        Long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
@@ -474,9 +472,8 @@ public class CourseResource {
             }
 
             Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            Long numberOfAllComplaints = complaintService.countAllComplaintsByExerciseId(exercise.getId());
             Long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
-            Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
+            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfParticipations);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -509,20 +506,19 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        stats.setNumberOfComplaints(numberOfComplaints);
+        Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+                ComplaintType.COMPLAINT);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+
         Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
-        Long numberOfAllComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
         Long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
                 ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
-        stats.setNumberOfComplaints(numberOfComplaints);
-
-        Long numberOfComplaintResponses = numberOfAllComplaintResponses - numberOfMoreFeedbackRequests;
-        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);

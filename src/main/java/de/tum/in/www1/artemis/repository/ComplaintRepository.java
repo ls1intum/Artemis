@@ -41,14 +41,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
-    /**
-     * This magic method counts the number of complaints associated to a course id
-     *
-     * @param courseId - the id of the course we want to filter by
-     * @return number of complaints associated to course courseId
-     */
-    long countByResult_Participation_Exercise_Course_Id(Long courseId);
-
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId}")
     Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
 
@@ -62,14 +54,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     @Query("SELECT count(c) FROM Complaint c  WHERE (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL) AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
-
-    /**
-     * This magic method counts the number of complaints associated to an exercise id
-     *
-     * @param exerciseId - the id of the course we want to filter by
-     * @return number of complaints associated to exercise exerciseId
-     */
-    long countByResult_Participation_Exercise_Id(Long exerciseId);
 
     /**
      * This magic method counts the number of complaints by complaint type associated to an exercise id

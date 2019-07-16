@@ -4,5 +4,9 @@
         <addColumn tableName="complaint">
             <column name="complaint_type" type="varchar(15)"/>
         </addColumn>
+        <addNotNullConstraint columnDataType="varchar(15)"
+                              columnName="complaint_type"
+                              defaultNullValue="COMPLAINT"
+                              tableName="complaint"/>
     </changeSet>
 </databaseChangeLog>

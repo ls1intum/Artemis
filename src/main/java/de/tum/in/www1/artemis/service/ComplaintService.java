@@ -101,8 +101,8 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public long countAllComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    public long countComplaintsByCourseId(long courseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)
@@ -111,8 +111,8 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public long countAllComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+    public long countComplaintsByExerciseId(long exerciseId) {
+        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)

@@ -82,7 +82,7 @@
 </h2>
 
 <div class="alert alert-info" *ngIf="complaint">
-    <ng-container *ngIf="!complaint.complaintType || complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
+    <ng-container *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
     <ng-container *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</ng-container>
 </div>
 
@@ -147,7 +147,7 @@
 
 <div class="mt-4" *ngIf="complaint">
     <jhi-complaints-for-tutor-form
-        *ngIf="complaint.complaintType === ComplaintType.COMPLAINT || !complaint.complaintType"
+        *ngIf="complaint.complaintType === ComplaintType.COMPLAINT"
         [complaint]="complaint"
         [isAllowedToRespond]="!isAuthorized"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
