@@ -251,12 +251,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     parse(): void {
         /** check if domainCommands are passed on from the parent component */
-        if (this.domainCommands == null || this.domainCommands.length === 0) {
+        if (this.showDefaultPreview) {
             /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
             this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown, this.extensions);
             this.html.emit(this.previewTextAsHtml);
             return;
-        } else {
+        }
+        if (this.domainCommands && this.domainCommands.length) {
             /** create array with domain command identifier */
             const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which
