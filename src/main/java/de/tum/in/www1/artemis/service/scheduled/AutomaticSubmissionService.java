@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 
@@ -53,8 +54,10 @@ public class AutomaticSubmissionService {
 
     /**
      * Check for every un-submitted modeling and text submission if the corresponding exercise has finished (i.e. due date < now) and the submission was saved before the exercise
-     * due date. - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
-     * of the corresponding participation to FINISHED. - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
+     * due date.
+     * - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the
+     * corresponding participation to FINISHED.
+     * - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
@@ -136,6 +139,8 @@ public class AutomaticSubmissionService {
      */
     private void notifyCompassAboutNewModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         try {
+            // set Authentication object to prevent authentication error "Authentication object cannot be null" - see JavaDoc of setAuthorizationObject method for further details
+            SecurityUtils.setAuthorizationObject();
             modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
         }
         catch (Exception ex) {

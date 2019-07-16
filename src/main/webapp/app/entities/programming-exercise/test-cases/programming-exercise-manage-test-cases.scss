@@ -1,0 +1,28 @@
+@import '../../../../content/scss/_bootstrap-variables.scss';
+@import '~bootstrap/scss/_forms.scss';
+
+::ng-deep {
+    .test-case--inactive {
+        color: grey;
+    }
+    .datatable-body-cell-label {
+        display: flex;
+        align-items: center;
+
+        .edit-weight__value {
+            flex: 2 1 auto;
+        }
+
+        .edit-weight__input {
+            @extend .form-control;
+            @extend .mr-2;
+            flex: 2 1 auto;
+        }
+
+        .edit-weight__edit-icon {
+            flex: 1 1 auto;
+            cursor: pointer;
+            margin-left: auto;
+        }
+    }
+}

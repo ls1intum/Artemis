@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -22,7 +22,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
-    @Input() diagramType: DiagramType;
+    @Input() diagramType: UMLDiagramType;
     @Input() maxScore: number;
     @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
@@ -245,14 +245,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return;
         }
-        this.model.assessments = feedbacks.map(feedback => {
-            return {
-                modelElementId: feedback.referenceId!,
-                elementType: feedback.referenceType!,
-                score: feedback.credits!,
-                feedback: feedback.text || undefined,
-            };
-        });
+        this.model.assessments = feedbacks.map<Assessment>(feedback => ({
+            modelElementId: feedback.referenceId!,
+            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+            score: feedback.credits!,
+            feedback: feedback.text || undefined,
+        }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }

@@ -63,6 +63,17 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfall Probleme.",
                 "ok": "Testfälle ok."
+            },
+            "manageTestCases": {
+                "title": "Verwalte Testfälle",
+                "hideInactive": "Inaktive Testfälle verbergen",
+                "showInactive": "Inaktive Testfälle anzeigen",
+                "resetWeights": "Gewichtung zurücksetzen",
+                "weightsReset": "Die Gewichtung wurde erfolgreich zurückgesetzt.",
+                "weightsResetFailed": "Die Gewichtung konnte nicht zurückgesetzt werden.",
+                "saveWeights": "Gewichtung speichern",
+                "weightsUpdated": "Die Gewichtung wurde erfolgreich gespeichert.",
+                "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}."
             }
         }
     }
