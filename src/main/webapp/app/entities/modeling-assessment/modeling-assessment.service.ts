@@ -112,7 +112,13 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType!;
             const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
-                const element = model.elements.find(elem => elem.id === referencedModelId)!;
+                const element = model.elements.find(elem => elem.id === referencedModelId);
+                if (!element) {
+                    // prevent errors when element could not be found, should never happen
+                    assessmentsNames[referencedModelId] = { name: '', type: '' };
+                    continue;
+                }
+
                 const name = element.name;
                 let type: string;
                 switch (element.type) {
