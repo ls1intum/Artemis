@@ -66,7 +66,7 @@ public class BambooBuildPlanService {
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
-        final String projectName = programmingExercise.getProjectName();
+        final String projectName = programmingExercise.getProjectName().replaceAll("[\\[\\]{}<>:@/&%\\\\!|#$*;~]", "");
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
                 .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
