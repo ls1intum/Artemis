@@ -3,13 +3,16 @@ package de.tum.in.www1.artemis.service.connectors;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -18,11 +21,12 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 
 public class TextSimilarityClusteringServiceTest {
 
-    @Ignore
+    private static String API_ENDPOINT = "http://localhost:8000/cluster";
+
     @Test
-    public void clusterTextBlocks() throws TextSimilarityClusteringService.NetworkingError, IOException {
+    public void clusterTextBlocks() throws TextSimilarityClusteringService.NetworkingError {
         final TextSimilarityClusteringService service = new TextSimilarityClusteringService();
-        ReflectionTestUtils.setField(service, "API_ENDPOINT", "https://tac.ase.in.tum.de/cluster");
+        ReflectionTestUtils.setField(service, "API_ENDPOINT", API_ENDPOINT);
 
         final List<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text).startIndex(0).endIndex(3)).peek(TextBlock::computeId).collect(toList());
 
@@ -37,6 +41,25 @@ public class TextSimilarityClusteringServiceTest {
 
         final double[][] distanceMatrix = cluster.getDistanceMatrix();
         assertThat(distanceMatrix[0][1], is(equalTo(distanceMatrix[1][0])));
-        assertThat((int) (distanceMatrix[0][1] * 10), is(equalTo(6)));
+        assertThat(distanceMatrix[0][1], is(both(greaterThan(0.6)).and(lessThan(0.8))));
+    }
+
+    @BeforeClass
+    public static void runClassOnlyIfTextAssessmentClusteringIsAvailable() {
+        assumeTrue(isTextAssessmentClusteringAvailable());
+    }
+
+    private static boolean isTextAssessmentClusteringAvailable() {
+        try {
+            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(API_ENDPOINT).openConnection();
+            httpURLConnection.setRequestMethod("HEAD");
+            httpURLConnection.setConnectTimeout(1000);
+            final int responseCode = httpURLConnection.getResponseCode();
+
+            return (responseCode == 405);
+        }
+        catch (IOException e) {
+            return false;
+        }
     }
 }
