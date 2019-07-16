@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import {
@@ -21,6 +22,7 @@ import {
     ProgrammingExerciseInstructorStatusComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
+    ProgrammingExerciseManageTestCasesComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -43,6 +45,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArTEMiSDifficultyPickerModule,
         ArTEMiSResultModule,
         ArTEMiSMarkdownEditorModule,
+        NgxDatatableModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -57,6 +60,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseInstructionTestcaseStatusComponent,
+        ProgrammingExerciseManageTestCasesComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
