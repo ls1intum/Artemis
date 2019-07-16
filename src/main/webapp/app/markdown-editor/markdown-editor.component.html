@@ -84,7 +84,7 @@
     <ngb-tab title="{{ 'entity.action.preview' | translate }}" id="editor_preview" *ngIf="showPreviewButton">
         <ng-template ngbTabContent>
             <ng-content></ng-content>
-            <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="markdown | htmlForMarkdown: extensions">
+            <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="markdown | htmlForMarkdown: extensions | safeHtml">
                 Preview
             </div>
         </ng-template>

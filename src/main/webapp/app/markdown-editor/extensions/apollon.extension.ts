@@ -7,11 +7,11 @@ export const ApollonExtension = (componentFactoryResolver: ComponentFactoryResol
     const extension: showdown.ShowdownExtension = {
         type: 'lang',
         filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
-            const regex = /^\[apollon\](.*)\[\/apollon\]/;
+            const regex = /(?!\[apollon\])(\d+?)(?=\[\/apollon\])/g;
             const match = regex.exec(text);
             if (match) {
                 const diagramId: number = Number(JSON.parse(match[1]));
-                const renderedHtml = apollonService
+                apollonService
                     .find(diagramId)
                     .map(({ body }) => body)
                     .toPromise()
@@ -20,9 +20,14 @@ export const ApollonExtension = (componentFactoryResolver: ComponentFactoryResol
                         componentRef.instance.readOnly = true;
                         componentRef.instance.umlModel = JSON.parse(diagram.jsonRepresentation);
                         appRef.attachView(componentRef.hostView);
-                        return (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                        const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                        const apollonContainer = document.getElementById(`apollon-${diagramId}`);
+                        if (apollonContainer) {
+                            apollonContainer.innerHTML = '';
+                            apollonContainer.append(domElem);
+                        }
                     });
-                return 'test apollon';
+                return `<div id="apollon-${diagramId}"></div>`;
             }
             return text;
         },

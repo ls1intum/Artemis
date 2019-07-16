@@ -124,6 +124,7 @@ export class ArtemisMarkdown {
     /**
      * converts markdown into html
      * @param {string} markdownText the original markdown text
+     * @param {showdown.ShowdownExtension[]} extensions extensions to be used for parsing/rendering the markdown.
      * @returns {string} the resulting html as a string
      */
     htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
@@ -141,8 +142,9 @@ export class ArtemisMarkdown {
             backslashEscapesHTMLTags: true,
             extensions,
         });
-        const html = converter.makeHtml(markdownText);
-        return this.sanitizer.sanitize(SecurityContext.HTML, html);
+        return converter.makeHtml(markdownText);
+        // TODO: This strips away the apollon extension html for some reason?
+        // return this.sanitizer.sanitize(SecurityContext.HTML, html);
     }
 
     markdownForHtml(htmlText: string) {
