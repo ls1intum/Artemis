@@ -367,8 +367,10 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         setTimeout(() => {
             const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            clickLayer.style.width = image.width + 'px';
-            clickLayer.style.height = image.height + 'px';
+            if (clickLayer) {
+                clickLayer.style.width = image.width + 'px';
+                clickLayer.style.height = image.height + 'px';
+            }
         }, 100);
     }
 }

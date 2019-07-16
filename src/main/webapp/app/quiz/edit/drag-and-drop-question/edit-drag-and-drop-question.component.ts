@@ -833,11 +833,14 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     }
 
     resizeImage() {
+        /* set timeout as workaround to render all necessary elements */
         setTimeout(() => {
             const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            clickLayer.style.width = image.width + 'px';
-            clickLayer.style.height = image.height + 'px';
-        }, 500);
+            if (clickLayer) {
+                clickLayer.style.width = image.width + 'px';
+                clickLayer.style.height = image.height + 'px';
+            }
+        }, 100);
     }
 }
