@@ -362,6 +362,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         }
     }
 
+    /**
+     *  The background image for drag and drop quizzes is dynamically adjusted through scss, therefore we have to resize the click layer to the same width and height as the background image
+     */
     resizeImage() {
         /* set timeout as workaround to render all necessary elements */
         setTimeout(() => {
