@@ -19,6 +19,7 @@ export interface IComplaintService {
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
     private resourceUrl = SERVER_API_URL + 'api/complaints';
+    private moreFeedbackResourceUrl = SERVER_API_URL + 'api/more-feedback';
 
     constructor(private http: HttpClient) {}
 
@@ -43,7 +44,7 @@ export class ComplaintService implements IComplaintService {
 
     getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${this.resourceUrl}/for-tutor-dashboard/moreFeedback/${exerciseId}`, { observe: 'response' })
+            .get<Complaint[]>(`${this.moreFeedbackResourceUrl}/for-tutor-dashboard/${exerciseId}`, { observe: 'response' })
             .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
     }
 
