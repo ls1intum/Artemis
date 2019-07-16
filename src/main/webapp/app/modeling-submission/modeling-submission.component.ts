@@ -420,9 +420,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    // function to check whether there are pending changes
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
+     */
     canDeactivate(): Observable<boolean> | boolean {
-        if (this.submission && this.submission.submitted) {
+        if (!this.modelingEditor || (this.submission && this.submission.submitted)) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
