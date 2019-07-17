@@ -239,7 +239,6 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: hide sensitive information
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
