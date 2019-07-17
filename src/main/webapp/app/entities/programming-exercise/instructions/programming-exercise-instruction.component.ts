@@ -63,7 +63,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public onNoInstructionsAvailable = new EventEmitter();
     @Output()
     public resultChange = new EventEmitter<Result>();
-    @Output() public exerciseTestCasesChange = new EventEmitter<ProgrammingExerciseTestCase[] | null>();
 
     public problemStatement: string;
     public participationSubscription: Subscription;
@@ -105,7 +104,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
-        const exerciseHasChanged = hasExerciseChanged(changes);
         // It is possible that the exercise does not have an id in case it is being created now.
         if (participationHasChanged) {
             this.isInitial = true;
