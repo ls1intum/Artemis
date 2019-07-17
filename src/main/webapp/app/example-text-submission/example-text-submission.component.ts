@@ -1,6 +1,7 @@
 import * as $ from 'jquery';
 
 import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -43,9 +44,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     readOnly: boolean;
     toComplete: boolean;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
