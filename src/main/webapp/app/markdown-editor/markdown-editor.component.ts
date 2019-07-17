@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ShowdownExtension } from 'showdown';
+import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
@@ -29,6 +30,8 @@ import { ColorSelectorComponent } from 'app/components/color-selector/color-sele
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
+import 'brace/mode/latex';
+
 export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
@@ -38,6 +41,22 @@ export enum MarkdownEditorHeight {
 export enum MarkdownExtension {
     APOLLON = 'APOLLON',
 }
+
+export enum EditorMode {
+    NONE = 'none',
+    LATEX = 'latex',
+}
+
+const getAceMode = (mode: EditorMode) => {
+    switch (mode) {
+        case EditorMode.LATEX:
+            return 'ace/mode/latex';
+        case EditorMode.NONE:
+            return null;
+        default:
+            return null;
+    }
+};
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -59,10 +78,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input()
-    markdown: string;
+    @Input() markdown: string;
+    @Input() editorMode = EditorMode.NONE;
     @Output() markdownChange = new EventEmitter<string>();
-    @Output() html = new EventEmitter<string | null>();
+    @Output() html = new EventEmitter<SafeHtml | null>();
 
     /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
@@ -110,7 +129,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() showPreviewButton = true;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
-    previewTextAsHtml: string | null;
+    previewTextAsHtml: SafeHtml | null;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
@@ -185,6 +204,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
         }
         this.setupMarkdownEditor();
 
+        const selectedAceMode = getAceMode(this.editorMode);
+        if (selectedAceMode) {
+            this.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .setMode(selectedAceMode);
+        }
+
         if (this.enableResize) {
             this.setupResizable();
         }
@@ -236,27 +263,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
-     * @function parse
-     * @desc Check if domainCommands are contained within the text to decide how to parse the text
-     *       1. If no domainCommands are contained parse markdown to HTML and emit the result to the parent component
-     *       2. Otherwise create an array containing all domainCommands identifier passed on from the client,
-     *       3. Create a copy of the markdown text
-     *       4. Create the regEx Expression which searches for the domainCommand identifier
-     *       5. Go through the copy of the markdown text until it is empty and split it as soon as a domainCommand identifier is found into [command]
-     *           5a. One command can contain text over several lines
-     *           5b. All the text between two identifiers is mapped to the first identifier
-     *       6. Reduce the copy by the length of the command
-     *       7. Call the parseLineForDomainCommand for command and save it into content
-     *       8. Emit the content to parent component to assign the values of the array to the right attributes
+     * Parses markdown to generate a preview if the standard preview is used and/or searches for domain command identifiers.
+     * Will emit events for both the generated preview and domain commands.
+     *
      */
     parse(): void {
-        /** check if domainCommands are passed on from the parent component */
-        if (this.domainCommands == null || this.domainCommands.length === 0) {
-            /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
+        if (this.showDefaultPreview) {
             this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown, this.extensions);
             this.html.emit(this.previewTextAsHtml);
             return;
-        } else {
+        }
+        if (this.domainCommands && this.domainCommands.length) {
             /** create array with domain command identifier */
             const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which

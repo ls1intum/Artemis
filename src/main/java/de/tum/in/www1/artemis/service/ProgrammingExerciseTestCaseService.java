@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -11,14 +13,19 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository) {
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService) {
         this.testCaseRepository = testCaseRepository;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -39,6 +46,47 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
         return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+    }
+
+    /**
+     * Update the weights of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
+     *
+     * @param exerciseId            of exercise the test cases belong to.
+     * @param testCaseWeightUpdates of the test cases to update the weights of.
+     * @return the updated test cases.
+     */
+    @Transactional
+    public Set<ProgrammingExerciseTestCase> updateWeights(Long exerciseId, Set<WeightUpdate> testCaseWeightUpdates) throws EntityNotFoundException, IllegalAccessException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
+        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
+
+        Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
+        for (WeightUpdate weightUpdate : testCaseWeightUpdates) {
+            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(weightUpdate.getId())).findFirst();
+            if (!matchingTestCaseOpt.isPresent())
+                continue;
+
+            ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
+            matchingTestCase.setWeight(weightUpdate.getWeight());
+            updatedTests.add(matchingTestCase);
+        }
+
+        return updatedTests;
+    }
+
+    /**
+     * Reset the weights of all test cases to 1.
+     *
+     * @param exerciseId
+     * @return
+     */
+    @Transactional
+    public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setWeight(1);
+        }
+        return testCases;
     }
 
     /**

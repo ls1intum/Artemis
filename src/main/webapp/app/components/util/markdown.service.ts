@@ -1,7 +1,9 @@
-import { Injectable, SecurityContext } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
+import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
-import { DomSanitizer } from '@angular/platform-browser';
+import * as DOMPurify from 'dompurify';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
@@ -122,7 +124,8 @@ export class ArtemisMarkdown {
     }
 
     /**
-     * converts markdown into html
+     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
+     *
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
@@ -139,13 +142,41 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions,
+            // TODO: Katex should be set by the callee if needed.
+            extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        return this.sanitizer.sanitize(SecurityContext.HTML, html);
+        const sanitized = DOMPurify.sanitize(html);
+        return this.sanitizer.bypassSecurityTrustHtml(sanitized);
     }
 
-    markdownForHtml(htmlText: string) {
+    /**
+     * This method is used to return sanitized html for markdown, that is not trusted by angular.
+     * Angular might strip away styles or html tags!
+     *
+     * @deprecated
+     * @param markdownText
+     */
+    htmlForMarkdownUntrusted(markdownText: string | null) {
+        if (markdownText == null || markdownText === '') {
+            return '';
+        }
+        const converter = new showdown.Converter({
+            parseImgDimensions: true,
+            headerLevelStart: 3,
+            simplifiedAutoLink: true,
+            excludeTrailingPunctuationFromURLs: true,
+            strikethrough: true,
+            tables: true,
+            openLinksInNewWindow: true,
+            backslashEscapesHTMLTags: true,
+            extensions: [showdownKatex()],
+        });
+        const html = converter.makeHtml(markdownText);
+        return DOMPurify.sanitize(html);
+    }
+
+    markdownForHtml(htmlText: string): string {
         const converter = new showdown.Converter({
             parseImgDimensions: true,
             headerLevelStart: 3,

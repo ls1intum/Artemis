@@ -19,6 +19,8 @@ import { ApollonCommand } from 'app/markdown-editor/domainCommands/apollon.comma
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { ApollonExtension } from 'app/markdown-editor/extensions/apollon.extension';
 import { ApollonDiagramService } from 'app/entities/apollon-diagram';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -26,6 +28,8 @@ import { ApollonDiagramService } from 'app/entities/apollon-diagram';
     styleUrls: ['./modeling-exercise-dialog.scss'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     dueDateError: boolean;
@@ -39,6 +43,9 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     domainCommands: DomainCommand[];
     extensions: ShowdownExtension[] = [];
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -60,7 +67,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.dueDateError = false;
         this.assessmentDueDateError = false;
         this.notificationText = null;
-        this.domainCommands = [this.apollonCommand];
+        this.domainCommandsProblemStatement = [...this.domainCommandsProblemStatement, this.apollonCommand];
         this.extensions = [ApollonExtension(this.componentFactoryResolver, this.appRef, this.injector, this.apollonService)];
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ShortAnswerSolution } from '../../entities/short-answer-solution';
 import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
@@ -471,6 +472,6 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
-        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element)));
+        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdownUntrusted(element)));
     }
 }

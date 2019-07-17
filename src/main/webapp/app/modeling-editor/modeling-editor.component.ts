@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
@@ -17,7 +17,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     @Input()
     umlModel: UMLModel;
     @Input()
-    diagramType: DiagramType;
+    diagramType: UMLDiagramType;
     @Input()
     readOnly = false;
     @Input()

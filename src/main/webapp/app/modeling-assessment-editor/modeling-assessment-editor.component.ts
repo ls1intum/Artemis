@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -146,7 +146,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.submission.participation.results = [this.result];
         this.result.participation = this.submission.participation;
         if (this.modelingExercise.diagramType == null) {
-            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
         }
         if (this.submission.model) {
             this.model = JSON.parse(this.submission.model);
