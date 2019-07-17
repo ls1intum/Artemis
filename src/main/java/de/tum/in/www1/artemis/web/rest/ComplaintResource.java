@@ -108,6 +108,7 @@ public class ComplaintResource {
      */
     @GetMapping("/complaints/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: hide sensitive information
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintService.getByResultId(resultId);

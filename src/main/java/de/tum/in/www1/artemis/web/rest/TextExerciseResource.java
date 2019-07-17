@@ -239,6 +239,7 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: hide sensitive information
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
@@ -291,6 +292,10 @@ public class TextExerciseResource {
             }
 
             participation.addSubmissions(textSubmission);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            participation.filterSensitiveInformation(); // TODO: Check if this filter is correct
         }
 
         return ResponseEntity.ok(participation);

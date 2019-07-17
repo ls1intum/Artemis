@@ -355,6 +355,13 @@ public class Participation implements Serializable {
         return findLatestSubmissionOfType(TextSubmission.class);
     }
 
+    /**
+     * can be invoked to make sure that sensitive information is not sent to the client
+     */
+    public void filterSensitiveInformation() {
+        setStudent(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
