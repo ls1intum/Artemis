@@ -718,7 +718,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    //TODO: save this on the ArTEMiS server, e.g. in the result class so that ArTEMiS does not need to retrieve it every time
+    //TODO: save this on the Artemis server, e.g. in the result class so that Artemis does not need to retrieve it every time
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);

@@ -1,4 +1,5 @@
 import * as $ from 'jquery';
+import { SafeHtml } from '@angular/platform-browser';
 import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
@@ -53,9 +54,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     paramSub: Subscription;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -106,8 +107,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.paramSub.unsubscribe();
         }
         this.paramSub = this.route.params.subscribe(params => {
-            const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-            const submissionValue = this.route.snapshot.paramMap.get('submissionId');
+            const exerciseId = Number(params['exerciseId']);
+            const submissionValue = params['submissionId'];
 
             if (submissionValue === 'new') {
                 this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
