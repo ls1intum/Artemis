@@ -66,6 +66,7 @@ export interface OrientationConfiguration {
     maximumSize?: number;
 }
 
+/* Orientation of the tour step position next to the highlighted element */
 export class Orientation {
     public static readonly Bottom = 'bottom';
     public static readonly BottomLeft = 'bottom-left';
@@ -78,12 +79,14 @@ export class Orientation {
     public static readonly TopRight = 'top-right';
 }
 
+/* Content type of tour step content */
 export enum ContentType {
     TEXT,
     IMAGE,
     VIDEO,
 }
 
+/* Link type of the link within the tour step content */
 export enum LinkType {
     LINK,
     BUTTON,

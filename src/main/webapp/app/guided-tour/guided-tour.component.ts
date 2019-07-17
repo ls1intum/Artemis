@@ -34,6 +34,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
+    /* Enable tour navigation with keyboard arrows */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
         if (event.code === 'ArrowRight' && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
@@ -67,7 +68,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     public get calculatedTourStepWidth() {
-        // console.log('this.tourStepWidth: ', this.tourStepWidth);
         return this.tourStepWidth - this.widthAdjustmentForScreenBound;
     }
 
@@ -166,6 +166,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    /* Start tour by hovering the orb */
     public handleOrb(): void {
         this.guidedTourService.activateOrb();
         if (this.currentTourStep && this.currentTourStep.selector) {

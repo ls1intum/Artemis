@@ -1,4 +1,4 @@
-import { GuidedTourService } from './guided-tour.service';
+/*import { GuidedTourService } from './guided-tour.service';
 import { ErrorHandler } from '@angular/core';
 import { ModuleWithProviders } from '@angular/compiler/src/core';
 
@@ -9,4 +9,4 @@ export class NgxGuidedTourModule {
             providers: [ErrorHandler, GuidedTourService],
         };
     }
-}
+}*/
