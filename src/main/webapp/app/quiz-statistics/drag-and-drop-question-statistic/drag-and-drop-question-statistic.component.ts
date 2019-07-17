@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService, JhiWebsocketService } from '../../core';
@@ -27,11 +28,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
@@ -58,7 +54,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string | null;
+    questionTextRendered: SafeHtml | null;
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -108,6 +104,10 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+    }
+
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
     }
 
     getDataSets() {
@@ -363,19 +363,13 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         }
     }
 
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
+    resizeImage() {
+        /* set timeout as workaround to render all necessary elements */
+        setTimeout(() => {
+            const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+            clickLayer.style.height = image.height + 'px';
+        }, 100);
     }
 }

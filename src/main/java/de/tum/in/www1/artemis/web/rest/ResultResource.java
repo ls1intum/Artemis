@@ -115,7 +115,7 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
-        resultService.createNewResult(result, true);
+        resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -341,7 +341,7 @@ public class ResultResource {
 
             Result relevantResult;
             if (ratedOnly) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
             }
             else {
                 relevantResult = participation.findLatestResult();
@@ -400,7 +400,7 @@ public class ResultResource {
     }
 
     /**
-     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation.
+     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation. The order of results is determined by completionDate desc.
      *
      * @param participationId the id of the participation for which to retrieve the latest result.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
@@ -415,7 +415,7 @@ public class ResultResource {
             return forbidden();
         }
 
-        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
         return result.map(ResponseEntity::ok).orElse(notFound());
     }
 

@@ -10,10 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,12 +38,10 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -56,6 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
@@ -79,6 +75,10 @@ public class ProgrammingExerciseService {
 
     private final ParticipationRepository participationRepository;
 
+    private final UserService userService;
+
+    private final AuthorizationCheckService authCheckService;
+
     private final ResourceLoader resourceLoader;
 
     @Value("${server.url}")
@@ -87,7 +87,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, UserService userService, AuthorizationCheckService authCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -97,6 +97,8 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -300,8 +302,8 @@ public class ProgrammingExerciseService {
             String testPrefix = programmingLanguage + File.separator + "test";
             String solutionPrefix = programmingLanguage + File.separator + "solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise);
-            setupTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
 
         }
         catch (Exception ex) {
@@ -316,59 +318,155 @@ public class ProgrammingExerciseService {
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
-        // We have to wait to have pushed one commit to each repository as we can only
-        // create the
-        // buildPlans then
-        // (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with
-                                                                                                                                        // solution repository
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName); // template build
+                                                                                                                                                               // plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName); // solution build
+                                                                                                                                                               // plan
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
+
         return programmingExercise;
     }
 
     // Copy template and push, if no file is in the directory
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
-            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
-                        programmingExercise.getPackageFolderName());
-            }
-            // there is no need in python to replace package names
-
-            List<String> fileTargets = new ArrayList<>();
-            List<String> fileReplacements = new ArrayList<>();
-            // This is based on the correct order and assumes that boths lists have the same
-            // length, it
-            // replaces fileTargets.get(i) with fileReplacements.get(i)
-
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                fileTargets.add("${packageName}");
-                fileReplacements.add(programmingExercise.getPackageName());
-            }
-            // there is no need in python to replace package names
-
-            fileTargets.add("${exerciseNamePomXml}");
-            fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
-
-            fileTargets.add("${exerciseName}");
-            fileReplacements.add(programmingExercise.getTitle());
-
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
-
-            gitService.stageAllChanges(repository);
-            gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
-            repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+            replacePlaceholders(programmingExercise, repository);
+            commitAndPushRepository(repository, templateName);
         }
+    }
+
+    /**
+     * Set up the test repository. This method differentiates non sequential and sequential test repositories (more than 1 test job).
+     *
+     * @param repository
+     * @param resources
+     * @param prefix
+     * @param templateName
+     * @param programmingExercise
+     * @throws Exception
+     */
+    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
+            throws Exception {
+        if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
+            String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
+
+            String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
+            String testUtilsPath = templatePath + "/testutils/**/*.*";
+
+            Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
+            Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
+
+            Map<String, Boolean> sectionsMap = new HashMap<>();
+
+            fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+
+            if (!programmingExercise.hasSequentialTestRuns()) {
+                String testFilePath = templatePath + "/testFiles" + "/**/*.*";
+                Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
+
+                sectionsMap.put("non-sequential", true);
+                sectionsMap.put("sequential", false);
+
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+
+                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                fileService.copyResources(testUtils, prefix, packagePath, true);
+                fileService.copyResources(testFileResources, prefix, packagePath, false);
+            }
+            else {
+                String stagePomXmlPath = templatePath + "/stagePom.xml";
+                Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
+                // This is done to prepare for a feature where instructors/tas can add multiple build stages.
+                List<String> sequentialTestTasks = new ArrayList<>();
+                sequentialTestTasks.add("structural");
+                sequentialTestTasks.add("behavior");
+
+                sectionsMap.put("non-sequential", false);
+                sectionsMap.put("sequential", true);
+
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+
+                for (String buildStage : sequentialTestTasks) {
+
+                    Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
+                    Files.createDirectory(buildStagePath);
+
+                    String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
+                    Resource[] buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
+
+                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
+                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+
+                    String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+
+                    Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                    fileService.copyResources(testUtils, prefix, packagePath, true);
+                    fileService.copyResources(buildStageResources, prefix, packagePath, false);
+                }
+            }
+
+            replacePlaceholders(programmingExercise, repository);
+            commitAndPushRepository(repository, templateName);
+        }
+        else {
+            // If there is no special test structure for a programming language, just copy all the test files.
+            setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+        }
+    }
+
+    /**
+     * Replace placeholders in repository files (e.g. ${placeholder}).
+     * 
+     * @param programmingExercise
+     * @param repository
+     * @throws IOException
+     */
+    public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+        }
+
+        List<String> fileTargets = new ArrayList<>();
+        List<String> fileReplacements = new ArrayList<>();
+        // This is based on the correct order and assumes that boths lists have the same
+        // length, it
+        // replaces fileTargets.get(i) with fileReplacements.get(i)
+
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            fileTargets.add("${packageName}");
+            fileReplacements.add(programmingExercise.getPackageName());
+        }
+        // there is no need in python to replace package names
+
+        fileTargets.add("${exerciseNamePomXml}");
+        fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+
+        fileTargets.add("${exerciseName}");
+        fileReplacements.add(programmingExercise.getTitle());
+
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+    }
+
+    /**
+     * Stage, commit and push.
+     * 
+     * @param repository
+     * @param templateName
+     * @throws GitAPIException
+     */
+    public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
+        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
     /**
@@ -415,6 +513,52 @@ public class ProgrammingExerciseService {
         templateParticipation.setInitializationState(InitializationState.INITIALIZED);
         solutionParticipation.setInitializationDate(ZonedDateTime.now());
         templateParticipation.setInitializationDate(ZonedDateTime.now());
+    }
+
+    /**
+     * Find a programming exercise by its id.
+     * 
+     * @param id of the programming exercise.
+     * @return
+     * @throws NoSuchElementException the programming exercise could not be found.
+     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    public ProgrammingExercise findById(Long id) throws NoSuchElementException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new IllegalAccessException();
+            }
+            return programmingExercise.get();
+        }
+        else {
+            throw new NoSuchElementException("programming exercise not found");
+        }
+    }
+
+    /**
+     * Find a programming exercise by its id.
+     *
+     * @param id of the programming exercise.
+     * @return
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new IllegalAccessException();
+            }
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
     }
 
     /**

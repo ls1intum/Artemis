@@ -1,6 +1,14 @@
 import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
-import { ElementType } from '@ls1intum/apollon';
+import { UMLModelElementType } from '@ls1intum/apollon';
+
+export const enum FeedbackHighlightColor {
+    RED = 'rgba(219, 53, 69, 0.6)',
+    CYAN = 'rgba(23, 162, 184, 0.3)',
+    BLUE = 'rgba(0, 123, 255, 0.6)',
+    YELLOW = 'rgba(255, 193, 7, 0.6)',
+    GREEN = 'rgba(40, 167, 69, 0.6)',
+}
 
 export const enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
@@ -18,10 +26,10 @@ export class Feedback implements BaseEntity {
     public positive: boolean | null;
 
     // helper attributes for modeling exercise assessments stored in Feedback
-    public referenceType: ElementType | null;
+    public referenceType: UMLModelElementType | null;
     public referenceId: string | null;
 
-    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: ElementType) {
+    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: UMLModelElementType) {
         this.referenceId = referenceId || null;
         this.referenceType = referenceType || null;
         this.credits = credits || 0;

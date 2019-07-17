@@ -1,9 +1,11 @@
 @import 'bootstrap-variables';
 @import 'artemis-variables';
-@import 'editor';
 @import 'quiz';
 @import 'text';
 @import '~ng-pick-datetime/assets/style/picker.min.css';
+// Needed for mathematical formulas in markdown editor
+@import '~katex/dist/katex.css';
+@import '~@swimlane/ngx-datatable/release/themes/bootstrap.css';
 
 /* ==============================================================
 Bootstrap tweaks
@@ -79,6 +81,14 @@ a:not(.btn):hover {
 
 .popover {
     max-width: 100%;
+}
+
+.border-lightgrey {
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
+.text-lightgrey {
+    color: rgba(0, 0, 0, 0.125);
 }
 
 /* ==========================================================================
@@ -466,6 +476,7 @@ pre {
 }
 
 code-error,
+code-warning,
 code-success {
     padding: 2px 4px;
     font-size: 90%;
@@ -485,6 +496,11 @@ code-success {
 code-error {
     color: #c7254e;
     background-color: #f9f2f4;
+}
+
+code-warning {
+    color: #e68a00;
+    background-color: #fff5e6;
 }
 
 code.password {

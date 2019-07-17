@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -13,9 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -44,8 +44,11 @@ public class ResultService {
 
     private final ObjectMapper objectMapper;
 
+    private final ProgrammingExerciseTestCaseService testCaseService;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
+            ProgrammingExerciseTestCaseService testCaseService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -53,6 +56,7 @@ public class ResultService {
         this.ltiService = ltiService;
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
+        this.testCaseService = testCaseService;
     }
 
     public Result findOne(long id) {
@@ -98,8 +102,9 @@ public class ResultService {
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it.
-     * 
+     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
+     * extracted from the feedbacks & the result is updated with the information from the test cases.
+     *
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
@@ -107,7 +112,36 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+
+        if (participation.getExercise() instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
+                extractTestCasesFromResult(participation, result);
+            }
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+        }
+
         notifyUser(participation, result);
+    }
+
+    /**
+     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
+     * through the websocket!
+     *
+     * @param participation of the given result.
+     * @param result        from which to extract the test cases.
+     */
+    private void extractTestCasesFromResult(Participation participation, Result result) {
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
+        if (haveTestCasesChanged) {
+            // Notify the client about the updated testCases
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
+        }
     }
 
     private void notifyUser(Participation participation, Result result) {
@@ -128,7 +162,7 @@ public class ResultService {
      *
      * @param result
      */
-    public void createNewResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public void createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -160,6 +194,11 @@ public class ResultService {
             }
 
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+
+            if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
+                Hibernate.initialize(savedResult.getParticipation().getExercise());
+            }
+
             ltiService.onNewBuildResult(savedResult.getParticipation());
         }
     }

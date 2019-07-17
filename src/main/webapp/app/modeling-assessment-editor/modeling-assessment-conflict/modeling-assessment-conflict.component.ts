@@ -7,7 +7,7 @@ import { AccountService, User } from 'app/core';
 import * as $ from 'jquery';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
@@ -20,14 +20,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     model: UMLModel;
     mergedFeedbacks: Feedback[];
     currentFeedbacksCopy: Feedback[];
-    modelHighlightedElementIds: Set<string>;
-    highlightColor: string;
+    modelHighlightedElements = new Map<string, string>(); // map elementId -> highlight color
     user: User | null;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
-    conflictingModelHighlightedElementIds: Set<string>;
+    conflictingModelHighlightedElements = new Map<string, string>(); // map elementId -> highlight color
     conflicts?: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
@@ -113,6 +112,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSave() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
             result => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
@@ -122,6 +126,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSubmit() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         const escalatedConflicts: Conflict[] = [];
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
             if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
@@ -184,8 +193,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     private updateHighlightedElements() {
-        this.modelHighlightedElementIds = new Set<string>([this.currentConflict.causingConflictingResult.modelElementId]);
-        this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
+        this.modelHighlightedElements = new Map<string, string>([[this.currentConflict.causingConflictingResult.modelElementId, FeedbackHighlightColor.RED]]);
+        this.conflictingModelHighlightedElements = new Map<string, string>([[this.conflictingResult.modelElementId, FeedbackHighlightColor.RED]]);
     }
 
     private updateCurrentState() {
@@ -203,15 +212,29 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     private updateHighlightColor() {
         switch (this.conflictResolutionStates[this.conflictIndex]) {
             case ConflictResolutionState.UNHANDLED:
-                this.highlightColor = 'rgba(0, 123, 255, 0.6)';
+                this.setHighlightColorOfConflictElements(FeedbackHighlightColor.BLUE);
                 break;
             case ConflictResolutionState.ESCALATED:
-                this.highlightColor = 'rgba(255, 193, 7, 0.6)';
+                this.setHighlightColorOfConflictElements(FeedbackHighlightColor.YELLOW);
                 break;
             case ConflictResolutionState.RESOLVED:
-                this.highlightColor = 'rgba(40, 167, 69, 0.6)';
+                this.setHighlightColorOfConflictElements(FeedbackHighlightColor.GREEN);
                 break;
         }
+    }
+
+    private setHighlightColorOfConflictElements(color: string) {
+        const conflictingModelHighlightedElements = new Map<string, string>();
+        for (const elementId of this.conflictingModelHighlightedElements.keys()) {
+            conflictingModelHighlightedElements.set(elementId, color);
+        }
+        this.conflictingModelHighlightedElements = conflictingModelHighlightedElements;
+
+        const modelHighlightedElements = new Map<string, string>();
+        for (const elementId of this.modelHighlightedElements.keys()) {
+            modelHighlightedElements.set(elementId, color);
+        }
+        this.modelHighlightedElements = modelHighlightedElements;
     }
 
     private updateOverallResolutioState() {

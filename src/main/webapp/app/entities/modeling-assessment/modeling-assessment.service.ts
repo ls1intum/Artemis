@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../result';
-import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
@@ -14,6 +14,8 @@ export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
+    private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
+    private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
     private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
@@ -93,7 +95,7 @@ export class ModelingAssessmentService {
         }
         for (const feedback of result.feedbacks) {
             if (feedback.reference) {
-                feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
+                feedback.referenceType = feedback.reference.split(':')[0] as UMLModelElementType;
                 feedback.referenceId = feedback.reference.split(':')[1];
             }
         }
@@ -110,7 +112,13 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType!;
             const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
-                const element = model.elements.find(elem => elem.id === referencedModelId)!;
+                const element = model.elements.find(elem => elem.id === referencedModelId);
+                if (!element) {
+                    // prevent errors when element could not be found, should never happen
+                    assessmentsNames[referencedModelId] = { name: '', type: '' };
+                    continue;
+                }
+
                 const name = element.name;
                 let type: string;
                 switch (element.type) {
@@ -197,6 +205,21 @@ export class ModelingAssessmentService {
             }
         }
         return assessmentsNames;
+    }
+
+    /**
+     * Checks if the feedback text and detail text of every feedback item is smaller than the configured maximum length. Returns true if the length of the texts is valid or if
+     * there is no feedback, false otherwise.
+     */
+    isFeedbackTextValid(feedback: Feedback[]): boolean {
+        if (!feedback) {
+            return true;
+        }
+        return feedback.every(
+            feedbackItem =>
+                (!feedbackItem.text || feedbackItem.text.length <= this.MAX_FEEDBACK_TEXT_LENGTH) &&
+                (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
+        );
     }
 
     /**

@@ -90,9 +90,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
     watchCollection() {
         // update html for text, hint and explanation for the question
         this.rendered = new DragAndDropQuestion();
-        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
     }
 
     /**
@@ -139,6 +139,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
+
         if (dropLocation) {
             // check if this mapping is new
             if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings, dragItem, dropLocation)) {
@@ -300,6 +301,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
-        }, 500);
+        }, 300);
     }
 }

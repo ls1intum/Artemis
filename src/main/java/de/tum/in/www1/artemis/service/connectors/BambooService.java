@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -87,10 +88,9 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
     }
-
 
     private BambooClient getBambooClient() {
         final BambooClient bambooClient = new BambooClient();
@@ -718,7 +718,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    //TODO: save this on the ArTEMiS server, e.g. in the result class so that ArTEMiS does not need to retrieve it every time
+    //TODO: save this on the Artemis server, e.g. in the result class so that Artemis does not need to retrieve it every time
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
