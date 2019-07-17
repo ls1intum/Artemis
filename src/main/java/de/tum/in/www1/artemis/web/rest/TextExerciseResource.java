@@ -290,11 +290,11 @@ public class TextExerciseResource {
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission);
-        }
+            if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+                result.setAssessor(null); // TODO: Check if this filter is correct
+            }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            participation.filterSensitiveInformation(); // TODO: Check if this filter is correct
+            participation.addSubmissions(textSubmission);
         }
 
         return ResponseEntity.ok(participation);
