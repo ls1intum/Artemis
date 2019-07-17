@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, async, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import * as chai from 'chai';
-import { MoreFeedbackForTutorComponent } from 'app/more-feedback-for-tutor';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { By, BrowserModule } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
+import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArTEMiSSharedModule } from 'app/shared';
@@ -15,9 +15,9 @@ import { ComplaintResponseService } from 'app/entities/complaint-response/compla
 import { Complaint } from 'app/entities/complaint';
 
 const expect = chai.expect;
-describe('MoreFeedbackForTutorComponent', () => {
-    let comp: MoreFeedbackForTutorComponent;
-    let fixture: ComponentFixture<MoreFeedbackForTutorComponent>;
+describe('ComplaintsForTutorComponent', () => {
+    let comp: ComplaintsForTutorComponent;
+    let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let debugElement: DebugElement;
 
     const complaint = new Complaint();
@@ -26,16 +26,13 @@ describe('MoreFeedbackForTutorComponent', () => {
     complaint.complaintText = 'Random';
 
     const complaint2 = new Complaint();
-    complaint.id = 11;
-    complaint.accepted = false;
-    complaint.complaintText = '';
-
-    const complaints = [{ complaint: complaint, responseText: 'Response' }, { accepted: true }, { accepted: false }];
+    complaint2.id = 11;
+    complaint2.complaintText = '';
 
     const subscribe = {
         subscribe: (fn: (value: any) => void) => {
             fn({
-                body: complaints,
+                body: complaint,
             });
         },
     };
@@ -43,7 +40,7 @@ describe('MoreFeedbackForTutorComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, HttpClientModule],
-            declarations: [MoreFeedbackForTutorComponent],
+            declarations: [ComplaintsForTutorComponent],
             providers: [
                 {
                     provide: ComplaintService,
@@ -65,17 +62,18 @@ describe('MoreFeedbackForTutorComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MoreFeedbackForTutorComponent);
+                fixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 comp.complaint = complaint;
                 comp.isAllowedToRespond = true;
-                comp.ngOnInit();
             });
     }));
 
     it('should show alert and accept message when complaint is handled', () => {
+        comp.ngOnInit();
         fixture.detectChanges();
+        expect(comp.complaint.accepted).to.be.true;
         expect(comp.handled).to.be.true;
         expect(comp.complaintText).to.be.equal(complaint.complaintText);
 
@@ -85,6 +83,7 @@ describe('MoreFeedbackForTutorComponent', () => {
 
     it('should not show alert and accept message when complaint is not handled', () => {
         comp.complaint = complaint2;
+        comp.ngOnInit();
         fixture.detectChanges();
         expect(comp.handled).to.be.false;
 

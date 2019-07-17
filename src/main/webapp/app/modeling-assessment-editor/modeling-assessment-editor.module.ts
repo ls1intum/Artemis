@@ -16,7 +16,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
-import { ArTEMiSMoreFeedbackForTutorModule } from 'app/more-feedback-for-tutor';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
@@ -30,7 +29,6 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         ModelingAssessmentModule,
         FontAwesomeModule,
         ArTEMiSComplaintsForTutorModule,
-        ArTEMiSMoreFeedbackForTutorModule,
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     entryComponents: [

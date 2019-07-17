@@ -19,14 +19,6 @@
             "rejectedLong": "Beschwerde wurde abgelehnt",
             "tooManyComplaints": "Maximale Anzahl an Beschwerden erreicht. Du kannst nicht mehr als {{ maxComplaintNumber }} offene oder abgelehnte Beschwerden gleichzeitig haben.",
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
-            "complaintResponse": {
-                "title": "Antwort auf die Beschwerde",
-                "created": "Deine Antwort auf die Beschwerde wurde eingereicht",
-                "updateAssessment": "Bewertung aktualisieren",
-                "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
-                "rejectComplaint": "Beschwerde zurückweisen",
-                "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
-            },
             "listOfComplaints": {
                 "exercise": "Übung",
                 "submissionId": "Einreichung ID",

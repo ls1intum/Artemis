@@ -86,15 +86,9 @@
 </div>
 <div class="mt-3" *ngIf="complaint && result?.id">
     <jhi-complaints-for-tutor-form
-        *ngIf="complaint.complaintType === ComplaintType.COMPLAINT"
         [complaint]="complaint"
-        [isAllowedToRespond]="!isAuthorized"
+        [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAuthorized : isAuthorized"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
     </jhi-complaints-for-tutor-form>
-    <jhi-more-feedback-for-tutor-form
-        *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK"
-        [complaint]="complaint"
-        [isAllowedToRespond]="isAuthorized"
-    ></jhi-more-feedback-for-tutor-form>
 </div>

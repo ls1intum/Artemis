@@ -1,15 +1,27 @@
-<h2>{{ 'artemisApp.complaint.review' | translate }}</h2>
+<h2>{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}</h2>
 <div class="col-12 px-0 mt-2">
     <div class="alert alert-info" *ngIf="handled">
-        {{ 'artemisApp.complaint.complaintAlreadyHandled' | translate }}
+        {{
+            complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                ? ('artemisApp.moreFeedback.alreadyHandled' | translate)
+                : ('artemisApp.complaint.complaintAlreadyHandled' | translate)
+        }}
     </div>
 
     <div class="row">
         <div class="col-12 col-md-6">
             <h4>
-                <span> {{ 'artemisApp.complaint.title' | translate }} </span>
+                <span
+                    >{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}
+                </span>
                 <small *ngIf="handled">
-                    <span *ngIf="complaint?.accepted" class="text-light bg-success small"> &nbsp;{{ 'artemisApp.complaint.accepted' | translate }}&nbsp; </span>
+                    <span *ngIf="complaint?.accepted" class="text-light bg-success small">
+                        &nbsp;{{
+                            complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                                ? ('artemisApp.moreFeedback.accepted' | translate)
+                                : ('artemisApp.complaint.accepted' | translate)
+                        }}&nbsp;
+                    </span>
                     <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | translate }}&nbsp; </span>
                 </small>
             </h4>
@@ -17,9 +29,15 @@
         </div>
 
         <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
-            <h3>{{ 'artemisApp.complaintResponse.title' | translate }}</h3>
+            <h3>
+                {{
+                    complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                        ? ('artemisApp.moreFeedback.response.title' | translate)
+                        : ('artemisApp.complaintResponse.title' | translate)
+                }}
+            </h3>
             <textarea class="col-12 px-1" rows="4" maxlength="2000" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
-            <div *ngIf="!handled" class="row justify-content-end">
+            <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
                 <div class="col-12 col-lg-6">
                     <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}">
                         {{ 'artemisApp.complaintResponse.updateAssessment' | translate }}
@@ -30,6 +48,21 @@
                         {{ 'artemisApp.complaintResponse.rejectComplaint' | translate }}
                     </button>
                 </div>
+            </div>
+
+            <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end">
+                <div class="col-12">
+                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.moreFeedback.response.sendResponseTooltip' | translate }}">
+                        {{ 'artemisApp.moreFeedback.response.provideFeedback' | translate }}
+                    </button>
+                </div>
+            </div>
+            <div *ngIf="complaint.accepted && !handled">
+                <h2>
+                    <span style="color:grey"
+                        ><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.dashboard.loading">Loading..</span></span
+                    >
+                </h2>
             </div>
         </div>
     </div>

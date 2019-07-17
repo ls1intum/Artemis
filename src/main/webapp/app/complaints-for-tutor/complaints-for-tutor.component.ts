@@ -20,6 +20,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     complaintText = '';
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
+    ComplaintType = ComplaintType;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
@@ -35,18 +36,21 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (this.complaintResponse.responseText.length <= 0 || !this.isAllowedToRespond) {
             return;
         }
-        this.handled = true;
         this.complaint.accepted = acceptComplaint;
         this.complaintResponse.complaint = this.complaint;
-        if (acceptComplaint) {
+        if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
+            this.handled = true;
         } else {
-            // If the complaint was rejected, just the complaint response is created.
+            // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
-                    this.jhiAlertService.success('artemisApp.complaint.complaintResponse.created');
+                    this.handled = true;
+                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                        ? this.jhiAlertService.success('artemisApp.moreFeedback.response.created')
+                        : this.jhiAlertService.success('artemisApp.complaintResponse.created');
                     this.complaintResponse = response.body!;
                 },
                 (err: HttpErrorResponse) => {

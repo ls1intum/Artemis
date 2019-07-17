@@ -19,14 +19,6 @@
             "rejectedLong": "Complaint was rejected",
             "tooManyComplaints": "Complaint limit reached. You cannot have more than {{ maxComplaintNumber }} open or rejected complaints at the same time.",
             "complaintAlreadyHandled": "The complaint has been resolved",
-            "complaintResponse": {
-                "title": "Complaint's response",
-                "created": "Response to complaint has been submitted",
-                "updateAssessment": "Update assessment",
-                "updateAssessmentTooltip": "Send complaint response and update assessment",
-                "rejectComplaint": "Reject complaint",
-                "rejectComplaintTooltip": "Send complaint response and reject complaint"
-            },
             "listOfComplaints": {
                 "exercise": "Exercise",
                 "submissionId": "Submission ID",
