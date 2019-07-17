@@ -13,14 +13,14 @@
                     <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
                 </div>
                 <div class="form-group hint-form__editor-wrapper">
-                    <!--                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.content" for="field_content">Content</label>
-                    <input type="text" class="form-control" name="content" id="field_content" [(ngModel)]="exerciseHint.content" />-->
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
                         (markdownChange)="updateHintContent($event)"
                         [resizableMinHeight]="MarkdownEditorHeight.SMALL"
                         [resizableMaxHeight]="MarkdownEditorHeight.LARGE"
                         [enableResize]="true"
+                        [domainCommands]="domainCommands"
+                        [editorMode]="editorMode"
                     ></jhi-markdown-editor>
                 </div>
 

@@ -11,7 +11,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
                 <dd>
-                    <span>{{ exerciseHint.content }}</span>
+                    <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>
@@ -25,7 +25,7 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button type="button" [routerLink]="['/exercise-hint', exerciseHint.id, 'edit']" class="btn btn-primary">
+            <button type="button" [routerLink]="['/exercise', exerciseId, 'hints', exerciseHint.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
         </div>

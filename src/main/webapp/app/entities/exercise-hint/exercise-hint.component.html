@@ -30,7 +30,7 @@
                         <a [routerLink]="['/exercise', exerciseId, 'hints', exerciseHint.id, 'view']">{{ exerciseHint.id }}</a>
                     </td>
                     <td>{{ exerciseHint.title }}</td>
-                    <td>{{ exerciseHint.content }}</td>
+                    <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
                     <td>
                         <div *ngIf="exerciseHint.exercise">
                             <a [routerLink]="['../exercise', exerciseHint.exercise?.id, 'view']">{{ exerciseHint.exercise?.id }}</a>

@@ -9,7 +9,8 @@ import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise
 import { ExerciseHintService } from './exercise-hint.service';
 import { Exercise } from 'app/entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
-import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { EditorMode, MarkdownEditorHeight } from 'app/markdown-editor';
+import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -24,6 +25,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     isSaving: boolean;
     paramSub: Subscription;
+
+    domainCommands = [new KatexCommand()];
+    editorMode = EditorMode.LATEX;
 
     constructor(
         private route: ActivatedRoute,

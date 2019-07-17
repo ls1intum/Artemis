@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
@@ -7,15 +8,27 @@ import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
     selector: 'jhi-exercise-hint-detail',
     templateUrl: './exercise-hint-detail.component.html',
 })
-export class ExerciseHintDetailComponent implements OnInit {
+export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
+    exerciseId: number;
     exerciseHint: IExerciseHint;
 
-    constructor(protected activatedRoute: ActivatedRoute) {}
+    paramSub: Subscription;
+
+    constructor(protected route: ActivatedRoute) {}
 
     ngOnInit() {
-        this.activatedRoute.data.subscribe(({ exerciseHint }) => {
+        this.paramSub = this.route.params.subscribe(params => {
+            this.exerciseId = params['exerciseId'];
+        });
+        this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
     }
 
     previousState() {
