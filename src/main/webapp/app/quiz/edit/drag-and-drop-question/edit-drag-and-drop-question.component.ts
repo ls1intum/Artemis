@@ -14,6 +14,7 @@ import * as TempID from 'app/quiz/edit/temp-id';
 import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -131,7 +132,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     }
 
     @HostListener('window:resize') onResize() {
-        this.resizeImage();
+        resizeImage();
     }
 
     /**
@@ -830,20 +831,5 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     prepareForSave(): void {
         this.cleanupQuestion();
         this.markdownEditor.parse();
-    }
-
-    /**
-     *  The background image for drag and drop quizzes is dynamically adjusted through scss, therefore we have to resize the click layer to the same width and height as the background image
-     */
-    resizeImage() {
-        /* set timeout as workaround to render all necessary elements */
-        setTimeout(() => {
-            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
-            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            if (clickLayer) {
-                clickLayer.style.width = image.width + 'px';
-                clickLayer.style.height = image.height + 'px';
-            }
-        }, 100);
     }
 }
