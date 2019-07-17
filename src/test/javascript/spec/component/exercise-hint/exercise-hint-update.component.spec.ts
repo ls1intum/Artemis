@@ -4,10 +4,10 @@ import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHintUpdateComponent } from 'app/entities/exercise-hint/exercise-hint-update.component';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ArTEMiSTestModule } from '../../test.module';
 
 describe('Component Tests', () => {
     describe('ExerciseHint Management Update Component', () => {
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ExerciseHintUpdateComponent],
                 providers: [FormBuilder],
             })
@@ -34,7 +34,7 @@ describe('Component Tests', () => {
                 // GIVEN
                 const entity = new ExerciseHint(123);
                 spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-                comp.updateForm(entity);
+                comp.exerciseHint = entity;
                 // WHEN
                 comp.save();
                 tick(); // simulate async
@@ -48,7 +48,7 @@ describe('Component Tests', () => {
                 // GIVEN
                 const entity = new ExerciseHint();
                 spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-                comp.updateForm(entity);
+                comp.exerciseHint = entity;
                 // WHEN
                 comp.save();
                 tick(); // simulate async

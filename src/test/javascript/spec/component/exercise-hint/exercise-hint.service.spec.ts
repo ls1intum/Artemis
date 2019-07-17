@@ -1,11 +1,13 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
+import * as chai from 'chai';
+import { take } from 'rxjs/operators';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint, IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+
+const expect = chai.expect;
 
 describe('Service Tests', () => {
     describe('ExerciseHint Service', () => {
@@ -13,12 +15,12 @@ describe('Service Tests', () => {
         let service: ExerciseHintService;
         let httpMock: HttpTestingController;
         let elemDefault: IExerciseHint;
-        let expectedResult;
+        let expectedResult: any;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
             });
-            expectedResult = {};
+            expectedResult = {} as HttpResponse<IExerciseHint>;
             injector = getTestBed();
             service = injector.get(ExerciseHintService);
             httpMock = injector.get(HttpTestingController);
@@ -36,7 +38,7 @@ describe('Service Tests', () => {
 
                 const req = httpMock.expectOne({ method: 'GET' });
                 req.flush(returnedFromService);
-                expect(expectedResult).toMatchObject({ body: elemDefault });
+                expect(expectedResult.body).to.deep.equal(elemDefault);
             });
 
             it('should create a ExerciseHint', async () => {
@@ -48,12 +50,12 @@ describe('Service Tests', () => {
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
-                    .create(new ExerciseHint(null))
+                    .create(new ExerciseHint())
                     .pipe(take(1))
                     .subscribe(resp => (expectedResult = resp));
                 const req = httpMock.expectOne({ method: 'POST' });
                 req.flush(returnedFromService);
-                expect(expectedResult).toMatchObject({ body: expected });
+                expect(expectedResult.body).to.deep.equal(expected);
             });
 
             it('should update a ExerciseHint', async () => {
@@ -72,29 +74,7 @@ describe('Service Tests', () => {
                     .subscribe(resp => (expectedResult = resp));
                 const req = httpMock.expectOne({ method: 'PUT' });
                 req.flush(returnedFromService);
-                expect(expectedResult).toMatchObject({ body: expected });
-            });
-
-            it('should return a list of ExerciseHint', async () => {
-                const returnedFromService = Object.assign(
-                    {
-                        title: 'BBBBBB',
-                        content: 'BBBBBB',
-                    },
-                    elemDefault,
-                );
-                const expected = Object.assign({}, returnedFromService);
-                service
-                    .query(expected)
-                    .pipe(
-                        take(1),
-                        map(resp => resp.body),
-                    )
-                    .subscribe(body => (expectedResult = body));
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush([returnedFromService]);
-                httpMock.verify();
-                expect(expectedResult).toContainEqual(expected);
+                expect(expectedResult.body).to.deep.equal(expected);
             });
 
             it('should delete a ExerciseHint', async () => {
@@ -102,7 +82,7 @@ describe('Service Tests', () => {
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
                 req.flush({ status: 200 });
-                expect(expectedResult);
+                expect(expectedResult).to.be.true;
             });
         });
 

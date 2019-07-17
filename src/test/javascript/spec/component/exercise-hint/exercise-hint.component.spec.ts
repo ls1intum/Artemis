@@ -3,10 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHintComponent } from 'app/entities/exercise-hint/exercise-hint.component';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ArTEMiSTestModule } from '../../test.module';
 
 describe('Component Tests', () => {
     describe('ExerciseHint Management Component', () => {
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ExerciseHintComponent],
                 providers: [],
             })
@@ -31,7 +31,7 @@ describe('Component Tests', () => {
         it('Should call load all on init', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'query').and.returnValue(
+            spyOn(service, 'findByExerciseId').and.returnValue(
                 of(
                     new HttpResponse({
                         body: [new ExerciseHint(123)],
@@ -44,7 +44,7 @@ describe('Component Tests', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.query).toHaveBeenCalled();
+            expect(service.findByExerciseId).toHaveBeenCalled();
             expect(comp.exerciseHints[0]).toEqual(jasmine.objectContaining({ id: 123 }));
         });
     });
