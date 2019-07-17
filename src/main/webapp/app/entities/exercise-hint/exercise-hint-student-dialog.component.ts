@@ -9,6 +9,9 @@ import { JhiEventManager } from 'ng-jhipster';
 import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 
+/**
+ * This component is a modal that shows the exercise's hints.
+ */
 @Component({
     selector: 'jhi-exercise-hint-student-dialog',
     templateUrl: './exercise-hint-student-dialog.component.html',
@@ -24,6 +27,9 @@ export class ExerciseHintStudentDialogComponent {
     }
 }
 
+/**
+ * This component is a question mark icon the user can click on the see the provided exercise's hints.
+ */
 @Component({
     selector: 'jhi-exercise-hint-student',
     template: `
@@ -55,6 +61,9 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
+    /**
+     * Open the exercise hint student dialog (see component above).
+     */
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
         this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;

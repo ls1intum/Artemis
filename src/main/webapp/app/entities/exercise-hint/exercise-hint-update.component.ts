@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
@@ -20,10 +20,14 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
+    exerciseId: number;
+    // This is a leftover from the jhipster boilerplate, it lets you chose the exercise of the hint in the same interface.
+    // We don't needs this atm, so we just disable the select, but it might be useful in future.
     exercises: Exercise[] = [];
     exerciseHint = new ExerciseHint();
 
     isSaving: boolean;
+    isLoading: boolean;
     paramSub: Subscription;
 
     domainCommands = [new KatexCommand()];
@@ -34,26 +38,39 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         protected jhiAlertService: JhiAlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
-        protected activatedRoute: ActivatedRoute,
     ) {}
 
     ngOnInit() {
+        this.isLoading = true;
         this.paramSub = this.route.params.subscribe(params => {
-            const exerciseId = params['exerciseId'];
+            this.exerciseId = params['exerciseId'];
             this.isSaving = false;
-            this.activatedRoute.data.subscribe(({ exerciseHint }) => {
-                this.exerciseHint = exerciseHint;
+        });
+        this.route.data.subscribe(({ exerciseHint }) => {
+            this.exerciseHint = exerciseHint;
+            // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
+            if (!this.exerciseHint.id) {
                 this.exerciseService
-                    .find(exerciseId)
-                    .map(({ body }) => body)
-                    .subscribe(
-                        (res: Exercise) => {
+                    .find(this.exerciseId)
+                    .pipe(
+                        map(({ body }) => body),
+                        tap((res: Exercise) => {
                             this.exercises = [res];
                             this.exerciseHint.exercise = res;
-                        },
-                        (res: HttpErrorResponse) => this.onError(res.message),
-                    );
-            });
+                        }),
+                        catchError((res: HttpErrorResponse) => {
+                            this.onError(res.message);
+                            return of();
+                        }),
+                    )
+                    .subscribe((res: Exercise) => {
+                        this.isLoading = false;
+                    });
+            } else {
+                // If the exercise exists, use its exercise for the exercise select.
+                this.exercises = this.exerciseHint.exercise ? [this.exerciseHint.exercise] : [];
+                this.isLoading = false;
+            }
         });
     }
 

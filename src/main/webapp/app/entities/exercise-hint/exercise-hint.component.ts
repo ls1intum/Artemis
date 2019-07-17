@@ -28,6 +28,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         protected eventManager: JhiEventManager,
     ) {}
 
+    /**
+     * Subscribes to the route params to act on the currently selected exercise.
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.exerciseId = params['exerciseId'];
@@ -43,6 +46,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * Load all exercise hints with the currently selected exerciseId (taken from route params).
+     */
     loadAllByExerciseId() {
         this.exerciseHintService
             .findByExerciseId(this.exerciseId)
@@ -63,6 +69,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInExerciseHints() {
+        if (this.eventSubscriber) {
+            this.eventSubscriber.unsubscribe();
+        }
         this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', (response: any) => this.loadAllByExerciseId());
     }
 
