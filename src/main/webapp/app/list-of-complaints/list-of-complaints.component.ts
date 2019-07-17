@@ -17,6 +17,8 @@ import * as moment from 'moment';
 export class ListOfComplaintsComponent implements OnInit {
     public complaints: Complaint[] = [];
     public hasStudentInformation = false;
+    public complaintType: ComplaintType;
+    ComplaintType = ComplaintType;
 
     private courseId: number;
     private exerciseId: number;
@@ -43,20 +45,21 @@ export class ListOfComplaintsComponent implements OnInit {
             this.exerciseId = Number(queryParams['exerciseId']);
             this.tutorId = Number(queryParams['tutorId']);
         });
+        this.route.data.subscribe(data => (this.complaintType = data.complaintType));
 
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
             }
         } else {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             } else {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
             }
         }
 
