@@ -268,6 +268,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      *
      */
     parse(): void {
+        /** check if domainCommands are passed on from the parent component */
         if (this.showDefaultPreview) {
             this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown, this.extensions);
             this.html.emit(this.previewTextAsHtml);
