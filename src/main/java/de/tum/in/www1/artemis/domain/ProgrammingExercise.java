@@ -59,6 +59,10 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
+
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateRepositoryUrl() {
@@ -283,6 +287,14 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
+    }
+
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
     }
 
     /**

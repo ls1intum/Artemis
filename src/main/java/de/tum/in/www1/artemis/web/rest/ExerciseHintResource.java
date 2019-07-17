@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,13 +12,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExerciseHint;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseHintService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import io.github.jhipster.web.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.ExerciseHint}.
@@ -34,8 +39,14 @@ public class ExerciseHintResource {
 
     private final ExerciseHintService exerciseHintService;
 
-    public ExerciseHintResource(ExerciseHintService exerciseHintService) {
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService) {
         this.exerciseHintService = exerciseHintService;
+        this.programmingExerciseService = programmingExerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -46,10 +57,14 @@ public class ExerciseHintResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/exercise-hints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint) throws URISyntaxException {
         log.debug("REST request to save ExerciseHint : {}", exerciseHint);
-        if (exerciseHint.getId() != null) {
-            throw new BadRequestAlertException("A new exerciseHint cannot already have an ID", ENTITY_NAME, "idexists");
+        if (exerciseHint.getExercise() == null) {
+            return badRequest();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())) {
+            return forbidden();
         }
         ExerciseHint result = exerciseHintService.save(exerciseHint);
         return ResponseEntity.created(new URI("/api/exercise-hints/" + result.getId()))
@@ -66,24 +81,19 @@ public class ExerciseHintResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/exercise-hints")
-    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint) throws URISyntaxException {
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
-        if (exerciseHint.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        Optional<ExerciseHint> hintBeforeSaving = exerciseHintService.findOne(exerciseHint.getId());
+        if (exerciseHint.getId() == null || exerciseHint.getExercise() == null || !hintBeforeSaving.isPresent()) {
+            return badRequest();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())
+                || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {
+            return forbidden();
         }
         ExerciseHint result = exerciseHintService.save(exerciseHint);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseHint.getId().toString())).body(result);
-    }
-
-    /**
-     * {@code GET  /exercise-hints} : get all the exerciseHints.
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of exerciseHints in body.
-     */
-    @GetMapping("/exercise-hints")
-    public List<ExerciseHint> getAllExerciseHints() {
-        log.debug("REST request to get all ExerciseHints");
-        return exerciseHintService.findAll();
     }
 
     /**
@@ -93,10 +103,17 @@ public class ExerciseHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/exercise-hints/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long id) {
         log.debug("REST request to get ExerciseHint : {}", id);
         Optional<ExerciseHint> exerciseHint = exerciseHintService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(exerciseHint);
+        if (!exerciseHint.isPresent()) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.get().getExercise())) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(exerciseHint.get());
     }
 
     /**
@@ -105,10 +122,22 @@ public class ExerciseHintResource {
      * @param id the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
      */
-    @GetMapping("/exercise-hints/by-exercise-id/{id}")
-    public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long id) {
-        log.debug("REST request to get ExerciseHint : {}", id);
-        Set<ExerciseHint> exerciseHints = exerciseHintService.findByExerciseId(id);
+    @GetMapping("/exercise-hints/by-exercise-id/{exerciseId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get ExerciseHint : {}", exerciseId);
+        ProgrammingExercise programmingExercise;
+        try {
+            programmingExercise = programmingExerciseService.findById(exerciseId);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        catch (NoSuchElementException ex) {
+            return notFound();
+        }
+        Set<ExerciseHint> exerciseHints = programmingExercise.getExerciseHints();
         return ResponseEntity.ok(exerciseHints);
     }
 
@@ -119,8 +148,16 @@ public class ExerciseHintResource {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/exercise-hints/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long id) {
         log.debug("REST request to delete ExerciseHint : {}", id);
+        Optional<ExerciseHint> exerciseHint = exerciseHintService.findOne(id);
+        if (!exerciseHint.isPresent()) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.get().getExercise())) {
+            return forbidden();
+        }
         exerciseHintService.delete(id);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }

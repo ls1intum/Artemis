@@ -27,11 +27,6 @@ export class ExerciseHintService {
         return this.http.get<IExerciseHint>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http.get<IExerciseHint[]>(this.resourceUrl, { params: options, observe: 'response' });
-    }
-
     findByExerciseId(exerciseId: number): Observable<HttpResponse<IExerciseHint[]>> {
         return this.http.get<IExerciseHint[]>(`${this.resourceUrl}/by-exercise-id/${exerciseId}`, { observe: 'response' });
     }
