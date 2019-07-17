@@ -50,7 +50,7 @@
             <p [innerHTML]="formattedProblemStatement"></p>
         </div>
 
-        <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution && formattedSampleSolution.length > 0">
+        <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
 
             <p [innerHTML]="formattedSampleSolution"></p>

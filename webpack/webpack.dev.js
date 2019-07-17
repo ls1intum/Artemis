@@ -25,7 +25,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             context: [
                 '/'
             ],
-            target: `http${options.tls ? 's' : ''}://127.0.0.1:8080`,
+            target: `http${options.tls ? 's' : ''}://${options.docker ? 'artemis-server' : 'localhost'}:8080`,
             secure: false,
             changeOrigin: options.tls,
             headers: { host: 'localhost:9000' }
