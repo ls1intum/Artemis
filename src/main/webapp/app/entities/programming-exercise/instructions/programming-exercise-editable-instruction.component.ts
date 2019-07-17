@@ -1,12 +1,11 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, ViewChild, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { of, Observable, Subscription } from 'rxjs';
-import { map as rxMap, filter as rxFilter, switchMap } from 'rxjs/operators';
-import { catchError, tap } from 'rxjs/operators';
-import { hasParticipationChanged, Participation } from 'app/entities/participation';
+import { Observable, of, Subscription } from 'rxjs';
+import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
