@@ -192,6 +192,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     sortBy('text'),
                 )(feedbacks),
             ),
+            catchError(() => of([])),
         );
     };
 }
