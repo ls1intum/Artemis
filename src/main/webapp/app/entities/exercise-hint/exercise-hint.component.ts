@@ -1,12 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
 import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { AccountService } from 'app/core';
 import { ExerciseHintService } from './exercise-hint.service';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -19,12 +21,18 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
 
     paramSub: Subscription;
 
-    constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, protected jhiAlertService: JhiAlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        protected exerciseHintService: ExerciseHintService,
+        protected jhiAlertService: JhiAlertService,
+        protected eventManager: JhiEventManager,
+    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.exerciseId = params['exerciseId'];
             this.loadAllByExerciseId();
+            this.registerChangeInExerciseHints();
         });
     }
 
@@ -32,6 +40,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.eventManager.destroy(this.eventSubscriber);
     }
 
     loadAllByExerciseId() {
@@ -51,6 +60,10 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
 
     trackId(index: number, item: IExerciseHint) {
         return item.id;
+    }
+
+    registerChangeInExerciseHints() {
+        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', (response: any) => this.loadAllByExerciseId());
     }
 
     protected onError(errorMessage: string) {
