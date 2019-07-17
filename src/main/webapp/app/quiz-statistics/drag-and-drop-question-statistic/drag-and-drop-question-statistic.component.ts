@@ -59,6 +59,8 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
+    resizeImage = resizeImage();
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,

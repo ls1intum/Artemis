@@ -88,6 +88,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     /** {array} with domainCommands that are needed for a drag and drop question **/
     dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
+    resizeImage = resizeImage();
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
