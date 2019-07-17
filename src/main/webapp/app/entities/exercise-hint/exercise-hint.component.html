@@ -32,9 +32,7 @@
                     <td>{{ exerciseHint.title }}</td>
                     <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
                     <td>
-                        <div *ngIf="exerciseHint.exercise">
-                            <a [routerLink]="['../exercise', exerciseHint.exercise?.id, 'view']">{{ exerciseHint.exercise?.id }}</a>
-                        </div>
+                        <span>{{ exerciseHint.exercise?.id }}</span>
                     </td>
                     <td class="text-right">
                         <div class="btn-group">

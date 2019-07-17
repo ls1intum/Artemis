@@ -194,7 +194,8 @@
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
-            "scores": "Bewertungen"
+            "scores": "Bewertungen",
+            "manageHints": "Verwalte Hinweise"
         },
         "detail": {
             "field": "Feld",

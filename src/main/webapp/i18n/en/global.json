@@ -195,7 +195,8 @@
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
             "exercise": "Exercise",
-            "scores": "Scores"
+            "scores": "Scores",
+            "manageHints": "Manage hints"
         },
         "detail": {
             "field": "Field",
