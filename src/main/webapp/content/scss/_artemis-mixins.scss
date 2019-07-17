@@ -26,17 +26,17 @@
 /* drag item in drop location mixin */
 @mixin dnd-drop-location-item {
     jhi-drag-item,
-    ::ng-deep .drag-item {
+    .drag-item {
         width: 100%;
         height: 100%;
         margin: 0;
         background: white;
 
-        ::ng-deep .drag-item-text,
-        ::ng-deep .drag-item-picture {
+        .drag-item-text,
+        .drag-item-picture {
             line-height: 1;
 
-            ::ng-deep span {
+            span {
                 border: none;
                 padding: 0;
                 vertical-align: middle;

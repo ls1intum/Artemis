@@ -66,14 +66,14 @@
                 opacity: 1;
             }
 
-            ::ng-deep .drag-item {
+            .drag-item {
                 background: transparent;
                 border: none;
                 position: relative;
                 min-width: 160px;
                 max-width: 360px;
 
-                ::ng-deep img {
+                img {
                     @include dnd-drag-item-image;
                 }
 

@@ -5,7 +5,7 @@
         .drag-item {
             height: 160px;
 
-            ::ng-deep img {
+            img {
                 @include dnd-drag-item-image;
             }
         }
