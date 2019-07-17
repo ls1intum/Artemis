@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArtemisTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { ExerciseHintDeleteDialogComponent } from 'app/entities/exercise-hint/exercise-hint-delete-dialog.component';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ExerciseHintDeleteDialogComponent],
             })
                 .overrideTemplate(ExerciseHintDeleteDialogComponent, '')
