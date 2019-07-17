@@ -17,7 +17,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
-import { intersection as _intersection } from 'lodash';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
@@ -71,30 +70,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue: Result | null;
-    // We store the test cases that could be extracted from the last result's feedback here.
-    // We can't explicitly request the test cases because they might expose information to the students they should not have.
-    public latestResultTestCases: string[] | null;
+    public latestResult: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
-
-    /**
-     * Also extracts the test cases from the latest result's feedback if it is not a legacy result.
-     *
-     * @param result
-     */
-    set latestResult(result: Result | null) {
-        this.latestResultValue = result;
-        this.latestResultTestCases =
-            result && result.feedbacks && !isLegacyResult(result) ? (result.feedbacks.filter(({ text }) => !!text).map(({ text }) => text) as string[]) : null;
-    }
-
-    get latestResult() {
-        return this.latestResultValue;
-    }
 
     constructor(
         private editorService: CodeEditorService,
@@ -124,6 +105,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
+        const exerciseHasChanged = hasExerciseChanged(changes);
         // It is possible that the exercise does not have an id in case it is being created now.
         if (participationHasChanged) {
             this.isInitial = true;
@@ -392,13 +374,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
                 const tests = match[2].split(',');
-                // If test cases could be mapped from the latestResult, validate the found test cases from them.
-                const validTests = this.latestResultTestCases ? _intersection(tests, this.latestResultTestCases) : tests;
                 // Insert the testsStatus token to our rendered tokens
                 state.push({
                     type: 'testsStatus',
                     title: match[1],
-                    tests: validTests,
+                    tests,
                     level: state.level,
                 });
             }
@@ -494,11 +474,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
         const tests = tokens[0].tests || [];
-
-        // If test cases could be mapped from the latestResult, validate the found test cases from them.
-        const validTests = this.latestResultTestCases ? _intersection(tests, this.latestResultTestCases) : tests;
-
-        const [done, label] = this.statusForTests(validTests);
+        const [done, label] = this.statusForTests(tests);
         const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
@@ -506,10 +482,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !validTests.length) {
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !tests.length) {
             text += `<span class="${textColor} bold">` + label + '</span>';
         } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
-            text += '<a data-tests="' + validTests + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
+            text += '<a data-tests="' + tests + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
         text += '<br>';
 
