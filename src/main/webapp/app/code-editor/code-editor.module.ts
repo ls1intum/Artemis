@@ -43,6 +43,8 @@ import {
 
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
+import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -56,6 +58,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
+        ArtemisExerciseHintModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -74,7 +77,13 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorActionsComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent, EditorInstructionsResultDetailComponent],
+    entryComponents: [
+        CodeEditorInstructorContainerComponent,
+        CodeEditorStudentContainerComponent,
+        CodeEditorFileBrowserDeleteComponent,
+        EditorInstructionsResultDetailComponent,
+        ExerciseHintStudentDialogComponent,
+    ],
     providers: [
         JhiAlertService,
         ResultService,

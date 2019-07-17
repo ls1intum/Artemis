@@ -13,6 +13,8 @@ import {
     ExerciseHintDeleteDialogComponent,
     exerciseHintRoute,
     exerciseHintPopupRoute,
+    ExerciseHintStudentDialogComponent,
+    ExerciseHintStudentComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
@@ -20,10 +22,19 @@ const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArTEMiSMarkdownEditorModule],
-    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent],
-    entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent],
+    declarations: [
+        ExerciseHintComponent,
+        ExerciseHintDetailComponent,
+        ExerciseHintUpdateComponent,
+        ExerciseHintDeleteDialogComponent,
+        ExerciseHintDeletePopupComponent,
+        ExerciseHintStudentDialogComponent,
+        ExerciseHintStudentComponent,
+    ],
+    entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent, ExerciseHintStudentDialogComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    exports: [ExerciseHintStudentDialogComponent, ExerciseHintStudentComponent],
 })
 export class ArtemisExerciseHintModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

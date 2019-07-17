@@ -24,6 +24,7 @@
             [short]="true"
             class="mr-2"
         ></jhi-updating-result>
+        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
         <jhi-code-editor-actions
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"

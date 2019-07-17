@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,19 @@ public class ExerciseHintResource {
         log.debug("REST request to get ExerciseHint : {}", id);
         Optional<ExerciseHint> exerciseHint = exerciseHintService.findOne(id);
         return ResponseUtil.wrapOrNotFound(exerciseHint);
+    }
+
+    /**
+     * {@code GET  /exercise-hints/by-exercise-id/:id} : get the exerciseHints of a provided exercise.
+     *
+     * @param id the exercise id of which to retrieve the exercise hints.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
+     */
+    @GetMapping("/exercise-hints/by-exercise-id/{id}")
+    public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long id) {
+        log.debug("REST request to get ExerciseHint : {}", id);
+        Set<ExerciseHint> exerciseHints = exerciseHintService.findByExerciseId(id);
+        return ResponseEntity.ok(exerciseHints);
     }
 
     /**

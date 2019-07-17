@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint, IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 type EntityResponseType = HttpResponse<IExerciseHint>;
 type EntityArrayResponseType = HttpResponse<IExerciseHint[]>;
@@ -30,6 +30,10 @@ export class ExerciseHintService {
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http.get<IExerciseHint[]>(this.resourceUrl, { params: options, observe: 'response' });
+    }
+
+    findByExerciseId(exerciseId: number): Observable<HttpResponse<IExerciseHint[]>> {
+        return this.http.get<IExerciseHint[]>(`${this.resourceUrl}/by-exercise-id/${exerciseId}`, { observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {

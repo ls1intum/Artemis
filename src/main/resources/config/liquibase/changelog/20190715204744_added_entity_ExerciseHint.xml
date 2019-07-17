@@ -20,7 +20,7 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="content" type="varchar(255)">
+            <column name="content" type="varchar(2000)">
                 <constraints nullable="true" />
             </column>
 

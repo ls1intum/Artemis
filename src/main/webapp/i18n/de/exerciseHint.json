@@ -18,7 +18,11 @@
             },
             "title": "Title",
             "content": "Content",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "studentDialog": {
+                "title": "Hinweise zur Übung",
+                "tooltip": "Hinweise zu dieser Übung öffnen"
+            }
         }
     }
 }
