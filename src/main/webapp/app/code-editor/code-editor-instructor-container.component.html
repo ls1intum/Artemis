@@ -113,6 +113,7 @@
                 [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
+            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
             <jhi-code-editor-actions
                 [buildable]="selectedRepository !== REPOSITORY.TEST"
                 [unsavedFiles]="unsavedFiles"
