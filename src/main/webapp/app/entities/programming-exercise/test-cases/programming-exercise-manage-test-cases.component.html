@@ -1,0 +1,67 @@
+<jhi-alert></jhi-alert>
+<div>
+    <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
+        Manage Test Cases.
+    </h3>
+    <div class="d-flex">
+        <label class="d-flex align-items-center mb-0">
+            <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
+            <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
+        </label>
+        <button
+            id="save-weights-button"
+            class="btn btn-primary ml-2"
+            jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveWeights"
+            (click)="saveWeights()"
+            [disabled]="isSaving || !changedTestCaseIds.length"
+        ></button>
+        <button class="btn btn-danger ml-auto" (click)="resetWeights()" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"></button>
+    </div>
+    <ngx-datatable
+        id="testCaseTable"
+        class="bootstrap"
+        [headerHeight]="50"
+        [limit]="20"
+        [columnMode]="'force'"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [rows]="filteredTestCases"
+        [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+        [rowClass]="getRowClass"
+    >
+        <ngx-datatable-column name="Id" prop="id">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Test Name" prop="testName">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Weight" prop="weight">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                <span title="Double click to edit" class="edit-weight__value" *ngIf="editing !== filteredTestCases[filteredTestCases.indexOf(row)]">
+                    {{ value }}
+                </span>
+                <input
+                    #editingInput
+                    *ngIf="editing === filteredTestCases[filteredTestCases.indexOf(row)]"
+                    class="edit-weight__input"
+                    autofocus
+                    (blur)="updateWeight($event)"
+                    (keyup.enter)="updateWeight($event)"
+                    (keyup.escape)="leaveEditingWithoutSaving()"
+                    [value]="value"
+                    type="text"
+                />
+                <fa-icon icon="pencil-alt" class="edit-weight__edit-icon" (click)="enterEditing(filteredTestCases.indexOf(row))"></fa-icon>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Is Active" prop="active">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+    </ngx-datatable>
+</div>

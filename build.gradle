@@ -316,3 +316,7 @@ if (project.hasProperty('nodeInstall')) {
         download = true
     }
 }
+
+task buildJarForDocker (type: Exec) {
+    commandLine './gradlew', 'build', '-x', 'webpackBuildDev', '-x', 'webpack', '-x', 'test'
+}

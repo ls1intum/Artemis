@@ -33,7 +33,7 @@
         <div class="col-9">
             <p class="mb-3 markdown-preview">
                 <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
-                <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown | safeHtml"></span>
+                <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">

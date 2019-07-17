@@ -14,6 +14,8 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -21,6 +23,8 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
     styleUrls: ['./text-exercise-dialog.scss'],
 })
 export class TextExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     textExercise: TextExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
@@ -29,6 +33,10 @@ export class TextExerciseDialogComponent implements OnInit {
     notificationText: string | null;
 
     courses: Course[];
+
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,
