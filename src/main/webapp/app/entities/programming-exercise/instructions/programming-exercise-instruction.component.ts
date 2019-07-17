@@ -128,7 +128,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     filter(problemStatement => !!problemStatement),
                     tap(problemStatement => (this.problemStatement = problemStatement!)),
                     switchMap(() => this.loadInitialResult()),
-                    map(latestResult => (this.latestResult = latestResult)),
+                    tap(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
                         this.updateMarkdown();
                         this.isInitial = false;
