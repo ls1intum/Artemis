@@ -22,6 +22,5 @@
     <include file="classpath:config/liquibase/changelog/20190520032531_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20190603142500_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20190619134531_changelog.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:config/liquibase/changelog/20190715204744_added_entity_ExerciseHint.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:config/liquibase/changelog/20190715204744_added_entity_constraints_ExerciseHint.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20190715204745_changelog.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
