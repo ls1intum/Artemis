@@ -11,7 +11,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
                 <dd>
-                    <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
+                    <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>
