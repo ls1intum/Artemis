@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Pipe({
@@ -6,7 +7,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 })
 export class HtmlForMarkdownPipe implements PipeTransform {
     constructor(private markdownService: ArtemisMarkdown) {}
-    transform(markdown: string): string | null {
+    transform(markdown: string): SafeHtml | null {
         return this.markdownService.htmlForMarkdown(markdown);
     }
 }

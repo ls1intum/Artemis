@@ -92,9 +92,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
     watchCollection() {
         // update html for text, hint and explanation for the question
         this.rendered = new DragAndDropQuestion();
-        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
     }
 
     /**
