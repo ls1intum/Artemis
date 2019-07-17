@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core
 import { of } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
 import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 
@@ -11,14 +11,14 @@ import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diag
     templateUrl: './modeling-editor-dialog.component.html',
 })
 export class ModelingEditorDialogComponent {
-    DiagramType = DiagramType;
+    UMLDiagramType = UMLDiagramType;
     @ViewChild(ModelingEditorComponent, { static: false }) editor: ModelingEditorComponent;
     @Input()
     get diagramId() {
         return this.diagramIdValue;
     }
     @Input()
-    diagramType = DiagramType.ClassDiagram;
+    diagramType = UMLDiagramType.ClassDiagram;
     @Input()
     readOnly = false;
     @Output()
@@ -49,7 +49,7 @@ export class ModelingEditorDialogComponent {
 
     constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService) {}
 
-    selectDiagramType(diagramType: DiagramType) {
+    selectDiagramType(diagramType: UMLDiagramType) {
         this.diagramType = diagramType;
     }
 

@@ -11,16 +11,16 @@ export const ApollonExtension = (componentFactoryResolver: ComponentFactoryResol
             const regex = /(?!\[apollon\])(\d+?)(?=\[\/apollon\])/g;
             const regexTemplate = `\\[apollon\\]${idPlaceholder}\\[\\/apollon\\]`;
             const apollonHtmlContainer = `<div id="apollon-${idPlaceholder}"></div>`;
-            const apollonDiagrams = (text.match(regex) || []).map(Number);
+            const apollonDiagrams: string[] = text.match(regex) || [];
             const replacedText = apollonDiagrams.reduce(
-                (acc: string, id: string) => acc.replace(new RegExp(regexTemplate.replace(idPlaceholder, id), 'g'), apollonHtmlContainer.replace(idPlaceholder, id)),
+                (acc: string, id: string): string => acc.replace(new RegExp(regexTemplate.replace(idPlaceholder, id), 'g'), apollonHtmlContainer.replace(idPlaceholder, id)),
                 text,
             );
             apollonDiagrams
-                .reduce((acc: number[], x: number) => (acc.includes(x) ? acc : [...acc, x]), [])
-                .forEach((diagramId: number) => {
+                .reduce((acc: string[], x: string) => (acc.includes(x) ? acc : [...acc, x]), [])
+                .forEach((diagramId: string) => {
                     apollonService
-                        .find(diagramId)
+                        .find(Number(diagramId))
                         .map(({ body }) => body)
                         .toPromise()
                         .then((diagram: ApollonDiagram) => {
