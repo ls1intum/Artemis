@@ -20,7 +20,7 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
-    exercises: Exercise[];
+    exercises: Exercise[] = [];
     exerciseHint = new ExerciseHint();
 
     isSaving: boolean;
@@ -43,17 +43,17 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             this.isSaving = false;
             this.activatedRoute.data.subscribe(({ exerciseHint }) => {
                 this.exerciseHint = exerciseHint;
+                this.exerciseService
+                    .find(exerciseId)
+                    .map(({ body }) => body)
+                    .subscribe(
+                        (res: Exercise) => {
+                            this.exercises = [res];
+                            this.exerciseHint.exercise = res;
+                        },
+                        (res: HttpErrorResponse) => this.onError(res.message),
+                    );
             });
-            this.exerciseService
-                .find(exerciseId)
-                .map(({ body }) => body)
-                .subscribe(
-                    (res: Exercise) => {
-                        this.exercises = [res];
-                        this.exerciseHint.exercise = res;
-                    },
-                    (res: HttpErrorResponse) => this.onError(res.message),
-                );
         });
     }
 

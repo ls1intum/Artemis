@@ -27,9 +27,8 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
                     <select class="form-control" id="field_exercise" name="exercise" [(ngModel)]="exerciseHint.exercise" [attr.disabled]="true">
-                        <option [ngValue]="null"></option>
                         <option
-                            [ngValue]="exerciseOption.id === exerciseHint.exercise.id ? exerciseHint.exercise : exerciseOption"
+                            [ngValue]="exerciseOption.id === exerciseHint?.exercise?.id ? exerciseHint.exercise : exerciseOption"
                             *ngFor="let exerciseOption of exercises; trackBy: trackExerciseById"
                             >{{ exerciseOption.id }} ({{ exerciseOption.title }})</option
                         >
