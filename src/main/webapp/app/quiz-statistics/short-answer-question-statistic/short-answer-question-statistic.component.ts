@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService, JhiWebsocketService } from '../../core';
@@ -54,7 +55,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string | null;
+    questionTextRendered: SafeHtml | null;
 
     // options for chart in chart.js style
     options: ChartOptions;

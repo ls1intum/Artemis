@@ -50,7 +50,7 @@
             <p [innerHTML]="formattedProblemStatement"></p>
         </div>
 
-        <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution && formattedSampleSolution.length > 0">
+        <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
 
             <p [innerHTML]="formattedSampleSolution"></p>
@@ -156,6 +156,7 @@
                             <th>{{ 'artemisApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.status' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.score' | translate }}</th>
+                            <th *ngIf="exercise.type === ExerciseType_TEXT">{{ 'artemisApp.tutorExerciseDashboard.language' | translate }}</th>
                             <th>{{ 'artemisApp.tutorExerciseDashboard.action' | translate }}</th>
                         </tr>
                     </thead>
@@ -171,6 +172,9 @@
                             </td>
                             <td>
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
+                            </td>
+                            <td *ngIf="exercise.type === ExerciseType_TEXT">
+                                {{ 'artemisApp.tutorExerciseDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
                             </td>
                             <td>
                                 <button
@@ -193,6 +197,9 @@
                             <td></td>
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
+                            <td *ngIf="exercise.type === ExerciseType_TEXT">
+                                {{ 'artemisApp.tutorExerciseDashboard.languages.' + (unassessedSubmission.language ? unassessedSubmission.language : 'UNKNOWN') | translate }}
+                            </td>
                             <td>
                                 <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">
                                     <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}

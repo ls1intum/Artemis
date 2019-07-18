@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
@@ -15,9 +16,9 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     textExercise: TextExercise;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
