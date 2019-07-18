@@ -150,7 +150,7 @@
                 *ngIf="question.backgroundFilePath"
                 [src]="question.backgroundFilePath"
                 [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate"
-                (endLoadingProcess)="this.resizeImage()"
+                (endLoadingProcess)="(this.resizeImage)"
             >
             </jhi-secured-image>
             <div
