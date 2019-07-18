@@ -541,6 +541,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Participation> findWithSubmissionsWithResultsByStudentUsername(String username) {
+        return participationRepository.findByStudentUsernameWithEagerSubmissionsWithEagerResults(username);
+    }
+
+    @Transactional(readOnly = true)
     public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
