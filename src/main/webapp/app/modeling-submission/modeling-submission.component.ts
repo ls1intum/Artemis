@@ -19,6 +19,7 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -130,15 +131,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 this.assessmentResult = assessmentResult;
                                 this.prepareAssessmentData();
                             });
-                            this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                                if (res.body) {
-                                    if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                            this.complaintService
+                                .findByResultId(this.result.id)
+                                .pipe(filter(res => !!res.body))
+                                .subscribe(res => {
+                                    if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
                                         this.hasComplaint = true;
                                     } else {
                                         this.hasRequestMoreFeedback = true;
                                     }
-                                }
-                            });
+                                });
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;

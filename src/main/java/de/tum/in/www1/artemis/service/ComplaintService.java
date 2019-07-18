@@ -56,7 +56,7 @@ public class ComplaintService {
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
+        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }

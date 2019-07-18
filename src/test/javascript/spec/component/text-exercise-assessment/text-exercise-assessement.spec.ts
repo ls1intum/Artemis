@@ -111,7 +111,7 @@ describe('TextAssessmentComponent', () => {
                 hasFeedback: false,
                 submission: comp.submission,
             };
-            comp.isAuthorized = true;
+            comp.isAssessor = true;
             comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };

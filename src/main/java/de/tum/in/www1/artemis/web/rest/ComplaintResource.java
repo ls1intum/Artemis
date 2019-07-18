@@ -170,10 +170,20 @@ public class ComplaintResource {
         return ResponseEntity.ok(responseComplaints);
     }
 
+    /**
+     * Get /complaints
+     * <p>
+     * Get all the complaints filtered by different request parameters.
+     * @param tutorId the id of the tutor by which we want to filter
+     * @param exerciseId the id of the exercise we are interested in
+     * @param courseId the id of the course we are interested in
+     * @param complaintType the type of complaints we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long courseId, @RequestParam() ComplaintType complaintType) {
+    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam() ComplaintType complaintType, @RequestParam(required = false) Long tutorId,
+            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long courseId) {
         if (tutorId == null && exerciseId == null && courseId == null) {
             throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
         }

@@ -245,6 +245,9 @@ public class ExerciseResource {
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id_And_ComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
+        long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_Id_And_ComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfOpenMoreFeedbackRequests);
+
         return ResponseEntity.ok(stats);
     }
 

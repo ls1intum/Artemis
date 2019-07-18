@@ -127,7 +127,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSConnectionNotificationModule,
         ArTEMiSListOfComplaintsModule,
-        // jhipster-needze-angular-add-module JHipster will add new module here
+        // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
         JhiMainComponent,

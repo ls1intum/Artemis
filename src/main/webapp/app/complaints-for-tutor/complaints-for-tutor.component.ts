@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -28,7 +29,10 @@ export class ComplaintsForTutorComponent implements OnInit {
         this.complaintText = this.complaint.complaintText;
         this.handled = this.complaint.accepted !== undefined;
         if (this.handled) {
-            this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
+            this.complaintResponseService
+                .findByComplaintId(this.complaint.id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
         }
     }
 

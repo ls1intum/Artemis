@@ -37,15 +37,20 @@
             <button class="btn ml-2 btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
                 <span jhiTranslate="modelingAssessmentEditor.button.resolveConflict">Resolve Conflict</span>
             </button>
-            <button class="btn ml-2 btn-success" *ngIf="result?.completionDate && isAssessor" [disabled]="busy" (click)="assessNextOptimal()">
+            <button
+                class="btn ml-2 btn-success"
+                *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !complaint"
+                [disabled]="busy"
+                (click)="assessNextOptimal()"
+            >
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
         </div>
     </h3>
     <div *ngIf="complaint">
-        <div class="alert alert-info" *ngIf="complaint.complaintType == ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</div>
-        <div class="alert alert-info" *ngIf="complaint.complaintType == ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</div>
+        <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</div>
+        <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</div>
     </div>
 
     <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAssessor && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
@@ -84,7 +89,7 @@
         </div>
     </div>
 </div>
-<div class="mt-3" *ngIf="complaint && result?.id">
+<div class="mt-3" *ngIf="complaint">
     <jhi-complaints-for-tutor-form
         [complaint]="complaint"
         [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
