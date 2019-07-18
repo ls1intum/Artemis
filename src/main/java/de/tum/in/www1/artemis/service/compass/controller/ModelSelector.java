@@ -69,9 +69,9 @@ public class ModelSelector {
                         && maxCandidateListSize < MAX_CANDIDATE_LIST_SIZE) {
                     maxCandidateListSize += 5;
                 }
-
-                candidates = candidates.subList(0, Math.min(candidates.size(), maxCandidateListSize));
             }
+
+            candidates = candidates.subList(0, Math.min(candidates.size(), maxCandidateListSize));
         }
 
         List<Long> nextOptimalModels = computeModelsWithHighestSimilarity(numberOfModels, candidates, unhandledModels);
