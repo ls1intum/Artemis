@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
@@ -11,27 +11,23 @@ import { SinonStub, spy, stub } from 'sinon';
 import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { Result } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
-import { MockResultService } from '../../mocks/mock-result.service';
 import {
     ProgrammingExercise,
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseParticipationService,
-    ProgrammingExerciseTestCaseService,
     TestCaseState,
 } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
+import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
-import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
@@ -44,7 +40,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let testCaseService: ProgrammingExerciseTestCaseService;
     let modalService: NgbModal;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFileStub: SinonStub;
@@ -59,7 +54,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
@@ -72,7 +66,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
-                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 modalService = debugElement.injector.get(NgbModal);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = stub(modalService, 'open');
@@ -213,7 +206,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.ngOnChanges({
             exercise: {
                 previousValue: { ...exercise, problemStatement: oldProblemStatement },
-                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
@@ -234,7 +227,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.ngOnChanges({
             exercise: {
                 previousValue: undefined,
-                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
@@ -268,14 +261,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completionDate: moment('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
-        const testCases = [{ testName: 'testBubbleSort', active: true }, { testName: 'testMergeSort', active: true }];
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.exerciseTestCases = testCases.map(({ testName }: { testName: string }) => testName);
 
         comp.updateMarkdown();
 
@@ -306,14 +297,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completionDate: moment('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
-        const testCases = [{ testName: 'testBubbleSort', active: true }, { testName: 'testMergeSort', active: true }];
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.exerciseTestCases = testCases.map(({ testName }: { testName: string }) => testName);
 
         comp.updateMarkdown();
 
@@ -350,9 +339,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases.slice(0, 1));
         expect(taskState1).to.equal(TestCaseState.SUCCESS);
 
+        // @ts-ignore
         const [taskState2] = comp.statusForTests(testCases.slice(2));
         expect(taskState2).to.equal(TestCaseState.SUCCESS);
     });
@@ -368,6 +359,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.FAIL);
     });
@@ -383,6 +375,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.FAIL);
     });
@@ -398,6 +391,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.NOT_EXECUTED);
     });

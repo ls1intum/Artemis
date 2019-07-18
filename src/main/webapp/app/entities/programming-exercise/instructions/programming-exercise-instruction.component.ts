@@ -17,7 +17,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as Remarkable from 'remarkable';
-import { intersection as _intersection } from 'lodash';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
@@ -31,7 +30,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
@@ -65,9 +64,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public onNoInstructionsAvailable = new EventEmitter();
     @Output()
     public resultChange = new EventEmitter<Result>();
-    @Output() public exerciseTestCasesChange = new EventEmitter<ProgrammingExerciseTestCase[] | null>();
-
-    exerciseTestCases: string[] | null = null;
 
     public problemStatement: string;
     public participationSubscription: Subscription;
@@ -81,15 +77,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
 
-    testCaseSubscription: Subscription;
-
     constructor(
         private editorService: CodeEditorService,
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private testCaseService: ProgrammingExerciseTestCaseService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
@@ -113,11 +106,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
-        const exerciseHasChanged = hasExerciseChanged(changes);
         // It is possible that the exercise does not have an id in case it is being created now.
-        if (exerciseHasChanged && this.exercise.id) {
-            this.setupTestCaseSubscription();
-        }
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
@@ -139,7 +128,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     filter(problemStatement => !!problemStatement),
                     tap(problemStatement => (this.problemStatement = problemStatement!)),
                     switchMap(() => this.loadInitialResult()),
-                    map(latestResult => (this.latestResult = latestResult)),
+                    tap(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
                         this.updateMarkdown();
                         this.isInitial = false;
@@ -153,25 +142,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.problemStatement = this.exercise.problemStatement!;
             this.updateMarkdown();
         }
-    }
-
-    private setupTestCaseSubscription() {
-        if (this.testCaseSubscription) {
-            this.testCaseSubscription.unsubscribe();
-        }
-
-        this.testCaseSubscription = this.testCaseService
-            .subscribeForTestCases(this.exercise.id)
-            .pipe(
-                tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
-                filter(testCases => !!testCases),
-                tap(testCases => {
-                    this.exerciseTestCases = testCases && testCases.filter(({ active }) => active).map(({ testName }) => testName);
-                }),
-                // The test cases validate the task specific tests, so we need to update the markdown here.
-                tap(() => this.updateMarkdown()),
-            )
-            .subscribe();
     }
 
     /**
@@ -397,12 +367,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
                 const tests = match[2].split(',');
-                const validTests = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases) : tests;
                 // Insert the testsStatus token to our rendered tokens
                 state.push({
                     type: 'testsStatus',
                     title: match[1],
-                    tests: validTests,
+                    tests,
                     level: state.level,
                 });
             }
@@ -500,17 +469,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
         const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-        const validTestCases = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases).toString() : tests;
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !validTestCases.length) {
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !tests.length) {
             text += `<span class="${textColor} bold">` + label + '</span>';
         } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
-            text += '<a data-tests="' + validTestCases + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
+            text += '<a data-tests="' + tests + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
         text += '<br>';
 
@@ -603,9 +571,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps = [];
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
-        }
-        if (this.testCaseSubscription) {
-            this.testCaseSubscription.unsubscribe();
         }
     }
 }
