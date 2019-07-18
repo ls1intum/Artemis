@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
@@ -15,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
+import de.tum.in.www1.artemis.service.TextClusteringService;
+import de.tum.in.www1.artemis.service.TextExerciseService;
 
 @Service
 @Profile("automaticText")

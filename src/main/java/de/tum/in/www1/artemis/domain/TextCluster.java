@@ -1,13 +1,25 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -33,10 +45,7 @@ public class TextCluster implements Serializable {
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
-    @Lob
-    @Column(name = "block_order")
-    private byte[] blockOrder;
-
+    @OrderColumn(name = "position_in_cluster")
     @OneToMany(mappedBy = "cluster")
     @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();
@@ -80,18 +89,8 @@ public class TextCluster implements Serializable {
         this.distanceMatrix = castToBinary(distanceMatrix);
     }
 
-    private String[] getBlockOrder() {
-        return castFromBinary(blockOrder);
-    }
-
-    public void storeBlockOrder() {
-        final String[] blockOrder = (String[]) blocks.stream().map(TextBlock::getId).toArray();
-        this.blockOrder = castToBinary(blockOrder);
-    }
-
     public int getBlockIndex(TextBlock textBlock) {
-        final String[] order = getBlockOrder();
-        return IntStream.range(0, order.length).filter(i -> textBlock.getId().equals(order[i])).findFirst().orElse(-1);
+        return blocks.indexOf(textBlock);
     }
 
     public List<TextBlock> getBlocks() {
@@ -166,8 +165,7 @@ public class TextCluster implements Serializable {
 
     @Override
     public String toString() {
-        return "TextCluster{" + "id=" + getId() + ", probabilities='" + Arrays.toString(getProbabilities()) + "'" + ", distanceMatrix='" + Arrays.deepToString(getDistanceMatrix())
-                + "'" + "}";
+        return "TextCluster{" + "id=" + getId() + ", exercise='" + exercise.getId() + "'" + ", size='" + size() + "'" + "}";
     }
 
     // region Binary Cast

@@ -28,8 +28,10 @@ artemis:
         name: ArTEMiS
         email: artemis@in.tum.de
     automatic-text:
-        url: http://localhost:8000/cluster
-        secret: foo
+        embedding-url: http://localhost:8000/embed
+        embedding-chunk-size: 50
+        clustering-url: http://localhost:8000/cluster
+        secret: null
 logging:
     level:
         ROOT: INFO

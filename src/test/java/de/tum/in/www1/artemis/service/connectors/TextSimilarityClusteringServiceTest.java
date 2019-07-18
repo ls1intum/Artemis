@@ -18,19 +18,28 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextEmbedding;
+import de.tum.in.www1.artemis.exception.NetworkingError;
 
 public class TextSimilarityClusteringServiceTest {
 
-    private static String API_ENDPOINT = "http://localhost:8000/cluster";
+    private static String CLUSTERING_ENDPOINT = "http://localhost:8000/cluster";
+
+    private static String EMBEDDING_ENDPOINT = "http://localhost:8000/embed";
 
     @Test
-    public void clusterTextBlocks() throws TextSimilarityClusteringService.NetworkingError {
+    public void clusterTextBlocks() throws NetworkingError {
         final TextSimilarityClusteringService service = new TextSimilarityClusteringService();
-        ReflectionTestUtils.setField(service, "API_ENDPOINT", API_ENDPOINT);
+        ReflectionTestUtils.setField(service, "API_ENDPOINT", CLUSTERING_ENDPOINT);
 
         final List<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text).startIndex(0).endIndex(3)).peek(TextBlock::computeId).collect(toList());
 
-        final Map<Integer, TextCluster> clusterDictionary = service.clusterTextBlocks(blocks);
+        // TODO: Properly split tests
+        final TextEmbeddingService textEmbeddingService = new TextEmbeddingService();
+        ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", EMBEDDING_ENDPOINT);
+        final List<TextEmbedding> embeddings = textEmbeddingService.embedTextBlocks(blocks);
+
+        final Map<Integer, TextCluster> clusterDictionary = service.clusterTextBlocks(embeddings);
 
         assertThat(clusterDictionary.keySet(), hasSize(1));
         assertThat(clusterDictionary.keySet(), hasItem(-1));
@@ -41,7 +50,7 @@ public class TextSimilarityClusteringServiceTest {
 
         final double[][] distanceMatrix = cluster.getDistanceMatrix();
         assertThat(distanceMatrix[0][1], is(equalTo(distanceMatrix[1][0])));
-        assertThat(distanceMatrix[0][1], is(both(greaterThan(0.6)).and(lessThan(0.8))));
+        assertThat(distanceMatrix[0][1], is(both(greaterThan(0.5)).and(lessThan(0.7))));
     }
 
     @BeforeClass
@@ -51,7 +60,7 @@ public class TextSimilarityClusteringServiceTest {
 
     private static boolean isTextAssessmentClusteringAvailable() {
         try {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(API_ENDPOINT).openConnection();
+            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(CLUSTERING_ENDPOINT).openConnection();
             httpURLConnection.setRequestMethod("HEAD");
             httpURLConnection.setConnectTimeout(1000);
             final int responseCode = httpURLConnection.getResponseCode();
