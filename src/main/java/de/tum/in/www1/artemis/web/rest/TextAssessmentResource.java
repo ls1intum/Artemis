@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -152,11 +151,10 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
-    @Transactional
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
-        final Result result = resultService.findOneWithSubmission(resultId);
+        final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
         final Exercise exercise = result.getParticipation().getExercise();
         checkAuthorization(exercise);
 
