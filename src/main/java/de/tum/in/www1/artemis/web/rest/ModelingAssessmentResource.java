@@ -132,7 +132,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return notFound();
         }
 
-        if (!isUserAllowedToGetAssessment(exercise, participation, result)) {
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
             return forbidden();
         }
 
@@ -296,20 +296,5 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @Override
     String getEntityName() {
         return ENTITY_NAME;
-    }
-
-    /**
-     * Checks if the current user is allowed to retrieve the given result. The user is allowed to retrieve the result if he is a student in the corresponding course, the submission
-     * is his submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
-     *
-     * @param exercise      the corresponding exercise
-     * @param participation the participation the result belongs to
-     * @param result        the result that should be sent to the client
-     * @return true if the user is allowed to retrieve the given result, false otherwise
-     */
-    private boolean isUserAllowedToGetAssessment(Exercise exercise, Participation participation, Result result) {
-        return courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) && authCheckService.isOwnerOfParticipation(participation)
-                && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
-                && result.getCompletionDate() != null;
     }
 }
