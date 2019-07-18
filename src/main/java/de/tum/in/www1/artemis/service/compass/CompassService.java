@@ -105,9 +105,6 @@ public class CompassService {
      * @return Ids of the next optimal models, an empty list if all models have been assessed for the given exercise
      */
     private List<Long> getNextOptimalModels(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
-            return null;
-        }
         return compassCalculationEngines.get(exerciseId).getNextOptimalModels(NUMBER_OF_NEW_OPTIMAL_MODELS);
     }
 
@@ -118,7 +115,7 @@ public class CompassService {
      * @param modelSubmissionId the id of the model submission which can be removed
      */
     public void removeModelWaitingForAssessment(long exerciseId, long modelSubmissionId) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return;
         }
         compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelSubmissionId, true);
@@ -133,7 +130,7 @@ public class CompassService {
      * @return a list of optimal model Ids waiting for an assessment by an assessor
      */
     public List<Long> getModelsWaitingForAssessment(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return new ArrayList<>();
         }
 
@@ -194,7 +191,7 @@ public class CompassService {
      * @param exerciseId the exerciseId
      */
     public void resetModelsWaitingForAssessment(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return;
         }
         List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
@@ -212,7 +209,7 @@ public class CompassService {
      *         assessor
      */
     public List<Feedback> getPartialAssessment(long exerciseId, Submission submission) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return null;
         }
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
@@ -229,7 +226,7 @@ public class CompassService {
      */
     public void addAssessment(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
         log.info("Add assessment for exercise " + exerciseId + " and model " + submissionId);
-        if (!loadExerciseIfSuspended(exerciseId)) { // TODO rework after distinguishing between saved and submitted assessments
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) { // TODO rework after distinguishing between saved and submitted assessments
             return;
         }
 
@@ -241,6 +238,10 @@ public class CompassService {
     }
 
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
+        if (!isSupported(exerciseId)) {
+            return new ArrayList<>();
+        }
+
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
         Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
@@ -285,11 +286,6 @@ public class CompassService {
      * @param exerciseId   the id of the corresponding exercise
      */
     private void assessAutomatically(long submissionId, long exerciseId) {
-        // Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
-        if (!isSupported(exerciseId)) {
-            return;
-        }
-
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
         ModelingSubmission modelingSubmission = findModelingSubmissionById(submissionId);
 
@@ -312,11 +308,6 @@ public class CompassService {
      * @param exerciseId    the id of the corresponding exercise
      */
     private void assessAllAutomatically(Collection<Long> submissionIds, long exerciseId) {
-        // Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
-        if (!isSupported(exerciseId)) {
-            return;
-        }
-
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
         List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(submissionIds);
 
@@ -461,7 +452,7 @@ public class CompassService {
      * @param model      the new model as raw string
      */
     public void addModel(long exerciseId, long modelId, String model) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return;
         }
         compassCalculationEngines.get(exerciseId).notifyNewModel(model, modelId);
@@ -526,7 +517,7 @@ public class CompassService {
      * @return statistics about the UML model
      */
     public JsonObject getStatistics(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return new JsonObject();
         }
         return compassCalculationEngines.get(exerciseId).getStatistics();
@@ -537,7 +528,7 @@ public class CompassService {
      * @return new list with all feedbacks handed over except the ones without a reference which therefore are considered general feedback
      */
     private List<Feedback> filterOutGeneralFeedback(List<Feedback> modelingAssessment) {
-        return modelingAssessment.stream().filter(feedback -> feedback.hasReference()).collect(Collectors.toList());
+        return modelingAssessment.stream().filter(Feedback::hasReference).collect(Collectors.toList());
     }
 
     // Call every night at 2:00 am to free memory for unused calculation engines (older than 1 day)
