@@ -5056,10 +5056,10 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=
 
-fork-ts-checker-webpack-plugin@1.4.3:
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-1.4.3.tgz#2252c1f8ad1b25313e056835d939b423ea240cd6"
-  integrity sha512-srf43Z3B1hCJNrwCG78DbHmWgKQUqHKsvFbLP182gank28j9s05KJbSZaMKBA0b6Pqi0LBLpAFWeB0JPbc1iLQ==
+fork-ts-checker-webpack-plugin@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-1.4.0.tgz#56a91667dfd7746248557d4f533772892e9ec474"
+  integrity sha512-Sy8rowZZJuGbu5NoBhk+XiSFpspxt9vJO6XOvPNonajm+8SFddUM375697Sn5b3RVVu/xPD9fZyNHCIbFUGnRA==
   dependencies:
     babel-code-frame "^6.22.0"
     chalk "^2.4.1"
@@ -12686,6 +12686,11 @@ typescript@3.4.5:
   version "3.4.5"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.4.5.tgz#2d2618d10bb566572b8d7aad5180d84257d70a99"
   integrity sha512-YycBxUb49UUhdNMU5aJ7z5Ej2XGmaIBL0x34vZ82fn3hGvD+bgrMrVDpatgz2f7YxUMJxMkbWxJZeAvDxVe7Vw==
+
+typescript@3.5.3:
+  version "3.5.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.5.3.tgz#c830f657f93f1ea846819e929092f5fe5983e977"
+  integrity sha512-ACzBtm/PhXBDId6a6sDJfroT2pOWt/oOnk4/dElG5G33ZL776N3Y6/6bKZJBFpd+b05F3Ct9qDjMeJmRWtE2/g==
 
 ua-parser-js@0.7.17:
   version "0.7.17"
