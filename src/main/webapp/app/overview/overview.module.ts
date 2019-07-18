@@ -66,7 +66,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseDetailsStudentActionsComponent,
     ],
     entryComponents: [],
-    providers: [GuidedTourService, OverviewComponent, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [GuidedTourService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     exports: [],
 })

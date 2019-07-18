@@ -166,7 +166,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         });
     }
 
-    /* Start tour by hovering the orb */
+    /* Handle orb event */
     public handleOrb(): void {
         this.guidedTourService.activateOrb();
         if (this.currentTourStep && this.currentTourStep.selector) {

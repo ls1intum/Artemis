@@ -27,7 +27,7 @@ export class OverviewComponent {
         private guidedTourService: GuidedTourService,
     ) {
         this.loadAndFilterCourses();
-        this.guidedTourService.getGuidedTourSettings();
+
         setTimeout(() => {
             if (guidedTourService.guidedTourSettings && guidedTourService.guidedTourSettings.showCourseOverviewTour) {
                 this.startTour();
@@ -69,7 +69,7 @@ export class OverviewComponent {
     }
 
     public startTour(): void {
-        this.guidedTourService.getOverviewTour()!.subscribe(tour => {
+        this.guidedTourService.getOverviewTour().subscribe(tour => {
             this.overviewTour = tour;
             this.guidedTourService.startTour(this.overviewTour);
         });

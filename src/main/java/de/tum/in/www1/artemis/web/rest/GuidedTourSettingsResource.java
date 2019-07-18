@@ -49,7 +49,7 @@ public class GuidedTourSettingsResource {
     /**
      * UPDATE /guided-tour-settings: update all guided tour settings of the current user
      *
-     * @return UserDTO
+     * @return the guided tour settings
      */
     @PutMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")

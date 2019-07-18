@@ -1,5 +1,5 @@
 import { ErrorHandler, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, of, Subject } from 'rxjs';
@@ -31,6 +31,8 @@ export class GuidedTourService {
     private _onResizeMessage = false;
 
     constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService) {
+        this.getGuidedTourSettings();
+
         this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
         this.guidedTourOrbShowingStream = this._guidedTourOrbShowingSubject.asObservable();
 
@@ -56,7 +58,7 @@ export class GuidedTourService {
     /**
      * Load course overview tour
      */
-    public getOverviewTour(): Observable<GuidedTour> | null {
+    public getOverviewTour(): Observable<GuidedTour> {
         return of(courseOverviewTour);
     }
 
@@ -196,6 +198,7 @@ export class GuidedTourService {
         }
     }
 
+    /* Start tour with orb */
     public activateOrb(): void {
         this._guidedTourOrbShowingSubject.next(false);
         document.body.classList.add('tour-open');
@@ -264,6 +267,7 @@ export class GuidedTourService {
         return this._currentTour && this._currentTour.steps ? this._currentTour.steps.length : 0;
     }
 
+    /* Prevents the tour from advancing by clicking the backdrop */
     public get preventBackdropFromAdvancing(): boolean {
         if (this._currentTour) {
             return this._currentTour && (this._currentTour.preventBackdropFromAdvancing ? this._currentTour.preventBackdropFromAdvancing : false);
@@ -272,8 +276,8 @@ export class GuidedTourService {
     }
 
     /**
-     *
-     * @param index
+     * Get the tour step with defined orientation
+     * @param index current tour step index
      */
     private getPreparedTourStep(index: number): TourStep | undefined {
         if (this._currentTour) {
