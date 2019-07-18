@@ -143,9 +143,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                     return ParticipationStatus.EXERCISE_MISSED;
                 }
             } else if (participation.initializationState === InitializationState.FINISHED) {
-                if (this.isParticipationInDuetime(participation, exercise)) {
+                if (this.isSubmissionInDueTime(participation, exercise)) {
                     if (this.hasResults(participation)) {
-                        console.log(participation);
                         return ParticipationStatus.EXERCISE_GRADED;
                     } else {
                         return ParticipationStatus.EXERCISE_SUBMITTED;
@@ -178,12 +177,15 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         return participation.results && participation.results.length > 0;
     }
 
-    isParticipationInDuetime(participation: Participation, exercise: Exercise): boolean {
-        return participation.initializationDate.isBefore(exercise.dueDate);
+    isSubmissionInDueTime(participation: Participation, exercise: Exercise): boolean {
+        if (participation.latestSubmissionDate && exercise.dueDate) return participation.latestSubmissionDate.isBefore(exercise.dueDate);
+        else if (!exercise.dueDate) return true;
+        else return false; // latestSubmissionDate is null
     }
 
     isExerciseInDuedate(exercise: Exercise): boolean {
-        return exercise.dueDate.isAfter(moment());
+        if (exercise.dueDate) return exercise.dueDate.isAfter(moment());
+        return true;
     }
 
     showDetails(event: any) {
