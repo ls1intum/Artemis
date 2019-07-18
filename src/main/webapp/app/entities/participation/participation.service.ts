@@ -104,6 +104,7 @@ export class ParticipationService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
+            res.body.latestSubmissionDate = res.body.latestSubmissionDate != null ? moment(res.body.latestSubmissionDate) : null;
             res.body.results = this.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
@@ -130,6 +131,7 @@ export class ParticipationService {
 
     protected convertParticipationDateFromServer(participation: Participation) {
         participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        participation.latestSubmissionDate = participation.latestSubmissionDate != null ? moment(participation.latestSubmissionDate) : null;
         participation.results = this.convertResultsDateFromServer(participation.results);
         participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
         return participation;
@@ -177,6 +179,7 @@ export class ParticipationService {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.initializationState = participations[0].initializationState;
             combinedParticipation.initializationDate = participations[0].initializationDate;
+            combinedParticipation.latestSubmissionDate = participations[0].latestSubmissionDate;
             combinedParticipation.presentationScore = participations[0].presentationScore;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             combinedParticipation.student = participations[0].student;
