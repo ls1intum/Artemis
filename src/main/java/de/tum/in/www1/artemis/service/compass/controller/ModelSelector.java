@@ -8,8 +8,19 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiag
 
 public class ModelSelector {
 
+    /**
+     * Maximal number of models that are considered for calculating the next optimal models that need to be assessed, i.e. we take the MAX_CANDIDATE_LIST_SIZE models with the
+     * lowest coverage as candidates for the next optimal models at max. These candidates are then further processed (see selectNextModels method). We use this limit to prevent
+     * that the selection of the next optimal models takes too much time.
+     */
     private static final int MAX_CANDIDATE_LIST_SIZE = 50;
 
+    /**
+     * This is used when calculating the models with the highest similarity to all other models. The models are stored together with their calculated similarity in a
+     * SortedMap<Double, Long> that maps similarity -> modelId (see computeModelsWithHighestSimilarity method). We add this small amount to every similarity to prevent duplicates.
+     * E.g if all models are exactly the same, their similarity is exactly the same as well. This would result in only one element in the sorted map as duplicate keys are not
+     * permitted. So we add a small epsilon value that does not impact the order of the similarities, but prevents these duplicate similarity values.
+     */
     private static final double EPSILON = 0.0000001;
 
     /**
