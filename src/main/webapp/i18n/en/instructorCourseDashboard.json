@@ -11,7 +11,7 @@
             "assessments": "Assessments",
             "open": "submissions not assessed",
             "openComplaint": "complaints not reviewed",
-            "openRequest": "requests not reviewed",
+            "openRequest": "requests not answered",
             "noExercise": "There is no exercise for this course",
             "exercise": "Exercise",
             "dueDate": "Due date",

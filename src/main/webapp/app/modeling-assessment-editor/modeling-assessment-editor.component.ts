@@ -37,7 +37,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     assessmentsAreValid = false;
     busy: boolean;
     userId: number;
-    isAuthorized = false;
+    isAssessor = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
     complaint: Complaint;
@@ -213,10 +213,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private checkPermissions(): void {
-        this.isAuthorized = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {

@@ -20,6 +20,7 @@ import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -89,6 +90,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
@@ -324,17 +326,17 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     calculateComplaintStatus(accepted?: boolean) {
         if (accepted !== undefined) {
-            return 'The complaint has already been evaluated';
+            return this.translateService.instant('artemisApp.tutorExerciseDashboard.complaintEvaluated');
         }
         // in the case of 'undefined' the complaint is not yet handled
-        return 'The complaint still needs to be evaluated';
+        return this.translateService.instant('artemisApp.tutorExerciseDashboard.complaintEvaluated');
     }
 
     calculateMoreFeedbackStatus(accepted?: boolean) {
         if (accepted !== undefined) {
-            return 'More Feedback Request has already been evaluated';
+            return this.translateService.instant('artemisApp.tutorExerciseDashboard.moreFeedbackRequestEvaluated');
         }
         // in the case of 'undefined' the more feedback request is not yet handled
-        return 'More Feedback Request still needs to be evaluated';
+        return this.translateService.instant('artemisApp.tutorExerciseDashboard.moreFeedbackRequestNotEvaluated');
     }
 }
