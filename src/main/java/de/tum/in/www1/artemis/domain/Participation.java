@@ -12,12 +12,10 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -96,6 +94,9 @@ public class Participation implements Serializable {
     @JsonIgnoreProperties("participations")
     @JsonView(QuizView.Before.class)
     private Exercise exercise;
+
+    @Transient
+    private ZonedDateTime latestSubmissionDate;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -254,6 +255,21 @@ public class Participation implements Serializable {
     public Participation exercise(Exercise exercise) {
         this.exercise = exercise;
         return this;
+    }
+
+    @JsonProperty("latestSubmissionDate")
+    public ZonedDateTime getLatestSubmissionDate() {
+        return this.latestSubmissionDate;
+    }
+
+    public void setLatestSubmissionDate() {
+        if (this.exercise instanceof ModelingExercise) {
+
+            this.findLatestModelingSubmission().ifPresent(s -> this.latestSubmissionDate = s.getSubmissionDate());
+        }
+        else if (this.exercise instanceof TextExercise) {
+            this.findLatestTextSubmission().ifPresent(s -> this.latestSubmissionDate = s.getSubmissionDate());
+        }
     }
 
     @JsonIgnore
