@@ -25,9 +25,9 @@ public final class SecurityUtils {
      * @return the login of the current user
      */
     public static Optional<String> getCurrentUserLogin() {
-        String customUserName = UserService.customUserName();
-        if (customUserName != null) {
-            return Optional.of(customUserName);
+        Optional customUserName = UserService.customUserName();
+        if (customUserName.isPresent()) {
+            return customUserName;
         }
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication()).map(authentication -> {

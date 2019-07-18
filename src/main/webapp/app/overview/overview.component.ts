@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService, UserService } from 'app/core';
 import { CUSTOM_USER_KEY } from 'app/app.constants';
 
 @Component({
@@ -17,9 +17,11 @@ export class OverviewComponent {
     public nextRelevantCourse: Course;
     public startLoginProcess = false;
     public selectedUserLogin: string | null;
+    public userNotFound: boolean;
 
     constructor(
         private courseService: CourseService,
+        private userService: UserService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private localStorageService: LocalStorageService,
@@ -75,9 +77,25 @@ export class OverviewComponent {
             this.localStorageService.clear(CUSTOM_USER_KEY);
             return;
         }
-        this.startLoginProcess = false;
-        this.localStorageService.store(CUSTOM_USER_KEY, this.selectedUserLogin);
-        this.loadAndFilterCourses();
+        this.userService.find(this.selectedUserLogin).subscribe(
+            res => {
+                this.startLoginProcess = false;
+                if (res.body) {
+                    this.localStorageService.store(CUSTOM_USER_KEY, this.selectedUserLogin);
+                    this.loadAndFilterCourses();
+                } else {
+                }
+            },
+            error => {
+                this.userNotFound = true;
+                this.startLoginProcess = false;
+                this.selectedUserLogin = null;
+                this.localStorageService.clear(CUSTOM_USER_KEY);
+                setTimeout(() => {
+                    this.userNotFound = false;
+                }, 1500);
+            },
+        );
     }
 
     removeUserLogin(): void {

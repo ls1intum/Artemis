@@ -29,6 +29,7 @@
         <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
     <div *jhiHasAnyAuthority="['ROLE_ADMIN']">
+        <span class="text-danger" *ngIf="userNotFound">{{ 'artemisApp.studentDashboard.studentLogin.userNotFound' | translate }}</span>
         <div class="btn btn-primary" *ngIf="!startLoginProcess && !selectedUserLogin" (click)="startLoginProcess = !startLoginProcess">
             {{ 'artemisApp.studentDashboard.studentLogin.loginAsStudent' | translate }}
         </div>

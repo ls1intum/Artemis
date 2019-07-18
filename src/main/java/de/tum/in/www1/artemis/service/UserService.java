@@ -407,33 +407,31 @@ public class UserService {
      * @return isCustomUserNameActive
      */
     public static Boolean isCustomUserNameActive() {
-        String customUserName = customUserName();
+        Optional<String> customUserName = customUserName();
 
-        if (customUserName == null) {
-            return false;
-        }
-        return true;
+        return customUserName.isPresent();
     }
 
     /**
      * Checks if the actually logged in user is admin If user is admin it returns the custom user name saved in the session if it exsits
      * 
-     * @return customUserName if exists or null
+     * @return Optional customUserName
      */
-    public static String customUserName() {
-        boolean isAdmin = SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
-        if (!isAdmin) {
-            return null;
-        }
+    public static Optional<String> customUserName() {
         String customUserName = null;
         try {
             ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
             HttpSession session = requestAttributes.getRequest().getSession();
             customUserName = (String) session.getAttribute("customUser");
-            return customUserName;
         }
         catch (Exception e) {
-            return null;
+            // leave customUserName null
         }
+        boolean isAdmin = SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
+        if (!isAdmin) {
+            // if user is no admin customUserName is always null
+            customUserName = null;
+        }
+        return Optional.ofNullable(customUserName);
     }
 }

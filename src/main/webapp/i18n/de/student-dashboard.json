@@ -10,7 +10,8 @@
                 "loginAsStudent": "Als Student anmelden",
                 "logout": "Abmelden",
                 "login": "Anmelden",
-                "loggedInAs": "Eingeloggt als:"
+                "loggedInAs": "Eingeloggt als:",
+                "userNotFound": "Der Nutzer wurde nicht gefunden"
             },
             "register": {
                 "signUp": "Für einen Kurs anmelden",
