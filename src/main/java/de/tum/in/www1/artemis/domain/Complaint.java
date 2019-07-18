@@ -110,8 +110,8 @@ public class Complaint implements Serializable {
         return this;
     }
 
-    public void setComplaintType(ComplaintType ComplaintType) {
-        this.complaintType = ComplaintType;
+    public void setComplaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
     }
 
     public String getResultBeforeComplaint() {

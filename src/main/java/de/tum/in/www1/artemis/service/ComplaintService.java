@@ -102,22 +102,22 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResult_Participation_Exercise_Course_Id_And_ComplaintType(courseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResult_Participation_Exercise_Course_Id_And_ComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
     public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResult_Participation_Exercise_Id_And_ComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)
     public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResult_Participation_Exercise_Id_And_ComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
