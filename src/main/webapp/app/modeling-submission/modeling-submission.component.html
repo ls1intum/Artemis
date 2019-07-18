@@ -144,8 +144,14 @@
 </div>
 
 <div *ngIf="showComplaintForm || hasComplaint">
-    <jhi-complaint-form class="row" [resultId]="result?.id" [allowedComplaints]="numberOfAllowedComplaints" (submit)="hasComplaint = true"></jhi-complaint-form>
+    <jhi-complaint-form
+        class="row"
+        [resultId]="result?.id"
+        [allowedComplaints]="numberOfAllowedComplaints"
+        [complaintType]="ComplaintType.COMPLAINT"
+        (submit)="hasComplaint = true"
+    ></jhi-complaint-form>
 </div>
 <div class="row" *ngIf="showRequestMoreFeedbackForm || hasRequestMoreFeedback">
-    <jhi-more-feedback-form class="flex-grow-1" [resultId]="result?.id" (submit)="hasRequestMoreFeedback = true"></jhi-more-feedback-form>
+    <jhi-complaint-form class="flex-grow-1" [resultId]="result?.id" [complaintType]="ComplaintType.MORE_FEEDBACK" (submit)="hasRequestMoreFeedback = true"></jhi-complaint-form>
 </div>

@@ -10,7 +10,6 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
-import { ArTEMiSMoreFeedbackModule } from 'app/more-feedback';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 
@@ -24,7 +23,6 @@ const ENTITY_STATES = [...modelingSubmissionRoute];
         ArTEMiSModelingEditorModule,
         ModelingAssessmentModule,
         ArTEMiSComplaintsModule,
-        ArTEMiSMoreFeedbackModule,
     ],
     declarations: [ModelingSubmissionComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

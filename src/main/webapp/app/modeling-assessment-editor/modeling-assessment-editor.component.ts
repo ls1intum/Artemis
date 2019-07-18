@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -141,7 +142,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {
-            this.getComplaint();
+            this.getComplaint(this.result.id);
         }
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
@@ -169,19 +170,19 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.isLoading = false;
     }
 
-    private getComplaint(): void {
+    private getComplaint(id: number): void {
         if (this.result) {
-            this.complaintService.findByResultId(this.result.id).subscribe(
-                res => {
-                    if (!res.body) {
-                        return;
-                    }
-                    this.complaint = res.body;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError();
-                },
-            );
+            this.complaintService
+                .findByResultId(id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(
+                    res => {
+                        this.complaint = res.body!;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError();
+                    },
+                );
         }
     }
 

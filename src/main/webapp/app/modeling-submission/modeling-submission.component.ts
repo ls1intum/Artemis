@@ -70,6 +70,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
+    ComplaintType = ComplaintType;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,

@@ -41,6 +41,7 @@ export class TextEditorComponent implements OnInit {
     isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
+    ComplaintType = ComplaintType;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;

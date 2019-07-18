@@ -42,8 +42,6 @@ describe('ComplaintsComponent', () => {
     }));
 
     it('should initialize with correct values for complaints service', fakeAsync(() => {
-        let textarea: HTMLTextAreaElement = debugElement.query(By.css('#complainTextArea')).nativeElement;
-        expect(textarea.value).to.be.equal('');
         fixture.detectChanges();
         expect(comp.complaintText).to.be.equal(MockComplaintResponse.body.complaintText);
         expect(comp.alreadySubmitted).to.be.true;
@@ -52,9 +50,20 @@ describe('ComplaintsComponent', () => {
         expect(comp.handled).to.be.false;
         tick();
 
-        textarea = debugElement.query(By.css('#complainTextArea')).nativeElement;
+        const textarea = debugElement.query(By.css('#complainTextArea')).nativeElement;
         expect(textarea.disabled).to.be.true;
         expect(textarea.value).to.be.equal(MockComplaintResponse.body.complaintText);
         expect(textarea.readOnly).to.be.true;
     }));
+    it('should show accepted message when complaint is accepted', () => {
+        comp.resultId = 111;
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(comp.alreadySubmitted).to.be.true;
+        expect(comp.submittedDate).to.be.undefined;
+        expect(comp.accepted).to.be.true;
+        expect(comp.handled).to.be.true;
+
+        expect(debugElement.query(By.css('.text-light.bg-success'))).to.be.not.null;
+    });
 });
