@@ -109,7 +109,7 @@ version = '3.4.0'
 description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
+    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -315,4 +315,8 @@ if (project.hasProperty('nodeInstall')) {
         yarnVersion = "${yarn_version}"
         download = true
     }
+}
+
+task buildJarForDocker (type: Exec) {
+    commandLine './gradlew', 'build', '-x', 'webpackBuildDev', '-x', 'webpack', '-x', 'test'
 }

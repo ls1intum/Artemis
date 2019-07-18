@@ -10,5 +10,6 @@ export * from './programming-exercise-detail.component';
 export * from './programming-exercise.component';
 export * from './programming-exercise-update.component';
 export * from './status/programming-exercise-instructor-status.component';
+export * from './test-cases/programming-exercise-manage-test-cases.component';
 export * from './programming-exercise.route';
 export * from './services';
