@@ -178,13 +178,19 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     }
 
     isSubmissionInDueTime(participation: Participation, exercise: Exercise): boolean {
-        if (participation.latestSubmissionDate && exercise.dueDate) return participation.latestSubmissionDate.isBefore(exercise.dueDate);
-        else if (!exercise.dueDate) return true;
-        else return false; // latestSubmissionDate is null
+        if (participation.latestSubmissionDate && exercise.dueDate) {
+            return participation.latestSubmissionDate.isBefore(exercise.dueDate);
+        } else if (!exercise.dueDate) {
+            return true;
+        } else {
+            return false; // latestSubmissionDate is null
+        }
     }
 
     isExerciseInDuedate(exercise: Exercise): boolean {
-        if (exercise.dueDate) return exercise.dueDate.isAfter(moment());
+        if (exercise.dueDate) {
+            return exercise.dueDate.isAfter(moment());
+        }
         return true;
     }
 
