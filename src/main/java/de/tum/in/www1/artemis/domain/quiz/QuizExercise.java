@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice or drag and drop. ArTEMiS supports live quizzes with a start and end time which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice or drag and drop. Artemis supports live quizzes with a start and end time which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
@@ -449,7 +449,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;
@@ -457,8 +457,10 @@ public class QuizExercise extends Exercise implements Serializable {
         else {
             // only rated results are considered relevant
             Result latestRatedResult = null;
+            Boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             for (Result result : participation.getResults()) {
-                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))
+                        || isAssessmentOver) {
                     latestRatedResult = result;
                 }
             }

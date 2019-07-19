@@ -296,8 +296,11 @@ public class ParticipationResource {
         if (!(exercise instanceof TextExercise)) {
             return badRequest();
         }
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
+        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
         if (!textSubmissionWithoutAssessment.isPresent()) {
             // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
@@ -308,7 +311,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmissionWithoutAssessment.get());
-        resultService.createNewResult(result, false);
+        resultService.createNewManualResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
@@ -331,8 +334,50 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
+        int resultCount = 0;
+        for (Participation participation : participations) {
+            // we only need id, title, dates and max points
+            // remove unnecessary elements
+            Exercise exercise = participation.getExercise();
+            exercise.setCourse(null);
+            exercise.setParticipations(null);
+            exercise.setTutorParticipations(null);
+            exercise.setExampleSubmissions(null);
+            exercise.setAttachments(null);
+            exercise.setCategories(null);
+            exercise.setProblemStatement(null);
+            exercise.setStudentQuestions(null);
+            exercise.setGradingInstructions(null);
+            exercise.setDifficulty(null);
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                programmingExercise.setSolutionParticipation(null);
+                programmingExercise.setTemplateParticipation(null);
+                programmingExercise.setTestRepositoryUrl(null);
+                programmingExercise.setShortName(null);
+                programmingExercise.setPublishBuildPlanUrl(null);
+                programmingExercise.setProgrammingLanguage(null);
+                programmingExercise.setPackageName(null);
+                programmingExercise.setAllowOnlineEditor(null);
+            }
+            else if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                quizExercise.setQuizQuestions(null);
+                quizExercise.setQuizPointStatistic(null);
+            }
+            else if (exercise instanceof TextExercise) {
+                TextExercise textExercise = (TextExercise) exercise;
+                textExercise.setSampleSolution(null);
+            }
+            else if (exercise instanceof ModelingExercise) {
+                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+                modelingExercise.setSampleSolutionModel(null);
+                modelingExercise.setSampleSolutionExplanation(null);
+            }
+            resultCount += participation.getResults().size();
+        }
         long end = System.currentTimeMillis();
-        log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
+        log.info("Found " + participations.size() + " particpations with " + resultCount + " results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);
     }
 
@@ -347,7 +392,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
-        checkAccessPermissionOwner(participation);
+        participationService.canAccessParticipation(participation);
         Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {

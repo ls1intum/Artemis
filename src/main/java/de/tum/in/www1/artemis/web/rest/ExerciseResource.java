@@ -18,15 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -61,8 +60,6 @@ public class ExerciseResource {
 
     private final ObjectMapper objectMapper;
 
-    private final TextAssessmentService textAssessmentService;
-
     private final ComplaintRepository complaintRepository;
 
     private final TextSubmissionService textSubmissionService;
@@ -71,10 +68,12 @@ public class ExerciseResource {
 
     private final ResultService resultService;
 
+    private final TutorLeaderboardService tutorLeaderboardService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
+            ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
+            ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -83,11 +82,11 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.objectMapper = objectMapper;
-        this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
+        this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
     /**
@@ -177,96 +176,91 @@ public class ExerciseResource {
     /**
      * GET /exercises/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given id
      *
-     * @param id the id of the exercise to retrieve
+     * @param exerciseId the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{id}/stats-for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForTutorExerciseDashboard(@PathVariable Long id) {
-        log.debug("REST request to get exercise statistics for tutor dashboard : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
-        User user = userService.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
+        log.debug("REST request to get exercise statistics for tutor dashboard : {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
 
-        ObjectNode data = populateCommonStatistics(id);
-        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
-        data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
 
-        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndResult_Assessor_Id(id, user.getId());
-        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
      * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
      * instructor dashboard
      *
-     * @param exerciseId - the exercise we are interested in
+     * @param exercise - the exercise we are interested in
      * @return a object node with the stats
      */
-    private ObjectNode populateCommonStatistics(@PathVariable Long exerciseId) {
-        ObjectNode data = objectMapper.createObjectNode();
+    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+        Long exerciseId = exercise.getId();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        stats.setNumberOfComplaints(numberOfComplaints);
 
-        return data;
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        return stats;
     }
 
     /**
      * GET /exercises/:id/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard of the exercise with the given id
      *
-     * @param id the id of the exercise to retrieve
+     * @param exerciseId the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{id}/stats-for-instructor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForInstructorExerciseDashboard(@PathVariable Long id) {
-        log.debug("REST request to get exercise statistics for instructor dashboard : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
+        log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
 
-        ObjectNode data = populateCommonStatistics(id);
-        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
+        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
-        List<StatsTutorLeaderboardDTO> tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForExercise(id);
-        data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
      * DELETE /exercises/:id : delete the "id" exercise.
      *
-     * @param id the id of the exercise to delete
+     * @param exerciseId the id of the exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{id}")
+    @DeleteMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        log.debug("REST request to delete Exercise : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+    public ResponseEntity<Void> delete(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete Exercise : {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
         if (Optional.ofNullable(exercise).isPresent()) {
             if (!authCheckService.isAtLeastInstructorForExercise(exercise))
                 return forbidden();
             exerciseService.delete(exercise, true, false);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 
     /**
@@ -346,7 +340,7 @@ public class ExerciseResource {
             return forbidden();
 
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        if (studentList.isEmpty() || studentList == null) {
+        if (studentList.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
                     .build();
         }

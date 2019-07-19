@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -133,7 +132,8 @@ public class TextExerciseResource {
      */
     @PutMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
+    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
@@ -157,7 +157,9 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
     }
 
@@ -233,13 +235,12 @@ public class TextExerciseResource {
      * submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
-     * @return the ResponseEntity with json as body
+     * @return the ResponseEntity with the participation as body
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -272,22 +273,24 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> textSubmission = participation.findLatestTextSubmission();
+        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (textSubmission.isPresent()) {
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.get().setParticipation(null);
+        if (optionalTextSubmission.isPresent()) {
+            TextSubmission textSubmission = optionalTextSubmission.get();
 
-            Result result = textSubmission.get().getResult();
-            if (textSubmission.get().isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
                 List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission.get());
+            participation.addSubmissions(textSubmission);
         }
 
         return ResponseEntity.ok(participation);

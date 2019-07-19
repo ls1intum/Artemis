@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +24,12 @@ public class AutomaticAssessmentController {
     private double totalConfidence;
 
     /**
-     * Add a score to an assessment, creates a new assessment if it does not exists
+     * For every model element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
+     * the similarity set yet, it creates a new one.
      *
      * @param index                manages all assessments
      * @param elementIdFeedbackMap maps elementIds to feedbacks
-     * @param model                the UML model - contains all elements with its corresponding jsonIds
+     * @param model                the UML model - contains all elements with its jsonIds
      * @throws IOException if the score for the element is null
      */
     public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassDiagram model) throws IOException {
@@ -57,6 +59,7 @@ public class AutomaticAssessmentController {
      * @param modelIndex      manages all models
      * @param assessmentIndex manages all assessments
      */
+    // TODO CZ: only assess models automatically that do not already have a complete manual assessment?
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
 
         totalCoverage = 0;
@@ -97,8 +100,9 @@ public class AutomaticAssessmentController {
             missingCount += classCount - compassResult.entitiesCovered();
         }
 
-        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
+        // TODO CZ: combine iterating over relations and packages
         for (UMLClassRelationship relation : model.getAssociationList()) {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getSimilarityID());
             totalCount++;
@@ -113,6 +117,25 @@ public class AutomaticAssessmentController {
                 }
                 else {
                     scoreHashMap.put(relation, score);
+                }
+            }
+        }
+
+        // TODO CZ: combine iterating over relations and packages
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(umlPackage.getSimilarityID());
+            totalCount++;
+
+            if (!assessmentOptional.isPresent()) {
+                missingCount++;
+            }
+            else {
+                Score score = assessmentOptional.get().getScore(umlPackage.getContext());
+                if (score == null) {
+                    log.debug("Unable to find score for package " + umlPackage.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
+                }
+                else {
+                    scoreHashMap.put(umlPackage, score);
                 }
             }
         }
@@ -135,7 +158,7 @@ public class AutomaticAssessmentController {
     }
 
     private CompassResult assessConnectable(UMLClass umlClass, AssessmentIndex index) {
-        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         int missing = 0;
 
@@ -211,5 +234,4 @@ public class AutomaticAssessmentController {
     public double getTotalConfidence() {
         return totalConfidence;
     }
-
 }

@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "markdownEditor": {
+            "commands": {
+                "katex": "Formula",
+                "fullscreen": "Fullscreen"
+            }
+        }
+    }
+}

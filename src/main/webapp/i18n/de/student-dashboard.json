@@ -65,13 +65,20 @@
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
-                "totalPresentationScore": "Deine gesamtes Präsentationsergebnisw: {{ number }}",
-                "exerciseCount": "Teilgenommen an {{ number }} Übungen",
+                "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
+                "exerciseCount": "{{ number }} {{ type }}",
                 "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",
                 "relativeScore": "Relative Punktzahl: {{ number }}%",
                 "presentationScore": "Präsentationsergebnis: {{ number }} ",
-                "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
+                "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden.",
+                "exerciseAchievedScore": "Erreichte Wertung: {{ points }} Punkte ({{ percentage }}%)",
+                "exerciseMissedScore": "Fehlende Wertung: {{ points }} Punkte ({{ percentage }}%)",
+                "exerciseNotGraded": "{{ exercise }} wurde noch nicht bewertet.",
+                "exerciseNotParticipated": "Du hast an {{ exercise }} nicht teilgenommen.",
+                "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach dem Abgabedatum.",
+                "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten.",
+                "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

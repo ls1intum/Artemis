@@ -30,6 +30,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(attributePaths = "testCases")
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithTestCases(@Param("exerciseId") Long id);
+
     // TODO: Investigate - this should return the templateParticipation result including its feedbacks - but for some reason they can't be retrieved.
     // Get an a programmingExercise with template and solution participation, each with the latest result
     @EntityGraph(attributePaths = { "templateParticipation.results.feedbacks", "solutionParticipation.results.feedbacks" })
@@ -45,4 +49,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
+
+    @EntityGraph(attributePaths = "course")
+    @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
+    Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
 }

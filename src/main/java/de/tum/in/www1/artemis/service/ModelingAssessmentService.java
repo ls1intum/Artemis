@@ -90,7 +90,7 @@ public class ModelingAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-        result.setNewFeedback(modelingAssessment);
+        result.updateAllFeedbackItems(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 
@@ -113,7 +113,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
         super.cancelAssessmentOfSubmission(modelingSubmission);
         ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
-        compassService.markModelAsUnassessed(modelingExercise, modelingSubmission.getId());
+        compassService.cancelAssessmentForSubmission(modelingExercise, modelingSubmission.getId());
     }
 
     /**

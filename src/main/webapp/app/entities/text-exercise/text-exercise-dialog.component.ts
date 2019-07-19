@@ -14,19 +14,29 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
     templateUrl: './text-exercise-dialog.component.html',
+    styleUrls: ['./text-exercise-dialog.scss'],
 })
 export class TextExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     textExercise: TextExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    notificationText: string | null;
 
     courses: Course[];
+
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -40,6 +50,7 @@ export class TextExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
@@ -67,7 +78,11 @@ export class TextExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.textExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }

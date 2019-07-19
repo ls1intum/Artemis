@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -192,7 +193,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
                 if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                    compassService.addAssessment(exerciseId, submissionId, feedbacks);
+                    compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
                 }
             }
         }
@@ -223,17 +224,37 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Update an assessment after a complaint was accepted. After the result is updated accordingly, Compass is notified about the changed assessment in order to adapt all
+     * automatic assessments based on this result, as well.
+     *
+     * @param submissionId     the id of the submission for which the assessment should be updated
+     * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
+     * @return the updated result
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PostMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+
         Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
+
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
+        }
+
+        // remove circular dependencies if the results of the participation are there
+        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
+            result.getParticipation().setResults(null);
+        }
+
         return ResponseEntity.ok(result);
     }
 

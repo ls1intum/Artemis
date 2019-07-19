@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +29,8 @@ public class CompassResult implements Grade {
     private double coverage;
 
     public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
-        jsonIdCommentsMapping = new HashMap<>();
-        jsonIdPointsMapping = new HashMap<>();
+        jsonIdCommentsMapping = new ConcurrentHashMap<>();
+        jsonIdPointsMapping = new ConcurrentHashMap<>();
 
         this.elementScoreMapping = elementScoreMapping;
         this.coverage = coverage;
@@ -60,17 +61,14 @@ public class CompassResult implements Grade {
                 continue;
             }
 
-            StringBuilder elementComments = new StringBuilder();
-            Iterator<String> iterator = entry.getValue().getComments().iterator();
-
-            while (iterator.hasNext()) {
-                elementComments.append(iterator.next());
-
-                if (iterator.hasNext()) {
-                    elementComments.append("\n\n");
-                }
+            String elementFeedbackText = "";
+            List<String> comments = entry.getValue().getComments();
+            if (comments != null) {
+                // get the longest of the given comments as feedback text - we assume that a longer text means more information/feedback for the student
+                elementFeedbackText = comments.stream().filter(Objects::nonNull).max(Comparator.comparingInt(String::length)).orElse("");
             }
-            jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementComments.toString());
+
+            jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementFeedbackText);
             jsonIdPointsMapping.put(entry.getKey().getJSONElementID(), entry.getValue().getPoints());
         }
     }
@@ -83,7 +81,7 @@ public class CompassResult implements Grade {
      * @return the calculated result
      */
     public static CompassResult buildResultFromResultList(List<CompassResult> compassResultList, double coverage) {
-        Map<UMLElement, Score> newScoreMapping = new HashMap<>();
+        Map<UMLElement, Score> newScoreMapping = new ConcurrentHashMap<>();
 
         for (CompassResult compassResult : compassResultList) {
             newScoreMapping.putAll(compassResult.elementScoreMapping);

@@ -33,8 +33,8 @@ public abstract class UMLElement {
         return similarityID;
     }
 
-    public void setSimilarityID(int elementID) {
-        this.similarityID = elementID;
+    public void setSimilarityID(int similarityID) {
+        this.similarityID = similarityID;
     }
 
     public String getJSONElementID() {

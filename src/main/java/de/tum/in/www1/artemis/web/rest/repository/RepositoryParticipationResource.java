@@ -177,8 +177,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
         log.debug("REST request to get build log : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        boolean hasPermissions = repositoryService.canAccessParticipation(participation);
-        if (!hasPermissions)
+        if (!participationService.canAccessParticipation(participation))
             return forbidden();
 
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);

@@ -26,8 +26,11 @@
             "repositories": "Repositories",
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
-            "problemStatement": "Problem Statement",
             "allowOnlineEditor": "Allow Online Editor",
+            "sequentialTestRuns": {
+                "title": "Sequential Test Runs",
+                "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
+            },
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
@@ -38,6 +41,14 @@
             "squashTemplateCommitsWarning": "This action squashes all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
             "squashTemplateCommitsError": "Template repository commits could not be squashed.",
             "squashTemplateCommitsSuccess": "Template repository commits have been successfully squashed.",
+            "editable": {
+                "unsaved": "Unsaved.",
+                "unsavedTooltip": "There are unsaved changes in the problem statement.",
+                "saving": "Saving...",
+                "savingTooltip": "Saving your unsaved changes in the problem statement.",
+                "saved": "Saved.",
+                "savedTooltip": "The problem statement is saved."
+            },
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "[task] Task",
@@ -49,7 +60,20 @@
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that are part of the problem statement but can't be found in your test repository:",
-                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:"
+                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
+                "issues": "Test case issues.",
+                "ok": "Test cases ok."
+            },
+            "manageTestCases": {
+                "title": "Manage Test Cases",
+                "hideInactive": "Hide inactive test cases",
+                "showInactive": "Show inactivate test cases",
+                "resetWeights": "Reset weights",
+                "weightsReset": "The weights were reset successfully.",
+                "weightsResetFailed": "The weights could not be reset.",
+                "saveWeights": "Save weights",
+                "weightsUpdated": "The weights were updated successfully.",
+                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
             }
         }
     }

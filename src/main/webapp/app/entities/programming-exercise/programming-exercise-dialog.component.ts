@@ -9,7 +9,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
@@ -20,6 +20,7 @@ import { ResultService } from 'app/entities/result';
 @Component({
     selector: 'jhi-programming-exercise-dialog',
     templateUrl: './programming-exercise-dialog.component.html',
+    styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
@@ -31,6 +32,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
+    notificationText: string | null;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -45,6 +47,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
@@ -96,7 +99,11 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.create(this.programmingExercise));
         }

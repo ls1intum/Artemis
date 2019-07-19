@@ -6,7 +6,6 @@ cache:
     directories:
         - $HOME/.gradle/caches/
         - $HOME/.gradle/wrapper/
-
 jobs:
     include:
       - stage: Build
@@ -18,7 +17,7 @@ jobs:
       - stage: Build
         name: "TypeScript"
         language: node_js
-        node_js: 12.2.0
+        node_js: 12.3.1
         install: yarn install
         script: yarn build
       - stage: Test
@@ -30,7 +29,7 @@ jobs:
       - stage: Test
         name: "TypeScript"
         language: node_js
-        node_js: 12.2.0
+        node_js: 12.3.1
         install: yarn install
         script: yarn test
       - stage: Lint
@@ -42,6 +41,6 @@ jobs:
       - stage: Lint
         name: "TypeScript"
         language: node_js
-        node_js: 12.2.0
+        node_js: 12.3.1
         install: yarn install
         script: yarn prettier:check

@@ -5,14 +5,11 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,17 +23,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -62,10 +56,6 @@ public class ModelingExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ParticipationService participationService;
-
-    private final ResultRepository resultRepository;
-
     private final ModelingExerciseService modelingExerciseService;
 
     private final GroupNotificationService groupNotificationService;
@@ -73,15 +63,12 @@ public class ModelingExerciseResource {
     private final CompassService compassService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ParticipationService participationService, ResultRepository resultRepository, ModelingExerciseService modelingExerciseService,
-            GroupNotificationService groupNotificationService, CompassService compassService) {
+            CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.participationService = participationService;
-        this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
     }
@@ -138,7 +125,8 @@ public class ModelingExerciseResource {
      */
     @PutMapping("/modeling-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
+    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
             return createModelingExercise(modelingExercise);
@@ -155,7 +143,9 @@ public class ModelingExerciseResource {
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString())).body(result);
     }
 
@@ -242,77 +232,5 @@ public class ModelingExerciseResource {
         }
         modelingExerciseService.delete(exerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
-    }
-
-    /**
-     * Returns the data needed for the modeling editor, which includes the participation, modelingSubmission with model if existing and the assessments if the submission was
-     * already submitted.
-     *
-     * @param participationId the participationId for which to find the data for the modeling editor
-     * @return the ResponseEntity with json as body
-     */
-    // TODO CZ: move to ModelingSubmissionResource?
-    @GetMapping("/modeling-editor/{participationId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<ModelingSubmission> getDataForModelingEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOneWithEagerSubmissions(participationId);
-        if (participation == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
-        }
-        ModelingExercise modelingExercise;
-        if (participation.getExercise() instanceof ModelingExercise) {
-            modelingExercise = (ModelingExercise) participation.getExercise();
-            if (modelingExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
-
-            // make sure sensitive information are not sent to the client
-            modelingExercise.filterSensitiveInformation();
-        }
-        else {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
-                    .body(null);
-        }
-
-        // users can only see their own models (to prevent cheating), TAs, instructors and admins can
-        // see all models
-        if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
-            // continue
-        }
-        else {
-            return forbidden();
-        }
-
-        // if no results, check if there are really no results or the relation to results was not
-        // updated yet
-        if (participation.getResults().size() == 0) {
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-            participation.setResults(new HashSet<>(results));
-        }
-
-        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
-        ModelingSubmission modelingSubmission;
-        if (!optionalModelingSubmission.isPresent()) {
-            modelingSubmission = new ModelingSubmission(); // NOTE: this object is not yet persisted
-            modelingSubmission.setParticipation(participation);
-        }
-        else {
-            // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = optionalModelingSubmission.get();
-        }
-
-        // make sure only the latest submission and latest result is sent to the client
-        participation.setSubmissions(null);
-        participation.setResults(null);
-
-        if (modelingSubmission.getResult() instanceof HibernateProxy) {
-            modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
-        }
-        return ResponseEntity.ok(modelingSubmission);
     }
 }

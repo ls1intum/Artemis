@@ -77,7 +77,7 @@ import { ArTEMiSModelingAssessmentConflictModule } from 'app/modeling-assessment
         BrowserAnimationsModule,
         ArTEMiSAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
-        DeviceDetectorModule.forRoot(),
+        DeviceDetectorModule,
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */

@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation, ParticipationWebsocketService } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { DiagramType, ElementType, Selection, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -106,7 +106,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             });
                         }
                         if (this.modelingExercise.diagramType == null) {
-                            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+                            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
                         this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
@@ -294,24 +294,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body!;
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
-                    // Compass has already calculated a result
-                    if (this.result && this.result.assessmentType && this.isAfterAssessmentDueDate) {
-                        const participation = this.participation;
-                        participation.results = [this.result];
-                        this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                            this.assessmentResult = assessmentResult;
-                            this.prepareAssessmentData();
-                        });
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessfulWithAssessment');
-                    } else {
-                        if (this.isActive) {
-                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                        } else {
-                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
-                        }
-                    }
                     this.retryStarted = false;
+
+                    if (this.isActive) {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                    } else {
+                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    }
+
                     this.subscribeToWebsockets();
                     if (this.automaticSubmissionWebsocketChannel) {
                         this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
@@ -430,9 +420,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    // function to check whether there are pending changes
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
+     */
     canDeactivate(): Observable<boolean> | boolean {
-        if (this.submission && this.submission.submitted) {
+        if (!this.modelingEditor || (this.submission && this.submission.submitted)) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();

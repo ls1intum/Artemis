@@ -9,15 +9,15 @@ import { instructorCourseDashboardRoute } from './instructor-course-dashboard.ro
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
-import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { SortByModule } from 'app/components/pipes';
+import { ArTEMiSTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule],
-    declarations: [InstructorCourseDashboardComponent, TutorLeaderboardComponent],
-    exports: [TutorLeaderboardComponent],
+    imports: [BrowserModule, ArTEMiSSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArTEMiSTutorLeaderboardModule],
+    declarations: [InstructorCourseDashboardComponent],
+    exports: [],
     entryComponents: [],
     providers: [],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

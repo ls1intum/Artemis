@@ -12,14 +12,24 @@ public class ModelFactory {
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
-        ModelingExercise exercise = new ModelingExercise();
+        ModelingExercise modelingExercise = new ModelingExercise();
+        modelingExercise = (ModelingExercise) populateExercise(modelingExercise, releaseDate, dueDate, assessmentDueDate, course);
+        modelingExercise.setDiagramType(diagramType);
+        return modelingExercise;
+    }
+
+    public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+        TextExercise textExercise = new TextExercise();
+        return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
+    }
+
+    public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setMaxScore(5.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setDiagramType(diagramType);
         exercise.setCourse(course);
         exercise.setParticipations(new HashSet<>());
         exercise.setExampleSubmissions(new HashSet<>());
@@ -58,6 +68,17 @@ public class ModelFactory {
         return generateCourse(id, startDate, endDate, exercises, UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
+    public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(submitted);
+        if (submitted) {
+            textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return textSubmission;
+    }
+
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
         submission.setModel(model);
@@ -66,6 +87,14 @@ public class ModelFactory {
             submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
         return submission;
+    }
+
+    public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setSubmission(submission);
+        exampleSubmission.setExercise(exercise);
+        exampleSubmission.setUsedForTutorial(usedForTutorial);
+        return exampleSubmission;
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,

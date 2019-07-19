@@ -10,9 +10,6 @@ public class Score {
 
     private List<String> comments;
 
-    public Score() {
-    }
-
     public Score(double points, List<String> comments, double confidence) {
         this.points = points;
         this.comments = comments;
@@ -27,7 +24,12 @@ public class Score {
         return comments;
     }
 
-    double getConfidence() {
+    /**
+     * Returns the confidence of the score. The confidence is the percentage indicating how certain Compass is about the points and comments of the Score.
+     *
+     * @return the confidence of the score
+     */
+    public double getConfidence() {
         return confidence;
     }
 }

@@ -20,6 +20,11 @@
         "expireDate": "Expire Date",
         "notificationDate": "Notification Date",
         "active": "Active",
-        "notActive": "Not Active"
+        "notActive": "Not Active",
+        "newAnswer": "View answer",
+        "newQuestion": "View question",
+        "exerciseCreated": "View exercise",
+        "exerciseUpdated": "View exercise",
+        "attachmentUpdated": "View lecture"
     }
 }

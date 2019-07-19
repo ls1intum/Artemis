@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 
 public class SimilarityDetector {
 
@@ -21,19 +22,23 @@ public class SimilarityDetector {
     public static void analyzeSimilarity(UMLClassDiagram model, ModelIndex index) {
 
         for (UMLClass umlClass : model.getClassList()) {
-            umlClass.setSimilarityID(index.getElementID(umlClass));
+            umlClass.setSimilarityID(index.getSimilarityId(umlClass));
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                attribute.setSimilarityID(index.getElementID(attribute));
+                attribute.setSimilarityID(index.getSimilarityId(attribute));
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                method.setSimilarityID(index.getElementID(method));
+                method.setSimilarityID(index.getSimilarityId(method));
             }
         }
 
         for (UMLClassRelationship relation : model.getAssociationList()) {
-            relation.setSimilarityID(index.getElementID(relation));
+            relation.setSimilarityID(index.getSimilarityId(relation));
+        }
+
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            umlPackage.setSimilarityID(index.getSimilarityId(umlPackage));
         }
 
         setContext(model);
@@ -49,8 +54,13 @@ public class SimilarityDetector {
                 method.setContext(generateContextForElement(model, method));
             }
         }
+
         for (UMLClassRelationship relation : model.getAssociationList()) {
             relation.setContext(generateContextForElement(model, relation));
+        }
+
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            umlPackage.setContext(generateContextForElement(model, umlPackage));
         }
     }
 

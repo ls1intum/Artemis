@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Submission;
@@ -24,4 +25,23 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false and not submission.participation is null")
     List<Submission> findAllUnsubmittedModelingAndTextSubmissions();
+
+    /**
+     * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
+     * assessment.
+     *
+     * @param userId   the id of the user
+     * @param courseId the id of the course
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Checks if a submission for the given participation exists.
+     *
+     * @param participationId the id of the participation to check
+     * @return true if a submission for the given participation exists, false otherwise
+     */
+    boolean existsByParticipationId(long participationId);
 }
