@@ -32,6 +32,7 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
+import { ArtemisTableModule } from 'app/components/table/table.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -45,6 +46,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArTEMiSDifficultyPickerModule,
         ArTEMiSResultModule,
         ArTEMiSMarkdownEditorModule,
+        ArtemisTableModule,
         NgxDatatableModule,
     ],
     declarations: [

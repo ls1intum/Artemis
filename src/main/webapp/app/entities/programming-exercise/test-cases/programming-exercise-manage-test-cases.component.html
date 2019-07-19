@@ -41,21 +41,26 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Weight" prop="weight">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <span title="Double click to edit" class="edit-weight__value" *ngIf="editing && editing[0] !== filteredTestCases[filteredTestCases.indexOf(row)]">
-                    {{ value }}
-                </span>
-                <input
-                    #editingInput
-                    *ngIf="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)]"
-                    class="edit-weight__input form-control mr-2"
-                    autofocus
-                    (blur)="updateEditedField($event)"
-                    (keyup.enter)="updateEditedField($event)"
-                    (keyup.escape)="leaveEditingWithoutSaving()"
+                <jhi-table-editable-field
                     [value]="value"
-                    type="text"
-                />
-                <fa-icon icon="pencil-alt" class="edit-weight__edit-icon" (click)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"></fa-icon>
+                    [canEdit]="!editing"
+                    [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.WEIGHT"
+                    (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"
+                    (onValueUpdate)="updateEditedField($event)"
+                    (onCancel)="leaveEditingWithoutSaving()"
+                ></jhi-table-editable-field>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="After Due Date" prop="afterDueDate">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                <jhi-table-editable-field
+                    [value]="value"
+                    [canEdit]="!editing"
+                    [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.AFTER_DUE_DATE"
+                    (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.AFTER_DUE_DATE)"
+                    (onValueUpdate)="updateEditedField($event)"
+                    (onCancel)="leaveEditingWithoutSaving()"
+                ></jhi-table-editable-field>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">

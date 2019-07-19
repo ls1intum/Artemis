@@ -16,5 +16,6 @@ export * from './pipes/html-for-markdown.pipe';
 export * from './pipes/truncate.pipe';
 export * from './shared-libs.module';
 export * from './shared-common.module';
+export * from '../components/table';
 export * from './shared.module';
 export * from './guard/pending-changes.guard';

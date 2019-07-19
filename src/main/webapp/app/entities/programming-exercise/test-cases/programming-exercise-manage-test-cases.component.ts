@@ -23,7 +23,6 @@ enum EditableField {
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
-    @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
     exerciseId: number;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
@@ -95,11 +94,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     enterEditing(rowIndex: number, field: EditableField) {
         this.editing = [this.filteredTestCases[rowIndex], field];
-        setTimeout(() => {
-            if (this.editingInput) {
-                this.editingInput.nativeElement.focus();
-            }
-        });
     }
 
     /**
@@ -115,24 +109,23 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      *
      * @param event
      */
-    updateEditedField(event: any) {
+    updateEditedField(newValue: number | boolean) {
         if (!this.editing) {
             return;
         }
         // Don't allow an empty string as a value!
-        if (!event.target.value) {
+        if (!newValue) {
             this.editing = null;
             return;
         }
         const [editedTestCase, field] = this.editing;
-        const weight = event.target.value;
         // If the weight has not changed, don't do anything besides closing the input.
-        if (weight === editedTestCase[field]) {
+        if (newValue === editedTestCase[field]) {
             this.editing = null;
             return;
         }
         this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
-        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: event.target.value }));
+        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
         this.editing = null;
     }
 
