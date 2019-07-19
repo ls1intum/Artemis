@@ -53,14 +53,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="After Due Date" prop="afterDueDate">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <jhi-table-editable-field
-                    [value]="value"
-                    [canEdit]="!editing"
-                    [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.AFTER_DUE_DATE"
-                    (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.AFTER_DUE_DATE)"
-                    (onValueUpdate)="updateEditedField($event)"
-                    (onCancel)="leaveEditingWithoutSaving()"
-                ></jhi-table-editable-field>
+                <jhi-table-editable-checkbox [value]="value" (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"></jhi-table-editable-checkbox>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">

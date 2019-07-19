@@ -12,7 +12,6 @@ import { ComponentCanDeactivate } from 'app/shared';
 
 enum EditableField {
     WEIGHT = 'weight',
-    AFTER_DUE_DATE = 'afterDueDate',
 }
 
 @Component({
@@ -107,9 +106,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Update the weight of the edited test case in the component state (does not persist the value on the server!).
      * Adds the currently edited weight to the list of unsaved changes.
      *
-     * @param event
+     * @param newValue of updated field;
      */
-    updateEditedField(newValue: number | boolean) {
+    updateEditedField(newValue: any) {
         if (!this.editing) {
             return;
         }
@@ -166,6 +165,12 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             .subscribe(() => {
                 this.isSaving = false;
             });
+    }
+
+    toggleAfterDueDate(rowIndex: number) {
+        const testCase = this.filteredTestCases[rowIndex];
+        this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id];
+        this.testCases = this.testCases.map(t => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
     }
 
     /**
