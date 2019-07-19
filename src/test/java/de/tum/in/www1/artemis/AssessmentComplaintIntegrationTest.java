@@ -18,14 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -69,6 +67,8 @@ public class AssessmentComplaintIntegrationTest {
 
     private Complaint complaint;
 
+    private Complaint moreFeedbackRequest;
+
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
@@ -76,7 +76,8 @@ public class AssessmentComplaintIntegrationTest {
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
-        complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair");
+        complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -99,14 +100,30 @@ public class AssessmentComplaintIntegrationTest {
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
+    }
 
+    @Test
+    @WithMockUser(username = "student1")
+    public void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+
+        // Only one complaint is possible for exercise regardless of its type
+        request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
+                .isFalse();
     }
 
     @Test
@@ -167,6 +184,39 @@ public class AssessmentComplaintIntegrationTest {
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("accepted flag of complaint is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getSubmittedComplaints_byComplaintType() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
+        modelingAssessment.setAssessor(database.getUserByLogin("tutor2"));
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        request.getList("/api/complaints", HttpStatus.BAD_REQUEST, ComplaintResponse.class, params);
+
+        params.add("exerciseId", modelingExercise.getId().toString());
+        List<ComplaintResponse> complaintResponses = request.getList("/api/complaints", HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponses.size()).isEqualTo(1);
+
+        params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
+        complaintResponses = request.getList("/api/complaints", HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponses.size()).isEqualTo(2);
+
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getSubmittedComplaints_asStudent_forbidden() throws Exception {
+        complaintRepo.save(complaint);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        params.add("exerciseId", modelingExercise.getId().toString());
+
+        request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
     }
 
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
