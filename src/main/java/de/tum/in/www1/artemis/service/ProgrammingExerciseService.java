@@ -520,21 +520,15 @@ public class ProgrammingExerciseService {
      * 
      * @param id of the programming exercise.
      * @return
-     * @throws NoSuchElementException the programming exercise could not be found.
-     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    public ProgrammingExercise findById(Long id) throws NoSuchElementException, IllegalAccessException {
+    public ProgrammingExercise findById(Long id) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
         if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new IllegalAccessException();
-            }
             return programmingExercise.get();
         }
         else {
-            throw new NoSuchElementException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found");
         }
     }
 
