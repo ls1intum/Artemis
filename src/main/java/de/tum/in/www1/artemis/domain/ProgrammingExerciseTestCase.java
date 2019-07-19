@@ -33,6 +33,9 @@ public class ProgrammingExerciseTestCase implements Serializable {
     @Column(name = "active")
     private Boolean active;
 
+    @Column(name = "after_due_date")
+    private Boolean afterDueDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private ProgrammingExercise exercise;
@@ -103,6 +106,22 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.exercise = exercise;
     }
 
+    public Boolean getAfterDueDate() {
+        if (afterDueDate == null) {
+            return false;
+        }
+        return afterDueDate;
+    }
+
+    public void setAfterDueDate(Boolean afterDueDate) {
+        this.afterDueDate = afterDueDate;
+    }
+
+    public ProgrammingExerciseTestCase afterDueDate(Boolean afterDueDate) {
+        this.afterDueDate = afterDueDate;
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
@@ -111,7 +130,8 @@ public class ProgrammingExerciseTestCase implements Serializable {
      * @return a clone of the object.
      */
     public ProgrammingExerciseTestCase clone() {
-        ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive()).exercise(this.exercise);
+        ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive())
+                .afterDueDate(afterDueDate).exercise(this.exercise);
         clone.setId(this.getId());
         return clone;
     }
