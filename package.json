@@ -40,7 +40,6 @@
         "chart.js": "2.8.0",
         "core-js": "3.1.4",
         "dompurify": "1.0.11",
-        "katex": "0.10.2",
         "franc-min": "4.1.0",
         "interactjs": "1.4.14",
         "jest": "24.8.0",
@@ -208,7 +207,7 @@
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "webpack:test": "yarn run test",
         "webpack-dev-server": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js",
+        "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js",
         "prepare": "patch-package"
     }
 }
