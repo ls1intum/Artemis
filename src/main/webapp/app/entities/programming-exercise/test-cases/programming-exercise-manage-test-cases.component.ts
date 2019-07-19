@@ -10,15 +10,22 @@ import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exe
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 
+enum EditableField {
+    WEIGHT = 'weight',
+    AFTER_DUE_DATE = 'afterDueDate',
+}
+
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    EditableField = EditableField;
+
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
     exerciseId: number;
-    editing: ProgrammingExerciseTestCase | null = null;
+    editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
     paramSub: Subscription;
 
@@ -86,8 +93,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Show an input to edit the test cases weight.
      * @param rowIndex
      */
-    enterEditing(rowIndex: number) {
-        this.editing = this.filteredTestCases[rowIndex];
+    enterEditing(rowIndex: number, field: EditableField) {
+        this.editing = [this.filteredTestCases[rowIndex], field];
         setTimeout(() => {
             if (this.editingInput) {
                 this.editingInput.nativeElement.focus();
@@ -108,7 +115,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      *
      * @param event
      */
-    updateWeight(event: any) {
+    updateEditedField(event: any) {
         if (!this.editing) {
             return;
         }
@@ -117,15 +124,15 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.editing = null;
             return;
         }
-        const editedTestCase = this.editing;
+        const [editedTestCase, field] = this.editing;
         const weight = event.target.value;
         // If the weight has not changed, don't do anything besides closing the input.
-        if (weight === editedTestCase.weight) {
+        if (weight === editedTestCase[field]) {
             this.editing = null;
             return;
         }
         this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
-        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, weight: event.target.value }));
+        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: event.target.value }));
         this.editing = null;
     }
 
