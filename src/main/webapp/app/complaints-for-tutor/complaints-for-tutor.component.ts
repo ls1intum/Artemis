@@ -29,10 +29,11 @@ export class ComplaintsForTutorComponent implements OnInit {
         this.complaintText = this.complaint.complaintText;
         this.handled = this.complaint.accepted !== undefined;
         if (this.handled) {
-            this.complaintResponseService
-                .findByComplaintId(this.complaint.id)
-                .pipe(filter(res => !!res.body))
-                .subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
+            this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => {
+                if (complaintResponse.body) {
+                    this.complaintResponse = complaintResponse.body;
+                }
+            });
         }
     }
 
