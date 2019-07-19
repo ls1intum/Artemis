@@ -16,11 +16,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseHintService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.UserService;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -43,10 +46,14 @@ public class ExerciseHintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService) {
+    private final UserService userService;
+
+    public ExerciseHintResource(ExerciseHintService exerciseHintService, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
+            UserService userService) {
         this.exerciseHintService = exerciseHintService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
+        this.userService = userService;
     }
 
     /**
@@ -131,12 +138,15 @@ public class ExerciseHintResource {
         try {
             programmingExercise = programmingExerciseService.findById(exerciseId);
         }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
         catch (NoSuchElementException ex) {
             return notFound();
         }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = programmingExercise.getCourse();
+        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))
+            return forbidden();
+
         Set<ExerciseHint> exerciseHints = programmingExercise.getExerciseHints();
         return ResponseEntity.ok(exerciseHints);
     }
