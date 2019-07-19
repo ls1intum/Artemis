@@ -40,7 +40,6 @@
         "chart.js": "2.8.0",
         "core-js": "3.1.4",
         "dompurify": "1.0.11",
-        "katex": "0.10.2",
         "franc-min": "4.1.0",
         "interactjs": "1.4.14",
         "jest": "24.8.0",

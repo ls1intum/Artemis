@@ -1,6 +1,3 @@
-@import '../../../../content/scss/_bootstrap-variables.scss';
-@import '~bootstrap/scss/_forms.scss';
-
 ::ng-deep {
     .test-case--inactive {
         color: grey;
@@ -14,8 +11,6 @@
         }
 
         .edit-weight__input {
-            @extend .form-control;
-            @extend .mr-2;
             flex: 2 1 auto;
         }
 
