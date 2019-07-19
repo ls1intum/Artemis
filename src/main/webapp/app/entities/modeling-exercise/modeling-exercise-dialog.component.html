@@ -95,13 +95,21 @@
         </div>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <div class="question-content background-editor-color">
-                <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
-            </div>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsProblemStatement"
+                [(markdown)]="modelingExercise.problemStatement"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
-            <jhi-markdown-editor [(markdown)]="modelingExercise.gradingInstructions"></jhi-markdown-editor>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsGradingInstructions"
+                [(markdown)]="modelingExercise.gradingInstructions"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
@@ -133,9 +141,12 @@
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
                 Example Solution Explanation
             </label>
-            <div class="question-content background-editor-color">
-                <jhi-markdown-editor [(markdown)]="modelingExercise.sampleSolutionExplanation"></jhi-markdown-editor>
-            </div>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsSampleSolution"
+                [(markdown)]="modelingExercise.sampleSolutionExplanation"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</span>

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 
@@ -9,16 +10,17 @@ public class ModelSelector {
     private static final int MAX_CANDIDATE_LIST_SIZE = 50;
 
     /**
-     * Tracks which models have been selected for assessment and have been sent to the client, typically these models are the ones where Compass learns the most, when they are
-     * assessed. Note: the key is the ModelSubmission id
+     * Tracks which models have been selected for assessment. Typically these models are the ones where Compass learns the most, when they are assessed. All models in this set do
+     * not have a complete assessment. Models get removed from this set when they are locked by a tutor for assessment or a manual (complete) assessment exists. The key is the
+     * ModelSubmission id.
      */
-    private Set<Long> modelsWaitingForAssessment = new HashSet<>();
+    private Set<Long> modelsWaitingForAssessment = ConcurrentHashMap.newKeySet();
 
     /**
-     * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though) The key
-     * is the ModelSubmission id
+     * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though). Models
+     * that are in this set are not considered by the ModelSelector when selecting the next optimal model. The key is the ModelSubmission id.
      */
-    private Set<Long> alreadyAssessedModels = new HashSet<>();
+    private Set<Long> alreadyAssessedModels = ConcurrentHashMap.newKeySet();
 
     /**
      * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process The selected model is currently unassessed and not queued into
@@ -33,7 +35,7 @@ public class ModelSelector {
 
         List<UMLClassDiagram> partiallyAssessed = new ArrayList<>();
         for (UMLClassDiagram umlModel : modelIndex.getModelCollection()) {
-            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId()) && !umlModel.isEntirelyAssessed()) {
+            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId())) {
                 partiallyAssessed.add(umlModel);
             }
         }

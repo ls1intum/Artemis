@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 
@@ -53,8 +54,10 @@ public class AutomaticSubmissionService {
 
     /**
      * Check for every un-submitted modeling and text submission if the corresponding exercise has finished (i.e. due date < now) and the submission was saved before the exercise
-     * due date. - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
-     * of the corresponding participation to FINISHED. - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
+     * due date.
+     * - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the
+     * corresponding participation to FINISHED.
+     * - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
@@ -80,6 +83,10 @@ public class AutomaticSubmissionService {
 
                 submissionRepository.save(unsubmittedSubmission);
 
+                if (unsubmittedSubmission instanceof ModelingSubmission) {
+                    notifyCompassAboutNewModelingSubmission((ModelingSubmission) unsubmittedSubmission, (ModelingExercise) exercise);
+                }
+
                 String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
                     messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
@@ -102,8 +109,7 @@ public class AutomaticSubmissionService {
     }
 
     /**
-     * Updates the participation for a given submission. The participation is set to FINISHED. In the case of a modeling exercise Compass is additionally notified about the new
-     * submission.
+     * Updates the participation for a given submission. The participation is set to FINISHED.
      *
      * @param submission the submission for which the participation should be updated for
      * @return submission if updating participation successful, otherwise null
@@ -115,21 +121,30 @@ public class AutomaticSubmissionService {
                 log.error("The submission {} has no participation.", submission);
                 return null;
             }
-            Exercise exercise = participation.getExercise();
-            if (submission instanceof ModelingSubmission) {
-                ModelingExercise modelingExercise = (ModelingExercise) exercise;
-                ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                // notify compass about new submission
-                modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
-                // check if compass could assess automatically
-                modelingSubmissionService.checkAutomaticResult(modelingSubmission, modelingExercise);
-            }
-            // set participation state to finished and persist it
+
             participation.setInitializationState(InitializationState.FINISHED);
+
             participationService.save(participation);
-            // return modeling submission with model and optional result
+
             return submission;
         }
         return null;
+    }
+
+    /**
+     * Notify Compass about the new modeling submission. Compass will then try to automatically assess the submission.
+     *
+     * @param modelingSubmission the new modeling submission Compass should be notified about
+     * @param modelingExercise   the modeling exercise to which the submission belongs to
+     */
+    private void notifyCompassAboutNewModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        try {
+            // set Authentication object to prevent authentication error "Authentication object cannot be null" - see JavaDoc of setAuthorizationObject method for further details
+            SecurityUtils.setAuthorizationObject();
+            modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
+        }
+        catch (Exception ex) {
+            log.error("Exception while notifying Compass about a new (automatic) submission:\n{}", ex.getMessage(), ex);
+        }
     }
 }

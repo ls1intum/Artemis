@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -19,29 +19,29 @@ public class ModelIndex {
      */
     private Map<Long, UMLClassDiagram> modelMap;
 
-    private HashMap<UMLElement, Integer> modelElementMapping;
+    private Map<UMLElement, Integer> modelElementMapping;
 
     public ModelIndex() {
-        modelElementMapping = new HashMap<>();
+        modelElementMapping = new ConcurrentHashMap<>();
         uniqueModelElementList = new ConcurrentLinkedQueue<>();
-        modelMap = new HashMap<>();
+        modelMap = new ConcurrentHashMap<>();
     }
 
     /**
-     * Get the internal id for a model element, if the element is similar to an existing one the share the same id
+     * Get the internal "similarity" id for a model element. If the element is similar to an existing one, they share the same id.
      *
      * @param element an element of a model
-     * @return its elementId
+     * @return its similarity id
      */
-    int getElementID(UMLElement element) {
+    int getSimilarityId(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }
         // element is similar to existing element
         for (UMLElement knownElement : uniqueModelElementList) {
             if (knownElement.similarity(element) > CompassConfiguration.EQUALITY_THRESHOLD) {
-                modelElementMapping.put(element, knownElement.getElementID());
-                return knownElement.getElementID();
+                modelElementMapping.put(element, knownElement.getSimilarityID());
+                return knownElement.getSimilarityID();
             }
         }
         // element does not fit already known element

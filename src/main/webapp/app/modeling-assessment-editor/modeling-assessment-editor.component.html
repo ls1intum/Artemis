@@ -31,7 +31,7 @@
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </div>
-            <button class="btn btn-danger" *ngIf="result?.completionDate && canOverride" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid">
+            <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
             <button class="btn ml-2 btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
@@ -46,6 +46,10 @@
     <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="artemisApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
+    <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAuthorized && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
+        Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By submitting
+        the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
+    </div>
     <div class="editor-container flex-grow-1">
         <jhi-modeling-assessment
             *ngIf="submission"
@@ -53,15 +57,28 @@
             [maxScore]="modelingExercise?.maxScore"
             [model]="model"
             [feedbacks]="result?.feedbacks"
-            [highlightedElementIds]="highlightedElementIds"
+            [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
     <div class="row mt-3">
-        <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-        <div class="col-12 col-lg-6">
-            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
+        <div class="col-md-6">
+            <h4 jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
+            <div>
+                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
+            </div>
+        </div>
+        <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
+            <h4 jhiTranslate="modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>
+            <div class="row" *ngIf="hasAutomaticFeedback">
+                <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
+                <span jhiTranslate="modelingAssessmentEditor.highlightingColors.automaticAssessment">automatic assessment</span>
+            </div>
+            <div class="row" *ngIf="highlightMissingFeedback">
+                <div class="mx-3 mb-2 highlighting-item color-red"></div>
+                <span jhiTranslate="modelingAssessmentEditor.highlightingColors.missingAssessment">missing assessment</span>
+            </div>
         </div>
     </div>
 </div>

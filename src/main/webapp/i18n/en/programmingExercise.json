@@ -63,6 +63,17 @@
                 "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok."
+            },
+            "manageTestCases": {
+                "title": "Manage Test Cases",
+                "hideInactive": "Hide inactive test cases",
+                "showInactive": "Show inactivate test cases",
+                "resetWeights": "Reset weights",
+                "weightsReset": "The weights were reset successfully.",
+                "weightsResetFailed": "The weights could not be reset.",
+                "saveWeights": "Save weights",
+                "weightsUpdated": "The weights were updated successfully.",
+                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
             }
         }
     }

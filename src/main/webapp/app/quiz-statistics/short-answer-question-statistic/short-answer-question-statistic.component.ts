@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService, JhiWebsocketService } from '../../core';
@@ -28,11 +29,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: ShortAnswerQuestion;
     questionStatistic: ShortAnswerQuestionStatistic;
@@ -59,7 +55,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string | null;
+    questionTextRendered: SafeHtml | null;
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -379,21 +375,5 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         } else {
             return null;
         }
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
     }
 }

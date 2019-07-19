@@ -3,12 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { sortBy } from 'lodash';
 
 import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, PRESENTATION_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
+import { InitializationState } from 'app/entities/participation';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -236,11 +238,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     groupExercisesByType() {
-        const exercises = this.course!.exercises;
+        let exercises = this.course!.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
+        // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
+        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
         exercises.forEach(exercise => {
-            if (!exercise.dueDate || exercise.dueDate.isBefore(moment())) {
+            if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type);
                 if (index === -1) {
                     index = exerciseTypes.length;
@@ -263,7 +267,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 exercise.participations.forEach(participation => {
                     if (participation.results && participation.results.length > 0) {
                         const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
-                        if (participationResult) {
+                        if (participationResult && participationResult.rated) {
                             const participationScore = participationResult.score;
                             const missedScore = 100 - participationScore;
                             groupedExercises[index].scores.data.push(participationScore);
@@ -298,7 +302,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                             }
                         }
                     } else {
-                        if (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!)) {
+                        if (
+                            participation.initializationState === InitializationState.FINISHED &&
+                            (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
+                        ) {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
                         } else {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
@@ -335,6 +342,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
+    // TODO: document the implementation of this method --> it is not really obvious
+    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;

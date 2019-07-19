@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel, UMLElement } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -10,7 +10,7 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -29,7 +29,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
     conflicts: Conflict[] | null;
-    highlightedElementIds: Set<string>;
+    highlightedElements: Map<string, string>; // map elementId -> highlight color
+    highlightMissingFeedback = false;
 
     assessmentsAreValid = false;
     busy: boolean;
@@ -40,6 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     hasComplaint: boolean;
     canOverride = false;
     isLoading: boolean;
+    hasAutomaticFeedback = false;
 
     private cancelConfirmationText: string;
 
@@ -144,7 +146,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.submission.participation.results = [this.result];
         this.result.participation = this.submission.participation;
         if (this.modelingExercise.diagramType == null) {
-            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
         }
         if (this.submission.model) {
             this.model = JSON.parse(this.submission.model);
@@ -164,17 +166,28 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     /**
      * Checks the given feedback list for general feedback (i.e. feedback without a reference). If there is one, it is assigned to the generalFeedback variable and removed from
      * the original feedback list. The remaining list is then assigned to the referencedFeedback variable containing only feedback elements with a reference and valid score.
+     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly. Afterwards, it triggers the
+     * highlighting of feedback elements, if necessary.
      */
     private handleFeedback(feedback: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
         }
+
         const generalFeedbackIndex = feedback.findIndex(feedbackElement => feedbackElement.reference == null);
         if (generalFeedbackIndex >= 0) {
             this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
             feedback.splice(generalFeedbackIndex, 1);
         }
+
         this.referencedFeedback = feedback;
+
+        this.hasAutomaticFeedback = feedback.some(feedbackItem => feedbackItem.type === FeedbackType.AUTOMATIC);
+        this.highlightAutomaticFeedback();
+
+        if (this.highlightMissingFeedback) {
+            this.highlightElementsWithMissingFeedback();
+        }
     }
 
     private checkPermissions(): void {
@@ -194,6 +207,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSaveAssessment() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
@@ -215,6 +233,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             if (confirm) {
                 this.submitAssessment();
             } else {
+                this.highlightMissingFeedback = true;
                 this.highlightElementsWithMissingFeedback();
             }
         } else {
@@ -223,12 +242,21 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private submitAssessment() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
+
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+
+                this.highlightMissingFeedback = false;
+
                 this.conflicts = null;
                 this.updateHighlightedConflictingElements();
             },
@@ -327,10 +355,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private updateHighlightedConflictingElements() {
-        this.highlightedElementIds = new Set<string>();
+        this.highlightedElements = new Map<string, string>();
         if (this.conflicts) {
             this.conflicts.forEach((conflict: Conflict) => {
-                this.highlightedElementIds.add(conflict.causingConflictingResult.modelElementId);
+                this.highlightedElements.set(conflict.causingConflictingResult.modelElementId, FeedbackHighlightColor.RED);
             });
         }
     }
@@ -347,10 +375,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         ) {
             this.assessmentsAreValid = false;
             return;
-        }
-        if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
-            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId!);
-            this.highlightedElementIds = new Set<string>(this.highlightedElementIds);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {
@@ -369,12 +393,54 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Add all elements for which no corresponding feedback element exist to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all
+     * elements with the corresponding "missing feedback color" get removed first.
+     */
     private highlightElementsWithMissingFeedback() {
-        this.highlightedElementIds = new Set<string>();
-        this.model!.elements.forEach((element: UMLElement) => {
-            if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
-                this.highlightedElementIds.add(element.id);
+        if (!this.model) {
+            return;
+        }
+
+        this.highlightedElements = this.highlightedElements
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.RED)
+            : new Map<string, string>();
+
+        const referenceIds = this.referencedFeedback.map(feedback => feedback.referenceId);
+        for (const element of this.model.elements) {
+            if (!referenceIds.includes(element.id)) {
+                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
             }
-        });
+        }
+    }
+
+    /**
+     * Add all automatic feedback elements to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all elements with the corresponding
+     * "automatic feedback color" get removed first. The automatic feedback will not be highlighted anymore after the assessment has been completed.
+     */
+    private highlightAutomaticFeedback() {
+        if (this.result && this.result.completionDate) {
+            return;
+        }
+
+        this.highlightedElements = this.highlightedElements
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.CYAN)
+            : new Map<string, string>();
+
+        for (const feedbackItem of this.referencedFeedback) {
+            if (feedbackItem.type === FeedbackType.AUTOMATIC && feedbackItem.referenceId) {
+                this.highlightedElements.set(feedbackItem.referenceId, FeedbackHighlightColor.CYAN);
+            }
+        }
+    }
+
+    /**
+     * Remove all elements with the given highlight color from the map of highlighted feedback elements.
+     *
+     * @param highlightedElements the map of highlighted feedback elements
+     * @param color the color of the elements that should be removed
+     */
+    private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
+        return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
 }

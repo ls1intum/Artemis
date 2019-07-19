@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiWebsocketService } from '../../core';
@@ -31,7 +32,7 @@ const ENTITY_STATES = [...quizRoute];
         DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, DeviceDetectorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

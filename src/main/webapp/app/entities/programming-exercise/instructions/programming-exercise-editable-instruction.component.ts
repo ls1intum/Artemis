@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
+import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
 import { ProgrammingExercise } from '../programming-exercise.model';
@@ -11,15 +12,17 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { Result, ResultService } from 'app/entities/result';
+import { hasExerciseChanged } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
@@ -34,6 +37,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     unsavedChanges = false;
 
     interactResizable: Interactable;
+
+    testCaseSubscription: Subscription;
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
@@ -66,7 +71,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.exerciseChange.emit(this.exerciseValue);
     }
 
-    constructor(private programmingExerciseService: ProgrammingExerciseService, private jhiAlertService: JhiAlertService) {}
+    constructor(
+        private programmingExerciseService: ProgrammingExerciseService,
+        private jhiAlertService: JhiAlertService,
+        private resultService: ResultService,
+        private testCaseService: ProgrammingExerciseTestCaseService,
+    ) {}
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (hasExerciseChanged(changes)) {
+            this.setupTestCaseSubscription();
+        }
+    }
 
     ngAfterViewInit() {
         this.interactResizable = interact('.editable-instruction-container')
@@ -127,14 +143,55 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
-    updateTestCases = (testCases: ProgrammingExerciseTestCase[]) => {
-        setTimeout(() => {
-            this.exerciseTestCases = compose(
-                map(({ testName }) => testName),
-                filter(({ active }) => active),
-                sortBy('testName'),
-            )(testCases);
-            this.testCaseCommand.setValues(this.exerciseTestCases);
-        }, 0);
+    private setupTestCaseSubscription() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+
+        this.testCaseSubscription = this.testCaseService
+            .subscribeForTestCases(this.exercise.id)
+            .pipe(
+                switchMap((testCases: ProgrammingExerciseTestCase[] | null) => {
+                    // If there are test cases, map them to their names, sort them and use them for the markdown editor.
+                    if (testCases) {
+                        const sortedTestCaseNames = compose(
+                            map(({ testName }) => testName),
+                            filter(({ active }) => active),
+                            sortBy('testName'),
+                        )(testCases);
+                        return of(sortedTestCaseNames);
+                    } else if (this.exercise.templateParticipation) {
+                        // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
+                        return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation.id);
+                    }
+                    return of();
+                }),
+                tap((testCaseNames: string[]) => {
+                    this.exerciseTestCases = testCaseNames;
+                    this.testCaseCommand.setValues(this.exerciseTestCases);
+                }),
+                catchError(() => of()),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Generate test case names from the feedback of the exercise's templateParticipation.
+     * This is the fallback for older programming exercises without test cases in the database.
+     * @param templateParticipationId
+     */
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
+        // Fallback for exercises that don't have test cases yet.
+        return this.resultService.getLatestResultWithFeedbacks(templateParticipationId).pipe(
+            rxMap((res: HttpResponse<Result>) => res.body),
+            rxFilter((result: Result) => !!result.feedbacks),
+            rxMap(({ feedbacks }: Result) =>
+                compose(
+                    map(({ text }) => text),
+                    sortBy('text'),
+                )(feedbacks),
+            ),
+            catchError(() => of([])),
+        );
     };
 }
