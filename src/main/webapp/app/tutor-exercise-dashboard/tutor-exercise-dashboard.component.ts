@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -62,9 +63,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     moreFeedbackRequests: Complaint[];
     submissionLockLimitReached = false;
 
-    formattedGradingInstructions: string | null;
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
+    formattedGradingInstructions: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;

@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
@@ -12,7 +13,7 @@ export class ExpandableSampleSolutionComponent implements OnInit {
     @Input() exercise: ModelingExercise;
     @Input() isCollapsed = false;
 
-    formattedSampleSolutionExplanation: string | null;
+    formattedSampleSolutionExplanation: SafeHtml | null;
     sampleSolution: UMLModel;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}

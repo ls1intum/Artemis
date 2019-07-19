@@ -6,13 +6,18 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
 
+export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number };
+
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
+    notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
+    updateWeights(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
+    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService, OnDestroy {
-    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise-test-cases`;
+    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise`;
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
@@ -48,11 +53,43 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     }
 
     /**
+     * Send new values for the test cases of an exercise to all subscribers.
+     * @param exerciseId
+     * @param testCases
+     */
+    public notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void {
+        if (this.subjects[exerciseId]) {
+            this.subjects[exerciseId].next(testCases);
+        }
+    }
+
+    /**
      * Executes a REST request to the test case endpoint.
      * @param exerciseId
      */
     private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases`);
+    }
+
+    /**
+     * Update the weights with the provided values of the test cases.
+     * Needs the exercise to verify permissions on the server.
+     *
+     * @param exerciseId
+     * @param testCaseId
+     * @param weight
+     */
+    public updateWeights(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/update-test-case-weights`, updates);
+    }
+
+    /**
+     * Use with care: Set all test case weights to 1.
+     *
+     * @param exerciseId
+     */
+    public resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset-weights`, {});
     }
 
     /**

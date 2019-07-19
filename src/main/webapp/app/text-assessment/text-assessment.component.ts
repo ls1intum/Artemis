@@ -1,4 +1,5 @@
 import * as $ from 'jquery';
+import { SafeHtml } from '@angular/platform-browser';
 import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
@@ -54,9 +55,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     paramSub: Subscription;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;

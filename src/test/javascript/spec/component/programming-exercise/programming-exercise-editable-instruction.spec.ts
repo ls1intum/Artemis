@@ -5,7 +5,7 @@ import { MockComponent } from 'ng-mocks';
 import { of, Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
@@ -58,6 +58,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
@@ -84,6 +85,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
         fixture.detectChanges();
         tick();
 
@@ -94,6 +99,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -108,6 +118,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should update test cases if a new test case result comes in', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -131,6 +146,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.participation = participation;
         const subject = new Subject<HttpResponse<Result>>();
         getLatestResultWithFeedbacksStub.returns(subject);
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
 
         // No test cases available, might be that the solution build never ran to create tests...
         (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
