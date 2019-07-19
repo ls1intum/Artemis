@@ -83,6 +83,10 @@ public class ComplaintResource {
         }
 
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().setAssessor(null);
+
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
     }

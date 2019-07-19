@@ -226,7 +226,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            participation.filterSensitiveInformation(); // TODO: Check if this filter is correct
+            participation.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);
