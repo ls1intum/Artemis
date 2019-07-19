@@ -10,19 +10,19 @@ public class TutorLeaderboardDTO {
 
     private Long numberOfAcceptedComplaints;
 
-    private Long numberOfAnsweredMoreFeedbackRequests;
+    private Long numberOfNotAnsweredMoreFeedbackRequests;
 
     private Long numberOfComplaintResponses;
 
     private Long points;
 
-    public TutorLeaderboardDTO(Long userId, String name, Long numberOfAssessments, Long numberOfAcceptedComplaints, Long numberOfAnsweredMoreFeedbackRequests,
+    public TutorLeaderboardDTO(Long userId, String name, Long numberOfAssessments, Long numberOfAcceptedComplaints, Long numberOfNotAnsweredMoreFeedbackRequests,
             Long numberOfComplaintResponses, Long points) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
         this.numberOfAcceptedComplaints = numberOfAcceptedComplaints;
-        this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
+        this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
         this.numberOfComplaintResponses = numberOfComplaintResponses;
         this.points = points;
     }
@@ -51,12 +51,12 @@ public class TutorLeaderboardDTO {
         this.numberOfAssessments = numberOfAssessments;
     }
 
-    public Long getNumberOfAnsweredMoreFeedbackRequests() {
-        return numberOfAnsweredMoreFeedbackRequests;
+    public Long getNumberOfNotAnsweredMoreFeedbackRequests() {
+        return numberOfNotAnsweredMoreFeedbackRequests;
     }
 
-    public void setNumberOfAnsweredMoreFeedbackRequests(Long numberOfAnsweredMoreFeedbackRequests) {
-        this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
+    public void setNumberOfNotAnsweredMoreFeedbackRequests(Long numberOfNotAnsweredMoreFeedbackRequests) {
+        this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
     }
 
     public Long getNumberOfAcceptedComplaints() {
