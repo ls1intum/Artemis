@@ -21,6 +21,8 @@ public class AutomaticTextFeedbackService {
 
     private final FeedbackService feedbackService;
 
+    private static final double DISTANCE_THRESHOLD = 1;
+
     public AutomaticTextFeedbackService(FeedbackService feedbackService) {
         this.feedbackService = feedbackService;
     }
@@ -34,29 +36,31 @@ public class AutomaticTextFeedbackService {
         final TextExercise exercise = (TextExercise) textSubmission.getParticipation().getExercise();
         final List<TextBlock> blocks = textSubmission.getBlocks();
 
-        final List<Feedback> suggestedFeedback = blocks.parallelStream().map(block -> {
+        final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
             Feedback newFeedback = new Feedback().reference(block.getId());
 
             if (cluster != null) {
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks();
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(exercise, cluster);
+                if (feedbackForTextExerciseInCluster.size() != 0) {
+                    final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
+                            .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
+                            .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
-                final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
-                        .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
-                        .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
+                    if (mostSimilarBlockInClusterWithFeedback.isPresent()
+                            && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
+                        final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
+                        return newFeedback.credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
 
-                if (mostSimilarBlockInClusterWithFeedback.isPresent()) {
-                    final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
-                    return newFeedback.reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
-
+                    }
                 }
             }
 
             return newFeedback.credits(0d).type(FeedbackType.MANUAL);
         }).collect(toList());
 
-        result.getFeedbacks().addAll(suggestedFeedback);
+        result.setFeedbacks(suggestedFeedback);
     }
 
 }

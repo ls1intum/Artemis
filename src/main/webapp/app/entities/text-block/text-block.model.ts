@@ -1,7 +1,7 @@
 import { TextSubmission } from 'app/entities/text-submission';
 
 export class TextBlock {
-    id?: number;
+    id: string;
     text: string;
     startIndex: number;
     endIndex: number;

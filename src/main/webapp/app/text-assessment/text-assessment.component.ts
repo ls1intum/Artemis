@@ -24,6 +24,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -38,6 +39,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     result: Result;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
+    referencedTextBlocks: (TextBlock | undefined)[];
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -68,6 +70,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     private cancelConfirmationText: string;
 
     public getColorForIndex = HighlightColors.forIndex;
+
+    private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
@@ -293,6 +297,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
+                const submission = <TextSubmission>response.body!.submission;
+                this.submission.blocks = submission.blocks;
                 this.loadFeedbacks(response.body!.feedbacks || []);
             },
             (error: HttpErrorResponse) => this.onError(error.message),
@@ -308,6 +314,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+        this.referencedTextBlocks = feedbacks.map(feedback => {
+            const feedbackReferencesTextBlock = this.sha1Regex.test(feedback.reference!);
+            if (!feedbackReferencesTextBlock) {
+                return undefined;
+            }
+
+            return this.submission.blocks!.find(block => block.id === feedback.reference);
+        });
     }
 
     private updateParticipationWithResult(): void {

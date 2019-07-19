@@ -16,7 +16,7 @@
             <column name="id" type="char(40)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="text" type="varchar(255)">
+            <column name="text" type="longtext">
                 <constraints nullable="false" />
             </column>
             <column name="start_index" type="int">

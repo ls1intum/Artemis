@@ -95,6 +95,7 @@
                 <jhi-text-assessment-editor
                     [submissionText]="submission?.text"
                     [assessments]="referencedFeedback"
+                    [blocks]="referencedTextBlocks"
                     (assessedText)="addAssessment($event)"
                 ></jhi-text-assessment-editor>
             </div>
@@ -136,6 +137,7 @@
         <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
             <jhi-text-assessment-detail
                 [(assessment)]="referencedFeedback[i]"
+                [block]="referencedTextBlocks[i]"
                 (assessmentChange)="validateAssessment()"
                 [highlightColor]="getColorForIndex(i)"
                 (deleteAssessment)="deleteAssessment($event)"

@@ -89,7 +89,7 @@ public class TextCluster implements Serializable {
         this.distanceMatrix = castToBinary(distanceMatrix);
     }
 
-    public int getBlockIndex(TextBlock textBlock) {
+    private int getBlockIndex(TextBlock textBlock) {
         return blocks.indexOf(textBlock);
     }
 
@@ -165,7 +165,7 @@ public class TextCluster implements Serializable {
 
     @Override
     public String toString() {
-        return "TextCluster{" + "id=" + getId() + ", exercise='" + exercise.getId() + "'" + ", size='" + size() + "'" + "}";
+        return "TextCluster{" + "id=" + getId() + (exercise != null ? ", exercise='" + exercise.getId() + "'" : "") + ", size='" + size() + "'" + "}";
     }
 
     // region Binary Cast

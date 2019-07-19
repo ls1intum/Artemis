@@ -1,6 +1,7 @@
 import { Component, DoCheck, Input, IterableDiffers, OnChanges, SimpleChanges } from '@angular/core';
 import { Feedback } from 'app/entities/feedback';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
     selector: 'jhi-highlighted-text-area',
@@ -10,6 +11,7 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     @Input() public submissionText: string;
     @Input() public assessments: Feedback[];
+    @Input() public blocks: (TextBlock | undefined)[];
     public displayedText: string;
     private differ: any;
 
@@ -46,7 +48,14 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
             if (assessment.reference == null) {
                 return content;
             }
-            return content.replace(assessment.reference, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`);
+
+            let replacementString = assessment.reference;
+            const textBlockAtCurrentIndex = this.blocks[currentIndex];
+            if (textBlockAtCurrentIndex) {
+                replacementString = textBlockAtCurrentIndex.text;
+            }
+
+            return content.replace(replacementString, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${replacementString}</span>`);
         }, this.submissionTextWithHtmlLinebreaks);
     }
 }

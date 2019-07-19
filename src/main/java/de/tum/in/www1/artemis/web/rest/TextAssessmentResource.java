@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,6 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
+        result.getParticipation().setStudent(null);
         return ResponseEntity.ok(result);
     }
 
@@ -101,6 +103,7 @@ public class TextAssessmentResource extends AssessmentResource {
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
+        result.getParticipation().setStudent(null);
         return ResponseEntity.ok(result);
     }
 
@@ -111,6 +114,7 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+        result.getParticipation().setStudent(null);
         return ResponseEntity.ok(result);
     }
 
@@ -140,7 +144,7 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
@@ -160,6 +164,12 @@ public class TextAssessmentResource extends AssessmentResource {
         else {
             textBlockService.prepopulateFeedbackBlocks(result);
         }
+
+        Comparator<TextBlock> byStartIndexReversed = (TextBlock first, TextBlock second) -> Integer.compare(second.getStartIndex(), first.getStartIndex());
+        TextSubmission textSubmission = (TextSubmission) result.getSubmission();
+        textSubmission.getBlocks().sort(byStartIndexReversed);
+
+        result.getParticipation().setStudent(null);
         return ResponseEntity.ok(result);
     }
 
@@ -221,6 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result.setFeedbacks(assessments);
         }
 
+        participation.setStudent(null);
         return ResponseEntity.ok(participation);
     }
 
@@ -267,6 +278,7 @@ public class TextAssessmentResource extends AssessmentResource {
         List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
         result.setFeedbacks(assessments);
 
+        result.getParticipation().setStudent(null);
         return ResponseEntity.ok(result);
     }
 
