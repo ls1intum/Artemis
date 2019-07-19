@@ -5,7 +5,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
