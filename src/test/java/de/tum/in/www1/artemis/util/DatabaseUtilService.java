@@ -55,6 +55,15 @@ public class DatabaseUtilService {
     StudentParticipationRepository participationRepo;
 
     @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
+
+    @Autowired
+    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+
+    @Autowired
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+
+    @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
@@ -98,6 +107,7 @@ public class DatabaseUtilService {
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
+        programmingExerciseStudentParticipationRepo.deleteAll();
         exerciseRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         testCaseRepository.deleteAll();
@@ -151,6 +161,35 @@ public class DatabaseUtilService {
         storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isPresent();
         return participationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+    }
+
+    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+        Optional<ProgrammingExerciseStudentParticipation> storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(),
+                login);
+        if (storedParticipation.isPresent()) {
+            return storedParticipation.get();
+        }
+        User user = getUserByLogin(login);
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setStudent(user);
+        participation.setExercise(exercise);
+        programmingExerciseStudentParticipationRepo.save(participation);
+        storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        assertThat(storedParticipation).isPresent();
+        return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
+    }
+
+    public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setProgrammingExercise(exercise);
+        templateProgrammingExerciseParticipationRepo.save(participation);
+        return participation;
+    }
+
+    public Result addResultToParticipation(Participation participation) {
+        Result result = new Result().participation(participation).resultString("x of y passed").rated(true).score(100L);
+        resultRepo.save(result);
+        return result;
     }
 
     public void addCourseWithOneModelingExercise() {

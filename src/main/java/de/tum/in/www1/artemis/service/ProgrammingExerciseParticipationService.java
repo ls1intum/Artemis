@@ -79,8 +79,8 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation) {
-        User user = userService.getUser();
-        return participation.getStudent().getLogin().equals(user.getLogin());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return participation.getStudent().getLogin().equals(user.getLogin()) || authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user);
     }
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation) {
