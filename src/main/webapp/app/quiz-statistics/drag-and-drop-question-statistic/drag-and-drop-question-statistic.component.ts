@@ -9,11 +9,11 @@ import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-que
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
-import { QuizQuestionType } from '../../entities/quiz-question';
 import { DropLocation } from '../../entities/drop-location';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
+import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -58,6 +58,8 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     // options for chart in chart.js style
     options: ChartOptions;
+
+    resizeImage = resizeImage();
 
     constructor(
         private route: ActivatedRoute,
@@ -107,7 +109,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:resize') onResize() {
-        this.resizeImage();
+        resizeImage();
     }
 
     getDataSets() {
@@ -361,15 +363,5 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         } else {
             return null;
         }
-    }
-
-    resizeImage() {
-        /* set timeout as workaround to render all necessary elements */
-        setTimeout(() => {
-            const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
-            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            clickLayer.style.width = image.width + 'px';
-            clickLayer.style.height = image.height + 'px';
-        }, 100);
     }
 }
