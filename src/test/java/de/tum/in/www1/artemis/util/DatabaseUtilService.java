@@ -108,6 +108,8 @@ public class DatabaseUtilService {
         textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         programmingExerciseStudentParticipationRepo.deleteAll();
+        templateProgrammingExerciseParticipationRepo.deleteAll();
+        solutionProgrammingExerciseParticipationRepo.deleteAll();
         exerciseRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         testCaseRepository.deleteAll();
@@ -179,10 +181,19 @@ public class DatabaseUtilService {
         return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
     }
 
-    public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+    public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
-        participation.setProgrammingExercise(exercise);
+        exercise.setTemplateParticipation(participation);
         templateProgrammingExerciseParticipationRepo.save(participation);
+        programmingExerciseRepository.save(exercise);
+        return participation;
+    }
+
+    public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        exercise.setSolutionParticipation(participation);
+        solutionProgrammingExerciseParticipationRepo.save(participation);
+        programmingExerciseRepository.save(exercise);
         return participation;
     }
 

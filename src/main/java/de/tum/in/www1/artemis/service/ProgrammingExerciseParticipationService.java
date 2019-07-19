@@ -85,12 +85,12 @@ public class ProgrammingExerciseParticipationService {
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
     public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation, Principal principal) {
