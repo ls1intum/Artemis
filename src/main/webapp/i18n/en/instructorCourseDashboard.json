@@ -27,7 +27,9 @@
                 "name": "Name",
                 "numberOfAssessments": "Assessments",
                 "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Not answered requests",
                 "numberOfComplaintResponses": "Complaint responses",
+                "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
                 "points": "Points"
             }
         }
