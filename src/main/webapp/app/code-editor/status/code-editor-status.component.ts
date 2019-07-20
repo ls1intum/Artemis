@@ -7,6 +7,9 @@ import { CommitState, EditorState } from 'app/code-editor';
     providers: [],
 })
 export class CodeEditorStatusComponent {
+    CommitState = CommitState;
+    EditorState = EditorState;
+
     @Input()
     editorState: EditorState;
     @Input()
