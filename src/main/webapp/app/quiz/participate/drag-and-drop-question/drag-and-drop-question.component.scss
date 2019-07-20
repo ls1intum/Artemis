@@ -109,4 +109,30 @@
             }
         }
     }
+
+    /* highlight drop location in light blue when selecting a drag item */
+    .drop-allowed {
+        background: rgba(173, 216, 230, 0.8) !important;
+    }
+    /* change highlight color to light green when dragging the item above a drop location */
+    .drop-hover,
+    .dnd-drag-over {
+        background: rgb(144, 238, 144) !important;
+    }
+
+    .dnd-instructions {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        font-weight: 500;
+    }
+
+    .background-area {
+        position: relative;
+        @include user-select(none);
+
+        img {
+            max-width: 100%;
+        }
+    }
 }

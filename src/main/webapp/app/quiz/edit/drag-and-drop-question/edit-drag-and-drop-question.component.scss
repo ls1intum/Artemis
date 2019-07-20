@@ -3,11 +3,105 @@
 .edit-dnd-question {
     .drag-items {
         .drag-item {
+            border: 1px solid dimgrey;
+            background: #fafafa;
             height: 160px;
 
             img {
                 @include dnd-drag-item-image;
             }
         }
+    }
+
+    /* highlight drop location in light blue when selecting a drag item */
+    .drop-allowed {
+        background: rgba(173, 216, 230, 0.8) !important;
+    }
+    /* change highlight color to light green when dragging the item above a drop location */
+    .drop-hover,
+    .dnd-drag-over {
+        background: rgb(144, 238, 144) !important;
+    }
+
+    .re-evaluate-button {
+        display: inline-block;
+        padding: 4px;
+
+        &:hover {
+            color: blue;
+        }
+    }
+
+    .resize {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: mediumpurple;
+
+        &.top {
+            top: -3px;
+        }
+
+        &.middle {
+            top: calc(50% - 3px);
+            cursor: col-resize;
+        }
+
+        &.bottom {
+            bottom: -3px;
+        }
+
+        &.left {
+            left: -3px;
+        }
+
+        &.center {
+            left: calc(50% - 3px);
+            cursor: row-resize;
+        }
+
+        &.right {
+            right: -3px;
+        }
+
+        &.top.left,
+        &.bottom.right {
+            cursor: nwse-resize;
+        }
+
+        &.top.right,
+        &.bottom.left {
+            cursor: nesw-resize;
+        }
+    }
+
+    .dimensions,
+    .invalid {
+        position: absolute;
+        left: 2px;
+        bottom: 0;
+        font-size: 14px;
+    }
+
+    .dnd-instructions {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        font-weight: 500;
+    }
+
+    .background-area {
+        position: relative;
+        @include user-select(none);
+
+        img {
+            max-width: 100%;
+        }
+    }
+
+    .drag-item-file {
+        display: flex;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
     }
 }

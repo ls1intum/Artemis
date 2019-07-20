@@ -1,39 +1,103 @@
-table.answer-options-result {
-    width: 100%;
+.mc-question {
+    .answer-options {
+        margin-top: 20px;
+    }
 
     .answer-option {
-        display: table-row;
-    }
-
-    th {
-        color: dimgray;
-    }
-
-    th,
-    td {
+        display: flex;
+        align-items: center;
+        outline: none !important;
+        border: 1px solid lightgrey;
+        margin: 4px 0;
         padding: 6px 10px;
+
+        .selection {
+            width: 36px;
+            margin-left: 16px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            align-items: center;
+
+            .text {
+                flex: 1;
+                padding-right: 8px;
+                font-size: 16px;
+            }
+
+            .hint {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                font-size: 18px;
+
+                /* adjust [ngbPopover] window style */
+                ngb-popover-window {
+                    max-width: 500px;
+
+                    @media (max-width: 991.98px) {
+                        max-width: 300px !important;
+                    }
+
+                    @media (max-width: 575.98px) {
+                        max-width: 200px !important;
+                    }
+                }
+            }
+        }
+
+        &:hover {
+            background: #fafafa;
+        }
+
+        &.click-disabled {
+            cursor: not-allowed;
+
+            &:hover {
+                background: inherit;
+            }
+        }
     }
 
-    .solution {
-        width: 100px;
-    }
+    table.answer-options-result {
+        width: 100%;
 
-    .result-symbol {
-        padding: 0;
-        color: orange;
-        width: 50px;
-    }
+        .answer-option {
+            display: table-row;
+        }
 
-    .selection {
-        width: 36px;
-        margin-left: 0;
-    }
+        th {
+            color: dimgray;
+        }
 
-    .correct {
-        color: green;
-    }
+        th,
+        td {
+            padding: 6px 10px;
+        }
 
-    .wrong {
-        color: red;
+        .solution {
+            width: 100px;
+        }
+
+        .result-symbol {
+            padding: 0;
+            color: orange;
+            width: 50px;
+        }
+
+        .selection {
+            width: 36px;
+            margin-left: 0;
+        }
+
+        .correct {
+            color: green;
+        }
+
+        .wrong {
+            color: red;
+        }
     }
 }

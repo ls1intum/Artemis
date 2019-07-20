@@ -20,6 +20,9 @@
     /* drag items below click layer */
     jhi-drag-item,
     .drag-item {
+        border: 1px solid dimgrey;
+        background: #fafafa;
+
         .drag-item-picture {
             cursor: default !important;
         }
@@ -42,12 +45,12 @@
             @include dnd-drop-location-item;
 
             .letter {
-                @include quiz-statistic-letter(#428bca);
+                @include quiz-letter-number(#428bca);
                 @include dnd-letter-position;
             }
 
             .letter-solution {
-                @include quiz-statistic-letter(#5cb85c);
+                @include quiz-letter-number(#5cb85c);
                 @include dnd-letter-position;
             }
 

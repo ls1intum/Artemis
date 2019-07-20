@@ -1,0 +1,57 @@
+.edit-quiz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 100px;
+
+    .quiz-options {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        width: 100%;
+
+        input,
+        .input-group-btn {
+            display: inline-block;
+            width: auto;
+        }
+
+        .datepicker-input {
+            max-width: 140px;
+        }
+
+        .checkbox {
+            display: inline-block;
+        }
+
+        .input-group > input {
+            height: 100%;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin: 0 5px 15px;
+
+            > * {
+                margin: 0 4px;
+            }
+
+            > div.time-picker {
+                margin-top: -15px;
+                margin-left: 0px;
+            }
+        }
+
+        .background-file,
+        .drag-item-file {
+            display: flex;
+        }
+
+        .drag-item-file {
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    }
+}

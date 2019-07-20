@@ -1,5 +1,22 @@
-/* quiz statistic letter mixin */
-@mixin quiz-statistic-letter($color) {
+/* user-select mixin */
+@mixin user-select($value) {
+    -webkit-user-select: $value;
+    -moz-user-select: $value;
+    -ms-user-select: $value;
+    user-select: $value;
+}
+
+/* apply transform translate3d */
+@mixin transformTranslate3D($tx, $ty, $tz) {
+    -webkit-transform: translate3d($tx, $ty, $tz);
+    -moz-transform: translate3d($tx, $ty, $tz);
+    -ms-transform: translate3d($tx, $ty, $tz);
+    -o-transform: translate3d($tx, $ty, $tz);
+    transform: translate3d($tx, $ty, $tz);
+}
+
+/* quiz letter/number mixin */
+@mixin quiz-letter-number($color) {
     width: 30px;
     height: 30px;
     line-height: 30px;
@@ -16,11 +33,7 @@
     left: 3%;
     z-index: 1;
     opacity: 1;
-    -webkit-transform: translate3d(-63%, -63%, 0);
-    -moz-transform: translate3d(-63%, -63%, 0);
-    -ms-transform: translate3d(-63%, -63%, 0);
-    -o-transform: translate3d(-63%, -63%, 0);
-    transform: translate3d(-63%, -63%, 0);
+    @include transformTranslate3D(-63%, -63%, 0);
 }
 
 /* drag item in drop location mixin */
