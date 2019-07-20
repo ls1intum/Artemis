@@ -13,6 +13,9 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit, OnChanges {
     rightFeedbacksCopy: Feedback[];
+    leftHighlightedElements: Map<string, string>;
+    rightHighlightedElements: Map<string, string>;
+
     highlightColor: string;
     private userInteractionWithConflict = false;
 
@@ -54,6 +57,20 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.rightFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
             if (this.userInteractionWithConflict) {
                 this.updateCurrentState();
+            }
+        }
+        if (changes.leftHighlightedElementIds) {
+            if (changes.leftHighlightedElementIds.currentValue) {
+                this.leftHighlightedElements = this.createHighlightedElementMapping(changes.leftHighlightedElementIds.currentValue);
+            } else {
+                this.leftHighlightedElements = new Map<string, string>();
+            }
+        }
+        if (changes.rightHighlightedElementIds) {
+            if (changes.rightHighlightedElementIds.currentValue) {
+                this.rightHighlightedElements = this.createHighlightedElementMapping(changes.rightHighlightedElementIds.currentValue);
+            } else {
+                this.rightHighlightedElements = new Map<string, string>();
             }
         }
     }
@@ -108,6 +125,10 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             }
         }
         this.updateHighlightColor();
+    }
+
+    private createHighlightedElementMapping(highlightedElementIds: Set<string>) {
+        return new Map<string, string>([...highlightedElementIds].map(id => [id, this.highlightColor]));
     }
 
     private updateHighlightColor() {
