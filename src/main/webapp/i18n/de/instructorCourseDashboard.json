@@ -27,7 +27,7 @@
                 "name": "Name",
                 "numberOfAssessments": "Assessments",
                 "numberOfAcceptedComplaints": "Angenommene Beschwerden",
-                "numberOfNotAnsweredMoreFeedbackRequests": "Nicht beantwortete Anfragen",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Offene AnfragenAnfragen",
                 "numberOfComplaintResponses": "Beschwerde Antworten",
                 "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Anfragen",
                 "points": "Punkte"
