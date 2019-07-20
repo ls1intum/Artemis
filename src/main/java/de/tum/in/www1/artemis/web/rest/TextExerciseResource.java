@@ -290,8 +290,8 @@ public class TextExerciseResource {
                 result.setFeedbacks(assessments);
             }
 
-            if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-                result.setAssessor(null); // TODO: Check if this filter is correct
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+                result.setAssessor(null);
             }
 
             participation.addSubmissions(textSubmission);

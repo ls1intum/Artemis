@@ -83,8 +83,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation(); // TODO: Check if this filter is correct
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -104,7 +104,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation(); // TODO: Check if this filter is correct
+            result.getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -118,8 +118,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation(); // TODO: Check if this filter is correct
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -161,7 +161,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textBlockService.prepopulateFeedbackBlocks(result);
 
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            result.getParticipation().filterSensitiveInformation(); // TODO: Check if this filter is correct
+            result.getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);

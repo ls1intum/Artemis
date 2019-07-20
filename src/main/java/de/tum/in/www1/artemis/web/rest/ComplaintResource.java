@@ -112,10 +112,17 @@ public class ComplaintResource {
      */
     @GetMapping("/complaints/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: hide sensitive information
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintService.getByResultId(resultId);
+
+        if (complaint.isPresent() && complaint.get().getResult() != null) {
+            Exercise exercise = complaint.get().getResult().getParticipation().getExercise();
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                complaint.get().getResult().setAssessor(null);
+            }
+        }
+
         return complaint.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 
