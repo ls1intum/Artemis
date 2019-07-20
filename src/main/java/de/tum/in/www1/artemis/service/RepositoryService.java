@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 /**
  * Service that provides utilites for managing files in a git repository.
@@ -187,7 +186,7 @@ public class RepositoryService {
      * @param repository
      */
     public void pullChanges(Repository repository) {
-        gitService.get().pull(repository);
+        gitService.get().pullIgnoreConflicts(repository);
     }
 
     /**
@@ -204,18 +203,13 @@ public class RepositoryService {
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      * 
-     * @param repository
+     * @param repositoryUrl
      * @return
      * @throws GitAPIException
      */
-    public RepositoryStatusDTO getStatus(Repository repository) throws GitAPIException {
-        RepositoryStatusDTO status = new RepositoryStatusDTO();
-        status.isClean = gitService.get().isClean(repository);
-
-        if (status.isClean) {
-            gitService.get().pull(repository);
-        }
-        return status;
+    public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
+        Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl, true);
+        return gitService.get().isClean(repository);
     }
 
     /**
@@ -228,14 +222,15 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout)
+            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl);
+        return gitService.get().getOrCheckoutRepository(repoUrl, pullOnCheckout);
     }
 
     /**
@@ -248,31 +243,14 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl)
+            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl);
-    }
-
-    /**
-     * Retrieve a repository by a participation connected to it.
-     * 
-     * @param participation
-     * @return
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws InterruptedException
-     */
-    public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {
-        boolean hasAccess = participationService.canAccessParticipation(participation);
-        if (!hasAccess) {
-            throw new IllegalAccessException();
-        }
-
-        return gitService.get().getOrCheckoutRepository(participation);
+        return gitService.get().getOrCheckoutRepository(repoUrl, true);
     }
 }

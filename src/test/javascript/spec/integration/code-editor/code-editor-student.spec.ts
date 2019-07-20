@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -14,13 +13,17 @@ import { TreeviewModule } from 'ngx-treeview';
 import {
     ArTEMiSCodeEditorModule,
     CodeEditorBuildLogService,
+    CodeEditorConflictStateService,
     CodeEditorFileService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
     CodeEditorSessionService,
     CodeEditorStudentContainerComponent,
     CommitState,
+    DomainService,
+    DomainType,
     EditorState,
+    GitConflictState,
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import {
@@ -59,6 +62,8 @@ describe('CodeEditorStudentIntegration', () => {
     let resultService: ResultService;
     let buildLogService: CodeEditorBuildLogService;
     let participationService: ParticipationService;
+    let conflictService: CodeEditorConflictStateService;
+    let domainService: DomainService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -119,6 +124,8 @@ describe('CodeEditorStudentIntegration', () => {
                 buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
                 participationService = containerDebugElement.injector.get(ParticipationService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
+                conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
+                domainService = containerDebugElement.injector.get(DomainService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
 
@@ -126,7 +133,7 @@ describe('CodeEditorStudentIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
 
-                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'isClean');
+                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
                     subscribeForLatestResultOfParticipationSubject,
@@ -174,9 +181,11 @@ describe('CodeEditorStudentIntegration', () => {
         container.participation = participation;
         container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
+        // TODO: This should be replaced by testing with route params.
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
-        isCleanSubject.next({ isClean: true });
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
 
@@ -252,6 +261,8 @@ describe('CodeEditorStudentIntegration', () => {
         container.participation = participation;
         container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
+        // TODO: This should be replaced by testing with route params.
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
         isCleanSubject.error('fatal error');
@@ -513,4 +524,47 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(container.participation).to.be.undefined;
     });
+
+    it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        container.ngOnInit();
+        const result = { id: 3, successful: false };
+        const participation = { id: 1, results: [result] } as Participation;
+        const feedbacks = [{ id: 2 }] as Feedback[];
+        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
+        const isCleanSubject = new Subject();
+        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
+        findWithLatestResultStub.returns(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+        getRepositoryContentStub.returns(of([]));
+
+        routeSubject.next({ participationId: 1 });
+
+        containerFixture.detectChanges();
+
+        findWithLatestResultSubject.next({ body: participation });
+        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
+
+        containerFixture.detectChanges();
+
+        // Create conflict.
+        isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
+        containerFixture.detectChanges();
+
+        expect(container.commitState).to.equal(CommitState.CONFLICT);
+        expect(getRepositoryContentStub).to.not.have.been.called;
+
+        // Resolve conflict.
+        conflictService.notifyConflictState(GitConflictState.OK);
+        tick();
+        containerFixture.detectChanges();
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
+        containerFixture.detectChanges();
+
+        expect(container.commitState).to.equal(CommitState.CLEAN);
+        expect(getRepositoryContentStub).to.calledOnce;
+
+        containerFixture.destroy();
+        flush();
+    }));
 });
