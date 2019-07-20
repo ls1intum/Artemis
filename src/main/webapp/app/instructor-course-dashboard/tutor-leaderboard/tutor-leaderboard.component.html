@@ -34,34 +34,39 @@
                 <td>{{ tutor.name }}</td>
                 <td>{{ tutor.points }}</td>
                 <td>{{ tutor.numberOfAssessments }}</td>
-                <span *ngIf="course && isAtLeastInstructor">
-                    <td>
-                        <a routerLink="/complaints" [queryParams]="{ courseId: course.id, tutorId: tutor.userId }">
-                            {{ tutor.numberOfAcceptedComplaints }}
-                        </a>
-                    </td>
-                    <td>
-                        <a routerLink="/moreFeedbackRequests" [queryParams]="{ courseId: course.id, tutorId: tutor.userId }">
-                            {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
-                        </a>
-                    </td>
-                </span>
-                <span *ngIf="exercise && isAtLeastInstructor">
-                    <td>
-                        <a routerLink="/complaints" [queryParams]="{ exerciseId: exercise.id, tutorId: tutor.userId }">
-                            {{ tutor.numberOfAcceptedComplaints }}
-                        </a>
-                    </td>
-                    <td>
-                        <a routerLink="/moreFeedbackRequests" [queryParams]="{ exerciseId: exercise.id, tutorId: tutor.userId }">
-                            {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
-                        </a>
-                    </td>
-                </span>
-                <span *ngIf="!isAtLeastInstructor">
+                <ng-container *ngIf="!isAtLeastInstructor; else atLeastInstructor">
                     <td>{{ tutor.numberOfAcceptedComplaints }}</td>
                     <td>{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
-                </span>
+                </ng-container>
+
+                <ng-template #atLeastInstructor>
+                    <ng-container *ngIf="exercise">
+                        <td>
+                            <a routerLink="/complaints" [queryParams]="{ exerciseId: exercise.id, tutorId: tutor.userId }">
+                                {{ tutor.numberOfAcceptedComplaints }}
+                            </a>
+                        </td>
+                        <td>
+                            <a routerLink="/moreFeedbackRequests" [queryParams]="{ exerciseId: exercise.id, tutorId: tutor.userId }">
+                                {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
+                            </a>
+                        </td>
+                    </ng-container>
+
+                    <ng-container *ngIf="course">
+                        <td>
+                            <a routerLink="/complaints" [queryParams]="{ courseId: course.id, tutorId: tutor.userId }">
+                                {{ tutor.numberOfAcceptedComplaints }}
+                            </a>
+                        </td>
+                        <td>
+                            <a routerLink="/moreFeedbackRequests" [queryParams]="{ courseId: course.id, tutorId: tutor.userId }">
+                                {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
+                            </a>
+                        </td>
+                    </ng-container>
+                </ng-template>
+
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td>{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
             </tr>
