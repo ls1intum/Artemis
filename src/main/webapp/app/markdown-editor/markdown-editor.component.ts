@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -58,6 +58,7 @@ const getAceMode = (mode: EditorMode) => {
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;

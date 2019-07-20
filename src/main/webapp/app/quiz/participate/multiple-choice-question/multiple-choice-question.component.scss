@@ -1,4 +1,12 @@
 .mc-question {
+    background: #fefefe;
+    border: 1px solid lightgrey;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 20px;
+    position: relative;
+    width: 100%;
+
     .answer-options {
         margin-top: 20px;
     }
@@ -32,19 +40,6 @@
                 flex-direction: column;
                 align-items: flex-end;
                 font-size: 18px;
-
-                /* adjust [ngbPopover] window style */
-                ngb-popover-window {
-                    max-width: 500px;
-
-                    @media (max-width: 991.98px) {
-                        max-width: 300px !important;
-                    }
-
-                    @media (max-width: 575.98px) {
-                        max-width: 200px !important;
-                    }
-                }
             }
         }
 
@@ -58,6 +53,19 @@
             &:hover {
                 background: inherit;
             }
+        }
+    }
+
+    /* adjust [ngbPopover] window style */
+    ngb-popover-window {
+        max-width: 500px;
+
+        @media (max-width: 991.98px) {
+            max-width: 300px !important;
+        }
+
+        @media (max-width: 575.98px) {
+            max-width: 200px !important;
         }
     }
 
@@ -99,5 +107,67 @@
         .wrong {
             color: red;
         }
+    }
+
+    &.result {
+        border-color: green;
+
+        .show-explanation {
+            display: inline-block;
+        }
+
+        &.incorrect {
+            border-color: orange;
+        }
+    }
+
+    h2 {
+        margin: 0 90px 0 0;
+
+        span {
+            color: grey;
+        }
+    }
+
+    p {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+
+    .question-title-display {
+        max-width: 80%;
+    }
+
+    .question-score {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        max-width: 30%;
+
+        @media (max-width: 900px) {
+            position: relative;
+            top: 0;
+            right: 0;
+            max-width: 100%;
+        }
+
+        &.result {
+            font-weight: bold;
+            color: green;
+
+            &.incorrect {
+                color: orange;
+            }
+        }
+    }
+
+    .label {
+        cursor: pointer;
+        margin: 2px 0;
+    }
+
+    &.disabled {
+        color: dimgrey;
+        background: #fafafa;
     }
 }

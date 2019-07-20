@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -11,6 +10,7 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
     templateUrl: './short-answer-question.component.html',
     providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;

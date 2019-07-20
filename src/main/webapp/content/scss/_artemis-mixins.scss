@@ -1,4 +1,14 @@
-/* user-select mixin */
+/* define position style mixin */
+@mixin position-style($position, $top, $left, $bottom, $right, $z-index) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: $z-index;
+}
+
+/* define user-select mixin */
 @mixin user-select($value) {
     -webkit-user-select: $value;
     -moz-user-select: $value;
@@ -6,7 +16,7 @@
     user-select: $value;
 }
 
-/* apply transform translate3d */
+/* apply transform translate3d mixin */
 @mixin transformTranslate3D($tx, $ty, $tz) {
     -webkit-transform: translate3d($tx, $ty, $tz);
     -moz-transform: translate3d($tx, $ty, $tz);
@@ -15,8 +25,8 @@
     transform: translate3d($tx, $ty, $tz);
 }
 
-/* quiz letter/number mixin */
-@mixin quiz-letter-number($color) {
+/* quiz mapping letter or number mixin */
+@mixin quiz-mapping-letter-number($color) {
     width: 30px;
     height: 30px;
     line-height: 30px;
@@ -27,48 +37,11 @@
 }
 
 /* dnd quiz statistic letter position mixin */
-@mixin dnd-letter-position {
+@mixin dnd-letter-position($tx, $ty, $tz) {
+    @include transformTranslate3D($tx, $ty, $tz);
     position: absolute;
     top: 3%;
     left: 3%;
     z-index: 1;
     opacity: 1;
-    @include transformTranslate3D(-63%, -63%, 0);
-}
-
-/* drag item in drop location mixin */
-@mixin dnd-drop-location-item {
-    jhi-drag-item,
-    .drag-item {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        background: white;
-
-        .drag-item-text,
-        .drag-item-picture {
-            line-height: 1;
-
-            span {
-                border: none;
-                padding: 0;
-                vertical-align: middle;
-                display: inline-block;
-                white-space: nowrap;
-            }
-        }
-    }
-}
-
-/* drag item image in drop location mixin */
-@mixin dnd-drag-item-image {
-    max-height: 100%;
-    max-width: 100%;
-    height: auto;
-    width: auto !important;
-    margin: auto;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
 }

@@ -1,0 +1,36 @@
+.question {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid lightgrey;
+    margin-bottom: 18px;
+    background: #fefefe;
+
+    &:first-of-type {
+        margin-top: 18px;
+    }
+
+    .question-card-header {
+        padding: 15px 5px 5px 5px;
+    }
+
+    .question-collapse {
+        margin-top: -15px;
+        width: 3.25rem;
+    }
+
+    .question-title {
+        flex: 1;
+
+        input.form-control {
+            width: 100%;
+        }
+    }
+
+    .question-content {
+        display: flex;
+        flex-flow: column;
+        > * {
+            height: 350px;
+        }
+    }
+}

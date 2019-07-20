@@ -31,11 +31,11 @@
             }
 
             &__statistic-letter {
-                @include quiz-letter-number(#428bca);
+                @include quiz-mapping-letter-number(#428bca);
             }
 
             &__statistic-letter-solution {
-                @include quiz-letter-number(#5cb85c);
+                @include quiz-mapping-letter-number(#5cb85c);
             }
         }
     }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
@@ -8,8 +8,9 @@ import { QuizExercise } from 'app/entities/quiz-exercise';
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
-    providers: [ArtemisMarkdown],
     styleUrls: ['./multiple-choice-question.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;

@@ -626,6 +626,11 @@ displaycolor {
     cursor: not-allowed;
 }
 
+.colon-suffix:after {
+    content: ':';
+    display: inline-flex;
+}
+
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -671,4 +676,17 @@ Course Info Bar
     .orange {
         color: #d86b1f;
     }
+}
+
+ngb-tooltip-window {
+    padding: 0;
+    width: 200px !important;
+
+    > div {
+        margin: auto !important;
+    }
+}
+
+.warning-modal-window .modal-dialog {
+    width: 50%;
 }

@@ -61,7 +61,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
-    resizeImage = resizeImage();
+    resizeImage = resizeImage(true);
 
     constructor(
         private route: ActivatedRoute,
@@ -111,7 +111,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:resize') onResize() {
-        resizeImage();
+        resizeImage(true);
     }
 
     getDataSets() {
