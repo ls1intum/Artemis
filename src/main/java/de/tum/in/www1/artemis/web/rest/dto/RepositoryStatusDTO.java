@@ -5,16 +5,16 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class RepositoryStatusDTO {
 
-    public Boolean isClean;
+    public RepositoryStatusDTOType repositoryStatus;
 
     public RepositoryStatusDTO() {
     }
 
-    public Boolean getClean() {
-        return isClean;
+    public RepositoryStatusDTOType getRepositoryStatus() {
+        return repositoryStatus;
     }
 
-    public void setClean(Boolean clean) {
-        isClean = clean;
+    public void setRepositoryStatus(RepositoryStatusDTOType repositoryStatus) {
+        this.repositoryStatus = repositoryStatus;
     }
 }
