@@ -6,7 +6,6 @@ cache:
     directories:
         - $HOME/.gradle/caches/
         - $HOME/.gradle/wrapper/
-
 jobs:
     include:
       - stage: Build

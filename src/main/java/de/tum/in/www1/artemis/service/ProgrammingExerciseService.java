@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
@@ -292,9 +293,9 @@ public class ProgrammingExerciseService {
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
         Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
-        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
-        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl);
+        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
+        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
         try {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
@@ -538,6 +539,29 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id.
+     *
+     * @param id of the programming exercise.
+     * @return
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new IllegalAccessException();
+            }
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
+    }
+
+    /**
      * This method saves the participations of the programming xercise
      *
      * @param programmingExercise The programming exercise
@@ -559,7 +583,7 @@ public class ProgrammingExerciseService {
      * @throws IllegalStateException
      */
     public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException, GitAPIException {
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
@@ -575,17 +599,18 @@ public class ProgrammingExerciseService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
+            throws IOException, GitAPIException, InterruptedException {
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
 
         gitService.resetToOriginMaster(solutionRepository);
-        gitService.pull(solutionRepository);
+        gitService.pullIgnoreConflicts(solutionRepository);
         gitService.resetToOriginMaster(exerciseRepository);
-        gitService.pull(exerciseRepository);
+        gitService.pullIgnoreConflicts(exerciseRepository);
         gitService.resetToOriginMaster(testRepository);
-        gitService.pull(testRepository);
+        gitService.pullIgnoreConflicts(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
