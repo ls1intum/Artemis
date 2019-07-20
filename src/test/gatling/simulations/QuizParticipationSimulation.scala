@@ -56,13 +56,13 @@ class QuizParticipationSimulation extends Simulation {
       */
     def selectRandomAnswers(questionsString: String, submit: Boolean): String = {
         // parse json strings into objects (Map or List)
-        val questions = JSON.parseFull(questionsString).get.asInstanceOf[List[Any]]
+//        val questions = JSON.parseFull(questionsString).get.asInstanceOf[List[Any]]
 
         // save submitted answers in a List
         var submittedAnswers = List[Map[String, Any]]()
 
         // iterate through all questions to select answers
-        questions.foreach((questionP) => {
+//        questions.foreach((questionP) => {
 //            val question = questionP.get.asInstanceOf[Map[String, Any]]
 //            val questionType = question("type").get.asInstanceOf[String]
 
@@ -121,7 +121,7 @@ class QuizParticipationSimulation extends Simulation {
 //
 //            // add submitted answer to the List
 //            submittedAnswers = submittedAnswer +: submittedAnswers
-        })
+//        })
 
         // add submitted answers to submission
         var result: Map[String, Any] = Map("submittedAnswers" -> submittedAnswers)
