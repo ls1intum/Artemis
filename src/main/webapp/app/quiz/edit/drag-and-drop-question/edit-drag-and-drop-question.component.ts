@@ -778,6 +778,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
+        resizeImage();
         this.showPreview = !this.showPreview;
         this.prepareForSave();
     }
