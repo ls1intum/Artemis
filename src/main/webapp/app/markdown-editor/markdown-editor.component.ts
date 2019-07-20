@@ -58,7 +58,6 @@ const getAceMode = (mode: EditorMode) => {
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
