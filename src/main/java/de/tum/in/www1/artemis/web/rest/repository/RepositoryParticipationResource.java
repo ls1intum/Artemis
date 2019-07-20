@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,10 +41,49 @@ public class RepositoryParticipationResource extends RepositoryResource {
         this.participationService = participationService;
     }
 
+    /**
+     * Retrieve a repository by providing a participation id. Will check if the user has permissions to access data related to the given participation.
+     *
+     * @param participationId of the given participation.
+     * @param pullOnGet       perform a pull on retrieval of a git repository (in some cases it might make sense not to pull!)
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws GitAPIException
+     */
     @Override
-    Repository getRepository(Long participationId) throws IOException, IllegalAccessException, InterruptedException {
+    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
         Participation participation = participationService.findOne(participationId);
-        return repositoryService.checkoutRepositoryByParticipation(participation);
+        boolean hasPermissions = participationService.canAccessParticipation(participation);
+        if (!hasPermissions) {
+            throw new IllegalAccessError();
+        }
+        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
+    }
+
+    /**
+     * Get the repository url by providing a participation id. Will not check any permissions!
+     *
+     * @param participationId
+     * @return
+     */
+    @Override
+    URL getRepositoryUrl(Long participationId) {
+        Participation participation = participationService.findOne(participationId);
+        return participation.getRepositoryUrlAsUrl();
+    }
+
+    /**
+     * Check if a user can access the participation's repository.
+     *
+     * @param participationId
+     * @return
+     */
+    @Override
+    boolean canAccessRepository(Long participationId) {
+        Participation participation = participationService.findOne(participationId);
+        return participationService.canAccessParticipation(participation);
     }
 
     /**
@@ -67,7 +107,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.getFile(participationId, filename);
     }
 
@@ -81,8 +121,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(participationId, filename, request);
     }
 
@@ -96,8 +135,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(participationId, folderName, request);
     }
 
@@ -111,7 +149,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws InterruptedException
      */
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         return super.renameFile(participationId, fileMove);
     }
 
@@ -124,7 +162,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      */
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.deleteFile(participationId, filename);
     }
 
@@ -136,7 +174,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
         return super.pullChanges(participationId);
     }
 
@@ -149,8 +187,13 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
         return super.commitChanges(participationId);
+    }
+
+    @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
+        return super.resetToLastCommit(participationId);
     }
 
     /**

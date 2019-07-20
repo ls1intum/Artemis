@@ -7,6 +7,7 @@ import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 // options are optional ;)
 polyfill({
@@ -82,7 +83,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     @HostListener('window:resize') onResize() {
-        this.resizeImage();
+        resizeImage();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -118,7 +119,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     changeLoading(value: string) {
         this.loadingState = value;
         if (this.loadingState === 'success') {
-            this.resizeImage();
+            resizeImage();
         }
     }
 
@@ -295,14 +296,5 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
-    }
-
-    resizeImage() {
-        setTimeout(() => {
-            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
-            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            clickLayer.style.width = image.width + 'px';
-            clickLayer.style.height = image.height + 'px';
-        }, 300);
     }
 }
