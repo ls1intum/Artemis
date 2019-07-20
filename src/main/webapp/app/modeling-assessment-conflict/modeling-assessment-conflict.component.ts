@@ -101,7 +101,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 } else {
                     newState = ConflictResolutionState.RESOLVED;
                 }
-                if (newState != this.conflictState) {
+                if (newState !== this.conflictState) {
                     this.conflictState = newState;
                     this.conflictResolutionStateChanged.emit(newState);
                 }

@@ -12,7 +12,7 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     private conflictIndex = 0;
     conflictsAllHandled = false;
 
-    @Input() showSave: boolean = false;
+    @Input() showSave = false;
     @Input() conflicts: Conflict[] | null;
     @Input() conflictResolutionStates: ConflictResolutionState[] = [];
     @Output() selectedConflictChanged = new EventEmitter<number>();

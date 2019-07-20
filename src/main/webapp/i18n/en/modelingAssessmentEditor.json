@@ -25,7 +25,7 @@
             "updateAfterComplaintFailed": "Updating the Assessment failed.",
             "confirmSubmission": "You have not assessed all model elements. Are you sure you want to submit this assessment? You will not be able to change it afterwards.",
             "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
-            "noConflicts": "Conflicts could not be loaded"
+            "noConflicts": "Conflicts could not be loaded",
             "feedbackTextTooLong": "Failed to save Assessment. Feedback text must not be longer than 500 characters."
         },
         "reviewComplaint": "Review Complaint",
