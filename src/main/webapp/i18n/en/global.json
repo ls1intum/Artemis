@@ -178,6 +178,7 @@
             "archive": "Archive",
             "submit": "Submit",
             "submitDeadlineMissed": "Submit (deadline missed)",
+            "submitAnyways": "Submit Anyways",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",

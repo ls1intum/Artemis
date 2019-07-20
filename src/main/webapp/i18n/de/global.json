@@ -178,6 +178,7 @@
             "archive": "Archivieren",
             "submit": "Absenden",
             "submitDeadlineMissed": "Absenden (Deadline verpasst)",
+            "submitAnyways": "Dennoch Absenden",
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
