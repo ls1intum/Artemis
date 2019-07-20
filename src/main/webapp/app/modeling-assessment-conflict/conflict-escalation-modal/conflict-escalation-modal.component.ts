@@ -10,7 +10,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class ConflictEscalationModalComponent implements OnInit {
     @Input() tutorsEscalatingTo: User[];
     @Input() escalatedConflictsCount: number;
-
+    @Input() isInstructorWarning = false;
     constructor(public activeModal: NgbActiveModal) {}
 
     ngOnInit() {}

@@ -12,11 +12,11 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
     styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor/modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit, OnChanges {
-    rightFeedbacksCopy: Feedback[];
     leftHighlightedElements: Map<string, string>;
     rightHighlightedElements: Map<string, string>;
 
-    highlightColor: string;
+    private rightFeedbacksCopy: Feedback[];
+    private highlightColor: string;
     private userInteractionWithConflict = false;
 
     @Input() modelingExercise: ModelingExercise;
@@ -35,7 +35,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     @Input() rightAssessmentReadOnly = false;
     @Input() conflictState: ConflictResolutionState = ConflictResolutionState.UNHANDLED;
     @Input() resultsInConflict: ConflictingResult[];
-    @Output() conflictResolutionStateChanged = new EventEmitter<ConflictResolutionState>();
     @Output() leftButtonPressed = new EventEmitter();
     @Output() rightButtonPressed = new EventEmitter();
     @Output() rightFeedbacksChanged = new EventEmitter<Feedback[]>();
@@ -55,9 +54,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
         if (changes.rightFeedback) {
             this.rightFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
-            if (this.userInteractionWithConflict) {
-                this.updateCurrentState();
-            }
+            // if (this.userInteractionWithConflict) {
+            //     this.updateCurrentState();
+            // }
         }
         if (changes.leftHighlightedElementIds) {
             if (changes.leftHighlightedElementIds.currentValue) {
@@ -90,12 +89,12 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
-        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
-        const originalElementAssessment = this.rightFeedback.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
-        if (elementAssessmentUpdate && originalElementAssessment && elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
-            this.userInteractionWithConflict = true;
-            this.updateCurrentState();
-        }
+        // const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
+        // const originalElementAssessment = this.rightFeedback.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
+        // if (elementAssessmentUpdate && originalElementAssessment && elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
+        //     this.userInteractionWithConflict = true;
+        //     this.updateCurrentState();
+        // }
         this.rightFeedbacksChanged.emit(feedbacks);
     }
 
@@ -105,26 +104,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         if (conflictEditorWidth && instructionsWidth) {
             $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
         }
-    }
-
-    private updateCurrentState() {
-        if (this.leftConflictingElemenId && this.rightConflictingElemenId) {
-            let newState;
-            const rightElementFeedback = this.rightFeedback.find((feedback: Feedback) => feedback.referenceId === this.rightConflictingElemenId);
-            const leftElementFeedback = this.leftFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.leftConflictingElemenId);
-            if (rightElementFeedback && leftElementFeedback) {
-                if (rightElementFeedback.credits !== leftElementFeedback.credits) {
-                    newState = ConflictResolutionState.ESCALATED;
-                } else {
-                    newState = ConflictResolutionState.RESOLVED;
-                }
-                if (newState !== this.conflictState) {
-                    this.conflictState = newState;
-                    this.conflictResolutionStateChanged.emit(newState);
-                }
-            }
-        }
-        this.updateHighlightColor();
     }
 
     private createHighlightedElementMapping(highlightedElementIds: Set<string>) {
@@ -143,5 +122,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 this.highlightColor = 'rgba(40, 167, 69, 0.6)';
                 break;
         }
+        this.leftHighlightedElements = this.createHighlightedElementMapping(this.leftHighlightedElementIds);
+        this.rightHighlightedElements = this.createHighlightedElementMapping(this.rightHighlightedElementIds);
     }
 }

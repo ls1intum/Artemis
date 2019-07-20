@@ -106,6 +106,7 @@ export class InitialConflictResolutionComponent implements OnInit {
                 this.currentConflict.causingConflictingResult.result.feedbacks,
             );
         }
+        this.updateCurrentState();
     }
 
     onTakeOver() {
@@ -116,6 +117,7 @@ export class InitialConflictResolutionComponent implements OnInit {
                 this.conflictingResult.result.feedbacks,
             );
         }
+        this.updateCurrentState();
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
@@ -125,7 +127,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     onConflictStateChanged(newState: ConflictResolutionState) {
         this.conflictResolutionStates[this.conflictIndex] = newState;
         this.currentState = newState;
-        // this.conflictResolutionStates = [...this.conflictResolutionStates];
+        this.conflictResolutionStates = [...this.conflictResolutionStates];
     }
 
     onSubmit(escalatedConflicts: Conflict[]) {
@@ -147,7 +149,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
     }
 
-    escalateAndSubmit(escalatedConflicts: Conflict[]) {
+    private escalateAndSubmit(escalatedConflicts: Conflict[]) {
         const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
         modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
@@ -156,7 +158,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         });
     }
 
-    submit() {
+    private submit() {
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
             () => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
@@ -175,6 +177,24 @@ export class InitialConflictResolutionComponent implements OnInit {
                 }
             },
         );
+    }
+
+    private updateCurrentState() {
+        if (this.conflictingCenteredElementId && this.currentCenteredElementId) {
+            let newState;
+            const rightElementFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentCenteredElementId);
+            const leftElementFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingCenteredElementId);
+            if (rightElementFeedback && leftElementFeedback) {
+                if (rightElementFeedback.credits !== leftElementFeedback.credits) {
+                    newState = ConflictResolutionState.ESCALATED;
+                } else {
+                    newState = ConflictResolutionState.RESOLVED;
+                }
+                if (newState !== this.currentState) {
+                    this.onConflictStateChanged(newState);
+                }
+            }
+        }
     }
 
     private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {

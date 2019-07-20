@@ -4,14 +4,22 @@
     </h4>
 </div>
 <div class="modal-body">
-    <h5>
-        {{
-            'modelingAssessmentConflict.messages.escalationWarning'
-                | translate: { escalatedConflictsCount: escalatedConflictsCount, tutorsEscalatingCount: tutorsEscalatingTo.length }
-        }}
-    </h5>
-    <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
+    <ng-template *ngIf="!isInstructorWarning; else instructorWarning">
+        <h5>
+            {{
+                'modelingAssessmentConflict.messages.escalationWarningTutors'
+                    | translate: { escalatedConflictsCount: escalatedConflictsCount, tutorsEscalatingCount: tutorsEscalatingTo.length }
+            }}
+        </h5>
+        <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
+    </ng-template>
+    <ng-template #instructorWarning>
+        <h5>
+            {{ 'modelingAssessmentConflict.messages.escalationWarningInstructors' | translate: { escalatedConflictsCount: escalatedConflictsCount } }}
+        </h5>
+    </ng-template>
 </div>
+
 <div class="modal-footer">
     <span class="ml-2" jhiTranslate="modelingAssessmentConflict.messages.areYouSure">Are your sure to continue?</span>
     <button type="button" class="btn btn-outline-danger" (click)="activeModal.dismiss('cancel')" jhiTranslate="entity.action.cancel">Cancel</button>

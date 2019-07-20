@@ -14,13 +14,14 @@
         },
         "messages": {
             "warning": "Hinweis",
-            "escalationWarning": "Du bist dabei {{escalatedConflictsCount}} Konflikte an die folgenden {{tutorsEscalatingCount}} betroffenen  Tutoren zu eskalieren:",
+            "escalationWarningTutors": "Du bist dabei {{escalatedConflictsCount}} Konflikte an die folgenden {{tutorsEscalatingCount}} betroffenen  Tutoren zu eskalieren:",
+            "escalationWarningInstructors": "You are about to escalate {{escalatedConflictsCount}} conflicts to a instructor",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
-            "noConflicts": "Es wurden keine Konflikte zum Bearbeiten gefunden!",
+            "noConflicts": "Es wurden keine Konflikte für dich zum Bearbeiten gefunden!",
             "conflictsResolved": "Alle Konflikte wurden bearbeitet. Sende deine aktualisierte Bewertung ab, um die Konfliktbehandlung abzuschließen.",
             "conflictResolutionInstructions": "Entscheide für jeden der vorhandenen Konflikte ob du deine Bewertung behalten oder die bereits vorhandene übernehmen möchtest.",
             "areYouSure": "Möchtest du dennoch fortfahren?"

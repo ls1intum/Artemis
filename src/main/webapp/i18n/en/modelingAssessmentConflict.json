@@ -14,13 +14,14 @@
         },
         "messages": {
             "warning": "Warning",
-            "escalationWarning": "You are about to escalate {{escalatedConflictsCount}} conflicts to the following affected {{tutorsEscalatingCount}} tutors:",
+            "escalationWarningTutors": "You are about to escalate {{escalatedConflictsCount}} conflicts to the following affected {{tutorsEscalatingCount}} tutors:",
+            "escalationWarningInstructors": "You are about to escalate {{escalatedConflictsCount}} conflicts to an instructor",
             "saveSuccessful": "Your assessment was saved successfully!",
             "saveFailed": "Saving your assessment failed!",
             "submitSuccessful": "Your assessment was submitted successfully!",
             "submitFailed": "Submitting your assessment failed!",
             "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
-            "noConflicts": "Found no conflicts to handle!",
+            "noConflicts": "Found no conflicts for you to handle!",
             "conflictsResolved": "All conflicts have been handled. Submit your updated assessment to complete the conflict resolution.",
             "conflictResolutionInstructions": "Decide for each conflict whether to keep your own assessment or to take over the already existing one.",
             "areYouSure": "Are your sure to continue?"

@@ -10,6 +10,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingAssessmentConflictService } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.service';
+import { ConflictEscalationModalComponent } from 'app/modeling-assessment-conflict/conflict-escalation-modal/conflict-escalation-modal.component';
 
 @Component({
     selector: 'jhi-escalated-conflict-resolution',
@@ -95,8 +96,12 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     onSave() {}
 
-    onSubmit() {
-        this.conflictService.updateConflicts(this.conflicts);
+    onSubmit(escalatedConflicts: Conflict[]) {
+        if (escalatedConflicts && escalatedConflicts.length > 0) {
+            this.escalateAndSubmit(escalatedConflicts);
+        } else {
+            this.submit();
+        }
     }
 
     onKeepYours() {
@@ -107,22 +112,35 @@ export class EscalatedConflictResolutionComponent implements OnInit {
                 this.currentConflictingResult.result.feedbacks,
             );
         }
+        this.updateCurrentState();
     }
 
     onTakeOver() {
         if (this.currentConflictingResult) {
             this.updateFeedbackInMergedFeedback(this.currentConflictingResult.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
         }
+        this.updateCurrentState();
     }
 
-    onFeedbackChanged(feedbacks: Feedback[]) {
-        // this.mergedFeedbacks = feedbacks;
-    }
+    // onFeedbackChanged(feedbacks: Feedback[]) {
+    //     this.mergedFeedbacks = feedbacks;
+    // }
 
     onConflictStateChanged(newState: ConflictResolutionState) {
         this.conflictResolutionStates[this.conflictIndex] = newState;
         this.currentState = newState;
         this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
+    }
+
+    private submit() {}
+
+    private escalateAndSubmit(escalatedConflicts: Conflict[]) {
+        const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.isInstructorWarning = true;
+        modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
+        modalRef.result.then(() => {
+            this.conflictService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
+        });
     }
 
     private initResolutionStates(conflicts: Conflict[]) {
@@ -143,6 +161,24 @@ export class EscalatedConflictResolutionComponent implements OnInit {
             }
         }
         this.currentState = this.conflictResolutionStates[this.conflictIndex];
+    }
+
+    private updateCurrentState() {
+        if (this.conflictingCenteredElementId && this.currentCenteredElementId) {
+            let newState;
+            const rightElementFeedback = this.currentFeedbacksCopy.find((feedback: Feedback) => feedback.referenceId === this.currentCenteredElementId);
+            const leftElementFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingCenteredElementId);
+            if (rightElementFeedback && leftElementFeedback) {
+                if (rightElementFeedback.credits !== leftElementFeedback.credits) {
+                    newState = ConflictResolutionState.ESCALATED;
+                } else {
+                    newState = ConflictResolutionState.RESOLVED;
+                }
+                if (newState !== this.currentState) {
+                    this.onConflictStateChanged(newState);
+                }
+            }
+        }
     }
 
     private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
