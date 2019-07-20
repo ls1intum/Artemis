@@ -169,6 +169,16 @@ public class AssessmentComplaintIntegrationTest {
         assertThat(storedComplaint.isAccepted()).as("accepted flag of complaint is not set").isNull();
     }
 
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintByResultId_assessorHiddenForStudent() throws Exception {
+        complaintRepo.save(complaint);
+
+        Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+
+        assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
+    }
+
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
         assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
         Result storedFeedbackResult = new Result();
