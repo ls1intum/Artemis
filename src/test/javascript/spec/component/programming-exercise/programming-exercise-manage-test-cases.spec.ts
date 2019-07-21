@@ -13,13 +13,14 @@ import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import * as chai from 'chai';
-import { ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
+import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
 import { ArTEMiSTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ArTEMiSSharedModule, JhiAlertComponent } from 'app/shared';
+import { ArtemisTableModule } from 'app/components/table/table.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,14 +39,15 @@ describe('ProgrammingExerciseManageTestCases', () => {
     let routeSubject: Subject<Params>;
 
     const testCaseTableId = '#testCaseTable';
+    const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
     const saveWeightsButtonId = '#save-weights-button';
 
     const exerciseId = 1;
     const testCases1 = [
-        { id: 1, testName: 'testBubbleSort', active: true, weight: 1 },
-        { id: 2, testName: 'testMergeSort', active: true, weight: 1 },
-        { id: 3, testName: 'otherTest', active: false, weight: 1 },
+        { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
+        { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
+        { id: 3, testName: 'otherTest', active: false, weight: 1, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
     const testCases2 = [
         { id: 4, testName: 'testBubbleSort', active: false, weight: 2 },
@@ -55,7 +57,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgxDatatableModule, FormsModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArtemisTableModule, NgxDatatableModule, FormsModule],
             declarations: [ProgrammingExerciseManageTestCasesComponent, MockComponent(JhiAlertComponent)],
             providers: [
                 JhiAlertService,
@@ -79,6 +81,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
 
                 routeSubject = new Subject();
+                // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
             });
     }));
@@ -88,6 +91,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         routeSubject.complete();
         routeSubject = new Subject();
+        // @ts-ignore
         (route as MockActivatedRoute).setSubject(routeSubject);
     });
 
@@ -95,6 +99,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
 
+        // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
 
         fixture.detectChanges();
@@ -115,6 +120,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
 
+        // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
 
         fixture.detectChanges();
@@ -137,23 +143,26 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         let orderedTests = _sortBy(testCases1, 'testName');
 
+        // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
 
         fixture.detectChanges();
 
         const table = debugElement.query(By.css(testCaseTableId));
-        const editIcons = table.queryAll(By.css('.edit-weight__edit-icon'));
+        const editIcons = table.queryAll(By.css('.table-editable-field__edit'));
         expect(editIcons).to.have.lengthOf(testCases1.length);
         editIcons[0].nativeElement.click();
 
         fixture.detectChanges();
 
-        expect(comp.editingInput).to.exist;
-        expect(comp.editing).to.deep.equal(orderedTests[0]);
+        let editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
+
+        expect(editingInput).to.exist;
+        expect(comp.editing).to.deep.equal([orderedTests[0], EditableField.WEIGHT]);
 
         // Set new weight.
-        comp.editingInput.nativeElement.value = '20';
-        comp.editingInput.nativeElement.dispatchEvent(new Event('blur'));
+        editingInput.value = '20';
+        editingInput.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
 
@@ -169,8 +178,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
         fixture.detectChanges();
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        expect(updateWeightsStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, weight: '20' }]);
-        expect(comp.editingInput).not.to.exist;
+        editingInput = debugElement.query(By.css(tableEditingInput));
+        expect(updateWeightsStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
+        expect(editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal('20');
     });
 });

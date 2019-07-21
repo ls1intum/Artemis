@@ -10,7 +10,7 @@ import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exe
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 
-enum EditableField {
+export enum EditableField {
     WEIGHT = 'weight',
 }
 
