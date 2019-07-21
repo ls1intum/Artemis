@@ -48,29 +48,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private get maxWidthAdjustmentForTourStep(): number {
-        return this.tourStepWidth - this.minimalTourStepWidth;
-    }
-
-    private get widthAdjustmentForScreenBound(): number {
-        if (!this.tourStep) {
-            return 0;
-        }
-        let adjustment = 0;
-        if (this.calculatedLeftPosition < 0) {
-            adjustment = -this.calculatedLeftPosition;
-        }
-        if (this.calculatedLeftPosition > window.innerWidth - this.tourStepWidth) {
-            adjustment = this.calculatedLeftPosition - (window.innerWidth - this.tourStepWidth);
-        }
-
-        return Math.min(this.maxWidthAdjustmentForTourStep, adjustment);
-    }
-
-    public get calculatedTourStepWidth() {
-        return this.tourStepWidth - this.widthAdjustmentForScreenBound;
-    }
-
+    /**
+     * Subscribe to guidedTourCurrentStepStream and set tour step if the user has the right permission
+     */
     public ngAfterViewInit(): void {
         this.guidedTourService.guidedTourCurrentStepStream.subscribe((step: TourStep) => {
             this.currentTourStep = step;
@@ -105,11 +85,49 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    /**
+     * Remove subscriptions on destroy
+     */
     public ngOnDestroy(): void {
         this.resizeSubscription.unsubscribe();
         this.scrollSubscription.unsubscribe();
     }
 
+    /**
+     * Calculate max width adjustment for tour step
+     */
+    private get maxWidthAdjustmentForTourStep(): number {
+        return this.tourStepWidth - this.minimalTourStepWidth;
+    }
+
+    /**
+     * Calculate width adjustment for screen bound
+     */
+    private get widthAdjustmentForScreenBound(): number {
+        if (!this.tourStep) {
+            return 0;
+        }
+        let adjustment = 0;
+        if (this.calculatedLeftPosition < 0) {
+            adjustment = -this.calculatedLeftPosition;
+        }
+        if (this.calculatedLeftPosition > window.innerWidth - this.tourStepWidth) {
+            adjustment = this.calculatedLeftPosition - (window.innerWidth - this.tourStepWidth);
+        }
+
+        return Math.min(this.maxWidthAdjustmentForTourStep, adjustment);
+    }
+
+    /**
+     * Calculate tour step width for tour-step div
+     */
+    public get calculatedTourStepWidth() {
+        return this.tourStepWidth - this.widthAdjustmentForScreenBound;
+    }
+
+    /**
+     * Scroll to highlighted element and set tour step
+     */
     public scrollToAndSetElement(): void {
         this.updateStepLocation();
         // Allow things to render to scroll to the correct location
@@ -166,7 +184,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         });
     }
 
-    /* Handle orb event */
+    /**
+     * Handle orb event
+     */
     public handleOrb(): void {
         this.guidedTourService.activateOrb();
         if (this.currentTourStep && this.currentTourStep.selector) {
@@ -174,6 +194,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Return if tour step is visible on screen
+     */
     private isTourOnScreen(): boolean {
         if (!this.currentTourStep && !this.currentTourStep!.selector) {
             return false;
@@ -181,7 +204,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return this.tourStep && this.elementInViewport(document.querySelector(this.currentTourStep!.selector!)) && this.elementInViewport(this.tourStep.nativeElement);
     }
 
-    // Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
+    /**
+     * Define if HTMLElement is visible in current viewport
+     * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
+     * @param element
+     */
     private elementInViewport(element: HTMLElement | null): boolean {
         if (!element) {
             return false;
@@ -207,6 +234,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Handle backdrop clicking event
+     * @param event
+     */
     public backdropClick(event: Event): void {
         if (this.guidedTourService.preventBackdropFromAdvancing) {
             event.stopPropagation();
@@ -215,6 +246,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Update tour step location
+     */
     public updateStepLocation(): void {
         if (this.currentTourStep && this.currentTourStep.selector) {
             const selectedElement = document.querySelector(this.currentTourStep.selector);
@@ -228,6 +262,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Return true if the current tour step orientation is bottom
+     */
     private isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
             return (
@@ -239,6 +276,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return false;
     }
 
+    /**
+     * Get top position for current tour step
+     */
     public get topPosition(): number {
         if (!this.selectedElementRect) {
             return 0;
@@ -251,6 +291,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return this.selectedElementRect.top - this.getHighlightPadding();
     }
 
+    /**
+     * Get orb top position
+     */
     public get orbTopPosition(): number {
         if (this.selectedElementRect && this.currentTourStep) {
             if (this.isBottom()) {
@@ -265,6 +308,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Calculate left position of current tour step / highlighted element
+     */
     private get calculatedLeftPosition(): number {
         if (this.selectedElementRect && this.currentTourStep) {
             const paddingAdjustment = this.getHighlightPadding();
@@ -290,6 +336,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Get left position for current tour step
+     */
     public get leftPosition(): number {
         if (this.calculatedLeftPosition === 0) {
             return 5;
@@ -302,6 +351,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return this.calculatedLeftPosition + maxAdjustment;
     }
 
+    /**
+     * Get orb left position
+     */
     public get orbLeftPosition(): number {
         if (this.selectedElementRect && this.currentTourStep) {
             if (this.currentTourStep.orientation === Orientation.TopRight || this.currentTourStep.orientation === Orientation.BottomRight) {
@@ -325,6 +377,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Transform position of tour steps which are shown on top of the highlighted element
+     */
     public get transform(): string {
         if (this.currentTourStep) {
             if (
@@ -339,6 +394,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return '';
     }
 
+    /**
+     * Transform orb position according to tour step orientation
+     */
     public get orbTransform(): string {
         if (this.currentTourStep) {
             if (
@@ -362,6 +420,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return '';
     }
 
+    /**
+     * Get overlay top position for highlighted element
+     */
     public get overlayTop(): number {
         if (this.selectedElementRect) {
             return this.selectedElementRect.top - this.getHighlightPadding();
@@ -369,6 +430,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Get overlay left position for highlighted element
+     */
     public get overlayLeft(): number {
         if (this.selectedElementRect) {
             return this.selectedElementRect.left - this.getHighlightPadding();
@@ -376,6 +440,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Get overlay height for highlighted element
+     */
     public get overlayHeight(): number {
         if (this.selectedElementRect) {
             return this.selectedElementRect.height + this.getHighlightPadding() * 2;
@@ -383,6 +450,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Get overlay width for highlighted element
+     */
     public get overlayWidth(): number {
         if (this.selectedElementRect) {
             return this.selectedElementRect.width + this.getHighlightPadding() * 2;
@@ -390,6 +460,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
+    /* Gets defined padding around tour highlighting in pixels */
     private getHighlightPadding(): number {
         if (!this.currentTourStep) {
             return 0;
@@ -402,7 +473,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * This calculates a value to add or subtract so the step should not be off screen.
+     * Calculate a value to add or subtract so the step should not be off screen.
      */
     private getStepScreenAdjustment(): number {
         if (!this.currentTourStep) {

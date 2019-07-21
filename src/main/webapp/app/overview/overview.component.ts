@@ -68,6 +68,7 @@ export class OverviewComponent {
         return relevantExercise;
     }
 
+    /* Start guided tour for course overview page */
     public startTour(): void {
         this.guidedTourService.getOverviewTour().subscribe(tour => {
             this.overviewTour = tour;

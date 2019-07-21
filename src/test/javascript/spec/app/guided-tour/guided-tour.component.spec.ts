@@ -24,7 +24,6 @@ describe('Component Tests', () => {
             },
             {
                 contentType: ContentType.TEXT,
-                selector: '.footer .col-sm-6',
                 headlineTranslateKey: 'tour.course-overview.contact.headline',
                 contentTranslateKey: 'tour.course-overview.contact.content',
                 orientation: Orientation.TopLeft,
@@ -51,10 +50,10 @@ describe('Component Tests', () => {
                 });
         }));
 
-        it('calls the given guided tour', inject(
+        it('starts the given guided tour', inject(
             [GuidedTourService],
             fakeAsync((service: GuidedTourService) => {
-                expect(comp.currentTourStep).to.be.undefined;
+                expect(comp.currentTourStep).to.not.exist;
 
                 comp.ngAfterViewInit();
                 service.startTour(courseOverviewTour);
@@ -62,7 +61,6 @@ describe('Component Tests', () => {
                 expect(service.currentTourSteps.length).to.eq(2);
                 expect(service.onFirstStep).to.be.true;
                 expect(service.onLastStep).to.be.false;
-
                 expect(comp.currentTourStep).to.exist;
             }),
         ));

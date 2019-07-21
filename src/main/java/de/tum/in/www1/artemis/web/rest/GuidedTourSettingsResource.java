@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 
+/**
+ * Rest controller for managing GuidedTourSettings
+ */
 @RestController
 @RequestMapping("/api")
 public class GuidedTourSettingsResource {

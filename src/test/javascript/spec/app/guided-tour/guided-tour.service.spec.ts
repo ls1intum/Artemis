@@ -40,7 +40,6 @@ describe('Service Tests', () => {
             it('should return json', () => {
                 const req = httpMock.expectOne({ method: 'GET' });
                 expect(req.request.responseType).to.equal('json');
-                expect(req.request.body).to.null;
             });
         });
     });

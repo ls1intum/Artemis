@@ -4,6 +4,9 @@ import java.io.Serializable;
 
 import com.google.gson.Gson;
 
+/**
+ * GuidedTourSettings
+ */
 public class GuidedTourSettings implements Serializable {
 
     private boolean showCourseOverviewTour = false;
