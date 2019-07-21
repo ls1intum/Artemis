@@ -3,12 +3,10 @@ import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ArTEMiSTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/components/table/table.module';
 import { TableEditableFieldComponent } from 'app/components/table';
 
-chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TableEditableFieldComponent', () => {
