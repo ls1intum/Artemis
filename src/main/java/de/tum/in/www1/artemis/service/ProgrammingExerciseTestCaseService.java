@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -49,25 +49,28 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Update the weights of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
+     * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseWeightUpdates of the test cases to update the weights of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
      * @return the updated test cases.
      */
     @Transactional
-    public Set<ProgrammingExerciseTestCase> updateWeights(Long exerciseId, Set<WeightUpdate> testCaseWeightUpdates) throws EntityNotFoundException, IllegalAccessException {
+    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
+            throws EntityNotFoundException, IllegalAccessException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
 
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
-        for (WeightUpdate weightUpdate : testCaseWeightUpdates) {
-            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(weightUpdate.getId())).findFirst();
+        for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
+            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
+                    .filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.getId())).findFirst();
             if (!matchingTestCaseOpt.isPresent())
                 continue;
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
-            matchingTestCase.setWeight(weightUpdate.getWeight());
+            matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
+            matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
             updatedTests.add(matchingTestCase);
         }
 

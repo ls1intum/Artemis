@@ -75,7 +75,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
 
-                updateWeightsStub = stub(testCaseService, 'updateWeights');
+                updateWeightsStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
 
                 routeSubject = new Subject();

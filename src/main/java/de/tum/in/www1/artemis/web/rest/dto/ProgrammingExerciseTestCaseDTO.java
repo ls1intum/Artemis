@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis.web.rest.dto;
 /**
  * This is a dto for updating the weight of an entity. Currently only used for updating programming exercise test case weights.
  */
-public class WeightUpdate {
+public class ProgrammingExerciseTestCaseDTO {
 
     private Long id;
 
     private Integer weight;
+
+    private boolean afterDueDate;
 
     public Long getId() {
         return id;
@@ -23,5 +25,13 @@ public class WeightUpdate {
 
     public void setWeight(Integer weight) {
         this.weight = weight;
+    }
+
+    public boolean isAfterDueDate() {
+        return afterDueDate;
+    }
+
+    public void setAfterDueDate(boolean afterDueDate) {
+        this.afterDueDate = afterDueDate;
     }
 }

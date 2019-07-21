@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -121,13 +121,13 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws IllegalAccessException {
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
-        Set<WeightUpdate> weightUpdates = new HashSet<>();
-        WeightUpdate weightUpdate = new WeightUpdate();
-        weightUpdate.setId(testCase.getId());
-        weightUpdate.setWeight(400);
-        weightUpdates.add(weightUpdate);
+        Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
+        ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
+        programmingExerciseTestCaseDTO.setId(testCase.getId());
+        programmingExerciseTestCaseDTO.setWeight(400);
+        programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
-        testCaseService.updateWeights(programmingExercise.getId(), weightUpdates);
+        testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
     }

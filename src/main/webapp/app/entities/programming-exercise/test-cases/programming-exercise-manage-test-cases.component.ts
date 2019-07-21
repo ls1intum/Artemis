@@ -139,7 +139,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         const weightUpdates = testCasesToUpdate.map(({ id, weight }) => ({ id, weight }));
 
         this.testCaseService
-            .updateWeights(this.exerciseId, weightUpdates)
+            .updateTestCase(this.exerciseId, weightUpdates)
             .pipe(
                 tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                     // From successfully updated test cases from dirty checking list.
