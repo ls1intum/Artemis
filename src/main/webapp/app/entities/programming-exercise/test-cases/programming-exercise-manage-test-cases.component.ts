@@ -136,10 +136,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-        const weightUpdates = testCasesToUpdate.map(({ id, weight }) => ({ id, weight }));
+        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, afterDueDate }) => ({ id, weight, afterDueDate }));
 
         this.testCaseService
-            .updateTestCase(this.exerciseId, weightUpdates)
+            .updateTestCase(this.exerciseId, testCaseUpdates)
             .pipe(
                 tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                     // From successfully updated test cases from dirty checking list.
