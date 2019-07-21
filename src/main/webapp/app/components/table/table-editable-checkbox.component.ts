@@ -1,5 +1,8 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
+/**
+ * A checkbox to show in a table to edit boolean attributes.
+ */
 @Component({
     selector: 'jhi-table-editable-checkbox',
     styles: ['.table-editable-field {display: flex; align-items: center}'],

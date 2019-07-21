@@ -167,6 +167,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             });
     }
 
+    /**
+     * Toggle the after due date of the test case related to the provided row of the datatable.
+     * @param rowIndex
+     */
     toggleAfterDueDate(rowIndex: number) {
         const testCase = this.filteredTestCases[rowIndex];
         this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id];

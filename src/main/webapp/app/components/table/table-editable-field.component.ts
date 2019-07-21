@@ -1,5 +1,8 @@
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 
+/**
+ * An inline editing field to use for tables.
+ */
 @Component({
     selector: 'jhi-table-editable-field',
     styles: [
