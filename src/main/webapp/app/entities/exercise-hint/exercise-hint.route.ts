@@ -33,7 +33,7 @@ export const exerciseHintRoute: Routes = [
         path: 'exercise/:exerciseId/hints',
         component: ExerciseHintComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -45,7 +45,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -57,7 +57,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -69,7 +69,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -84,7 +84,7 @@ export const exerciseHintPopupRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
