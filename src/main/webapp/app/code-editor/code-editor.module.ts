@@ -21,6 +21,7 @@ import {
     CodeEditorBuildLogService,
     CodeEditorSessionService,
     CodeEditorGridService,
+    CodeEditorConflictStateService,
     // layout
     CodeEditorGridComponent,
     // components
@@ -35,6 +36,7 @@ import {
     EditorInstructionsResultDetailComponent,
     CodeEditorActionsComponent,
     CodeEditorInstructionsComponent,
+    CodeEditorResolveConflictModalComponent,
     // containers
     CodeEditorInstructorContainerComponent,
     CodeEditorStudentContainerComponent,
@@ -72,9 +74,16 @@ const ENTITY_STATES = [...codeEditorRoute];
         EditorInstructionsResultDetailComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
+        CodeEditorResolveConflictModalComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent, EditorInstructionsResultDetailComponent],
+    entryComponents: [
+        CodeEditorInstructorContainerComponent,
+        CodeEditorStudentContainerComponent,
+        CodeEditorFileBrowserDeleteComponent,
+        EditorInstructionsResultDetailComponent,
+        CodeEditorResolveConflictModalComponent,
+    ],
     providers: [
         JhiAlertService,
         ResultService,
@@ -87,6 +96,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorSessionService,
         CodeEditorFileService,
         CodeEditorGridService,
+        CodeEditorConflictStateService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
