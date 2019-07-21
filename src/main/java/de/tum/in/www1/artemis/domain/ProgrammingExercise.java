@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.*;
 
@@ -98,6 +100,23 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     public String getTestRepositoryUrl() {
         return testRepositoryUrl;
+    }
+
+    /**
+     * Returns the test repository name of the exercise. Test test repository name is extracted from the test repository url.
+     *
+     * @return the test repository name if a valid test repository url is set. Otherwise returns null!
+     */
+    public String getTestRepositoryName() {
+        if (getTestRepositoryUrl() == null)
+            return null;
+
+        Pattern p = Pattern.compile(".*/(.*-tests)\\.git");
+        Matcher m = p.matcher(getTestRepositoryUrl());
+        if (!m.matches() || m.groupCount() != 1)
+            return null;
+
+        return m.group(1);
     }
 
     public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {

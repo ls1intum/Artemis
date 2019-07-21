@@ -1,15 +1,15 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, throwError } from 'rxjs';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
-import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState, GitConflictState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
+import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
@@ -19,7 +19,8 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
+    CommitState = CommitState;
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
@@ -28,7 +29,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     exerciseTitle: string;
     @Input()
-    get selectedFile() {
+    get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
     @Input()
@@ -46,14 +47,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
-    selectedFileChange = new EventEmitter<string>();
+    selectedFileChange = new EventEmitter<string | undefined>();
     @Output()
     commitStateChange = new EventEmitter<CommitState>();
     @Output()
     onError = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
-    selectedFileValue: string;
+    selectedFileValue: string | undefined;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     filesTreeViewItem: TreeviewItem[];
@@ -83,7 +84,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    set selectedFile(file: string) {
+    gitConflictState: GitConflictState;
+    conflictSubscription: Subscription;
+
+    set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
     }
@@ -99,7 +103,18 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         private repositoryFileService: CodeEditorRepositoryFileService,
         private repositoryService: CodeEditorRepositoryService,
         private fileService: CodeEditorFileService,
+        private conflictService: CodeEditorConflictStateService,
     ) {}
+
+    ngOnInit(): void {
+        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
+            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
+            if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
+                this.selectedFile = undefined;
+            }
+            this.gitConflictState = gitConflictState;
+        });
+    }
 
     /**
      * @function ngAfterViewInit
@@ -160,6 +175,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
                         return throwError('couldNotBeRetrieved');
+                    } else if (this.commitState === CommitState.CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                        return throwError('repositoryInConflict');
                     }
                     return this.loadFiles();
                 }),
@@ -183,9 +201,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
-        return this.repositoryService.isClean().pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        return this.repositoryService.getStatus().pipe(
+            rxMap(res => {
+                // The server sends us the CommitState, however we need to type it here by finding it in the client commitStates.
+                const mappedCommitState = Object.values(CommitState).find(commitState => commitState === res.repositoryStatus);
+                // This should not happen, but needs to be done so that the compiler is satisfied.
+                return mappedCommitState || CommitState.COULD_NOT_BE_RETRIEVED;
+            }),
+            catchError(() => Observable.of(CommitState.COULD_NOT_BE_RETRIEVED)),
         );
     };
 

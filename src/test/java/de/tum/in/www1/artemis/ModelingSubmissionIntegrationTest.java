@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -193,7 +192,7 @@ public class ModelingSubmissionIntegrationTest {
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
-        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission2 });
+        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
     }
 
     @Test
@@ -216,7 +215,7 @@ public class ModelingSubmissionIntegrationTest {
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
                 ModelingSubmission.class);
 
-        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission3 });
+        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(submission1, submission3);
     }
 
     @Test
@@ -280,10 +279,7 @@ public class ModelingSubmissionIntegrationTest {
         // set date to UTC for comparison as dates coming from the database are in UTC
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
-        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessmentType()).as("type of result is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
-        assertThat(storedSubmission.getResult().getCompletionDate()).as("completion date is not set").isNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is not set").isNull();
+        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
