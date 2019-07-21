@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -24,9 +25,13 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService) {
+    private final FeedbackRepository feedbackRepository;
+
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
+            FeedbackRepository feedbackRepository) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -145,6 +150,14 @@ public class ProgrammingExerciseTestCaseService {
         // If there are no feedbacks, the build has failed.
         // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
+            // Remove feedbacks that the student should not see yet because of the due date.
+            List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
+                    .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
+            feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
+            feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
+            if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType().equals(FeedbackType.MANUAL)))
+                result.setHasFeedback(false);
+
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream()
                     .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
                     .collect(Collectors.toSet());
@@ -168,6 +181,8 @@ public class ProgrammingExerciseTestCaseService {
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
             // This is not a usual case, but we still need to handle it:
             // There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
+            result.setFeedbacks(new ArrayList<>());
+            result.hasFeedback(false);
             result.setScore(0L);
             result.setResultString("0 of 0 passed");
         }
