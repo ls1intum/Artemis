@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,17 @@ public class ExerciseHintService {
     public Optional<ExerciseHint> findOne(Long id) {
         log.debug("Request to get ExerciseHint : {}", id);
         return exerciseHintRepository.findById(id);
+    }
+
+    /**
+     * Get all hints of an exercise;
+     * @param exerciseId of exercise.
+     * @return hints of provided exercise.
+     */
+    @Transactional(readOnly = true)
+    public Set<ExerciseHint> findByExerciseId(Long exerciseId) {
+        log.debug("Request to get ExerciseHints by Exercise id : {}", exerciseId);
+        return exerciseHintRepository.findByExerciseId(exerciseId);
     }
 
     /**

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -131,7 +130,6 @@ public class ExerciseHintResource {
      */
     @GetMapping("/exercise-hints/by-exercise-id/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise;
@@ -147,7 +145,7 @@ public class ExerciseHintResource {
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))
             return forbidden();
 
-        Set<ExerciseHint> exerciseHints = programmingExercise.getExerciseHints();
+        Set<ExerciseHint> exerciseHints = exerciseHintService.findByExerciseId(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
 
