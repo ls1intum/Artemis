@@ -4,7 +4,7 @@
     </h4>
 </div>
 <div class="modal-body">
-    <ng-template *ngIf="!isInstructorWarning; else instructorWarning">
+    <div *ngIf="!isInstructorWarning; else instructorWarning">
         <h5>
             {{
                 'modelingAssessmentConflict.messages.escalationWarningTutors'
@@ -12,7 +12,7 @@
             }}
         </h5>
         <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
-    </ng-template>
+    </div>
     <ng-template #instructorWarning>
         <h5>
             {{ 'modelingAssessmentConflict.messages.escalationWarningInstructors' | translate: { escalatedConflictsCount: escalatedConflictsCount } }}

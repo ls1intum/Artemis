@@ -1,6 +1,6 @@
 <div class="container-fluid">
-    <h3 class="row justify-content-between">
-        <ng-template *ngIf="conflicts.length > 0; else noConflictsPlaceholder">
+    <h3>
+        <div *ngIf="conflicts.length > 0; else noConflictsPlaceholder" class="row justify-content-between">
             <div class="navigation-container row-container">
                 <span jhiTranslate="modelingAssessmentConflict.conflicts">Conflicts</span>
                 <button class="btn btn-primary" (click)="onPrevConflict()">
@@ -21,7 +21,7 @@
                     <span jhiTranslate="entity.action.submit">Submit</span>
                 </button>
             </div>
-        </ng-template>
+        </div>
         <ng-template #noConflictsPlaceholder>
             <span jhiTranslate="modelingAssessmentConflict.messages.noConflicts"> No conflicts found!</span>
         </ng-template>
