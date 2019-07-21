@@ -106,7 +106,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.exercise = exercise;
     }
 
-    public Boolean getAfterDueDate() {
+    public Boolean isAfterDueDate() {
         if (afterDueDate == null) {
             return false;
         }

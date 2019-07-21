@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,16 +127,20 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Updates an incoming result with the information of the exercises test cases. This update includes: - Checking which test cases were not executed as this is not part of the
-     * bamboo build (not all test cases are executed in an exercise with sequential test runs) - Recalculating the score based based on the successful test cases weight vs the
-     * total weight of all test cases.
+     * Updates an incoming result with the information of the exercises test cases. This update includes:
+     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
+     * - Checking the due date and the afterDueDate flag
+     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
      *
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
      * @return
      */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        boolean calculateScoresForAfterDueDateTestCases = exercise.getDueDate() == null || ZonedDateTime.now().isAfter(exercise.getDueDate());
+        // Remove all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
+        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId()).stream()
+                .filter(testCase -> calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate()).collect(Collectors.toSet());
         // If there are no feedbacks, the build has failed.
         // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
         if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
