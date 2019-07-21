@@ -13,9 +13,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewC
     ],
     template: `
         <div class="table-editable-field">
-            <span class="table-editable-field__value" *ngIf="!isEditing">
-                {{ value }}
-            </span>
+            <span class="table-editable-field__value" *ngIf="!isEditing">{{ value }}</span>
             <input
                 #editingInput
                 *ngIf="isEditing"
