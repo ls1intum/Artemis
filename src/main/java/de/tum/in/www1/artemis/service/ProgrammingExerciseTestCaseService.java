@@ -139,15 +139,16 @@ public class ProgrammingExerciseTestCaseService {
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         boolean calculateScoresForAfterDueDateTestCases = exercise.getDueDate() == null || ZonedDateTime.now().isAfter(exercise.getDueDate());
         // Remove all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
-        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId()).stream()
-                .filter(testCase -> calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate()).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate())
+                .collect(Collectors.toSet());
         // If there are no feedbacks, the build has failed.
         // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
-        if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
-            Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
+        if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
+            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream()
                     .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
                     .collect(Collectors.toSet());
-            Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCases.stream()
+            Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCasesForCurrentDate.stream()
                     .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
             List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
                     .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
@@ -156,13 +157,19 @@ public class ProgrammingExerciseTestCaseService {
             // Recalculate the achieved score by including the test cases individual weight.
             if (successfulTestCases.size() > 0) {
                 long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+                long maxTestScore = testCasesForCurrentDate.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
                 long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
                 result.setScore(score);
             }
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            result.setResultString(successfulTestCases.size() + " of " + testCases.size() + " passed");
+            result.setResultString(successfulTestCases.size() + " of " + testCasesForCurrentDate.size() + " passed");
+        }
+        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
+            // This is not a usual case, but we still need to handle it:
+            // There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
+            result.setScore(0L);
+            result.setResultString("0 of 0 passed");
         }
         return result;
     }
