@@ -152,13 +152,13 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     // Find out if there are test cases that were not updated, show an error.
                     const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
                     if (notUpdatedTestCases.length) {
-                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
                     } else {
-                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsUpdated`);
+                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
                 }),
                 catchError((err: HttpErrorResponse) => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: testCasesToUpdate });
+                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
                     return of(null);
                 }),
             )
