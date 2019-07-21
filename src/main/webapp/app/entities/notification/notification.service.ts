@@ -176,7 +176,11 @@ export class NotificationService {
             const courseId = target.course || notification.course.id;
             this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
         } else if (target.exerciseId) {
-            this.router.navigate([target.mainPage, target.exerciseId, target.entity, target.id, 'conflict']);
+            if (target.entity === 'conflicts') {
+                this.router.navigate([target.mainPage, target.exerciseId, target.entity, target.id]);
+            } else {
+                this.router.navigate([target.mainPage, target.exerciseId, target.entity, target.id, 'conflict']);
+            }
         }
     }
 }

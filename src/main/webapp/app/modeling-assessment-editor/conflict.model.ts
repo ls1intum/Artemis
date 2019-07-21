@@ -1,5 +1,6 @@
 import { Result } from 'app/entities/result';
 import { Moment } from 'moment';
+import { Feedback } from 'app/entities/feedback';
 
 export class Conflict {
     id: number;
@@ -13,10 +14,12 @@ export class Conflict {
 export class ConflictingResult {
     modelElementId: string;
     result: Result;
+    updatedFeedback: Feedback;
 
-    constructor(modelElementId: string, result: Result) {
+    constructor(modelElementId: string, result: Result, updatedFeedback: Feedback) {
         this.modelElementId = modelElementId;
         this.result = result;
+        this.updatedFeedback = updatedFeedback;
     }
 }
 

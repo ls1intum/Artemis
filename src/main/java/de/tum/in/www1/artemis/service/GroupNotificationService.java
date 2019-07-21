@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
 @Service
@@ -96,6 +97,17 @@ public class GroupNotificationService {
         return groupNotification;
     }
 
+    private GroupNotification createConflictEscalatedGroupNotification(ModelAssessmentConflict conflict) {
+        Course course = conflict.getCausingConflictingResult().getResult().getParticipation().getExercise().getCourse();
+        String title = "A conflict got escalated to you.";
+        String notificationText = "The conflict could not be resolved within the group of affected tutors";
+        GroupNotificationType notificationType = GroupNotificationType.INSTRUCTOR;
+        User user = userService.getUser();
+        GroupNotification groupNotification = new GroupNotification(course, title, notificationText, user, notificationType);
+        groupNotification.setTarget(groupNotification.getConflictTarget(conflict, conflict.getCausingConflictingResult().getResult().getParticipation().getExercise()));
+        return groupNotification;
+    }
+
     public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
         String title = "Exercise started";
         String notificationText = "Exercise \"" + exercise.getTitle() + "\" just started.";
@@ -165,6 +177,11 @@ public class GroupNotificationService {
             return;
         }
         GroupNotification groupNotification = createAttachmentUpdatedGroupNotification(attachment, notificationText);
+        saveAndSendGroupNotification(groupNotification);
+    }
+
+    public void notifyInstructorGroupAboutEscalatedConflict(ModelAssessmentConflict conflict) {
+        GroupNotification groupNotification = createConflictEscalatedGroupNotification(conflict);
         saveAndSendGroupNotification(groupNotification);
     }
 

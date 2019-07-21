@@ -4,17 +4,24 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
+import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
+import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -40,17 +47,19 @@ public class ModelAssessmentConflictService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final GroupNotificationService groupNotificationService;
+
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
             ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, GroupNotificationService groupNotificationService) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
         this.conflictingResultRepository = conflictingResultRepository;
-        // this.compassService = compassService;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     public ModelAssessmentConflict findOne(Long conflictId) {
@@ -141,7 +150,7 @@ public class ModelAssessmentConflictService {
     /**
      * Updates the state of the given conflict by escalating the conflict to the next authority. The assessors or instructors then responsible for handling the conflict are getting
      * notified.
-     * 
+     *
      * @param conflictId id of the conflict to escalate
      * @return escalated conflict of the given conflictId
      */
@@ -161,7 +170,7 @@ public class ModelAssessmentConflictService {
             storedConflict.setState(EscalationState.ESCALATED_TO_TUTORS_IN_CONFLICT);
             break;
         case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            // TODO Notify instructors
+            groupNotificationService.notifyInstructorGroupAboutEscalatedConflict(storedConflict);
             storedConflict.setState(EscalationState.ESCALATED_TO_INSTRUCTOR);
             break;
         default:
@@ -174,10 +183,11 @@ public class ModelAssessmentConflictService {
 
     /**
      * Used to update the list of conflicts according to the decisions of the currentUser to whom the list of conflicts got escalated to.
-     * 
+     *
      * @param conflicts
      * @param currentUser
      */
+    @Transactional
     public void updateEscalatedConflicts(List<ModelAssessmentConflict> conflicts, User currentUser) {
         conflicts.forEach(conflict -> {
             ModelAssessmentConflict storedConflict = findOne(conflict.getId());
@@ -287,7 +297,7 @@ public class ModelAssessmentConflictService {
     /**
      * Updates the given storedConflict with the decision of a tutor to whom the storedConflict got escalated to. When all tutors posted their decision the conflict is either
      * escalated to an instructor or resolved in case all tutors decided the same way
-     * 
+     *
      * @param storedConflict
      * @param updatedConflictingResult
      */
@@ -296,7 +306,7 @@ public class ModelAssessmentConflictService {
                 .filter(conflictingResult -> conflictingResult.getId().equals(updatedConflictingResult.getId())).findFirst().get();
         storedConflictingResult.setUpdatedFeedback(updatedConflictingResult.getUpdatedFeedback());
         if (decisionOfAllTutorsPresent(storedConflict)) {
-            if (decisionOfAllTutorsUniform(storedConflict)) {
+            if (allTutorsAcceptedConflictCausingFeedback(storedConflict)) {
                 resolveConflict(storedConflict);
             }
             else {
@@ -312,9 +322,18 @@ public class ModelAssessmentConflictService {
         });
     }
 
-    private boolean decisionOfAllTutorsUniform(ModelAssessmentConflict conflict) {
+    private boolean allTutorsAcceptedConflictCausingFeedback(ModelAssessmentConflict conflict) {
         ConflictingResult firstConflictingResult = conflict.getResultsInConflict().iterator().next();
-        return conflict.getResultsInConflict().stream().allMatch(cR -> cR.getUpdatedFeedback().getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits()));
+        boolean tutorsDecisionUniform = conflict.getResultsInConflict().stream()
+                .allMatch(cR -> cR.getUpdatedFeedback().getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits()));
+        if (tutorsDecisionUniform) {
+            Feedback causingFeedback = conflict.getCausingConflictingResult().getResult().getFeedbacks().stream()
+                    .filter(feedback -> feedback.getReferenceElementId().equals(conflict.getCausingConflictingResult().getModelElementId())).findFirst().get();
+            return causingFeedback.getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits());
+        }
+        else {
+            return false;
+        }
     }
 
     private boolean decisionOfAllTutorsPresent(ModelAssessmentConflict conflict) {

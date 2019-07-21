@@ -83,7 +83,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.conflictIndex = conflictIndex;
         this.currentConflict = this.conflicts[conflictIndex];
         if (this.currentConflict) {
-            this.currentConflictingResult = this.getUsersConflictingResult();
+            this.currentConflictingResult = this.getUsersConflictingResult(this.currentConflict);
             if (this.conflictResolutionStates) {
                 this.currentState = this.conflictResolutionStates[conflictIndex];
             }
@@ -98,7 +98,10 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     onSubmit(escalatedConflicts: Conflict[]) {
         if (escalatedConflicts && escalatedConflicts.length > 0) {
-            this.escalateAndSubmit(escalatedConflicts);
+            const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
+            modalRef.componentInstance.isInstructorWarning = true;
+            modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
+            modalRef.result.then(() => this.submit());
         } else {
             this.submit();
         }
@@ -132,15 +135,9 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
     }
 
-    private submit() {}
-
-    private escalateAndSubmit(escalatedConflicts: Conflict[]) {
-        const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.isInstructorWarning = true;
-        modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
-        modalRef.result.then(() => {
-            this.conflictService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
-        });
+    private submit() {
+        this.storeDecisionsToConflicts();
+        this.conflictService.updateConflicts(this.conflicts).subscribe(() => this.router.navigate(['course', 2, 'exercise', 2, 'tutor-dashboard']));
     }
 
     private initResolutionStates(conflicts: Conflict[]) {
@@ -182,16 +179,14 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     }
 
     private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
-        const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
         if (feedbackToUse) {
             this.currentFeedbacksCopy.forEach(feedback => {
                 if (feedback.referenceId === elementIdToUpdate) {
                     feedback.credits = feedbackToUse.credits;
                 }
-                feedbacks.push(feedback);
             });
-            this.currentFeedbacksCopy = feedbacks;
+            this.currentFeedbacksCopy = [...this.currentFeedbacksCopy];
         }
     }
 
@@ -207,11 +202,29 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
     }
 
-    private getUsersConflictingResult(): ConflictingResult | undefined {
-        if (this.currentConflict) {
-            return this.currentConflict.resultsInConflict.find((conflictingResult: ConflictingResult) => conflictingResult.result.assessor.id === this.currentUserId);
+    private getUsersConflictingResult(conflict: Conflict): ConflictingResult | undefined {
+        if (conflict) {
+            return conflict.resultsInConflict.find((conflictingResult: ConflictingResult) => conflictingResult.result.assessor.id === this.currentUserId);
         } else {
             return undefined;
         }
+    }
+
+    private storeDecisionsToConflicts() {
+        this.conflicts.forEach(conflict => {
+            const currentUsersConflictingResult = this.getUsersConflictingResult(conflict);
+            if (currentUsersConflictingResult) {
+                const decisionFeedback = this.currentFeedbacksCopy.find(feedback => feedback.referenceId === currentUsersConflictingResult.modelElementId);
+                if (decisionFeedback) {
+                    currentUsersConflictingResult.updatedFeedback = decisionFeedback;
+                } else {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('Failed to apply your decision to conflict');
+                }
+            } else {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('Failed to apply your decision to conflict');
+            }
+        });
     }
 }

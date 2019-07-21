@@ -8,7 +8,9 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 
 /**
  * A GroupNotification.
@@ -128,6 +130,16 @@ public class GroupNotification extends Notification implements Serializable {
         target.addProperty("entity", "lectures");
         target.addProperty("course", lecture.getCourse().getId());
         target.addProperty("mainPage", "overview");
+        return target.toString();
+    }
+
+    public String getConflictTarget(ModelAssessmentConflict conflict, Exercise exercise) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "newConflict");
+        target.addProperty("id", conflict.getId());
+        target.addProperty("entity", "conflicts");
+        target.addProperty("exerciseId", exercise.getId());
+        target.addProperty("mainPage", "modeling-exercise");
         return target.toString();
     }
 
