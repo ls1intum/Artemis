@@ -155,7 +155,7 @@ public class ProgrammingExerciseTestCaseService {
                     .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
             feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
             feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
-            if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType().equals(FeedbackType.MANUAL)))
+            if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
                 result.setHasFeedback(false);
 
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream()
