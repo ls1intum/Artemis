@@ -9,6 +9,7 @@ export function resizeImage(isStatisticsPage?: boolean) {
             : (document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement);
 
         const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+
         if (image && clickLayer) {
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
