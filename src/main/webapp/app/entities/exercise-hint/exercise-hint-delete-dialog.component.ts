@@ -45,16 +45,10 @@ export class ExerciseHintDeletePopupComponent implements OnInit, OnDestroy {
             setTimeout(() => {
                 this.ngbModalRef = this.modalService.open(ExerciseHintDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
                 this.ngbModalRef.componentInstance.exerciseHint = exerciseHint;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate(['/exercise-hint', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate(['/exercise-hint', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    },
-                );
+                this.ngbModalRef.result.finally(() => {
+                    this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                    this.ngbModalRef = null;
+                });
             }, 0);
         });
     }
