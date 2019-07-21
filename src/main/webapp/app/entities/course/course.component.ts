@@ -15,7 +15,7 @@ import * as moment from 'moment';
 export class CourseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
-    showOnlyActive = false;
+    showOnlyActive = true;
 
     courses: Course[];
     eventSubscriber: Subscription;
