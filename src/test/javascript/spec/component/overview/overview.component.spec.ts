@@ -68,7 +68,7 @@ describe('Component Tests', () => {
         it('starts and finishes the overview guided tour', inject(
             [GuidedTourService],
             fakeAsync((service: GuidedTourService) => {
-                // Prepare GuidedTourService
+                // Prepare GuidedTourService and GuidedTourComponent
                 spyOn(service, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                 tourComp.ngAfterViewInit();
                 expect(tourCompfixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
@@ -87,7 +87,9 @@ describe('Component Tests', () => {
                 expect(service.onLastStep).to.be.true;
 
                 // Finish GuidedTour
+                spyOn(service, 'updateGuidedTourSettings').and.returnValue(of());
                 nextButton.nativeElement.click();
+                tourCompfixture.detectChanges();
                 expect(tourCompfixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
             }),
         ));
