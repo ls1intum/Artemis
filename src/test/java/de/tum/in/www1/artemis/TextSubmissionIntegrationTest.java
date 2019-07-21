@@ -48,7 +48,7 @@ public class TextSubmissionIntegrationTest {
     public void initTestCase() throws Exception {
         database.resetDatabase();
         database.addUsers(1, 1, 0);
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
     }
@@ -64,4 +64,18 @@ public class TextSubmissionIntegrationTest {
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(textSubmissions.get(0).getParticipation().getStudent()).as("student of participation is hidden").isNull();
     }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
+        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class);
+
+        assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
+        assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(textSubmissionWithoutAssessment.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+    }
+
 }
