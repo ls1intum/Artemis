@@ -6,11 +6,11 @@ import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
 import { AccountService, JhiLanguageHelper, LoginService, User } from 'app/core';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/entities/participation';
-import { OverviewComponent } from 'app/overview';
 
 @Component({
     selector: 'jhi-navbar',
@@ -35,7 +35,7 @@ export class NavbarComponent implements OnInit {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private router: Router,
-        private overviewComponent: OverviewComponent,
+        private guidedTourService: GuidedTourService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -120,7 +120,7 @@ export class NavbarComponent implements OnInit {
      * */
     startGuidedTour() {
         if (this.router.url === '/overview') {
-            this.overviewComponent.startTour();
+            this.guidedTourService.startTourForComponent('overview');
         }
     }
 }

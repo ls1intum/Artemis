@@ -482,7 +482,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.currentTourStep.orientation === Orientation.Left || this.currentTourStep.orientation === Orientation.Right) {
             return 0;
         }
-        if (this.selectedElementRect) {
+        if (this.selectedElementRect && this.tourStep) {
             const elementHeight =
                 this.selectedElementRect.height +
                 (this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0) +

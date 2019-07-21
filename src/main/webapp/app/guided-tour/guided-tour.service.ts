@@ -30,6 +30,8 @@ export class GuidedTourService {
     private _onLastStep = true;
     private _onResizeMessage = false;
 
+    private guidedTourNotification = new Subject<any>();
+
     constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService) {
         this.getGuidedTourSettings();
 
@@ -53,6 +55,21 @@ export class GuidedTourService {
                     }
                 }
             });
+    }
+
+    /**
+     * Notify other component to start guided tour from service
+     * @param component     name of the component as string
+     */
+    startTourForComponent(component: string) {
+        this.guidedTourNotification.next({ name: component });
+    }
+
+    /**
+     * Get guided tour notifications from service
+     */
+    getGuidedTourNotification(): Observable<any> {
+        return this.guidedTourNotification.asObservable();
     }
 
     /**
