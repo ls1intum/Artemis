@@ -14,6 +14,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewC
                 {{ value }}
             </span>
             <input
+                #editingInput
                 *ngIf="isEditing"
                 class="table-editable-field__input form-control mr-2"
                 autofocus
@@ -44,7 +45,7 @@ export class TableEditableFieldComponent<T> implements OnChanges {
                 if (this.editingInput) {
                     this.editingInput.nativeElement.focus();
                 }
-            });
+            }, 0);
         }
     }
 
