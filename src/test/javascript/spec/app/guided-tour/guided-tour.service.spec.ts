@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
 
 import { ArTEMiSTestModule } from '../../test.module';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { SERVER_API_URL } from 'app/app.constants';
-import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('Service Tests', () => {
     describe('GuidedTourService', () => {
@@ -30,13 +34,13 @@ describe('Service Tests', () => {
             it('should call correct URL', () => {
                 const req = httpMock.expectOne({ method: 'GET' });
                 const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
-                expect(req.request.url).toEqual(`${resourceUrl}`);
+                expect(req.request.url).equal(`${resourceUrl}`);
             });
 
             it('should return json', () => {
                 const req = httpMock.expectOne({ method: 'GET' });
-                expect(req.request.responseType).toBe('json');
-                expect(req.request.body).toBe(null);
+                expect(req.request.responseType).to.equal('json');
+                expect(req.request.body).to.null;
             });
         });
     });
