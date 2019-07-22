@@ -329,12 +329,14 @@ public class DatabaseUtilService {
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
     }
 
-    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
-        result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+        if (submit) {
+            result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+        }
         return result;
     }
 

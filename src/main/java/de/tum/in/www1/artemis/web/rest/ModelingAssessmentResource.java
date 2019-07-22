@@ -111,18 +111,29 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
     }
 
+    /**
+     * Get the result of the modeling submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
+     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
+     * the corresponding exercise is in the future (or not set).
+     *
+     * @param submissionId the id of the submission that should be sent to the client
+     * @return the submission with the given id
+     */
     @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+        log.debug("REST request to get assessment for submission with id {}", submissionId);
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Participation participation = submission.getParticipation();
         Exercise exercise = participation.getExercise();
-        if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
-            return forbidden();
-        }
+
         Result result = submission.getResult();
         if (result == null) {
             return notFound();
+        }
+
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+            return forbidden();
         }
 
         // remove sensitive information for students

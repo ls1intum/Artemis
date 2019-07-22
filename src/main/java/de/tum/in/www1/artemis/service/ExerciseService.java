@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -365,7 +366,7 @@ public class ExerciseService {
                     gitService.get().resetToOriginMaster(repo);
                 }
             }
-            catch (IOException | GitException | InterruptedException ex) {
+            catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
         }
@@ -413,7 +414,7 @@ public class ExerciseService {
                         gitService.get().deleteLocalRepository(participation);
                     }
                 }
-                catch (IOException | GitException | InterruptedException ex) {
+                catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                     log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
