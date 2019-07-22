@@ -5,8 +5,7 @@ import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
-
-export type TestsForTasks = Array<[string, string, string[]]>;
+import { TestCaseState } from 'app/entities/programming-exercise';
 
 @Injectable()
 export class ProgrammingExercisePlantUmlExtensionFactory {
@@ -27,13 +26,21 @@ export class ProgrammingExercisePlantUmlExtensionFactory {
                 const plantUmlRegex = /@startuml([^@]*)@enduml/g;
                 // E.g. Implement BubbleSort, testBubbleSort
                 const plantUmlContainer = `<img id="plantUml-${idPlaceholder}"/>`;
+                // Replace test status markers.
                 const plantUmls = text.match(plantUmlRegex) || [];
                 const replacedText = plantUmls.reduce(
                     (acc: string, plantUml: string, index: number): string =>
                         acc.replace(new RegExp(escapeStringForUseInRegex(plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, index.toString())),
                     text,
                 );
-                plantUmls.forEach((plantUml, index) => {
+                const plantUmlsValidated = plantUmls.map(plantUml =>
+                    plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
+                        const tests = capture.split(',');
+                        const [done] = this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult);
+                        return done === TestCaseState.SUCCESS ? 'green' : done === TestCaseState.FAIL ? 'red' : 'grey';
+                    }),
+                );
+                plantUmlsValidated.forEach((plantUml, index) => {
                     this.plantUmlService
                         .getPlantUmlImage(plantUml)
                         .pipe(
