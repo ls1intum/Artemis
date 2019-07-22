@@ -85,6 +85,16 @@ public class ComplaintResponseResource {
         // All tutors and higher can see this, and also the students who first open the complaint
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
 
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
+
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }
 
@@ -105,6 +115,16 @@ public class ComplaintResponseResource {
         }
 
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
+
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
 
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }

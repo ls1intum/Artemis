@@ -346,6 +346,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
+        result.setCompletionDate(exercise.getReleaseDate());
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
