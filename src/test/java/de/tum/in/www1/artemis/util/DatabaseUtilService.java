@@ -312,6 +312,23 @@ public class DatabaseUtilService {
     }
 
     @Transactional
+    public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+        Participation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
+        Result result = new Result();
+        result.setSubmission(submission);
+        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setCompletionDate(ZonedDateTime.now());
+        submission.setParticipation(participation);
+        submission.setResult(result);
+        submission.getParticipation().addResult(result);
+        modelingSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    @Transactional
     public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         Participation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
