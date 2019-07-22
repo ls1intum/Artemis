@@ -12,7 +12,6 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 import { TextAssessmentDetailComponent } from './text-assessment-detail/text-assessment-detail.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 import { SortByModule } from 'app/components/pipes';
-import { TextSharedModule } from 'app/text-shared/text-shared.module';
 import { RouterModule } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
@@ -20,7 +19,7 @@ import { HighlightedTextAreaComponent } from 'app/text-assessment/highlighted-te
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
-    imports: [CommonModule, SortByModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsForTutorModule],
+    imports: [CommonModule, SortByModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSSharedModule, ArTEMiSResultModule, ArTEMiSComplaintsForTutorModule],
     declarations: [
         TextAssessmentComponent,
         TextSelectDirective,
