@@ -181,6 +181,10 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long exerciseId) {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
+
+        System.out.println("FranciscoTest2");
+        System.out.println(exercise.toString());
+
         if (!exercise.isPresent()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
@@ -191,7 +195,10 @@ public class ExerciseService {
     // TODO: we could move this to Exercise.java and override it in the subclasses to avoid the if-else statements
     private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
         if (exercise instanceof QuizExercise) {
+
+            System.out.println(((QuizExercise) exercise).getQuizQuestions().size());
             QuizExercise quizExercise = (QuizExercise) exercise;
+            System.out.println("FranciscoBlub");
             // eagerly load questions and statistic
             quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
@@ -223,18 +230,24 @@ public class ExerciseService {
 
             // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
+
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
+            quizExercise.setAllowedNumberOfAttempts(null);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
             quizExercise.setReleaseDate(null);
+
+            System.out.println("FranciscoTest3");
+
+            System.out.println(quizExercise.toString());
 
             // TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz
             // exercise resource
             // which delegates some functionality to the exercise service
 
             // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
-            quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
-            quizScheduleService.clearQuizData(quizExercise.getId());
+            // quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+            // quizScheduleService.clearQuizData(quizExercise.getId());
 
             // clean up the statistics
             quizStatisticService.recalculateStatistics(quizExercise);

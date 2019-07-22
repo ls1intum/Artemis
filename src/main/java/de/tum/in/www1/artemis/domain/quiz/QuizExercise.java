@@ -609,7 +609,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public String toString() {
         return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
                 + getAllowedNumberOfAttempts() + "'" + ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'"
-                + ", isPlannedToStart='" + isIsPlannedToStart() + "'" + ", duration='" + getDuration() + "'" + "}";
+                + ", isPlannedToStart='" + isIsPlannedToStart() + "'" + ", duration='" + getDuration() + "'" + "Francisco: " + Arrays.toString(quizQuestions.toArray()) + "}";
     }
 
     /**
