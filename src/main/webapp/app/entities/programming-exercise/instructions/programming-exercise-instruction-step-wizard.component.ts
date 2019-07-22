@@ -14,8 +14,8 @@ import { ProgrammingExerciseInstructionService } from 'app/entities/programming-
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {
     TestCaseState = TestCaseState;
-    latestResult: Result | null;
-    steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
+    @Input() latestResult: Result | null;
+    @Input() steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
 
     constructor(private modalService: NgbModal) {}
 
