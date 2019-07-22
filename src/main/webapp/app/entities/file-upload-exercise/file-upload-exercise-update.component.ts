@@ -24,6 +24,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     courses: Course[];
     EditorMode = EditorMode;
     domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
