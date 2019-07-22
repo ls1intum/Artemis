@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -161,4 +162,82 @@ public class ProgrammingExerciseTestCaseServiceTest {
         assertThat(result.getScore()).isEqualTo(expectedScore);
     }
 
+    @Test
+    public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.parse("2999-06-30T12:30:40Z[UTC]"));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 100L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        // The feedback of the after due date test case must be removed.
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
+    }
+
+    @Test
+    public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
+        // Set programming exercise due date in past.
+        programmingExercise.setDueDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        // The feedback of the after due date test case must be kept.
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
+    }
+
+    @Test
+    public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.parse("2999-06-30T12:30:40Z[UTC]"));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        // Set all test cases of the programming exercise to be executed after due date.
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setAfterDueDate(true);
+        }
+        testCaseRepository.saveAll(testCases);
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 0L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        // The feedback must be empty as not test should be executed yet.
+        assertThat(result.getFeedbacks()).hasSize(0);
+    }
 }
