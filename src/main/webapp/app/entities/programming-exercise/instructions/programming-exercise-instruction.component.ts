@@ -77,9 +77,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             if (this.generateHtmlSubscription) {
                 this.generateHtmlSubscription.unsubscribe();
             }
-            this.generateHtmlEvents.subscribe(() => {
-                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
-            });
+            if (this.generateHtmlEvents) {
+                this.generateHtmlEvents.subscribe(() => {
+                    this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+                });
+            }
             this.setupResultWebsocket();
             this.programmingExerciseTaskFactory.subscribeForTestForTasks().subscribe((testsForTasks: TestsForTasks) => {
                 this.steps = testsForTasks.map(([, taskName, tests]) => ({

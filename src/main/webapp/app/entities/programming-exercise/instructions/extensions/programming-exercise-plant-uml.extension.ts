@@ -40,19 +40,23 @@ export class ProgrammingExercisePlantUmlExtensionFactory {
                         return done === TestCaseState.SUCCESS ? 'green' : done === TestCaseState.FAIL ? 'red' : 'grey';
                     }),
                 );
-                plantUmlsValidated.forEach((plantUml, index) => {
-                    this.plantUmlService
-                        .getPlantUmlImage(plantUml)
-                        .pipe(
-                            tap((plantUmlSrcAttribute: string) => {
-                                const plantUmlContainer = document.getElementById(`plantUml-${index}`);
-                                if (plantUmlContainer) {
-                                    plantUmlContainer.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
-                                }
-                            }),
-                        )
-                        .subscribe();
-                });
+                setTimeout(
+                    () =>
+                        plantUmlsValidated.forEach((plantUml, index) => {
+                            this.plantUmlService
+                                .getPlantUmlImage(plantUml)
+                                .pipe(
+                                    tap((plantUmlSrcAttribute: string) => {
+                                        const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
+                                        if (plantUmlHtmlContainer) {
+                                            plantUmlHtmlContainer.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                                        }
+                                    }),
+                                )
+                                .subscribe();
+                        }),
+                    0,
+                );
                 return replacedText;
             },
         };

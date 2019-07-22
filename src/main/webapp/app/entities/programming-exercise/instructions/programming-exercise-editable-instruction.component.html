@@ -5,7 +5,7 @@
         [domainCommands]="domainCommands"
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"
-        (onPreviewSelect)="generateHtml($event)"
+        (onPreviewSelect)="generateHtml()"
     >
         <jhi-programming-exercise-instructions
             #preview

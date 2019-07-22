@@ -33,7 +33,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand, this.katexCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
     unsavedChanges = false;

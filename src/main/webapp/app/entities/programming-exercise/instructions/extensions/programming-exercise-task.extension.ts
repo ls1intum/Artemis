@@ -61,10 +61,10 @@ export class ProgrammingExerciseTaskExtensionFactory {
 
                         this.appRef.attachView(componentRef.hostView);
                         const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                        const taskContainer = document.getElementById(`task-${index}`);
-                        if (taskContainer) {
-                            taskContainer.innerHTML = '';
-                            taskContainer.append(domElem);
+                        const taskHtmlContainer = document.getElementById(`task-${index}`);
+                        if (taskHtmlContainer) {
+                            taskHtmlContainer.innerHTML = '';
+                            taskHtmlContainer.append(domElem);
                         }
                     });
                 });
