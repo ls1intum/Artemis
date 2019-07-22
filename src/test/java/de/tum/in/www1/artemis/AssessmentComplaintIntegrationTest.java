@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -57,6 +58,9 @@ public class AssessmentComplaintIntegrationTest {
 
     @Autowired
     ComplaintRepository complaintRepo;
+
+    @Autowired
+    ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
     ObjectMapper mapper;
@@ -177,6 +181,62 @@ public class AssessmentComplaintIntegrationTest {
         Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintResponse_reviewerHiddenForStudent() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1")
+    public void getComplaintResponse_studentHiddenForTutor() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1")
+    public void getComplaintResponseByComplaintId_studentHiddenForTutor() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
     }
 
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
