@@ -36,8 +36,8 @@ export class ProgrammingExercisePlantUmlExtensionFactory {
                 const plantUmlsValidated = plantUmls.map(plantUml =>
                     plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
                         const tests = capture.split(',');
-                        const [done] = this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult);
-                        return done === TestCaseState.SUCCESS ? 'green' : done === TestCaseState.FAIL ? 'red' : 'grey';
+                        const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
+                        return testCaseState === TestCaseState.SUCCESS ? 'green' : testCaseState === TestCaseState.FAIL ? 'red' : 'grey';
                     }),
                 );
                 setTimeout(

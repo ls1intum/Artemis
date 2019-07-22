@@ -85,7 +85,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.setupResultWebsocket();
             this.programmingExerciseTaskFactory.subscribeForTestForTasks().subscribe((testsForTasks: TestsForTasks) => {
                 this.steps = testsForTasks.map(([, taskName, tests]) => ({
-                    done: this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult)[0],
+                    done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
                     title: taskName,
                     tests,
                 }));

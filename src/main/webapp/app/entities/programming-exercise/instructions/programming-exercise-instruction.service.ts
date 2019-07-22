@@ -10,23 +10,30 @@ export enum TestCaseState {
     NO_RESULT = 'NO_RESULT',
 }
 
+export type TaskResult = {
+    testCaseState: TestCaseState;
+    detailed: {
+        successFulTests: string[];
+        failedTests: string[];
+        notExecutedTests: string[];
+    };
+};
+
 @Injectable()
 export class ProgrammingExerciseInstructionService {
     constructor(private translateService: TranslateService) {}
 
     /**
-     * @function statusForTests
+     * @function testStatusForTask
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    public statusForTests = (tests: string[], latestResult: Result | null): [TestCaseState, string] => {
-        const translationBasePath = 'artemisApp.editor.testStatusLabels.';
+    public testStatusForTask = (tests: string[], latestResult: Result | null): TaskResult => {
         const totalTests = tests.length;
 
         if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length)) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
-            const label = this.translateService.instant(translationBasePath + 'testPassing');
-            return [TestCaseState.SUCCESS, label];
+            return { testCaseState: TestCaseState.SUCCESS, detailed: { successFulTests: tests, failedTests: [], notExecutedTests: [] } };
         } else if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = tests.reduce(
@@ -54,12 +61,10 @@ export class ProgrammingExerciseInstructionService {
 
             // Exercise is done if none of the tests failed
             const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
-            const label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests, passedTests: successful.length });
-            return [testCaseState, label];
+            return { testCaseState, detailed: { successFulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results
-            const label = this.translateService.instant(translationBasePath + 'noResult');
-            return [TestCaseState.NO_RESULT, label];
+            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successFulTests: [], failedTests: [], notExecutedTests: tests } };
         }
     };
 }

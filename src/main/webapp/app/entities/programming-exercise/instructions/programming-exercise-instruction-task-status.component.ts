@@ -7,39 +7,12 @@ import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entitie
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
-    template: `
-        <div>
-            <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="['far', 'check-circle']" size="lg" class="test-icon text-success"></fa-icon>
-            <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="['far', 'times-circle']" size="lg" class="test-icon text-danger"></fa-icon>
-            <fa-icon
-                *ngIf="testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED"
-                [icon]="['far', 'question-circle']"
-                size="lg"
-                class="test-icon text-secondary"
-            ></fa-icon>
-            <span *ngIf="taskName" class="task-name">{{ taskName }}</span>
-            <span>
-                <span
-                    *ngIf="testCaseState === TestCaseState.SUCCESS || testCaseState === TestCaseState.NO_RESULT || !tests.length"
-                    [class.text-success]="testCaseState === TestCaseState.SUCCESS"
-                    [class.text-secondary]="testCaseState === TestCaseState.NO_RESULT"
-                    >{{ testResultLabel }}</span
-                >
-                <span
-                    *ngIf="testCaseState === TestCaseState.FAIL || testCaseState === TestCaseState.NOT_EXECUTED"
-                    class="test-status--linked"
-                    [class.danger]="testCaseState === TestCaseState.FAIL"
-                    [class.text-secondary]="testCaseState === TestCaseState.NOT_EXECUTED"
-                    (click)="showDetailsForTests()"
-                    >{{ testResultLabel }}</span
-                >
-            </span>
-        </div>
-    `,
-    styles: ['.test-status--linked {text-decoration: underline; cursor: pointer}', '.test-icon, .task-name {font-weight: bold}'],
+    templateUrl: './programming-exercise-instruction-task-status.component.html',
+    styleUrls: ['./programming-exercise-instruction-task-status.scss'],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     TestCaseState = TestCaseState;
+    translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
     @Input() taskName: string;
     @Input()
@@ -52,6 +25,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     testCaseState: TestCaseState;
     testResultLabel: string;
 
+    successfulTests: string[];
+    notExecutedTests: string[];
+    failedTests: string[];
+
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private componentFactoryResolver: ComponentFactoryResolver,
@@ -62,9 +39,14 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     set tests(tests: string[]) {
         this.testsValue = tests;
-        const [testCaseState, label] = this.programmingExerciseInstructionService.statusForTests(this.tests, this.latestResult);
+        const {
+            testCaseState,
+            detailed: { successFulTests, notExecutedTests, failedTests },
+        } = this.programmingExerciseInstructionService.testStatusForTask(this.tests, this.latestResult);
         this.testCaseState = testCaseState;
-        this.testResultLabel = label;
+        this.successfulTests = successFulTests;
+        this.notExecutedTests = notExecutedTests;
+        this.failedTests = failedTests;
     }
 
     /**
