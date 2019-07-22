@@ -85,6 +85,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
     }
 
+    trackCourseById(index: number, item: Course) {
+        return item.id;
+    }
+
     private onSaveSuccess() {
         this.isSaving = false;
         this.previousState();
