@@ -448,10 +448,10 @@ public class ProgrammingExerciseService {
         // there is no need in python to replace package names
 
         fileTargets.add("${exerciseNamePomXml}");
-        fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+        fileReplacements.add(programmingExercise.getTitleWithoutReservedCharacters().replaceAll(" ", "-")); // Used e.g. in artifactId
 
         fileTargets.add("${exerciseName}");
-        fileReplacements.add(programmingExercise.getTitle());
+        fileReplacements.add(programmingExercise.getTitleWithoutReservedCharacters());
 
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
     }

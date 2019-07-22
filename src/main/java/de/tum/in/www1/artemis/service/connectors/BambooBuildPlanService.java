@@ -45,8 +45,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    private final static String SPECIAL_BAMBOO_CHARS = "[\\[\\]{}<>:@/&%\\\\!|#$*;~]";
-
     @Value("${artemis.bamboo.user}")
     private String BAMBOO_USER;
 
@@ -66,9 +64,9 @@ public class BambooBuildPlanService {
     private String BITBUCKET_APPLICATION_LINK_ID;
 
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
-        final String planDescription = planKey + " Build Plan for Exercise " + filterOutBambooSpecialChars(programmingExercise.getTitle());
+        final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitleWithoutReservedCharacters();
         final String projectKey = programmingExercise.getProjectKey();
-        final String projectName = filterOutBambooSpecialChars(programmingExercise.getProjectName());
+        final String projectName = programmingExercise.getProjectName();
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
                 .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
@@ -84,10 +82,6 @@ public class BambooBuildPlanService {
         final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), plan.getKey().toString(), teachingAssistantGroupName,
                 instructorGroupName, ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
-    }
-
-    private String filterOutBambooSpecialChars(String str) {
-        return str.replaceAll(SPECIAL_BAMBOO_CHARS, "");
     }
 
     private Project createBuildProject(String name, String key) {
