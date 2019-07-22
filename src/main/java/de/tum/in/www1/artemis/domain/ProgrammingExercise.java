@@ -277,7 +277,7 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for Bitbucket and Bamboo
-        return this.getCourse().getShortName() + " " + this.getTitleWithoutReservedCharacters();
+        return this.getCourse().getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore

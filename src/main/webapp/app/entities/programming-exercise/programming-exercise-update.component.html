@@ -17,7 +17,7 @@
 
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                    <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="programmingExercise.title" />
+                    <input required type="text" class="form-control" name="title" id="field_title" [pattern]="titleNamePattern" [(ngModel)]="programmingExercise.title" />
                 </div>
 
                 <div class="form-group-narrow">

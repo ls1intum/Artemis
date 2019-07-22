@@ -366,8 +366,7 @@ public class ExerciseService {
         try {
             // create a large zip file with all zipped repos and provide it for download
             log.debug("Create zip file for all repositories");
-            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    exercise.getCourse().getTitle() + " " + exercise.getTitleWithoutReservedCharacters() + studentIds.hashCode() + ".zip");
+            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
             createZipFile(zipFilePath, zippedRepoFiles);
             scheduleForDeletion(zipFilePath, 10);
 

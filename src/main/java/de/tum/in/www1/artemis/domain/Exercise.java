@@ -608,16 +608,4 @@ public abstract class Exercise implements Serializable {
     public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
     }
-
-    /**
-     * Replaces every character, which might not be allowed in a String, e.g. if used as an identifier.
-     * Generally, only alphanumeric characters and German umlauts are allowed with some special exceptions: <br>
-     * "+,-,(,),_". <br>
-     * Since those characters generally don't cause any problems, but are often used in names.
-     *
-     * @return A "safe" String to be used for IDs and other sensitive names.
-     */
-    public String getTitleWithoutReservedCharacters() {
-        return title.replaceAll("[^0-9A-Za-z\\söäü_()+\\-]", "");
-    }
 }

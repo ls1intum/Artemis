@@ -64,7 +64,7 @@ public class BambooBuildPlanService {
     private String BITBUCKET_APPLICATION_LINK_ID;
 
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
-        final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitleWithoutReservedCharacters();
+        final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
