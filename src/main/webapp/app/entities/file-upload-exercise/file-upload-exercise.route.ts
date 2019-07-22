@@ -3,7 +3,6 @@ import { Routes, Resolve, RouterStateSnapshot, ActivatedRouteSnapshot } from '@a
 import { UserRouteAccessService } from '../../core';
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
-import { FileUploadExercisePopupComponent } from './file-upload-exercise-dialog.component';
 import { FileUploadExerciseDeletePopupComponent } from './file-upload-exercise-delete-dialog.component';
 
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
