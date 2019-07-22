@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -76,6 +77,17 @@ public class TextSubmissionIntegrationTest {
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(textSubmissionWithoutAssessment.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getResultsForCurrentStudent_assessorHiddenForStudent() throws Exception {
+        textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+
+        Exercise returnedExercise = request.get("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Exercise.class);
+
+        assertThat(returnedExercise.getParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }
 
 }

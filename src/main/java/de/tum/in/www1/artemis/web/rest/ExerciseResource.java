@@ -382,6 +382,7 @@ public class ExerciseResource {
             for (Participation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
+                participation.getResults().forEach(r -> r.setAssessor(null));
                 exercise.addParticipation(participation);
             }
 
