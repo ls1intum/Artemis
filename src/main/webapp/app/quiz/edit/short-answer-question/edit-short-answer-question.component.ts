@@ -11,6 +11,8 @@ import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-questi
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -18,10 +20,10 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     providers: [ArtemisMarkdown],
 })
 export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
-    @ViewChild('questionEditor', { static: false })
+    @ViewChild('markdownEditor', { static: false })
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
+    private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: ShortAnswerQuestion;
@@ -701,5 +703,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @function prepareForSave
      * @desc reset the question and calls the parsing method of the markdown editor
      */
-    prepareForSave(): void {}
+    prepareForSave(): void {
+		this.cleanupQuestion();
+        this.markdownEditor.parse();
+	}
 }

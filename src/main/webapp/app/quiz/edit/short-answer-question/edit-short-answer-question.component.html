@@ -82,25 +82,32 @@
             </ng-container>
         </div>
         <div class="markupEditorArea" [hidden]="showVisualMode">
-            <div class="toolbar" *ngIf="!reEvaluationInProgress">
-                <div class="btn-group">
-                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>-->
-                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
-                </div>
-            </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
-                <ace-editor
-                    #questionEditor
-                    [(text)]="questionEditorText"
-                    [mode]="questionEditorMode"
-                    [autoUpdateContent]="questionEditorAutoUpdate"
-                    (textChange)="questionUpdated.emit()"
-                    style="min-height: 200px; width:100%; overflow: auto;"
-                    class="form-control"
-                >
-                </ace-editor>
+                <jhi-markdown-editor
+                    #markdownEditor
+                    [markdown]="questionEditorText"
+                    [showPreviewButton]="false"
+                    [domainCommands]="dragAndDropQuestionDomainCommands"
+                    (markdownChange)="changesInMarkdown()"
+                    (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                ></jhi-markdown-editor>
+            </div>
+            <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
+                <div class="question-content">
+                    <jhi-markdown-editor
+                        #markdownEditor
+                        [markdown]="questionEditorText"
+                        [showPreviewButton]="false"
+                        [domainCommands]="dragAndDropQuestionDomainCommands"
+                        (markdownChange)="changesInMarkdown()"
+                        (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    ></jhi-markdown-editor>
+                    <span class="input-group-btn" style="vertical-align: top">
+                        <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
+                            <fa-icon icon="undo"></fa-icon>
+                        </button>
+                    </span>
+                </div>
             </div>
         </div>
         <div class="edit-sa-question" style="padding:20px" *ngIf="showVisualMode || reEvaluationInProgress">
