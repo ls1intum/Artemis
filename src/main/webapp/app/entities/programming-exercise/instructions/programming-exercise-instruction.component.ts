@@ -77,10 +77,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: SafeHtml;
-    // Can be used to remove the click listeners for result details
-    private listenerRemoveFunctions: Function[] = [];
 
-    private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory;
     private markdownExtensions: ShowdownExtension[];
 
     constructor(
@@ -90,21 +87,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private markdownService: ArtemisMarkdown,
-        private renderer: Renderer2,
-        private elementRef: ElementRef,
-        private modalService: NgbModal,
-        private componentFactoryResolver: ComponentFactoryResolver,
-        private appRef: ApplicationRef,
-        private injector: Injector,
+        private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory,
     ) {
-        this.programmingExerciseTaskFactory = new ProgrammingExerciseTaskExtensionFactory(this.componentFactoryResolver, this.appRef, this.injector, this.translateService);
         this.markdownExtensions = [this.programmingExerciseTaskFactory.getExtension()];
-        // Enabled for color picker of markdown editor that inserts spans into the markdown
-        /*        this.markdown = new Remarkable({ html: true });
-        this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
-        this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
-        this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);*/
     }
 
     /**
@@ -205,7 +190,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         // Wait for re-render of component
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
-            this.setUpClickListeners();
+            /*            this.setUpClickListeners();*/
             this.setUpTaskIcons();
         }, 0);
     }
@@ -266,58 +251,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * Remove existing listeners and then setup new listeners.
-     */
-    private setUpClickListeners() {
-        // // Detach test status click listeners if already initialized; if not, set it empty
-        if (this.listenerRemoveFunctions.length) {
-            this.listenerRemoveFunctions.forEach(f => f());
-            this.listenerRemoveFunctions = [];
-        }
-        // // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
-        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-
-        testStatusDOMElements.forEach((element: any) => {
-            const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
-                event.stopPropagation();
-                // Extract the data attribute for tests and open the details popup with it
-                let tests = '';
-                if (event.target.getAttribute('data-tests')) {
-                    tests = event.target.getAttribute('data-tests');
-                } else {
-                    tests = event.target.parentElement.getAttribute('data-tests');
-                }
-                if (tests.length) {
-                    this.showDetailsForTests(this.latestResult, tests);
-                }
-            });
-            this.listenerRemoveFunctions.push(listenerRemoveFunction);
-        });
-    }
-
-    /**
-     * Add task icons (success or failed) to tasks in introduction file.
-     * Existing icons will be removed.
-     */
-    private setUpTaskIcons() {
-        // E.g. when the instructions are used in an editor, the steps area might not be rendered, so check first
-        if (document.getElementsByClassName('stepwizard').length) {
-            this.steps.forEach(({ done }, i) => {
-                const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
-                componentRef.instance.size = 'lg';
-                componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : done === TestCaseState.FAIL ? faTimesCircle : faQuestionCircle;
-                componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary'];
-                componentRef.instance.ngOnChanges({});
-                this.appRef.attachView(componentRef.hostView);
-                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                const iconContainer = document.getElementById(`step-icon-${i}`)!;
-                iconContainer.innerHTML = '';
-                iconContainer.append(domElem);
-            });
-        }
-    }
-
-    /**
      * PlantUMLs are rendered on the server, we provide their structure as a string.
      * When parsing the file for plantUMLs we store their ids (= position in HTML) and structure in a dictionary, so that we can load them after the initial render.
      */
@@ -337,6 +270,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         );
     }
 
+    // TODO: The information about the known test status should come from a service.
     /**
      * @function triggerTestStatusClick
      * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
@@ -352,58 +286,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (testStatusDOMElements.length && !testStatusCircleElements[index].classList.contains('stepwizard-step--success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
             testStatusDOMElements[index - positiveTestsUntilIndex].click();
-        }
-    }
-
-    /**
-     * @function showDetailsForTests
-     * @desc Opens the ResultDetailComponent as popup; displays test results
-     * @param result {Result} Result object, mostly latestResult
-     * @param tests {string} Identifies the testcase
-     */
-    showDetailsForTests(result: Result | null, tests: string) {
-        if (!result) {
-            return;
-        }
-        const modalRef = this.modalService.open(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = result;
-        modalRef.componentInstance.tests = tests;
-    }
-
-    /**
-     * @function remarkableTestsStatusParser
-     * @desc Parser rule for Remarkable custom token TestStatus
-     * @param state
-     * @param silent
-     */
-    private remarkableTestsStatusParser(state: any, silent: boolean) {
-        const regex = /^\[task\]\[([^\]]*)\]\s*\(([^)]+)\)/;
-
-        // It is surely not our rule, so we can stop early
-        if (state.src[state.pos] !== '[') {
-            return false;
-        }
-
-        const match = regex.exec(state.src.slice(state.pos));
-        if (match) {
-            // In silent mode it shouldn't output any tokens or modify pending
-            if (!silent) {
-                const tests = match[2].split(',');
-                // Insert the testsStatus token to our rendered tokens
-                state.push({
-                    type: 'testsStatus',
-                    title: match[1],
-                    tests,
-                    level: state.level,
-                });
-            }
-
-            // Every rule should set state.pos to a position after token's contents
-            state.pos += match[0].length;
-
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -477,40 +359,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
         return true;
     };
-
-    /**
-     * @function remarkableTestsStatusRenderer
-     * @desc Renderer rule for Remarkable custom token TestStatus
-     * Builds the raw html for test case status; also inserts the test details link
-     * @param tokens
-     * @param id
-     * @param options
-     * @param env
-     */
-    private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
-        const tests = tokens[0].tests || [];
-        const [done, label] = this.statusForTests(tests);
-        const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-
-        let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
-
-        text += ' ' + tokens[0].title;
-        text += '</span>: ';
-        // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !tests.length) {
-            text += `<span class="${textColor} bold">` + label + '</span>';
-        } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
-            text += '<a data-tests="' + tests + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
-        }
-        text += '<br>';
-
-        this.steps.push({
-            title: tokens[0].title,
-            done,
-        });
-
-        return text;
-    }
 
     /**
      * @function remarkablePlantUmlRenderer
@@ -588,8 +436,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     ngOnDestroy() {
-        this.listenerRemoveFunctions.forEach(f => f());
-        this.listenerRemoveFunctions = [];
         this.steps = [];
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
