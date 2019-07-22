@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArTEMiSTestModule } from '../test.module';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';

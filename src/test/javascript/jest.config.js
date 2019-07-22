@@ -13,7 +13,7 @@ module.exports = {
     modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
-    testMatch: ['<rootDir>/src/test/javascript/spec/integration/**/*.ts', '<rootDir>/src/test/javascript/spec/component/**/*.ts', '<rootDir>/src/test/javascript/spec/service/**/*.ts','<rootDir>/src/test/javascript/spec/app/**/*.ts'],
+    testMatch: ['<rootDir>/src/test/javascript/spec/integration/**/*.ts', '<rootDir>/src/test/javascript/spec/component/**/*.ts', '<rootDir>/src/test/javascript/spec/service/**/*.ts'],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
