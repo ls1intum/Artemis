@@ -66,7 +66,7 @@ public class Participation implements Serializable {
      * settings.
      */
     @OneToMany(mappedBy = "participation")
-    @JsonIgnoreProperties("participation")
+    @JsonIgnoreProperties(value = "participation", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
