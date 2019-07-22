@@ -33,7 +33,6 @@ public class AutomaticTextFeedbackService {
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final TextExercise exercise = (TextExercise) textSubmission.getParticipation().getExercise();
         final List<TextBlock> blocks = textSubmission.getBlocks();
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
