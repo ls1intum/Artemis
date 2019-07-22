@@ -5,6 +5,11 @@ import { Observable } from 'rxjs';
 
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
+import { Course, CourseService } from 'app/entities/course';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { JhiAlertService } from 'ng-jhipster';
+import { EditorMode } from 'app/markdown-editor';
+import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -13,14 +18,48 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-uploa
 export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
+    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+    courses: Course[];
+    EditorMode = EditorMode;
+    domainCommandsProblemStatement = [new KatexCommand()];
 
-    constructor(private fileUploadExerciseService: FileUploadExerciseService, private activatedRoute: ActivatedRoute) {}
+    constructor(
+        private fileUploadExerciseService: FileUploadExerciseService,
+        private activatedRoute: ActivatedRoute,
+        private courseService: CourseService,
+        private exerciseService: ExerciseService,
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
         });
+        this.activatedRoute.params.subscribe(params => {
+            if (params['courseId']) {
+                const courseId = params['courseId'];
+                this.courseService.find(courseId).subscribe(res => {
+                    const course = res.body!;
+                    this.fileUploadExercise.course = course;
+                    this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
+                    this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course.id).subscribe(
+                        (categoryRes: HttpResponse<string[]>) => {
+                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                        },
+                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                    );
+                });
+            }
+        });
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body!;
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
     }
 
     previousState() {
@@ -36,6 +75,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         }
     }
 
+    updateCategories(categories: ExerciseCategory[]) {
+        this.fileUploadExercise.categories = categories.map(el => JSON.stringify(el));
+    }
+
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
         result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
     }
@@ -47,5 +90,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
+    }
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 }

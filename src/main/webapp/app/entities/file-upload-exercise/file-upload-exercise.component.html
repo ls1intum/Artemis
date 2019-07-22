@@ -4,9 +4,9 @@
         ><span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         <button
-            *ngIf="course"
+            *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
-            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'file-upload-exercise-new'] } }]"
+            [routerLink]="['/course', course.id, 'file-upload-exercise', 'new']"
         >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">

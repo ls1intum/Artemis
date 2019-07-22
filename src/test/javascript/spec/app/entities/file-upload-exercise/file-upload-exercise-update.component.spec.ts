@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { ArTeMiSTestModule } from '../../../test.module';
 import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 
 describe('Component Tests', () => {
     describe('FileUploadExercise Management Update Component', () => {

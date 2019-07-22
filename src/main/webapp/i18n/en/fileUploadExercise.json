@@ -4,7 +4,7 @@
             "home": {
                 "title": "File Upload Exercises",
                 "createLabel": "Create a new File Upload Exercise",
-                "createOrEditLabel": "Create or edit a File Upload Exercise"
+                "editLabel": "Edit a File Upload Exercise"
             },
             "created": "A new File Upload Exercise is created with identifier {{ param }}",
             "updated": "A File Upload Exercise is updated with identifier {{ param }}",
