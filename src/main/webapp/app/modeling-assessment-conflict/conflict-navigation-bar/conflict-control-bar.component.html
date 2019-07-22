@@ -1,7 +1,7 @@
 <div class="container-fluid">
     <h3>
         <div *ngIf="conflicts.length > 0; else noConflictsPlaceholder" class="row justify-content-between">
-            <div class="navigation-container row-container">
+            <div *ngIf="conflicts.length > 1; else singleConflict" class="navigation-container row-container">
                 <span jhiTranslate="modelingAssessmentConflict.conflicts">Conflicts</span>
                 <button class="btn btn-primary" (click)="onPrevConflict()">
                     <fa-icon icon="arrow-left"></fa-icon>
@@ -11,6 +11,7 @@
                     <fa-icon icon="arrow-right"></fa-icon>
                 </button>
             </div>
+            <ng-template #singleConflict> </ng-template>
             <jhi-alert></jhi-alert>
             <div class="control-button-container">
                 <button *ngIf="showSave" class="btn btn-primary" (click)="onSave()">
