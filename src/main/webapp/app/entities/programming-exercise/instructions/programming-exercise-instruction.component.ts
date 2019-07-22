@@ -21,7 +21,7 @@ import * as Remarkable from 'remarkable';
 import { ShowdownExtension } from 'showdown';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
+import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
@@ -35,6 +35,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/p
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionFactory } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -81,15 +82,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdownExtensions: ShowdownExtension[];
 
     constructor(
-        private editorService: CodeEditorService,
+        private editorService: ProgrammingExercisePlantUmlService,
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private markdownService: ArtemisMarkdown,
         private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory,
+        private programmingExercisePlantUmlFactory: ProgrammingExercisePlantUmlExtensionFactory,
     ) {
-        this.markdownExtensions = [this.programmingExerciseTaskFactory.getExtension()];
+        this.markdownExtensions = [this.programmingExerciseTaskFactory.getExtension(), this.programmingExercisePlantUmlFactory.getExtension()];
     }
 
     /**
@@ -124,6 +126,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     tap(latestResult => {
                         this.latestResult = latestResult;
                         this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
+                        this.programmingExercisePlantUmlFactory.setLatestResult(this.latestResult);
                     }),
                     tap(() => {
                         /*                        this.updateMarkdown();*/
@@ -156,6 +159,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
+                this.programmingExercisePlantUmlFactory.setLatestResult(this.latestResult);
                 this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement);
                 /*                this.updateMarkdown();*/
             });

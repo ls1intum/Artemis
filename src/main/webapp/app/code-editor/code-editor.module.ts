@@ -14,7 +14,6 @@ import { TreeviewModule } from 'ngx-treeview';
 
 import {
     // services
-    CodeEditorService,
     DomainService,
     CodeEditorRepositoryService,
     CodeEditorRepositoryFileService,
@@ -88,7 +87,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         JhiAlertService,
         ResultService,
         ParticipationService,
-        CodeEditorService,
         DomainService,
         CodeEditorRepositoryService,
         CodeEditorRepositoryFileService,

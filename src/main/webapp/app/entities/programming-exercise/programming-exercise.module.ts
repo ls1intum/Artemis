@@ -36,6 +36,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entiti
 import { ProgrammingExerciseTaskExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -94,7 +96,9 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseTestCaseService,
         ProgrammingExercisePopupService,
         ProgrammingExerciseTaskExtensionFactory,
+        ProgrammingExercisePlantUmlExtensionFactory,
         ProgrammingExerciseInstructionService,
+        ProgrammingExercisePlantUmlService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
