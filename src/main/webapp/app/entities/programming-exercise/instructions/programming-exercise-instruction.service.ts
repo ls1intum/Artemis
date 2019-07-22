@@ -31,7 +31,7 @@ export class ProgrammingExerciseInstructionService {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = tests.reduce(
                 (acc, testName) => {
-                    const feedback = latestResult ? latestResult.feedbacks.find(({ text }) => text === testName) : [];
+                    const feedback = latestResult ? latestResult.feedbacks.find(({ text }) => text === testName) : null;
                     // This is a legacy check, results before the 24th May are considered legacy.
                     const resultIsLegacy = isLegacyResult(latestResult!);
                     // If there is no feedback item, we assume that the test was successful (legacy check).
