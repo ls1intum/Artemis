@@ -136,9 +136,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 .pipe(filter(res => !!res.body))
                                 .subscribe(res => {
                                     if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                        this.hasComplaint = true;
-                                    } else {
                                         this.hasRequestMoreFeedback = true;
+                                    } else {
+                                        this.hasComplaint = true;
                                     }
                                 });
                         }
