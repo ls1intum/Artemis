@@ -25,6 +25,7 @@
         "newQuestion": "View question",
         "exerciseCreated": "View exercise",
         "exerciseUpdated": "View exercise",
-        "attachmentUpdated": "View lecture"
+        "attachmentUpdated": "View lecture",
+        "newConflict": "Resolve conflict"
     }
 }

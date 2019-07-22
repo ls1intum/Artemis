@@ -25,6 +25,7 @@
         "newQuestion": "Frage ansehen",
         "exerciseCreated": "Übung ansehen",
         "exerciseUpdated": "Übung ansehen",
-        "attachmentUpdated": "Vorlesung ansehen"
+        "attachmentUpdated": "Vorlesung ansehen",
+        "newConflict": "Konflikt behandeln"
     }
 }
