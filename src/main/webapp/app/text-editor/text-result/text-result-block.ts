@@ -1,4 +1,5 @@
 import { Feedback } from 'app/entities/feedback';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 enum FeedbackType {
     POSITIVE = 'positive',
@@ -7,18 +8,18 @@ enum FeedbackType {
 }
 
 export class TextResultBlock {
-    constructor(public text: string, public startIndex: number, public feedback?: Feedback) {
-        this.text = text;
-        this.startIndex = startIndex;
-        this.feedback = feedback;
-    }
+    constructor(public textBlock: TextBlock, public feedback?: Feedback) {}
 
     get length(): number {
-        return this.text.length;
+        return this.endIndex - this.startIndex;
+    }
+
+    get startIndex(): number {
+        return this.textBlock.startIndex;
     }
 
     get endIndex(): number {
-        return this.startIndex + this.length;
+        return this.textBlock.endIndex;
     }
 
     get feedbackType(): FeedbackType {
