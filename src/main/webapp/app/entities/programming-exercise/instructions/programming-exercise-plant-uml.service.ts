@@ -30,7 +30,7 @@ export class ProgrammingExercisePlantUmlService {
         maxAge: 3000,
         slidingExpiration: true,
     })
-    getPlantUmlImage(plantUml: string)  {
+    getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
                 params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
