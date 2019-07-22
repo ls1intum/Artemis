@@ -140,7 +140,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 this.latestResult = result;
                 this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
                 this.programmingExercisePlantUmlFactory.setLatestResult(this.latestResult);
-                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement);
+                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
             });
     }
 
