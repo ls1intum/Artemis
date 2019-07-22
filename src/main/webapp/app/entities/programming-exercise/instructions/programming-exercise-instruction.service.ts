@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result';
-import { TestCaseState } from 'app/entities/programming-exercise';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+
+export enum TestCaseState {
+    NOT_EXECUTED = 'NOT_EXECUTED',
+    SUCCESS = 'SUCCESS',
+    FAIL = 'FAIL',
+    NO_RESULT = 'NO_RESULT',
+}
 
 @Injectable()
 export class ProgrammingExerciseInstructionService {

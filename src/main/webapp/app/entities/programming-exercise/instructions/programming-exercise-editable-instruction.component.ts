@@ -16,6 +16,7 @@ import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from '
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { Result, ResultService } from 'app/entities/result';
 import { hasExerciseChanged } from 'app/entities/exercise';
+import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -31,7 +32,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand];
+    katexCommand = new KatexCommand();
+    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand, this.katexCommand];
 
     savingInstructions = false;
     unsavedChanges = false;
