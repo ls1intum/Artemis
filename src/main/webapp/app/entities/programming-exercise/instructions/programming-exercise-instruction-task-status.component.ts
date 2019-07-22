@@ -11,15 +11,15 @@ import { ProgrammingExerciseInstructionService } from 'app/entities/programming-
     selector: 'jhi-programming-exercise-instructions-task-status',
     template: `
         <div>
-            <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="['far', 'check-circle']" size="lg" class="text-success"></fa-icon>
-            <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="['far', 'times-circle']" size="lg" class="text-danger"></fa-icon>
+            <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="['far', 'check-circle']" size="lg" class="test-icon text-success"></fa-icon>
+            <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="['far', 'times-circle']" size="lg" class="test-icon text-danger"></fa-icon>
             <fa-icon
                 *ngIf="testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED"
                 [icon]="['far', 'question-circle']"
                 size="lg"
-                class="text-secondary"
+                class="test-icon text-secondary"
             ></fa-icon>
-            <span *ngIf="taskName">{{ taskName }}</span>
+            <span *ngIf="taskName" class="task-name">{{ taskName }}</span>
             <span>
                 <span
                     *ngIf="testCaseState === TestCaseState.SUCCESS || testCaseState === TestCaseState.NO_RESULT || !tests.length"
@@ -38,7 +38,7 @@ import { ProgrammingExerciseInstructionService } from 'app/entities/programming-
             </span>
         </div>
     `,
-    styles: ['.test-status--linked {text-decoration: underline; cursor: pointer}'],
+    styles: ['.test-status--linked {text-decoration: underline; cursor: pointer}', '.test-icon, .task-name {font-weight: bold}'],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     TestCaseState = TestCaseState;

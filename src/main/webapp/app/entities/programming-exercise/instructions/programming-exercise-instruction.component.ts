@@ -13,13 +13,14 @@ import { hasParticipationChanged, Participation, ParticipationWebsocketService }
 import { Observable, Subscription } from 'rxjs';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ProgrammingExerciseTaskExtensionFactory } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionFactory, TestsForTasks } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
 type Step = {
     title: string;
     done: TestCaseState;
+    tests: string[];
 };
 
 @Component({
@@ -28,8 +29,6 @@ type Step = {
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
-    TestCaseState = TestCaseState;
-
     @Input()
     public exercise: ProgrammingExercise;
     @Input()
@@ -52,12 +51,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdownExtensions: ShowdownExtension[];
 
     constructor(
-        private editorService: ProgrammingExercisePlantUmlService,
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private markdownService: ArtemisMarkdown,
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory,
         private programmingExercisePlantUmlFactory: ProgrammingExercisePlantUmlExtensionFactory,
     ) {
@@ -75,6 +74,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
+            this.programmingExerciseTaskFactory.subscribeForTestForTasks().subscribe((testsForTasks: TestsForTasks) => {
+                this.steps = testsForTasks.map(([, taskName, tests]) => ({
+                    done: this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult)[0],
+                    title: taskName,
+                    tests,
+                }));
+            });
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {

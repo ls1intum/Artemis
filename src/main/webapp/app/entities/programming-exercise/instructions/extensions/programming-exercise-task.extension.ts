@@ -1,10 +1,9 @@
-import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injector, Injectable } from '@angular/core';
+import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as showdown from 'showdown';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise';
 import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
 export type TestsForTasks = Array<[string, string, string[]]>;
@@ -12,6 +11,8 @@ export type TestsForTasks = Array<[string, string, string[]]>;
 @Injectable()
 export class ProgrammingExerciseTaskExtensionFactory {
     private latestResult: Result | null = null;
+
+    private testsForTaskSubject = new Subject<TestsForTasks>();
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
@@ -22,6 +23,10 @@ export class ProgrammingExerciseTaskExtensionFactory {
 
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
+    }
+
+    public subscribeForTestForTasks() {
+        return this.testsForTaskSubject.asObservable();
     }
 
     getExtension() {
@@ -41,6 +46,7 @@ export class ProgrammingExerciseTaskExtensionFactory {
                         return testMatch && testMatch.length === 3 ? [task, testMatch[1], testMatch[2]] : [];
                     })
                     .map(([task, taskName, tests]: [string, string, string]) => [task, taskName, tests.split(',').map(s => s.trim())]);
+                this.testsForTaskSubject.next(testsForTask);
                 const replacedText = testsForTask.reduce(
                     (acc: string, [task, taskName, tests]: [string, string, string[]], index: number): string =>
                         acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
@@ -48,7 +54,6 @@ export class ProgrammingExerciseTaskExtensionFactory {
                 );
                 setTimeout(() => {
                     testsForTask.forEach(([, taskName, tests]: [string, string, string[]], index: number) => {
-                        /*                        const [done] = this.statusForTests(tests);*/
                         const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
                         componentRef.instance.taskName = taskName;
                         componentRef.instance.latestResult = this.latestResult;
@@ -62,23 +67,8 @@ export class ProgrammingExerciseTaskExtensionFactory {
                             taskContainer.append(domElem);
                         }
                     });
-                    // Setup step wizard.
-                    const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionStepWizardComponent).create(this.injector);
-                    componentRef.instance.steps = testsForTask.map(([, taskName, tests]) => ({
-                        title: taskName,
-                        done: this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult)[0],
-                        tests,
-                    }));
-                    componentRef.instance.latestResult = this.latestResult;
-                    this.appRef.attachView(componentRef.hostView);
-                    const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                    const stepWizardContainer = document.getElementById('stepwizard-container');
-                    if (stepWizardContainer) {
-                        stepWizardContainer.innerHTML = '';
-                        stepWizardContainer.append(domElem);
-                    }
-                }, 0);
-                return "<div id='stepwizard-container'></div>" + replacedText;
+                });
+                return replacedText;
             },
         };
         return extension;
