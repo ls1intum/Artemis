@@ -576,6 +576,7 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
 
+        // TODO: for students this call returns null which will result in an error in the for-each loop below
         List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
 
         for (Exercise exercise : exercises) {

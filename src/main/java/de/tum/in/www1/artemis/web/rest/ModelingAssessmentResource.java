@@ -266,6 +266,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
             result.getParticipation().setResults(null);
         }
 
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            result.getParticipation().setStudent(null);
+        }
+
         return ResponseEntity.ok(result);
     }
 
