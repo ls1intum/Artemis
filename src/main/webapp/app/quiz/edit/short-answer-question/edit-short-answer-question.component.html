@@ -87,7 +87,7 @@
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="false"
-                    [domainCommands]="dragAndDropQuestionDomainCommands"
+                    [domainCommands]="shortAnswerQuestionDomainCommands"
                     (markdownChange)="changesInMarkdown()"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
                 ></jhi-markdown-editor>
@@ -98,7 +98,7 @@
                         #markdownEditor
                         [markdown]="questionEditorText"
                         [showPreviewButton]="false"
-                        [domainCommands]="dragAndDropQuestionDomainCommands"
+                        [domainCommands]="shortAnswerQuestionDomainCommands"
                         (markdownChange)="changesInMarkdown()"
                         (textWithDomainCommandsFound)="domainCommandsFound($event)"
                     ></jhi-markdown-editor>

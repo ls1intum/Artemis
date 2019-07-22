@@ -11,8 +11,8 @@ import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-questi
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { DomainCommand, ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -63,6 +63,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     textParts: (string | null)[][];
 
     backupQuestion: ShortAnswerQuestion;
+
+    // for markdown
+
+    hintCommand = new HintCommand();
+    explanationCommand = new ExplanationCommand();
+
+    /** {array} with domainCommands that are needed for a drag and drop question **/
+    shortAnswerQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -699,12 +707,58 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
     }
 
+    /*For markdown*/
+
+    /**
+     * @function changesInMarkdown
+     * @desc Detect of text changes in the markdown editor
+     *      1. Notify the parent component to check the validity of the text
+     *      2. Parse the text in the editor to get the newest values
+     */
+    changesInMarkdown(): void {
+        this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
+        this.prepareForSave();
+    }
+
+    /**
+     * @function domainCommandsFound
+     * @desc 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new short answer problem statement
+     *       by assigning the text according to the domainCommandIdentifiers to the short answer attributes.
+     *       (question text, explanation, hint)
+     * @param {array} containing markdownText with the corresponding domainCommand {DomainCommand} identifier
+     */
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        this.cleanupQuestion();
+        for (const [text, command] of domainCommands) {
+            if (command === null && text.length > 0) {
+                this.question.text = text;
+            }
+            if (command instanceof ExplanationCommand) {
+                this.question.explanation = text;
+            } else if (command instanceof HintCommand) {
+                this.question.hint = text;
+            }
+        }
+    }
+
     /**
      * @function prepareForSave
      * @desc reset the question and calls the parsing method of the markdown editor
      */
     prepareForSave(): void {
-		this.cleanupQuestion();
+        this.cleanupQuestion();
         this.markdownEditor.parse();
-	}
+    }
+
+    /**
+     * @function cleanupQuestion
+     * @desc Clear the question to avoid double assignments of one attribute
+     */
+    private cleanupQuestion() {
+        // Reset Question Object
+        this.question.text = null;
+        this.question.explanation = null;
+        this.question.hint = null;
+    }
 }
