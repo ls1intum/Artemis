@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static java.time.Instant.now;
+
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +10,13 @@ import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
@@ -35,10 +39,14 @@ public class TextClusteringScheduleService {
 
     private final TextClusteringService textClusteringService;
 
-    public TextClusteringScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, TextClusteringService textClusteringService) {
+    private final TaskScheduler scheduler;
+
+    public TextClusteringScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, TextClusteringService textClusteringService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseService = textExerciseService;
         this.textClusteringService = textClusteringService;
+        this.scheduler = scheduler;
     }
 
     @PostConstruct
@@ -60,18 +68,26 @@ public class TextClusteringScheduleService {
         scheduleExerciseForClustering(exercise);
     }
 
-    @Transactional
-    void scheduleExerciseForClustering(TextExercise exercise) {
+    private void scheduleExerciseForClustering(TextExercise exercise) {
         // check if already scheduled for exercise. if so, cancel
         cancelScheduledClustering(exercise);
 
-        ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
-            SecurityUtils.setAuthorizationObject();
-            textClusteringService.calculateClusters(exercise);
-        });
+        ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
 
         scheduledClusteringTasks.put(exercise.getId(), future);
         log.debug("Scheduled Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
+    }
+
+    public void scheduleExerciseForInstantClustering(TextExercise exercise) {
+        scheduler.schedule(clusteringRunnableForExercise(exercise), now());
+    }
+
+    @NotNull
+    private Runnable clusteringRunnableForExercise(TextExercise exercise) {
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            textClusteringService.calculateClusters(exercise);
+        };
     }
 
     public void cancelScheduledClustering(TextExercise exercise) {

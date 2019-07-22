@@ -76,6 +76,7 @@ public class TextClusteringService {
         return textEmbeddings;
     }
 
+    @Transactional
     public void calculateClusters(TextExercise exercise) {
         long start = System.currentTimeMillis();
         log.debug("Start Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");

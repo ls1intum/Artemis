@@ -116,6 +116,9 @@ public class TextExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
+        if (userNotAllowedToSetAutomaticAssessmentEnabled(textExercise)) {
+            return forbidden();
+        }
 
         if (textExercise.getDueDate() != null && textExercise.getAssessmentDueDate() == null) {
             textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
@@ -155,6 +158,10 @@ public class TextExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
+        TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
+        if (userNotAllowedToSetAutomaticAssessmentEnabled(textExercise) || textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled()) {
+            return forbidden();
+        }
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
@@ -168,6 +175,10 @@ public class TextExerciseResource {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
+    }
+
+    private boolean userNotAllowedToSetAutomaticAssessmentEnabled(TextExercise textExercise) {
+        return !authCheckService.isAdmin() && textExercise.isAutomaticAssessmentEnabled();
     }
 
     /**
@@ -302,5 +313,18 @@ public class TextExerciseResource {
         }
 
         return ResponseEntity.ok(participation);
+    }
+
+    @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
+        if (textClusteringScheduleService.isPresent()) {
+            TextExercise textExercise = textExerciseService.findOne(exerciseId);
+            textClusteringScheduleService.get().scheduleExerciseForInstantClustering(textExercise);
+            return ResponseEntity.ok().build();
+        }
+        else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
