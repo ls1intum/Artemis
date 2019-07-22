@@ -1,14 +1,24 @@
 import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injector, Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import * as showdown from 'showdown';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise';
 import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+
+export type TestsForTasks = Array<[string, string, string[]]>;
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionFactory {
     private latestResult: Result | null = null;
 
-    constructor(private componentFactoryResolver: ComponentFactoryResolver, private appRef: ApplicationRef, private injector: Injector) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private componentFactoryResolver: ComponentFactoryResolver,
+        private appRef: ApplicationRef,
+        private injector: Injector,
+    ) {}
 
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
@@ -25,7 +35,7 @@ export class ProgrammingExerciseTaskExtensionFactory {
                 const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)/;
                 const taskContainer = `<div id="task-${idPlaceholder}"></div>`;
                 const tasks = text.match(taskRegex) || [];
-                const testsForTask = tasks
+                const testsForTask: TestsForTasks = tasks
                     .map(task => {
                         const testMatch = task.match(innerTaskRegex);
                         return testMatch && testMatch.length === 3 ? [task, testMatch[1], testMatch[2]] : [];
@@ -46,12 +56,29 @@ export class ProgrammingExerciseTaskExtensionFactory {
 
                         this.appRef.attachView(componentRef.hostView);
                         const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                        const taskContainer = document.getElementById(`task-${index}`)!;
-                        taskContainer.innerHTML = '';
-                        taskContainer.append(domElem);
+                        const taskContainer = document.getElementById(`task-${index}`);
+                        if (taskContainer) {
+                            taskContainer.innerHTML = '';
+                            taskContainer.append(domElem);
+                        }
                     });
+                    // Setup step wizard.
+                    const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionStepWizardComponent).create(this.injector);
+                    componentRef.instance.steps = testsForTask.map(([, taskName, tests]) => ({
+                        title: taskName,
+                        done: this.programmingExerciseInstructionService.statusForTests(tests, this.latestResult)[0],
+                        tests,
+                    }));
+                    componentRef.instance.latestResult = this.latestResult;
+                    this.appRef.attachView(componentRef.hostView);
+                    const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                    const stepWizardContainer = document.getElementById('stepwizard-container');
+                    if (stepWizardContainer) {
+                        stepWizardContainer.innerHTML = '';
+                        stepWizardContainer.append(domElem);
+                    }
                 }, 0);
-                return replacedText;
+                return "<div id='stepwizard-container'></div>" + replacedText;
             },
         };
         return extension;

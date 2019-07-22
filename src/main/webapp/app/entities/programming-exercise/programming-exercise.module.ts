@@ -35,6 +35,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 import { ProgrammingExerciseTaskExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -62,6 +63,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseInstructionStepWizardComponent,
         ProgrammingExerciseInstructionTestcaseStatusComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
@@ -76,6 +78,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
+        ProgrammingExerciseInstructionStepWizardComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
