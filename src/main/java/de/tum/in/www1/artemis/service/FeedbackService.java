@@ -74,8 +74,9 @@ public class FeedbackService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextExercise exercise, TextCluster cluster) {
+    public Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
         final List<String> references = cluster.getBlocks().stream().filter(Objects::nonNull).map(TextBlock::getId).collect(toList());
+        final TextExercise exercise = cluster.getExercise();
         return feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
                 .collect(toMap(Feedback::getReference, f -> f));
     }

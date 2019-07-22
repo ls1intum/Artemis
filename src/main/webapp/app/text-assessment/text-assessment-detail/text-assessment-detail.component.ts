@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { HighlightColors } from '../../text-shared/highlight-colors';
+import { HighlightColors } from '../highlight-colors';
 import { Feedback } from 'app/entities/feedback';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 

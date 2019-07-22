@@ -6,15 +6,8 @@
             "fieldType": "String"
         }
     ],
-    "relationships": [
-        {
-            "relationshipType": "one-to-many",
-            "otherEntityName": "textBlock",
-            "otherEntityRelationshipName": "submission",
-            "relationshipName": "blocks"
-        }
-    ],
-    "changelogDate": "20190703140635",
+    "relationships": [],
+    "changelogDate": "20190315161937",
     "entityTableName": "text_submission",
     "dto": "no",
     "pagination": "no",

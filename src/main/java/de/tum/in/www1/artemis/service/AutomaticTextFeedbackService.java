@@ -42,7 +42,7 @@ public class AutomaticTextFeedbackService {
 
             if (cluster != null) {
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks();
-                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(exercise, cluster);
+                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
                             .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))

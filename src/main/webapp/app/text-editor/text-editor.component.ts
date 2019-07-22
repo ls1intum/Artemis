@@ -10,7 +10,7 @@ import { Result, ResultService } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';

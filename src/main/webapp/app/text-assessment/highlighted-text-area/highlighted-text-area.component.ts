@@ -1,6 +1,6 @@
 import { Component, DoCheck, Input, IterableDiffers, OnChanges, SimpleChanges } from '@angular/core';
 import { Feedback } from 'app/entities/feedback';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
@@ -49,11 +49,13 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
                 return content;
             }
 
-            let replacementString = assessment.reference;
-            const textBlockAtCurrentIndex = this.blocks[currentIndex];
-            if (textBlockAtCurrentIndex) {
-                replacementString = textBlockAtCurrentIndex.text;
-            }
+            /**
+             * For now, we want to support two kind of Feedback to Text references:
+             * (1) The text is stored in the `feedback.reference` as is.
+             * (2) feedback.reference contains a text block id.
+             * Matching for ids is done in the `TextAssessmentComponent` and `this.blocks[currentIndex]` is only defined for case (2).
+             */
+            const replacementString: string = this.blocks[currentIndex] ? this.blocks[currentIndex]!.text : assessment.reference;
 
             return content.replace(replacementString, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${replacementString}</span>`);
         }, this.submissionTextWithHtmlLinebreaks);

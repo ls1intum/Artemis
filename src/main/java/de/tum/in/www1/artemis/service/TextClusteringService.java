@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,20 +59,19 @@ public class TextClusteringService {
     private List<TextEmbedding> computeEmbeddings(List<TextBlock> blocks) {
         final AtomicInteger counter = new AtomicInteger();
 
-        final Collection<List<TextBlock>> chunks = blocks.stream().collect(groupingBy(block -> counter.getAndIncrement() / embeddingChunkSize)).values();
+        Map<Integer, List<TextBlock>> chunks = blocks.stream().collect(groupingBy(block -> counter.getAndIncrement() / embeddingChunkSize, toList()));
         log.debug("Splitted Text Blocks into " + chunks.size() + " chunks.");
 
-        int chunkIndex = 0;
         final List<TextEmbedding> textEmbeddings = new ArrayList<>();
-        for (List<TextBlock> chunk : chunks) {
-            log.debug("Computing Language Embeddigns for Chunk " + ++chunkIndex + " / " + chunks.size() + ".");
+        chunks.forEach((i, chunk) -> {
+            log.debug("Computing Language Embeddigns for Chunk " + i + " / " + chunks.size() + ".");
             try {
                 textEmbeddings.addAll(textEmbeddingService.embedTextBlocks(chunk, 2));
             }
             catch (NetworkingError networkingError) {
                 networkingError.printStackTrace();
             }
-        }
+        });
 
         return textEmbeddings;
     }
@@ -115,9 +113,6 @@ public class TextClusteringService {
 
         // Store Clusters in Database
         textClusterRepository.saveAll(savedClusters);
-
-        // TODO (Gregor): Sort Manual Assessment Queue
-        // Pass clusters.values() ?
 
         log.info("Found " + clusters.size() + " clusters for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") in " + (System.currentTimeMillis() - start)
                 + "ms");

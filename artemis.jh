@@ -280,6 +280,8 @@ entity TextSubmission {             //extends Submission
 entity TextBlock {
     id String
     text String
+    startIndex Integer
+    endIndex   Integer
 }
 
 entity TextCluster {

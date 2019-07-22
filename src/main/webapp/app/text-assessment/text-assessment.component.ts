@@ -7,7 +7,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { HighlightColors } from '../text-shared/highlight-colors';
+import { HighlightColors } from './highlight-colors';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -314,8 +314,16 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+
+        /**
+         * List of Text Blocks, where the order is IN SYNC with `referencedFeedback`.
+         * referencedFeedback[i].reference == referencedTextBlocks[i].id
+         * OR referencedTextBlocks[i] == undefined
+         *
+         * For all feedbacks, feedbacks[i].reference is defined.
+         */
         this.referencedTextBlocks = feedbacks.map(feedback => {
-            const feedbackReferencesTextBlock = this.sha1Regex.test(feedback.reference!);
+            const feedbackReferencesTextBlock = feedback.reference ? this.sha1Regex.test(feedback.reference) : false;
             if (!feedbackReferencesTextBlock) {
                 return undefined;
             }

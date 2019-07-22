@@ -16,6 +16,7 @@ import { TextSharedModule } from 'app/text-shared/text-shared.module';
 import { RouterModule } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { HighlightedTextAreaComponent } from 'app/text-assessment/highlighted-text-area/highlighted-text-area.component';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
@@ -27,6 +28,7 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         TextAssessmentDetailComponent,
         TextAssessmentDashboardComponent,
         ResizableInstructionsComponent,
+        HighlightedTextAreaComponent,
     ],
     exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent, ResizableInstructionsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
