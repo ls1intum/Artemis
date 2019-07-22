@@ -33,7 +33,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     let route: ActivatedRoute;
     let testCaseService: ProgrammingExerciseTestCaseService;
 
-    let updateWeightsStub: SinonStub;
+    let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
 
     let routeSubject: Subject<Params>;
@@ -41,7 +41,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
-    const saveWeightsButtonId = '#save-weights-button';
+    const saveTestCasesButton = '#save-weights-button';
 
     const exerciseId = 1;
     const testCases1 = [
@@ -77,7 +77,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
 
-                updateWeightsStub = stub(testCaseService, 'updateTestCase');
+                updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
 
                 routeSubject = new Subject();
@@ -110,7 +110,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveWeightsButtonId));
+        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
         expect(saveWeightsButton).to.exist;
         expect(saveWeightsButton.nativeElement.disabled).to.be.true;
     });
@@ -131,7 +131,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveWeightsButtonId));
+        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
         expect(saveWeightsButton).to.exist;
         expect(saveWeightsButton.nativeElement.disabled).to.be.true;
     });
@@ -169,8 +169,8 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
 
         // Save weight.
-        updateWeightsStub.returns(of({ ...orderedTests[0], weight: 20 }));
-        const saveWeightsButton = debugElement.query(By.css(saveWeightsButtonId));
+        updateTestCasesStub.returns(of({ ...orderedTests[0], weight: 20 }));
+        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
         expect(saveWeightsButton).to.exist;
         expect(saveWeightsButton.nativeElement.disabled).to.be.false;
         saveWeightsButton.nativeElement.click();
@@ -179,8 +179,46 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         editingInput = debugElement.query(By.css(tableEditingInput));
-        expect(updateWeightsStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
+        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
         expect(editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal('20');
+    });
+
+    it('should be able to update the value of the afterDueDate boolean', async () => {
+        comp.ngOnInit();
+        comp.showInactive = true;
+        routeSubject.next({ exerciseId });
+
+        let orderedTests = _sortBy(testCases1, 'testName');
+
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const table = debugElement.query(By.css(testCaseTableId));
+        const checkboxes = table.queryAll(By.css('.table-editable-field__checkbox'));
+        expect(checkboxes).to.have.lengthOf(testCases1.length);
+        checkboxes[0].nativeElement.click();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+
+        // Save weight.
+        updateTestCasesStub.returns(of({ ...orderedTests[0], afterDueDate: true }));
+        const saveTestCases = debugElement.query(By.css(saveTestCasesButton));
+        expect(saveTestCases).to.exist;
+        expect(saveTestCases.nativeElement.disabled).to.be.false;
+        saveTestCases.nativeElement.click();
+
+        fixture.detectChanges();
+
+        const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
+            { id: testThatWasUpdated.id, weight: testThatWasUpdated.weight, afterDueDate: testThatWasUpdated.afterDueDate },
+        ]);
     });
 });
