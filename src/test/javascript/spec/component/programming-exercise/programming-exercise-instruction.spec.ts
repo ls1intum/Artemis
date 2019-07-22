@@ -24,7 +24,7 @@ import { MockRepositoryFileService } from '../../mocks/mock-repository-file.serv
 import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
+import { ProgrammingExerciseInstructionResultDetail } from 'app/code-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 
 chai.use(sinonChai);
@@ -285,7 +285,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnceWithExactly(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetail, { keyboard: true, size: 'lg' });
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -322,7 +322,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
 
         expect(openModalStub).to.have.been.calledOnce;
-        expect(openModalStub).to.have.been.calledOnceWithExactly(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetail, { keyboard: true, size: 'lg' });
     }));
 
     it('should determine a successful state for all tasks if the result is successful', () => {

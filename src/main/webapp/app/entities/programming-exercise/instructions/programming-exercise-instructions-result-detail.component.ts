@@ -1,18 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Result, ResultService } from '../../entities/result';
-import { Feedback } from '../../entities/feedback';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BuildLogEntryArray } from 'app/entities/build-log';
+import { Result, ResultService } from 'app/entities/result';
+import { Feedback } from 'app/entities/feedback';
 
 // Modal -> Result details view
 @Component({
-    selector: 'jhi-code-editor-instructions-result-detail',
+    selector: 'jhi-programming-exercise-instructions-result-detail',
     // This popup references the result detail html template, so make sure the constant names match
-    templateUrl: '../../entities/result/result-detail.component.html',
+    templateUrl: '../../../entities/result/result-detail.component.html',
 })
-export class EditorInstructionsResultDetailComponent implements OnInit {
+export class ProgrammingExerciseInstructionResultDetailComponent implements OnInit {
     @Input() result: Result;
     @Input() tests: string[];
     isLoading: boolean;

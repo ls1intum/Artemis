@@ -38,6 +38,7 @@ import { ProgrammingExerciseInstructionService } from 'app/entities/programming-
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
+import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -66,6 +67,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseInstructionStepWizardComponent,
+        ProgrammingExerciseInstructionResultDetailComponent,
         ProgrammingExerciseInstructionTestcaseStatusComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
@@ -81,6 +83,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseInstructionStepWizardComponent,
+        ProgrammingExerciseInstructionResultDetailComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
