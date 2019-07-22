@@ -23,6 +23,7 @@ import {
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseManageTestCasesComponent,
+    ProgrammingExerciseInstructionTaskStatusComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -60,6 +61,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseInstructionTestcaseStatusComponent,
+        ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
     ],
     entryComponents: [
@@ -71,6 +73,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,

@@ -14,21 +14,19 @@ import { BuildLogEntryArray } from 'app/entities/build-log';
 })
 export class EditorInstructionsResultDetailComponent implements OnInit {
     @Input() result: Result;
-    @Input() tests: string;
+    @Input() tests: string[];
     isLoading: boolean;
-    filterTests: string[];
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
 
     ngOnInit(): void {
-        this.filterTests = this.tests.split(',');
         of(this.result.feedbacks)
             .pipe(
                 switchMap(feedbacks => (feedbacks ? of(feedbacks) : this.loadResultDetails(this.result))),
                 map(feedbacks =>
-                    this.filterTests.map(test => {
+                    this.tests.map(test => {
                         const matchingFeedback = feedbacks.find(({ text }) => text === test);
                         return matchingFeedback || ({ text: test, detailText: 'No result information available', type: 'AUTOMATIC' } as Feedback);
                     }),

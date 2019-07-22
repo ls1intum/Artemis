@@ -1,14 +1,16 @@
 import { ApplicationRef, EmbeddedViewRef, ComponentFactoryResolver, Injector } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import * as showdown from 'showdown';
 import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
-import { TestCaseState } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseInstructionTaskStatusComponent, TestCaseState } from 'app/entities/programming-exercise';
 import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
 
 export class ProgrammingExerciseTaskExtensionFactory {
     private latestResult: Result | null = null;
@@ -22,6 +24,18 @@ export class ProgrammingExerciseTaskExtensionFactory {
 
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
+    }
+
+    private htmlStatusForTests(tests: string[]) {
+        const [done, label] = this.statusForTests(tests);
+        const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
+
+        // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !tests.length) {
+            return `<span class="${textColor} bold">` + label + '</span>';
+        } else {
+            return '<a data-tests="' + tests + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
+        }
     }
 
     /**
@@ -78,34 +92,42 @@ export class ProgrammingExerciseTaskExtensionFactory {
             type: 'lang',
             filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
                 const idPlaceholder = '%idPlaceholder%';
+                const taskNamePlaceholder = '%taskNamePlaceholder%';
+                const testResultPlaceholder = '%testResultPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const taskRegex = /\[task\]\[.*\]\(.*\)/g;
-                // E.g. testBubbleSort
-                const testRegex = /\((.*)\)/;
-                const taskContainer = `<span id="step-icon-${idPlaceholder}"></span>`;
+                // E.g. Implement BubbleSort, testBubbleSort
+                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)/;
+                const taskContainer = `<div id="task-${idPlaceholder}"></div>`;
                 const tasks = text.match(taskRegex) || [];
                 const testsForTask = tasks
                     .map(task => {
-                        const testMatch = task.match(testRegex);
-                        return testMatch && testMatch.length === 2 ? [task, testMatch[1]] : [];
+                        const testMatch = task.match(innerTaskRegex);
+                        return testMatch && testMatch.length === 3 ? [task, testMatch[1], testMatch[2]] : [];
                     })
-                    .map(([task, tests]: [string, string]) => [task, tests.split(',').map(s => s.trim())]);
-                const replacedText = tasks.reduce(
-                    (acc: string, task: string, index: number): string =>
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
-                    text,
-                );
+                    .map(([task, taskName, tests]: [string, string, string]) => [task, taskName, tests.split(',').map(s => s.trim())]);
+                const replacedText = testsForTask.reduce((acc: string, [task, taskName, tests]: [string, string, string[]], index: number): string => {
+                    return (
+                        acc
+                            // Replace task with html structure for task and insert task index.
+                            .replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString()))
+                    );
+                    /*                        // Replace task name.
+                        .replace(new RegExp(taskNamePlaceholder), taskName)
+                        // Replace test result.
+                        .replace(new RegExp(testResultPlaceholder), this.htmlStatusForTests(tests));*/
+                }, text);
                 setTimeout(() => {
-                    testsForTask.forEach(([, tests]: [string, string[]], index: number) => {
-                        const [done] = this.statusForTests(tests);
-                        const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
-                        componentRef.instance.size = 'lg';
-                        componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : done === TestCaseState.FAIL ? faTimesCircle : faQuestionCircle;
-                        componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary'];
-                        componentRef.instance.ngOnChanges({});
+                    testsForTask.forEach(([, taskName, tests]: [string, string, string[]], index: number) => {
+                        /*                        const [done] = this.statusForTests(tests);*/
+                        const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
+                        componentRef.instance.taskName = taskName;
+                        componentRef.instance.latestResult = this.latestResult;
+                        componentRef.instance.tests = tests;
+
                         this.appRef.attachView(componentRef.hostView);
                         const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                        const iconContainer = document.getElementById(`step-icon-${index}`)!;
+                        const iconContainer = document.getElementById(`task-${index}`)!;
                         iconContainer.innerHTML = '';
                         iconContainer.append(domElem);
                     });
