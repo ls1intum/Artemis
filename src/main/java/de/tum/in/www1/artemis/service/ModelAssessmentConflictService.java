@@ -118,7 +118,8 @@ public class ModelAssessmentConflictService {
         existingConflicts.forEach(conflict -> conflict.getResultsInConflict().forEach(conflictingResult -> {
             if (conflictingResult.getResult().getId().equals(result.getId())) {
                 conflict.getResultsInConflict().remove(conflictingResult);
-                conflictingResultRepository.delete(conflictingResult);
+                conflictingResultRepository.deleteById(conflictingResult.getId());
+                System.out.println("test");
             }
         }));
     }
@@ -129,12 +130,14 @@ public class ModelAssessmentConflictService {
      * @param conflicts
      */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
-        conflicts.forEach(conflict -> {
-            conflict.getCausingConflictingResult()
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
-            conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
-        });
+        conflicts.forEach(this::loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults);
+    }
+
+    public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(ModelAssessmentConflict conflict) {
+        conflict.getCausingConflictingResult()
+                .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
+        conflict.getResultsInConflict().forEach(
+                conflictingResult -> conflictingResult.setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
     }
 
     @Transactional
@@ -207,7 +210,6 @@ public class ModelAssessmentConflictService {
      * @param newConflictingFeedbacks Map which contains existing feedbacks the causingResult is currently in conflict with. The feedbacks are mapped to the corresponding
      *                                modelElementId of the feedback from causingResult that is inside the same similarity set as the List of feedbacks and therefore conflicting.
      */
-    @Transactional
     public void addMissingConflicts(Result causingResult, List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         newConflictingFeedbacks.keySet().forEach(modelElementId -> {
             Optional<ModelAssessmentConflict> foundExistingConflict = existingConflicts.stream()
