@@ -34,6 +34,7 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 import { ProgrammingExerciseTaskExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -85,7 +86,13 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
     ],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseTaskExtensionFactory],
+    providers: [
+        ProgrammingExerciseService,
+        ProgrammingExerciseTestCaseService,
+        ProgrammingExercisePopupService,
+        ProgrammingExerciseTaskExtensionFactory,
+        ProgrammingExerciseInstructionService,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {

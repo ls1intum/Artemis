@@ -191,7 +191,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
             /*            this.setUpClickListeners();*/
-            this.setUpTaskIcons();
+            /*            this.setUpTaskIcons();*/
         }, 0);
     }
 
