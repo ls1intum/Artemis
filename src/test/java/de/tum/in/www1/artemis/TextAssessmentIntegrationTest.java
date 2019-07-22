@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +89,6 @@ public class TextAssessmentIntegrationTest {
         assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isNull();
     }
 
-    @Ignore // TODO: reenable this
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
@@ -100,6 +98,7 @@ public class TextAssessmentIntegrationTest {
         Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
+        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
@@ -159,5 +158,18 @@ public class TextAssessmentIntegrationTest {
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getDataForTextEditor_assessorHidden() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+
+        Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+
+        assertThat(participation).as("participation found").isNotNull();
+        assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
+        assertThat(participation.getResults().iterator().next().getAssessor()).as("assessor of participation is hidden").isNull();
     }
 }
