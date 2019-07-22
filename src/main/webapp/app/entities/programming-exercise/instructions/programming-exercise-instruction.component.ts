@@ -34,7 +34,7 @@ import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exe
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ProgrammingExerciseTaskExtension } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionFactory } from './extensions/programming-exercise-task.extension';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -80,6 +80,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
 
+    private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory;
     private markdownExtensions: ShowdownExtension[];
 
     constructor(
@@ -96,7 +97,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
-        this.markdownExtensions = [ProgrammingExerciseTaskExtension(componentFactoryResolver, appRef, injector)];
+        this.programmingExerciseTaskFactory = new ProgrammingExerciseTaskExtensionFactory(this.componentFactoryResolver, this.appRef, this.injector, this.translateService);
+        this.markdownExtensions = [this.programmingExerciseTaskFactory.getExtension()];
         // Enabled for color picker of markdown editor that inserts spans into the markdown
         /*        this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
@@ -134,7 +136,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     filter(problemStatement => !!problemStatement),
                     tap(problemStatement => (this.problemStatement = problemStatement!)),
                     switchMap(() => this.loadInitialResult()),
-                    tap(latestResult => (this.latestResult = latestResult)),
+                    tap(latestResult => {
+                        this.latestResult = latestResult;
+                        this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
+                    }),
                     tap(() => {
                         /*                        this.updateMarkdown();*/
                         this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
@@ -165,7 +170,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(filter(participation => !!participation))
             .subscribe((result: Result) => {
                 this.latestResult = result;
-                this.updateMarkdown();
+                this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
+                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement);
+                /*                this.updateMarkdown();*/
             });
     }
 
