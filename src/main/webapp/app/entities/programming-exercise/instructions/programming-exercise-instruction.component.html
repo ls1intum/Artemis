@@ -30,12 +30,7 @@
     </div>
 
     <!-- Rendered markdown will be inserted in this div -->
-    <div
-        id="programming-exercise-instructions-content"
-        class="instructions__content__markdown markdown-preview"
-        [hidden]="!renderedMarkdown"
-        [innerHtml]="renderedMarkdown | safeHtml"
-    ></div>
+    <div id="programming-exercise-instructions-content" class="instructions__content__markdown markdown-preview" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown"></div>
 </div>
 <ng-template #loadingInstructions>
     <span id="programming-exercise-instructions-loading" class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>

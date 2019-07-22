@@ -128,7 +128,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForMarkdown(markdownText: string | null) {
+    htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
         if (markdownText == null || markdownText === '') {
             return '';
         }
@@ -141,7 +141,7 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [showdownKatex()],
+            extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
         const sanitized = DOMPurify.sanitize(html);

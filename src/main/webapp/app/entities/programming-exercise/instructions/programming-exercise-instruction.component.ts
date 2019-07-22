@@ -14,9 +14,11 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { SafeHtml } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
+import { ShowdownExtension } from 'showdown';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
@@ -31,6 +33,8 @@ import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ProgrammingExerciseTaskExtension } from './extensions/programming-exercise-task.extension';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -72,9 +76,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public latestResult: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
-    public renderedMarkdown: string;
+    public renderedMarkdown: SafeHtml;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
+
+    private markdownExtensions: ShowdownExtension[];
 
     constructor(
         private editorService: CodeEditorService,
@@ -82,6 +88,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private markdownService: ArtemisMarkdown,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -89,12 +96,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
+        this.markdownExtensions = [ProgrammingExerciseTaskExtension(componentFactoryResolver, appRef, injector)];
         // Enabled for color picker of markdown editor that inserts spans into the markdown
-        this.markdown = new Remarkable({ html: true });
+        /*        this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);*/
     }
 
     /**
@@ -128,7 +136,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     switchMap(() => this.loadInitialResult()),
                     tap(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
-                        this.updateMarkdown();
+                        /*                        this.updateMarkdown();*/
+                        this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
                         this.isInitial = false;
                         this.isLoading = false;
                     }),
@@ -138,7 +147,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.problemStatement = this.exercise.problemStatement!;
-            this.updateMarkdown();
+            this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+            /*            this.updateMarkdown();*/
         }
     }
 
