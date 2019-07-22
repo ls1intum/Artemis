@@ -1,4 +1,4 @@
-<jhi-conflict-control-bar [conflicts]="conflicts" (save)="onSave()" (submit)="onSubmit($event)"></jhi-conflict-control-bar>
+<jhi-conflict-control-bar [conflicts]="conflicts" (submit)="onSubmit($event)"></jhi-conflict-control-bar>
 <jhi-modeling-assessment-conflict
     *ngIf="currentConflict"
     [modelingExercise]="modelingExercise"
@@ -6,17 +6,15 @@
     leftTitle="{{ 'modelingAssessment.assessmentOf' | translate }} {{ leftConflictingResult.result.assessor.firstName }} {{ leftConflictingResult.result.assessor.lastName }}"
     [leftModel]="leftModel"
     [leftFeedbacks]="leftConflictingResult.result.feedbacks"
-    [leftHighlightedElementIds]="conflictingHighlightedElementIds"
-    [leftCenteredElementId]="conflictingCenteredElementId"
-    [leftConflictingElemenId]="conflictingCenteredElementId"
+    [leftHighlightedElementIds]="leftHighlightedElementIds"
+    [leftCenteredElementId]="leftCenteredElementId"
+    [leftConflictingElemenId]="leftCenteredElementId"
     rightTitle="{{ 'modelingAssessmentConflict.ownAssessmentTitle' | translate }}"
     [rightModel]="rightModel"
-    [rightFeedback]="currentFeedbacksCopy"
-    [rightHighlightedElementIds]="currentHighlightedElementIds"
-    [rightCenteredElementId]="currentCenteredElementId"
-    [rightConflictingElemenId]="currentCenteredElementId"
-    (conflictResolutionStateChanged)="onConflictStateChanged($event)"
+    [rightFeedback]="rightConflictingResult.result.feedbacks"
+    [rightHighlightedElementIds]="rightHighlightedElementIds"
+    [rightCenteredElementId]="rightCenteredElementId"
+    [rightConflictingElemenId]="rightCenteredElementId"
     (leftButtonPressed)="onTakeOver()"
     (rightButtonPressed)="onKeepYours()"
-    (rightFeedbacksChanged)="onFeedbackChanged($event)"
 ></jhi-modeling-assessment-conflict>

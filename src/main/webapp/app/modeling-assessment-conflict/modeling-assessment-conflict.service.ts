@@ -30,6 +30,10 @@ export class ModelingAssessmentConflictService {
         }
     }
 
+    getConflict(conflictId: number): Observable<Conflict> {
+        return this.http.get<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/${conflictId}`);
+    }
+
     getConflictsForSubmission(submissionID: number): Observable<Conflict[]> {
         return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
     }

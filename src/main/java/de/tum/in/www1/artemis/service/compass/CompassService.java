@@ -222,6 +222,7 @@ public class CompassService {
         }
     }
 
+    // TODO MJ rename
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
@@ -241,7 +242,7 @@ public class CompassService {
     public void applyUpdateOnSubmittedAssessment(Result result, Feedback newFeedback) {
         CompassCalculationEngine engine = getCalculationEngine(result.getSubmission().getId());
         engine.updateFeedback((ModelingSubmission) result.getSubmission(), newFeedback);
-        // TODO trigger complete recalculation of all assessments
+        // TODO MJ trigger complete recalculation of all assessments
     }
 
     /**

@@ -53,7 +53,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.updateHighlightColor();
         }
         if (changes.rightFeedback) {
-            this.rightFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
+            this.rightFeedbacksCopy = [...changes.rightFeedback.currentValue];
             // if (this.userInteractionWithConflict) {
             //     this.updateCurrentState();
             // }

@@ -2,19 +2,25 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.slf4j.*;
-import org.springframework.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 @Controller
 @RequestMapping("/api")
@@ -54,10 +60,25 @@ public class ModelingAssessmentConflictRessource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelAssessmentConflict>> getAllConflicts(@PathVariable Long exerciseId) {
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
         return ResponseEntity.ok(conflictService.getConflictsForExercise(exerciseId));
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+            @ApiResponse(code = 200, message = GET_CONFLICTS_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
+    @GetMapping("/model-assessment-conflicts/{conflictId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ModelAssessmentConflict> getConflict(@PathVariable Long conflictId) {
+        Exercise exercise = conflictService.getExerciseOfConflict(conflictId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        ModelAssessmentConflict conflict = conflictService.findOne(conflictId);
+        conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflict);
+        return ResponseEntity.ok(conflict);
     }
 
     @ResponseStatus(HttpStatus.OK)
