@@ -11,7 +11,6 @@
         "moreFeedbackResponse": {
             "title": "Antwort auf die Anfrage",
             "created": "Deine Antwort auf weitere Feedbackanfragen wurde eingereicht",
-            "created": "Deine Antwort auf die Feedbackanfrage wurde eingereicht",
             "sendResponseTooltip": "Antwort auf Feedbackanfrage senden",
             "provideFeedback": "Weiteres Feedback geben"
         }

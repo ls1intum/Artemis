@@ -51,12 +51,6 @@
             "responseExists": "Antwort auf deine Anfrage vom ",
             "notAllowedTooltip": "Anfrage aktuell nicht möglich: die Bewertung ist älter als eine Woche",
             "accepted": "Beantwortet",
-            "response": {
-                "title": "Antwort auf die Anfrage",
-                "created": "Deine Antwort auf die Feedbackanfrage wurde eingereicht",
-                "sendResponseTooltip": "Antwort auf Feedbackanfrage senden",
-                "provideFeedback": "Weiteres Feedback geben"
-            },
             "hint": "Scrolle nach unten um Feedbackanfragen zu prüfen",
             "list": {
                 "title": "Liste der Feedbackanfragen",
