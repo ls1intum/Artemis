@@ -39,6 +39,8 @@ public class ComplaintResource {
 
     private static final String ENTITY_NAME = "complaint";
 
+    private static final String MORE_FEEDBACK_ENTITY_NAME = "moreFeedback";
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -84,9 +86,11 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
         }
 
+        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
+        String enityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, enityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
     /**

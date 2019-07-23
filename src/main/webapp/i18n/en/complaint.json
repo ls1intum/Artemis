@@ -38,10 +38,10 @@
             "review": "Review Complaint"
         },
         "moreFeedback": {
-            "title": "More feedback request",
+            "title": "More Feedback Request",
             "description": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
             "beDescriptive": "Please describe in detail what is unclear for you in the assessment. Your request will then be evaluated by the same reviewer.",
-            "created": "Your request has been submitted!",
+            "created": "Your More Feedback Request has been submitted!",
             "button": "Request more feedback",
             "info": "Submitting feedback request will not affect number of maximum complaints, but your score will remain unchanged.",
             "review": "Review More Feedback Request",
@@ -51,14 +51,8 @@
             "responseExists": "Response to your request of",
             "notAllowedTooltip": "Currently not allowed: assessment is older than one week",
             "accepted": "Answered",
-            "response": {
-                "title": "Request's response",
-                "created": "Response to more feedback request has been submitted",
-                "sendResponseTooltip": "Send response to more feedback request",
-                "provideFeedback": "Provide more feedback"
-            },
             "list": {
-                "title": "List of more feedback requests",
+                "title": "List of More Feedback Requests",
                 "showAnsweredRequests": "Show answered requests",
                 "noRequestsToShow": "There are no requests to show at the moment"
             },

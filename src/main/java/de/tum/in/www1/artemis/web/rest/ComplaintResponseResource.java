@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
@@ -33,6 +34,8 @@ public class ComplaintResponseResource {
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "complaintResponse";
+
+    private static final String ENITY_NAME_MORE_FEEDBACK_RESPONSE = "moreFeedbackResponse";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -62,8 +65,11 @@ public class ComplaintResponseResource {
     public ResponseEntity<ComplaintResponse> createComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
+
+        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
+        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? ENITY_NAME_MORE_FEEDBACK_RESPONSE : ENTITY_NAME;
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
 
     /**

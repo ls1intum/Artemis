@@ -53,7 +53,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 response => {
                     this.handled = true;
                     this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? this.jhiAlertService.success('artemisApp.moreFeedback.response.created')
+                        ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
                         : this.jhiAlertService.success('artemisApp.complaintResponse.created');
                     this.complaintResponse = response.body!;
                 },

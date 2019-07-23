@@ -32,7 +32,7 @@
             <h3>
                 {{
                     complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? ('artemisApp.moreFeedback.response.title' | translate)
+                        ? ('artemisApp.moreFeedbackResponse.title' | translate)
                         : ('artemisApp.complaintResponse.title' | translate)
                 }}
             </h3>
@@ -52,8 +52,8 @@
 
             <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end">
                 <div class="col-12">
-                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.moreFeedback.response.sendResponseTooltip' | translate }}">
-                        {{ 'artemisApp.moreFeedback.response.provideFeedback' | translate }}
+                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | translate }}">
+                        {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | translate }}
                     </button>
                 </div>
             </div>
