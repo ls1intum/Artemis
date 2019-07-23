@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
@@ -136,7 +136,7 @@ public class CourseResource {
         }
         try {
             // Check if course shortname matches regex
-            Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
+            Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
             if (!shortNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
             }
@@ -177,7 +177,7 @@ public class CourseResource {
         if (user.getGroups().contains(existingCourse.get().getInstructorGroupName()) || authCheckService.isAdmin()) {
             try {
                 // Check if course shortname matches regex
-                Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
+                Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
                 if (!shortNameMatcher.matches()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
