@@ -35,7 +35,7 @@ public class ComplaintResponseResource {
 
     private static final String ENTITY_NAME = "complaintResponse";
 
-    private static final String ENITY_NAME_MORE_FEEDBACK_RESPONSE = "moreFeedbackResponse";
+    private static final String MORE_FEEDBACK_RESPONSE_ENITY_NAME = "moreFeedbackResponse";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -67,7 +67,7 @@ public class ComplaintResponseResource {
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? ENITY_NAME_MORE_FEEDBACK_RESPONSE : ENTITY_NAME;
+        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
