@@ -78,7 +78,7 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code PUT  /exercise-hints} : Updates an existing exerciseHint.
+     * {@code PUT  /exercise-hints/{id}} : Updates an existing exerciseHint.
      *
      * @param exerciseHint the exerciseHint to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated exerciseHint,
@@ -86,13 +86,16 @@ public class ExerciseHintResource {
      * or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/exercise-hints")
+    @PutMapping("/exercise-hints/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint) {
+    public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long id) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
-        Optional<ExerciseHint> hintBeforeSaving = exerciseHintService.findOne(exerciseHint.getId());
-        if (exerciseHint.getId() == null || exerciseHint.getExercise() == null || !hintBeforeSaving.isPresent()) {
+        if (exerciseHint.getId() == null || !id.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
             return badRequest();
+        }
+        Optional<ExerciseHint> hintBeforeSaving = exerciseHintService.findOne(id);
+        if (!hintBeforeSaving.isPresent()) {
+            return notFound();
         }
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())
                 || !authCheckService.isAtLeastTeachingAssistantForExercise(hintBeforeSaving.get().getExercise())) {

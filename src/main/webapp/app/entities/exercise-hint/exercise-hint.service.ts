@@ -20,7 +20,7 @@ export class ExerciseHintService {
     }
 
     update(exerciseHint: IExerciseHint): Observable<EntityResponseType> {
-        return this.http.put<IExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
+        return this.http.put<IExerciseHint>(`${this.resourceUrl}/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
 
     find(id: number): Observable<EntityResponseType> {
