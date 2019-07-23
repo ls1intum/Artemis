@@ -37,6 +37,9 @@ public class TextBlock implements Serializable {
     @Column(name = "end_index", nullable = false)
     private int endIndex;
 
+    @Column(name = "position_in_cluster")
+    private Integer positionInCluster = null;
+
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
@@ -44,8 +47,8 @@ public class TextBlock implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextCluster cluster;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
     public String getId() {
         return id;
     }
@@ -125,6 +128,10 @@ public class TextBlock implements Serializable {
         this.cluster = textCluster;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    void setPositionInCluster(Integer positionInCluster) {
+        this.positionInCluster = positionInCluster;
+    }
 
     @Override
     public boolean equals(Object o) {

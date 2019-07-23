@@ -18,7 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderColumn;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -45,8 +45,8 @@ public class TextCluster implements Serializable {
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
-    @OrderColumn(name = "position_in_cluster")
     @OneToMany(mappedBy = "cluster")
+    @OrderBy("position_in_cluster")
     @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();
 
@@ -99,23 +99,28 @@ public class TextCluster implements Serializable {
 
     public TextCluster blocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
+        updatePositions();
         return this;
     }
 
     public TextCluster addBlocks(TextBlock textBlock) {
+        int newPosition = this.blocks.size();
         this.blocks.add(textBlock);
         textBlock.setCluster(this);
+        textBlock.setPositionInCluster(newPosition);
         return this;
     }
 
     public TextCluster removeBlocks(TextBlock textBlock) {
         this.blocks.remove(textBlock);
         textBlock.setCluster(null);
+        textBlock.setPositionInCluster(null);
         return this;
     }
 
     public void setBlocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
+        updatePositions();
     }
 
     public TextExercise getExercise() {
@@ -145,6 +150,12 @@ public class TextCluster implements Serializable {
         }
 
         return getDistanceMatrix()[firstIndex][secondIndex];
+    }
+
+    private void updatePositions() {
+        for (int i = 0; i < size(); i++) {
+            blocks.get(i).setPositionInCluster(i);
+        }
     }
 
     @Override

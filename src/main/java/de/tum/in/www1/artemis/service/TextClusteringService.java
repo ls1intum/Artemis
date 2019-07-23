@@ -82,9 +82,7 @@ public class TextClusteringService {
         log.debug("Start Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
 
         // Find all submissions for Exercise and Split them into Blocks
-        Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(getTextBlocks(exercise.getId())).stream().limit(1000) // Limit to n Blocks for testing purposes. TODO:
-                                                                                                                                // remove this for production
-                .collect(toMap(TextBlock::getId, block -> block));
+        Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(getTextBlocks(exercise.getId())).stream().collect(toMap(TextBlock::getId, block -> block));
         List<TextEmbedding> embeddings = computeEmbeddings(new ArrayList<>(textBlockMap.values()));
 
         // Invoke clustering for Text Blocks
