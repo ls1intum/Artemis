@@ -44,7 +44,7 @@ jobs:
         language: java
         jdk: openjdk8
         install: skip
-        script: ./gradlew checkstyleMain
+        script: ./gradlew checkstyleMain -x yarn_install -x webpackBuildDev -x webpack
       - stage: Lint
         name: "TypeScript"
         language: node_js
