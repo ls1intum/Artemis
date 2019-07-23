@@ -321,7 +321,7 @@ if (project.hasProperty('nodeInstall')) {
 checkstyle {
     toolVersion = '6.16.1'
     config = rootProject.resources.text.fromFile('checkstyle/rules.xml')
-    maxErrors = 2000
+    maxErrors = 550
 }
 
 task executeCheckstyle (type: Exec) {
