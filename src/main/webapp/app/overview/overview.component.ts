@@ -39,7 +39,6 @@ export class OverviewComponent implements OnDestroy {
         this.subscription = this.guidedTourService.getGuidedTourNotification().subscribe(component => {
             if (component && component.name === 'overview') {
                 this.startTour();
-                // this.guidedTourService.clearGuidedTourNotification();
             }
         });
     }

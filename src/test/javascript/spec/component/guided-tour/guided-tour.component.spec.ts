@@ -42,7 +42,6 @@ describe('Component Tests', () => {
                 schemas: [NO_ERRORS_SCHEMA],
                 providers: [GuidedTourService],
             })
-                // .overrideTemplate(GuidedTourComponent, '<html><body></body></html>')
                 .compileComponents()
                 .then(() => {
                     fixture = TestBed.createComponent(GuidedTourComponent);

@@ -29,6 +29,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     readonly TEXT = ContentType.TEXT;
     readonly VIDEO = ContentType.VIDEO;
 
+    // TODO
     readonly LINK = LinkType.LINK;
     readonly BUTTON = LinkType.BUTTON;
 

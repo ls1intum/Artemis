@@ -1,4 +1,4 @@
-import { ContentType, GuidedTour, LinkType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -108,15 +108,6 @@ export const courseOverviewTour: GuidedTour = {
             headlineTranslateKey: 'tour.course-overview.contact.headline',
             contentTranslateKey: 'tour.course-overview.contact.content',
             orientation: Orientation.TopLeft,
-        },
-        {
-            contentType: ContentType.VIDEO,
-            headlineTranslateKey: 'tour.course-overview.team.headline',
-            contentTranslateKey: 'tour.course-overview.team.content',
-            externalUrl: 'https://ase.in.tum.de/lehrstuhl_1/people',
-            externalUrlTranslateKey: 'tour.course-overview.team.link-text',
-            linkType: LinkType.LINK,
-            videoUrl: 'https://www.youtube.com/embed/EOyxE9L-4X4',
         },
     ],
 };
