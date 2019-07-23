@@ -1,6 +1,12 @@
 <div class="card mb-3">
     <div class="card-header">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
+        <fa-icon
+            [icon]="'robot'"
+            class="float-right mr-1"
+            *ngIf="assessment.type == FeedbackType_AUTOMATIC"
+            title="{{ 'artemisApp.textAssessment.automatic' | translate }}"
+        ></fa-icon>
         <h4 class="card-title">
             {{ 'artemisApp.textAssessment.detail.scoreFor' | translate }} "<span
                 class="highlight"

@@ -24,6 +24,7 @@ public class TextBlockService {
 
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final List<TextBlock> blocks = splitSubmissionIntoBlocks(textSubmission);
+        textSubmission.setBlocks(blocks);
         final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block.getText()).credits(0d)).collect(toList());
 
         result.getFeedbacks().addAll(feedbacks);

@@ -211,11 +211,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.referencedFeedback.push(assessment);
+        this.referencedTextBlocks.push(undefined);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.referencedFeedback = this.referencedFeedback.filter(elem => elem !== assessmentToDelete);
+        const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
+        this.referencedFeedback.splice(indexToDelete, 1);
+        this.referencedTextBlocks.splice(indexToDelete, 1);
         this.validateAssessment();
     }
 

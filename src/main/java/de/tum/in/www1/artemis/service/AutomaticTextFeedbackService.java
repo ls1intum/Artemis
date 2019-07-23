@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
 @Profile("automaticText")
@@ -23,8 +24,11 @@ public class AutomaticTextFeedbackService {
 
     private static final double DISTANCE_THRESHOLD = 1;
 
-    public AutomaticTextFeedbackService(FeedbackService feedbackService) {
+    private final TextBlockRepository textBlockRepository;
+
+    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
         this.feedbackService = feedbackService;
+        this.textBlockRepository = textBlockRepository;
     }
 
     /**
@@ -38,7 +42,8 @@ public class AutomaticTextFeedbackService {
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> blocks = textSubmission.getBlocks();
+        final List<TextBlock> blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
+        textSubmission.setBlocks(blocks);
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
