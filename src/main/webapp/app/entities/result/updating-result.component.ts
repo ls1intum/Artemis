@@ -44,6 +44,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
+
+            console.log('result changes');
+            console.log(this.participation.results);
         }
     }
 

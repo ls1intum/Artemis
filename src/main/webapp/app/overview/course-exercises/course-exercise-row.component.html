@@ -16,8 +16,10 @@
                 <div class="d-none d-sm-inline">
                     <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
+                    <!--
                     <span class="text-muted" *ngSwitchCase="'exercise-late-no-feedback'">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'exercise-late'">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | translate }}</span>
+                    -->
                     <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
@@ -45,6 +47,7 @@
                     <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                     <span class="text-muted">({{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }})</span>
                 </span>
+                <!--
                 <span *ngSwitchCase="'exercise-submitted'">
                     <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                     <span class="text-muted">({{ 'artemisApp.courseOverview.exerciseList.exercisedSubmitted' | translate }})</span>
@@ -52,6 +55,7 @@
                 <span *ngSwitchCase="'exercise-graded'">
                     <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
+                -->
             </div>
         </div>
         <div class="row">
