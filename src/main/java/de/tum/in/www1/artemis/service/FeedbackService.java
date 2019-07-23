@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -73,9 +72,15 @@ public class FeedbackService {
         return feedbackRepository.save(feedback);
     }
 
+    /**
+     * Find all existing Feedback Elements referencing a text block part of a TextCluster.
+     *
+     * @param cluster TextCluster requesting existinging Feedbacks for.
+     * @return Map<TextBlockId, Feedback>
+     */
     @Transactional(readOnly = true)
     public Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().stream().filter(Objects::nonNull).map(TextBlock::getId).collect(toList());
+        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).collect(toList());
         final TextExercise exercise = cluster.getExercise();
         return feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
                 .collect(toMap(Feedback::getReference, f -> f));

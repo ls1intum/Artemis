@@ -28,7 +28,12 @@ public class AutomaticTextFeedbackService {
     }
 
     /**
-     * @param result
+     * Suggest Feedback for a Submission based on its cluster.
+     * For each TextBlock of the submission, this method finds already existing Feedback elements in the same cluster and chooses the one with the minimum distance.
+     * Otherwise, an empty Feedback Element is created for simplicity.
+     * Feedbacks are stored inline with the provided Result object.
+     *
+     * @param result Result for the Submission
      */
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
@@ -39,12 +44,19 @@ public class AutomaticTextFeedbackService {
             final TextCluster cluster = block.getCluster();
             Feedback newFeedback = new Feedback().reference(block.getId());
 
+            // if TextBlock is part of a cluster, we try to find an existing Feedback Element
             if (cluster != null) {
-                final List<TextBlock> allBlocksInCluster = cluster.getBlocks();
+                // Find all Feedbacks for other Blocks in Cluster.
+                final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
+
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
+
+                            // Filter all other blocks in the cluster for those with Feedback
                             .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
+
+                            // Find the closest block
                             .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
