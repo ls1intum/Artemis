@@ -64,8 +64,24 @@
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
             "notificationText": "Optional: Notification about changes",
+            "forbiddenCharactersError": "The field must not contain any of the following characters: ",
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
+            },
+            "form": {
+                "title": {
+                    "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
+                },
+                "shortName": {
+                    "pattern": "The short name must only consist of alphanumeric characters!",
+                    "minlength": "The short name must be at least 3 characters long!"
+                },
+                "packageName": {
+                    "pattern": "The package name must have at least 1 dot and must not start with a number"
+                },
+                "maxScore": {
+                    "pattern": "The maximum score hast to be an integer between 1 and 9999!"
+                }
             }
         },
         "exerciseLtiConfiguration": {
