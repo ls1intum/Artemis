@@ -30,19 +30,6 @@ We are using [Scss](https://sass-lang.com) to write modular, reusable css.
 
 We have a couple of global scss files in `webapp/content` but encourage [component dependent css with angular's styleUrls](https://angular.io/guide/component-styles).
 
-The [bootstrap css](https://getbootstrap.com/) is imported into Artemis, however we discourage using it in html.
-We encourage using the Scss [extend](https://sass-lang.com/documentation/at-rules/extend) mechanism if bootstrap styles are used.
-
-Discouraged html styling:
-`<div class="d-flex">some content</div>`
-
-Encouraged scss extend styling:
-```
-.my-container {
-    @extend .d-flex;
-}
-```
-
 From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/).
 ```
 .my-container {
@@ -55,6 +42,12 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
     }
 }
 ```
+
+Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/).
+
+Encouraged html styling:
+`<div class="d-flex ml-2">some content</div>`
+
 
 ## Testing
 

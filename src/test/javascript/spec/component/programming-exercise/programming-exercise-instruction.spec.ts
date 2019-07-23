@@ -37,7 +37,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let resultService: ResultService;
-    let testCaseService: ProgrammingExerciseTestCaseService;
     let modalService: NgbModal;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFileStub: SinonStub;
@@ -52,7 +51,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
@@ -65,7 +63,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 resultService = debugElement.injector.get(ResultService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
-                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 modalService = debugElement.injector.get(NgbModal);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = stub(modalService, 'open');
@@ -261,14 +258,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completionDate: moment('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
-        const testCases = [{ testName: 'testBubbleSort', active: true }, { testName: 'testMergeSort', active: true }];
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.exerciseTestCases = testCases.map(({ testName }: { testName: string }) => testName);
 
         comp.updateMarkdown();
 
@@ -299,14 +294,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completionDate: moment('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
-        const testCases = [{ testName: 'testBubbleSort', active: true }, { testName: 'testMergeSort', active: true }];
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.exerciseTestCases = testCases.map(({ testName }: { testName: string }) => testName);
 
         comp.updateMarkdown();
 

@@ -115,7 +115,7 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
-        resultService.createNewResult(result, true);
+        resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -341,7 +341,7 @@ public class ResultResource {
 
             Result relevantResult;
             if (ratedOnly) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
             }
             else {
                 relevantResult = participation.findLatestResult();

@@ -72,7 +72,7 @@ public class AssessmentComplaintIntegrationTest {
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 2);
+        database.addUsers(1, 2, 0);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
@@ -186,6 +186,7 @@ public class AssessmentComplaintIntegrationTest {
     private void saveModelingSubmissionAndAssessment() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
+                true);
     }
 }

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.StreamSupport;
@@ -47,7 +49,7 @@ public class GitServiceTest {
 
     @After
     public void afterEach() {
-        gitUtilService.deleteRepo();
+        gitUtilService.deleteRepos();
     }
 
     @Test
@@ -63,6 +65,26 @@ public class GitServiceTest {
 
         reflog = gitUtilService.getReflog(GitUtilService.REPOS.LOCAL);
         assertThat(reflog.size()).isEqualTo(3);
+    }
+
+    @Test
+    public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException, IOException {
+        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        String newFileContent = "const a = arr.reduce(sum)";
+        gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
+        gitService.getOrCheckoutRepository(localPath, true);
+
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1)).isEqualTo(newFileContent);
+    }
+
+    @Test
+    public void checkoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
+        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
+        gitService.getOrCheckoutRepository(localPath, true);
+        gitUtilService.reinitializeRepo(GitUtilService.REPOS.LOCAL);
+
+        assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
     }
 
     @Test

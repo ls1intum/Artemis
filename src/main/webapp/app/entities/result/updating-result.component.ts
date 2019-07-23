@@ -24,7 +24,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
-    @Input() result: Result;
+    @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
@@ -40,10 +40,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             }
             // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
-            if (latestResult) {
-                // Make sure that the participation result is connected to the newest result.
-                this.result = { ...latestResult, participation: this.participation };
-            }
+            // Make sure that the participation result is connected to the newest result.
+            this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
         }

@@ -158,7 +158,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         addNewManualAssessment(submission.getResult().getFeedbacks(), model);
         modelSelector.removeModelWaitingForAssessment(submission.getId());
-        modelSelector.addAlreadyAssessedModel(submission.getId());
+        modelSelector.addAlreadyHandledModel(submission.getId());
     }
 
     protected Collection<UMLClassDiagram> getUmlModelCollection() {
@@ -183,13 +183,10 @@ public class CompassCalculationEngine implements CalculationEngine {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
     }
 
-    /**
-     * @return id of the next optimal model or null if all models are completely assessed
-     */
     @Override
-    public Long getNextOptimalModel() {
+    public List<Long> getNextOptimalModels(int numberOfModels) {
         lastUsed = LocalDateTime.now();
-        return modelSelector.selectNextModel(modelIndex);
+        return modelSelector.selectNextModels(modelIndex, numberOfModels);
     }
 
     @Override
@@ -217,7 +214,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     @Override
     public void notifyNewAssessment(List<Feedback> modelingAssessment, long assessedModelSubmissionId) {
         lastUsed = LocalDateTime.now();
-        modelSelector.addAlreadyAssessedModel(assessedModelSubmissionId);
+        modelSelector.addAlreadyHandledModel(assessedModelSubmissionId);
         UMLClassDiagram model = modelIndex.getModel(assessedModelSubmissionId);
         if (model == null) {
             log.warn("Cannot add manual assessment to Compass, because the model in modelIndex is null for submission id " + assessedModelSubmissionId);
@@ -252,16 +249,16 @@ public class CompassCalculationEngine implements CalculationEngine {
     public void removeModelWaitingForAssessment(long modelSubmissionId, boolean isAssessed) {
         modelSelector.removeModelWaitingForAssessment(modelSubmissionId);
         if (isAssessed) {
-            modelSelector.addAlreadyAssessedModel(modelSubmissionId);
+            modelSelector.addAlreadyHandledModel(modelSubmissionId);
         }
         else {
-            modelSelector.removeAlreadyAssessedModel(modelSubmissionId);
+            modelSelector.removeAlreadyHandledModel(modelSubmissionId);
         }
     }
 
     @Override
     public void markModelAsUnassessed(long modelSubmissionId) {
-        modelSelector.removeAlreadyAssessedModel(modelSubmissionId);
+        modelSelector.removeAlreadyHandledModel(modelSubmissionId);
     }
 
     // TODO adapt the parser to support different UML diagrams

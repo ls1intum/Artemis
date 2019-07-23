@@ -102,6 +102,7 @@ public class AutomaticAssessmentController {
 
         Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
+        // TODO CZ: combine iterating over relations and packages
         for (UMLClassRelationship relation : model.getAssociationList()) {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getSimilarityID());
             totalCount++;
@@ -116,6 +117,25 @@ public class AutomaticAssessmentController {
                 }
                 else {
                     scoreHashMap.put(relation, score);
+                }
+            }
+        }
+
+        // TODO CZ: combine iterating over relations and packages
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(umlPackage.getSimilarityID());
+            totalCount++;
+
+            if (!assessmentOptional.isPresent()) {
+                missingCount++;
+            }
+            else {
+                Score score = assessmentOptional.get().getScore(umlPackage.getContext());
+                if (score == null) {
+                    log.debug("Unable to find score for package " + umlPackage.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
+                }
+                else {
+                    scoreHashMap.put(umlPackage, score);
                 }
             }
         }

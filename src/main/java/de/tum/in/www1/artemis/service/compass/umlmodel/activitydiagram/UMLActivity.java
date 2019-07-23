@@ -25,7 +25,7 @@ public class UMLActivity extends UMLElement {
     public double similarity(UMLElement element) {
         double similarity = 0;
         if (element.getClass() == UMLActivity.class) {
-            similarity += NameSimilarity.nameContainsSimilarity(name, element.getName());
+            similarity += NameSimilarity.levenshteinSimilarity(name, element.getName());
         }
         return similarity;
     }
