@@ -43,9 +43,8 @@ jobs:
         name: "Checkstyle"
         language: java
         jdk: openjdk8
-        node_js: 12.3.1
         install: skip
-        script: ./gradlew checkstyleMain
+        script: ./gradlew checkstyleMain -x yarn_install -x webpackBuildDev -x webpack
       - stage: Lint
         name: "TypeScript"
         language: node_js
