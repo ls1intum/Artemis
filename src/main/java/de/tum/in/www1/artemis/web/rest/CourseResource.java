@@ -307,7 +307,7 @@ public class CourseResource {
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, principal.getName());
+                exercise.filterForCourseDashboard(participations, principal.getName(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();

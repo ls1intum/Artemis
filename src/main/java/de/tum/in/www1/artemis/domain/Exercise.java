@@ -511,7 +511,7 @@ public abstract class Exercise implements Serializable {
      * @param participations the set of participations, wherein to search for the relevant participation
      * @param username
      */
-    public void filterForCourseDashboard(List<Participation> participations, String username) {
+    public void filterForCourseDashboard(List<Participation> participations, String username, boolean isStudent) {
 
         // remove the unnecessary inner course attribute
         setCourse(null);
@@ -533,6 +533,12 @@ public abstract class Exercise implements Serializable {
 
             // only transmit the relevant result
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
+
+            // filter sensitive information about the assessor if the current user is a student
+            if (isStudent) {
+                result.filterSensitiveInformation();
+            }
+
             Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
 
             // add results to json
