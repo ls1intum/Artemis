@@ -7,6 +7,14 @@
         <dd>
             <span>{{ fileUploadExercise.title }}</span>
         </dd>
+        <dt><span jhiTranslate="artemisApp.exercise.categories">Categories</span></dt>
+        <dd>
+            <span>{{ fileUploadExercise.categories }}</span>
+        </dd>
+        <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
+        <dd>
+            <span>{{ fileUploadExercise.difficulty }}</span>
+        </dd>
         <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{ fileUploadExercise.releaseDate | date: 'medium' }}</span>
@@ -26,9 +34,12 @@
             </div>
         </dd>
         <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd>
-            <span>{{ fileUploadExercise.problemStatement }}</span>
-        </dd>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.problemStatement | htmlForMarkdown"></dd>
+        <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Soltution</span></dt>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution | htmlForMarkdown"></dd>
+        <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions | htmlForMarkdown"></dd>
+
         <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
         <dd>
             <span>{{ fileUploadExercise.maxScore }}</span>
@@ -42,13 +53,7 @@
 
     <button type="submit" (click)="previousState()" class="btn btn-info"><fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span></button>
 
-    <button
-        type="button"
-        [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/' + fileUploadExercise.id + '/edit' } }]"
-        replaceUrl="true"
-        queryParamsHandling="merge"
-        class="btn btn-primary"
-    >
+    <button type="button" [routerLink]="['/file-upload-exercise/' + fileUploadExercise.id + '/edit']" replaceUrl="true" queryParamsHandling="merge" class="btn btn-primary">
         <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
     </button>
 </div>

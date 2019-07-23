@@ -37,7 +37,7 @@
                         <a [routerLink]="['/course', fileUploadExercise.course.id, 'file-upload-exercise', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
                     <td>{{ fileUploadExercise.title }}</td>
-                    <td>{{ fileUploadExercise.problemStatement }}</td>
+                    <td [innerHTML]="fileUploadExercise.problemStatement | htmlForMarkdown"></td>
                     <td>{{ fileUploadExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ fileUploadExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ fileUploadExercise.maxScore }}</td>
@@ -62,7 +62,7 @@
                             </button>
                             <button
                                 type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/' + fileUploadExercise.id + '/edit' } }]"
+                                [routerLink]="['/file-upload-exercise/' + fileUploadExercise.id + '/edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
