@@ -534,17 +534,17 @@ public abstract class Exercise implements Serializable {
             // only transmit the relevant result
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
 
-            // filter sensitive information about the assessor if the current user is a student
-            if (isStudent) {
-                result.filterSensitiveInformation();
-            }
-
             Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
 
             // add results to json
             if (result != null) {
                 // remove inner participation from result
                 result.setParticipation(null);
+
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    result.filterSensitiveInformation();
+                }
             }
             participation.setResults(results);
             // remove inner exercise from participation
