@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -139,53 +140,117 @@ public class ProgrammingExerciseTestCaseService {
      *
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
-     * @return
+     * @return Result with updated feedbacks, score and result string.
      */
+    @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         boolean calculateScoresForAfterDueDateTestCases = exercise.getDueDate() == null || ZonedDateTime.now().isAfter(exercise.getDueDate());
-        // Remove all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate())
                 .collect(Collectors.toSet());
-        // If there are no feedbacks, the build has failed.
-        // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
+        // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
-            List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
-                    .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
-            feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
-            feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
-            if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
-                result.setHasFeedback(false);
+            removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
 
-            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream()
-                    .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
-                    .collect(Collectors.toSet());
-            Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCasesForCurrentDate.stream()
-                    .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
-            List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
-                    .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
-            result.addFeedbacks(feedbacksForNotExecutedTestCases);
+            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
+
+            // Add feedbacks for tests that were not executed ("test was not executed").
+            createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
             // Recalculate the achieved score by including the test cases individual weight.
-            if (successfulTestCases.size() > 0) {
-                long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                long maxTestScore = testCasesForCurrentDate.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
-                result.setScore(score);
-            }
+            updateScore(result, successfulTestCases, testCasesForCurrentDate);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            result.setResultString(successfulTestCases.size() + " of " + testCasesForCurrentDate.size() + " passed");
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
+        // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
-            // This is not a usual case, but we still need to handle it:
-            // There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-            result.setFeedbacks(new ArrayList<>());
-            result.hasFeedback(false);
-            result.setScore(0L);
-            result.setResultString("0 of 0 passed");
+            removeAllFeedbackAndSetScoreToZero(result);
         }
+        // Case 3: If there are no feedbacks, the build has failed. In this case we just return the original result without changing it.
         return result;
+    }
+
+    /**
+     * Check if the provided test was found in the result's feedbacks with positive = true.
+     * @param result of the build run.
+     * @return true if there is a positive feedback for a given test.
+     */
+    private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
+        return testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive());
+    }
+
+    /**
+     * Check if the provided test was not found in the result's feedbacks.
+     * @param result of the build run.
+     * @return true if there is no feedback for a given test.
+     */
+    private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
+        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
+    }
+
+    /**
+     * Check which tests were not executed and add a new Feedback for them to the exercise.
+     * @param result of the build run.
+     * @param allTests of the given programming exercise.
+     */
+    private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
+        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+        result.addFeedbacks(feedbacksForNotExecutedTestCases);
+    }
+
+    /**
+     * Check which tests were executed but which result should not be made public to the student yet.
+     * @param result of the build run.
+     * @param testCasesForCurrentDate of the given programming exercise.
+     */
+    private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
+                .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
+        feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
+        feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
+        // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
+        if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
+            result.setHasFeedback(false);
+    }
+
+    /**
+     * Update the score given the postive tests score divided by all tests's score.
+     * @param result of the build run.
+     * @param successfulTestCases test cases with positive feedback.
+     * @param allTests of a given programming exercise.
+     */
+    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
+        if (successfulTestCases.size() > 0) {
+            long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+            long maxTestScore = allTests.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+            long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+            result.setScore(score);
+        }
+    }
+
+    /**
+     * Update the result's result string given the successful tests vs. all tests (x of y passed).
+     * @param result of the build run.
+     * @param successfulTestCases test cases with positive feedback.
+     * @param allTests of the given programming exercise.
+     */
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
+        // Create a new result string that reflects passed, failed & not executed test cases.
+        result.setResultString(successfulTestCases.size() + " of " + allTests.size() + " passed");
+    }
+
+    /**
+     * Remove all feedback information from a result and treat it as if it has a score of 0.
+     * @param result
+     */
+    private void removeAllFeedbackAndSetScoreToZero(Result result) {
+        result.setFeedbacks(new ArrayList<>());
+        result.hasFeedback(false);
+        result.setScore(0L);
+        result.setResultString("0 of 0 passed");
     }
 }
