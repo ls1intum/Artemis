@@ -256,29 +256,39 @@ public class ExerciseService {
         log.debug("Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
-        if (exercise instanceof ProgrammingExercise && deleteBaseReposBuildPlans) {
+        if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            if (programmingExercise.getTemplateBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
-            }
-            if (programmingExercise.getSolutionBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
-            }
-            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+            if (deleteBaseReposBuildPlans) {
+                if (programmingExercise.getTemplateBuildPlanId() != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+                }
+                if (programmingExercise.getSolutionBuildPlanId() != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+                }
+                continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
-            if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
-                gitService.get().deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                if (programmingExercise.getTemplateRepositoryUrl() != null) {
+                    versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                    gitService.get().deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                }
+                if (programmingExercise.getSolutionRepositoryUrl() != null) {
+                    versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                    gitService.get().deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                }
+                if (programmingExercise.getTestRepositoryUrl() != null) {
+                    versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                    gitService.get().deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                }
+                versionControlService.get().deleteProject(programmingExercise.getProjectKey());
             }
-            if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-                gitService.get().deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-            }
-            if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-                gitService.get().deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-            }
-            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+
+            SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
+            TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
+            /*
+             * programmingExercise.setSolutionParticipation(null); programmingExercise.setTemplateParticipation(null);
+             */
+            participationService.delete(solutionProgrammingExerciseParticipation.getId(), false, true);
+            participationService.delete(templateProgrammingExerciseParticipation.getId(), false, true);
         }
         exerciseRepository.delete(exercise);
     }

@@ -721,16 +721,17 @@ public class ParticipationService {
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findById(participationId).get();
+        Participation participation = participationRepository.findById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
-        if (participation.getExercise() instanceof ProgrammingExercise) {
-            if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+        if (participation instanceof ProgrammingExerciseParticipation) {
+            ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+            if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
             }
-            if (deleteRepository && participation.getRepositoryUrl() != null) {
+            if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
-                    versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+                    versionControlService.get().deleteRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl());
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: " + ex.getMessage());
@@ -739,7 +740,7 @@ public class ParticipationService {
 
             // delete local repository cache
             try {
-                gitService.get().deleteLocalRepository(participation);
+                gitService.get().deleteLocalRepository(programmingExerciseParticipation);
             }
             catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
@@ -777,10 +778,13 @@ public class ParticipationService {
             }
         }
 
-        Exercise exercise = participation.getExercise();
-        exercise.removeParticipation(participation);
-        exerciseRepository.save(exercise);
-        studentParticipationRepository.delete(participation);
+        if (participation instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) participation;
+            Exercise exercise = participation.getExercise();
+            exercise.removeParticipation(studentParticipation);
+            exerciseRepository.save(exercise);
+            studentParticipationRepository.delete(studentParticipation);
+        }
     }
 
     /**
