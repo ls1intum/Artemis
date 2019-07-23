@@ -7,8 +7,8 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
+    styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../quiz.scss'],
     providers: [ArtemisMarkdown],
-    styleUrls: ['./re-evaluate-multiple-choice-question.component.scss'],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('questionEditor', { static: false })

@@ -20,7 +20,7 @@ import { resizeImage } from 'app/utils/drag-and-drop.utils';
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
-    styleUrls: ['./edit-drag-and-drop-question.component.scss'],
+    styleUrls: ['./edit-drag-and-drop-question.component.scss', '../../../quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {

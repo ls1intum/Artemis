@@ -12,7 +12,7 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    styleUrls: ['./quiz-re-evaluate.component.scss'],
+    styleUrls: ['./quiz-re-evaluate.component.scss', '../../quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [],
 })
