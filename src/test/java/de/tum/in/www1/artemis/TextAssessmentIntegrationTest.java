@@ -161,7 +161,7 @@ public class TextAssessmentIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditor_assessorHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
@@ -171,5 +171,18 @@ public class TextAssessmentIntegrationTest {
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getResults().iterator().next().getAssessor()).as("assessor of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getDataForTextEditor_studentHidden() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+
+        Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+
+        assertThat(participation).as("participation found").isNotNull();
+        assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
+        assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
     }
 }

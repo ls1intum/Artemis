@@ -297,6 +297,10 @@ public class TextExerciseResource {
             participation.addSubmissions(textSubmission);
         }
 
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            participation.setStudent(null);
+        }
+
         return ResponseEntity.ok(participation);
     }
 }
