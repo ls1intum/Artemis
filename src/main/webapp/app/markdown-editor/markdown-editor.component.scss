@@ -66,3 +66,9 @@
 .background-editor-high {
     min-height: 150px;
 }
+
+/* additional style to overwrite form-control style from parent components */
+.form-control {
+    font-size: 12px;
+    line-height: normal;
+}
