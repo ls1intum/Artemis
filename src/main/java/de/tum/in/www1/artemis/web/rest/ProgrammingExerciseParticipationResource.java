@@ -65,7 +65,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body.
      */
     @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForSolutionParticipation(@PathVariable Long participationId) {
         Participation participation;
         try {
