@@ -225,7 +225,6 @@ public class TextAssessmentResource extends AssessmentResource {
             result.setFeedbacks(assessments);
         }
 
-        participation.setStudent(null);
         return ResponseEntity.ok(participation);
     }
 
