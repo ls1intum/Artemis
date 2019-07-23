@@ -18,7 +18,6 @@
             <property name="allowMissingReturnTag" value="false" />
             <property name="minLineCount" value="4" />
             <property name="allowMissingPropertyJavadoc" value="true"/>
-            <property name="allowedAnnotations" value="Override, Test" />
             <property name="allowThrowsTagsForSubclasses" value="true" />
             <property name="severity" value="error"/>
         </module>
