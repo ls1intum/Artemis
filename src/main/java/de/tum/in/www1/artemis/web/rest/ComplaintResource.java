@@ -120,6 +120,12 @@ public class ComplaintResource {
             Exercise exercise = complaint.get().getResult().getParticipation().getExercise();
             if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 complaint.get().getResult().setAssessor(null);
+
+                if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
+                    complaint.get().filterSensitiveInformation();
+                    complaint.get().getResult().getParticipation().filterSensitiveInformation();
+                }
             }
         }
 
