@@ -56,6 +56,10 @@ public class TextClusteringScheduleService {
         log.info("Scheduled text clustering for " + runningTextExercises.size() + " text exercises with future due dates.");
     }
 
+    /**
+     * Schedule a clustering task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     * @param exercise exercise to schedule clustering for
+     */
     public void scheduleExerciseForClusteringIfRequired(TextExercise exercise) {
         if (!exercise.isAutomaticAssessmentEnabled()) {
             cancelScheduledClustering(exercise);
@@ -69,7 +73,8 @@ public class TextClusteringScheduleService {
     }
 
     private void scheduleExerciseForClustering(TextExercise exercise) {
-        // check if already scheduled for exercise. if so, cancel
+        // check if already scheduled for exercise. if so, cancel.
+        // no exercise should be scheduled for clustering more than once.
         cancelScheduledClustering(exercise);
 
         ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
@@ -78,7 +83,12 @@ public class TextClusteringScheduleService {
         log.debug("Scheduled Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
     }
 
+    /**
+     * Schedule a clustering task for a text exercise to start immediately.
+     * @param exercise exercise to schedule clustering for
+     */
     public void scheduleExerciseForInstantClustering(TextExercise exercise) {
+        // TODO: sanity checks.
         scheduler.schedule(clusteringRunnableForExercise(exercise), now());
     }
 
@@ -90,6 +100,10 @@ public class TextClusteringScheduleService {
         };
     }
 
+    /**
+     * Cancel possible schedules clustering tasks for a provided exercise.
+     * @param exercise exercise for which a potential clustering task is canceled
+     */
     public void cancelScheduledClustering(TextExercise exercise) {
         ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
         if (future != null) {

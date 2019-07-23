@@ -117,6 +117,13 @@ public class TextClusteringService {
                 + "ms");
     }
 
+    /**
+     * Fetch all submissions for an exercise and split them up into TextBlocks.
+     * Note: See `TextSubmissionService:getTextSubmissionsByExerciseId` for selection of Submissions.
+     *
+     * @param exerciseId id of relevant TextExercise
+     * @return List of TextBlocks from *all* submissions for the specified TextExercise.
+     */
     @NotNull
     @Transactional(readOnly = true)
     List<TextBlock> getTextBlocks(Long exerciseId) {
