@@ -115,13 +115,15 @@ public class ResultService {
 
         if (participation.getExercise() instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            boolean isSolutionParticipation = programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation);
+            boolean isTemplateParticipation = programmingExercise.isParticipationTemplateParticipationOfThisExercise(participation);
             // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
+            if (result != null && isSolutionParticipation) {
                 extractTestCasesFromResult(participation, result);
             }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
-            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise, !(isSolutionParticipation || isTemplateParticipation));
         }
 
         notifyUser(participation, result);

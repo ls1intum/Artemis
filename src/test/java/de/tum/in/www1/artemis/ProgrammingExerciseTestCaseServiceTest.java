@@ -139,7 +139,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         testCaseRepository.deleteAll();
 
         Long scoreBeforeUpdate = result.getScore();
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
     }
@@ -154,7 +154,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         Long expectedScore = 25L;
 
@@ -175,7 +175,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         // All available test cases are fulfilled.
         Long expectedScore = 100L;
@@ -184,6 +184,29 @@ public class ProgrammingExerciseTestCaseServiceTest {
         assertThat(result.getScore()).isEqualTo(expectedScore);
         // The feedback of the after due date test case must be removed.
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
+    }
+
+    @Test
+    public void shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise, false);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.getFeedbacks()).hasSize(2);
     }
 
     @Test
@@ -199,7 +222,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         // All available test cases are fulfilled.
         Long expectedScore = 25L;
@@ -230,7 +253,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         }
         testCaseRepository.saveAll(testCases);
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         // All available test cases are fulfilled.
         Long expectedScore = 0L;

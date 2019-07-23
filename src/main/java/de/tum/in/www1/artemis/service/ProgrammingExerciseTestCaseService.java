@@ -140,15 +140,17 @@ public class ProgrammingExerciseTestCaseService {
      *
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
+     * @param isStudentParticipation boolean flag indicating weather the participation of the result is not a solution/template participation.
      * @return Result with updated feedbacks, score and result string.
      */
     @Transactional
-    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
+    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         boolean calculateScoresForAfterDueDateTestCases = exercise.getDueDate() == null || ZonedDateTime.now().isAfter(exercise.getDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate())
-                .collect(Collectors.toSet());
+        // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream()
+                .filter(testCase -> !isStudentParticipation || calculateScoresForAfterDueDateTestCases || !testCase.isAfterDueDate()).collect(Collectors.toSet());
         // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
