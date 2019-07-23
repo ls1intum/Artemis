@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.QueryHint;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -18,10 +21,12 @@ import de.tum.in.www1.artemis.domain.Lecture;
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
     @Query("select l FROM Lecture l WHERE l.course.id =  :#{#courseId}")
-    // @Cacheable(cacheNames = "query_de.tum.in.www1.artemis.domain.Attachment")
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+            @QueryHint(name = "org.hibernate.cacheRegion", value = "query_de.tum.in.www1.artemis.domain.Lecture") })
     List<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
-    // @Cacheable(cacheNames = "query_de.tum.in.www1.artemis.domain.Attachment")
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+            @QueryHint(name = "org.hibernate.cacheRegion", value = "query_de.tum.in.www1.artemis.domain.Lecture") })
     Optional<Lecture> findById(@Param("id") Long id);
 
 }
