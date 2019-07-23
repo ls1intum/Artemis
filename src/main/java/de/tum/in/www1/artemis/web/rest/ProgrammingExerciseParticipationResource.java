@@ -66,7 +66,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacksForSolutionParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId) {
         Participation participation;
         try {
             participation = participationService.findOne(participationId);
