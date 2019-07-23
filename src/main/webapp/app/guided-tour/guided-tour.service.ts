@@ -10,6 +10,7 @@ import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
 import { ContentType, GuidedTour, Orientation, OrientationConfiguration, TourStep } from './guided-tour.constants';
 import { AccountService } from 'app/core';
+import { textExerciseTour } from 'app/guided-tour/tours/text-exercise-tour';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
@@ -79,6 +80,10 @@ export class GuidedTourService {
         return of(courseOverviewTour);
     }
 
+    public getTextExerciseTour(): Observable<GuidedTour> {
+        return of(textExerciseTour);
+    }
+
     /**
      * Navigate to next tour step
      */
@@ -113,11 +118,11 @@ export class GuidedTourService {
                 if (this._currentTour.completeCallback) {
                     this._currentTour.completeCallback();
                 }
-                this.updateGuidedTourSettings(this._currentTour.settingsId, false).subscribe(guidedTourSettings => {
+                /* this.updateGuidedTourSettings(this._currentTour.settingsId, false).subscribe(guidedTourSettings => {
                     if (guidedTourSettings.body) {
                         this.guidedTourSettings = guidedTourSettings.body;
                     }
-                });
+                }); */
                 this.resetTour();
             }
         }

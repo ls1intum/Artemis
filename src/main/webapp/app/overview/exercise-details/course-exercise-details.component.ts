@@ -9,6 +9,8 @@ import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTour } from 'app/guided-tour/guided-tour.constants';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -33,6 +35,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
+    private exerciseTour: GuidedTour;
+
     combinedParticipation: Participation;
     isAfterAssessmentDueDate: boolean;
 
@@ -47,6 +51,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -60,6 +65,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
+            }
+        });
+
+        setTimeout(() => {
+            if (this.guidedTourService.guidedTourSettings && this.guidedTourService.guidedTourSettings.showTextExerciseTour) {
+                this.startTour();
+            }
+        }, 500);
+
+        this.subscription = this.guidedTourService.getGuidedTourNotification().subscribe(component => {
+            if (component && component.name === 'exercise') {
+                this.startTour();
             }
         });
     }
@@ -223,5 +240,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             latestResult.participation = this.combinedParticipation;
         }
         return latestResult;
+    }
+
+    /* Start guided tour for text exercise detail page */
+    public startTour(): void {
+        if (this.exercise && this.exercise.type === this.TEXT) {
+            this.guidedTourService.getTextExerciseTour().subscribe(tour => {
+                this.exerciseTour = tour;
+                this.guidedTourService.startTour(this.exerciseTour);
+            });
+        }
     }
 }
