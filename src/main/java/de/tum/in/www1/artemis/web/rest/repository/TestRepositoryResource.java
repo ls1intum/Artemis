@@ -40,12 +40,47 @@ public class TestRepositoryResource extends RepositoryResource {
         this.versionControlService = versionControlService;
     }
 
+    /**
+     * Retrieve a test repository by providing its exerciseId. Will check if the user has permissions to access data related to the given test repository.
+     *
+     * @param exerciseId of the given test repository's exercise.
+     * @param pullOnGet  perform a pull on retrieval of a git repository (in some cases it might make sense not to pull!)
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws GitAPIException
+     */
     @Override
-    Repository getRepository(Long exerciseId) throws IOException, IllegalAccessException, InterruptedException {
+    Repository getRepository(Long exerciseId, boolean pullOnGet) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        String testRepoName = exercise.getTestRepositoryName();
+        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnGet);
+    }
+
+    /**
+     * Get the test repository url by providing a exercise id. Will not check any permissions!
+     *
+     * @param exerciseId
+     * @return
+     */
+    @Override
+    URL getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
-        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
-        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
+        return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+    }
+
+    /**
+     * Check if a user can access the test repository of the exercise.
+     *
+     * @param exerciseId
+     * @return
+     */
+    @Override
+    boolean canAccessRepository(Long exerciseId) {
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        return authCheckService.isAtLeastInstructorForCourse(exercise.getCourse(), userService.getUserWithGroupsAndAuthorities());
     }
 
     /**
@@ -69,7 +104,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.getFile(exerciseId, filename);
     }
 
@@ -83,8 +118,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(exerciseId, filename, request);
     }
 
@@ -98,8 +132,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(exerciseId, folderName, request);
     }
 
@@ -113,7 +146,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws InterruptedException
      */
     @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         return super.renameFile(exerciseId, fileMove);
     }
 
@@ -126,7 +159,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.deleteFile(exerciseId, filename);
     }
 
@@ -138,7 +171,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) {
         return super.pullChanges(exerciseId);
     }
 
@@ -151,7 +184,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
         return super.commitChanges(exerciseId);
     }
 

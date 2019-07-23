@@ -127,9 +127,10 @@ public class BambooBuildPlanService {
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
         return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(
-                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath), // NOTE: this path needs to be specified in the Maven
-                                                                                                                              // pom.xml in the Tests Repo
-                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));
+                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
+                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath) // NOTE: this path needs to be specified in the Maven
+                                                                                                                             // pom.xml in the Tests Repo
+        );
     }
 
     private PlanBranchManagement createPlanBranchManagement() {

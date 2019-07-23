@@ -14,6 +14,8 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -21,6 +23,8 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
     styleUrls: ['./modeling-exercise-dialog.scss'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
+    EditorMode = EditorMode;
+
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     dueDateError: boolean;
@@ -31,6 +35,10 @@ export class ModelingExerciseDialogComponent implements OnInit {
     notificationText: string | null;
 
     courses: Course[];
+
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,

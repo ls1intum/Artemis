@@ -106,11 +106,11 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.3.2'
+version = '3.4.0'
 description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
+    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -326,5 +326,9 @@ checkstyle {
 
 task executeCheckstyle (type: Exec) {
     commandLine './gradlew', 'checkstyleMain', '-x', 'yarn_install', '-x', 'webpackBuildDev', '-x', 'webpack'
+}
+
+task buildJarForDocker (type: Exec) {
+    commandLine './gradlew', 'build', '-x', 'webpackBuildDev', '-x', 'webpack', '-x', 'test'
 }
 

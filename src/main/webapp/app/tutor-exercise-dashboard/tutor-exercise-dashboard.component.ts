@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -7,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmissionService } from 'app/entities/text-submission';
+import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -15,7 +16,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
-import { Submission } from 'app/entities/submission';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -58,9 +59,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     complaints: Complaint[];
     submissionLockLimitReached = false;
 
-    formattedGradingInstructions: string | null;
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
+    formattedGradingInstructions: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
