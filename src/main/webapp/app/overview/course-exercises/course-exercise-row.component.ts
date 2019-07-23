@@ -143,7 +143,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                     return ParticipationStatus.EXERCISE_MISSED;
                 }
             } else if (participation.initializationState === InitializationState.FINISHED) {
-                if (this.isSubmissionInDueTime(participation, exercise)) {
+                return ParticipationStatus.EXERCISE_SUBMITTED;
+                /*if (this.isSubmissionInDueTime(participation, exercise)) {
                     if (this.hasResults(participation)) {
                         return ParticipationStatus.EXERCISE_GRADED;
                     } else {
@@ -155,7 +156,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                     } else {
                         return ParticipationStatus.EXERCISE_LATE_NO_FEEDBACK;
                     }
-                }
+                }*/
             } else {
                 return ParticipationStatus.UNINITIALIZED;
             }

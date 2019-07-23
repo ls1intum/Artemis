@@ -38,7 +38,7 @@
                 "live": "Live",
                 "noDueDate": "No due date",
                 "userNotStartedExercise": "You have not started this exercise yet.",
-                "exercisedSubmitted": "Submitted",
+                "exerciseSubmitted": "Submitted, waiting for grading",
                 "exerciseNotSubmitted": "No Submission",
                 "exerciseMissedDeadline": "You have missed the deadline",
                 "exerciseLateSubmission": "Late submission, waiting for feedback",

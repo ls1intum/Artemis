@@ -3,7 +3,11 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <span *ngIf="!result || (!result.score && result.score !== 0)">
-    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.result.noResult">No results</span></span>
+    <span class="text-muted">
+        <fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;
+        <span *ngIf="!isModelingOrText" jhiTranslate="artemisApp.result.noResult">No results</span>
+        <span *ngIf="isModelingOrText"> {{ resultString }}</span>
+    </span>
     <span class="text-primary" *ngIf="isBuilding"
         ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="artemisApp.editor.building">&nbsp;Building...</span></span
     >

@@ -4,7 +4,7 @@ import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService, JhiWebsocketService } from 'app/core';
@@ -36,6 +36,7 @@ export class ResultComponent implements OnInit, OnChanges {
     hasFeedback: boolean;
     resultIconClass: string[];
     resultString: string;
+    isModelingOrText: boolean = false;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -49,6 +50,9 @@ export class ResultComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit(): void {
+        if (this.participation.exercise.type == ExerciseType.TEXT || this.participation.exercise.type == ExerciseType.MODELING) {
+            this.isModelingOrText = true;
+        }
         if (this.result) {
             this.init();
         } else if (this.participation && this.participation.id) {
@@ -79,11 +83,15 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     init() {
+        console.log(this.participation.exercise.title);
+        console.log(this.participation);
         if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
+        } else if (this.participation && this.isModelingOrText) {
+            this.resultString = this.buildResultStringForTextModeling();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
@@ -96,11 +104,43 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    buildResultStringForTextModeling() {
+        if (this.isSubmissionInDueTime(this.participation, this.participation.exercise)) {
+            if (this.hasResults(this.participation)) {
+                return '';
+            } else {
+                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseSubmitted');
+            }
+        } else {
+            if (this.hasResults(this.participation)) {
+                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseLateFeedback');
+            } else {
+                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseLateSubmission');
+            }
+        }
+    }
+
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
+        } else if (this.result && this.participation && this.isModelingOrText) {
+            return this.buildResultStringForTextModeling();
         }
         return this.result!.resultString;
+    }
+
+    hasResults(participation: Participation): boolean {
+        return participation.results && participation.results.length > 0;
+    }
+
+    isSubmissionInDueTime(participation: Participation, exercise: Exercise): boolean {
+        if (participation.latestSubmissionDate && exercise.dueDate) {
+            return participation.latestSubmissionDate.isBefore(exercise.dueDate);
+        } else if (!exercise.dueDate) {
+            return true;
+        } else {
+            return false; // latestSubmissionDate is null
+        }
     }
 
     getHasFeedback() {

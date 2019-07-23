@@ -20,6 +20,7 @@
                     <span class="text-muted" *ngSwitchCase="'exercise-late-no-feedback'">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'exercise-late'">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | translate }}</span>
                     -->
+                    <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
@@ -43,9 +44,8 @@
                 <span *ngSwitchCase="'quiz-finished'">
                     <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
-                <span *ngSwitchCase="'exercise-active'">
-                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
-                    <span class="text-muted">({{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }})</span>
+                <span *ngSwitchCase="'exercise-submitted'">
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <!--
                 <span *ngSwitchCase="'exercise-submitted'">
