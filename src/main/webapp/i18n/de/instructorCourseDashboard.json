@@ -17,7 +17,7 @@
             "dueDate": "Abgabedatum",
             "assessmentDueDate": "Assessment Abgabedatum",
             "complaints": "Beschwerden",
-            "moreFeedbackRequests": "Mehr Feedback Anfragen",
+            "moreFeedbackRequests": "Feedbackanfragen",
             "completedAssessments": "Komplette Assessments",
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
@@ -27,9 +27,9 @@
                 "name": "Name",
                 "numberOfAssessments": "Assessments",
                 "numberOfAcceptedComplaints": "Angenommene Beschwerden",
-                "numberOfNotAnsweredMoreFeedbackRequests": "Offene AnfragenAnfragen",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Offene Feedbackanfragen",
                 "numberOfComplaintResponses": "Beschwerde Antworten",
-                "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Anfragen",
+                "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Feedbackanfragen",
                 "points": "Punkte"
             }
         }
