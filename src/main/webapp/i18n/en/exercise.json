@@ -79,7 +79,7 @@
                     "pattern": "The package name must have at least 1 dot and must not start with a number"
                 },
                 "maxScore": {
-                    "pattern": "The maximum score hast to be an integer between 1 and 9999!"
+                    "pattern": "The maximum score must be between 1 and 9999!"
                 }
             }
         },
