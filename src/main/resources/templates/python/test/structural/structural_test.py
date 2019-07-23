@@ -1,21 +1,20 @@
-import main
+import unittest
+from sorting_algorithms import *
+from sort_strategy import SortStrategy
 
+class TestSortingStructural(unittest.TestCase):
 
-def test_a():
-    assert main.complementary('A') == 'T'
+    def test_sort_strategy_structure(self):
+        self.assertTrue('perform_sort' in dir(SortStrategy))
 
+    def test_bubble_sort_structure(self):
+        bubble_sort = BubbleSort()
 
-def test_t():
-    assert main.complementary('T') == 'A'
+        self.assertTrue(issubclass(BubbleSort, SortStrategy))
+        self.assertTrue(callable(bubble_sort.perform_sort))
 
+    def test_merge_sort_structure(self):
+        merge_sort = MergeSort()
 
-def test_g():
-    assert main.complementary('G') == 'C'
-
-
-def test_c():
-    assert main.complementary('C') == 'G'
-
-
-def test_complete():
-    assert main.complementary('ATGC') == 'TACG'
+        self.assertTrue(issubclass(MergeSort, SortStrategy))
+        self.assertTrue(callable(merge_sort.perform_sort))
