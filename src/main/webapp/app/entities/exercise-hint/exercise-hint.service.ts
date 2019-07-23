@@ -28,7 +28,7 @@ export class ExerciseHintService {
     }
 
     findByExerciseId(exerciseId: number): Observable<HttpResponse<IExerciseHint[]>> {
-        return this.http.get<IExerciseHint[]>(`${this.resourceUrl}/by-exercise-id/${exerciseId}`, { observe: 'response' });
+        return this.http.get<IExerciseHint[]>(`api/exercises/${exerciseId}/hints`, { observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {

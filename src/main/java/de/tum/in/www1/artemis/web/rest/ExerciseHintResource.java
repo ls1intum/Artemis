@@ -128,10 +128,10 @@ public class ExerciseHintResource {
     /**
      * {@code GET  /exercise-hints/by-exercise-id/:id} : get the exerciseHints of a provided exercise.
      *
-     * @param id the exercise id of which to retrieve the exercise hints.
+     * @param exerciseId the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
      */
-    @GetMapping("/exercise-hints/by-exercise-id/{exerciseId}")
+    @GetMapping("/exercises/{exerciseId}/hints")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
