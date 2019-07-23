@@ -222,7 +222,9 @@ public class ExerciseService {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
         // delete all participations for this exercise
-        participationService.deleteAllByExerciseId(exercise.getId(), false, false);
+        for (Participation participation : exercise.getParticipations()) {
+            participationService.delete(participation.getId(), true, true);
+        }
 
         if (exercise instanceof QuizExercise) {
 
