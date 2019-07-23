@@ -116,7 +116,7 @@ public class TextExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        if (userNotAllowedToSetAutomaticAssessmentEnabled(textExercise)) {
+        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
 
@@ -159,7 +159,7 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
-        if (userNotAllowedToSetAutomaticAssessmentEnabled(textExercise) || textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled()) {
+        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
@@ -175,10 +175,6 @@ public class TextExerciseResource {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
-    }
-
-    private boolean userNotAllowedToSetAutomaticAssessmentEnabled(TextExercise textExercise) {
-        return !authCheckService.isAdmin() && textExercise.isAutomaticAssessmentEnabled();
     }
 
     /**
