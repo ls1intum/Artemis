@@ -19,6 +19,9 @@ export class TextAssessmentDetailComponent {
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
 
     public emitChanges(): void {
+        if (this.assessment.type === FeedbackType.AUTOMATIC) {
+            this.assessment.type = FeedbackType.AUTOMATIC_ADAPTED;
+        }
         this.assessmentChange.emit(this.assessment);
     }
 
