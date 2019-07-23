@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -36,6 +37,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
     private static final String ENTITY_NAME = "textAssessment";
+
+    private final TextBlockRepository textBlockRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -61,7 +64,7 @@ public class TextAssessmentResource extends AssessmentResource {
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
-            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
+            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService,
             TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
             SimpMessageSendingOperations messagingTemplate, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
@@ -70,6 +73,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -192,6 +196,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Participation participation = textSubmission.get().getParticipation();
         participation = participationService.findOneWithEagerResultsAndSubmissionsAndAssessor(participation.getId());
+        List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId);
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
@@ -223,6 +228,7 @@ public class TextAssessmentResource extends AssessmentResource {
         for (Result result : participation.getResults()) {
             List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
+            ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
         }
 
         return ResponseEntity.ok(participation);

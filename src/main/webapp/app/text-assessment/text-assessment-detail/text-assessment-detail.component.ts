@@ -6,7 +6,7 @@ import { TextBlock } from 'app/entities/text-block/text-block.model';
 @Component({
     selector: 'jhi-text-assessment-detail',
     templateUrl: './text-assessment-detail.component.html',
-    styles: [],
+    styleUrls: ['./text-assessment-detail.component.scss'],
 })
 export class TextAssessmentDetailComponent {
     @Input() public assessment: Feedback;

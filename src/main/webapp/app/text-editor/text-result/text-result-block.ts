@@ -22,6 +22,10 @@ export class TextResultBlock {
         return this.textBlock.endIndex;
     }
 
+    get text(): string {
+        return this.textBlock.text;
+    }
+
     get feedbackType(): FeedbackType {
         if (!this.feedback || this.feedback.credits === 0 || this.feedback.credits == null) {
             return FeedbackType.NEUTRAL;

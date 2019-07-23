@@ -39,9 +39,11 @@ export class TextResultComponent {
         );
 
         const referenceBasedResultBlocks = referenceBasedFeedback.map(this.feedbackToTextResultBlock, this);
-        const blockBasedResultBlocks = blockBasedFeedback.map(this.textBlockToTextResultBlock, this).filter(elem => elem !== undefined) as TextResultBlock[];
+        const blockBasedResultBlocks = blockBasedFeedback.map(this.textBlockToTextResultBlock, this);
 
-        const resultBlocks = [...referenceBasedResultBlocks, ...blockBasedResultBlocks].sort((a, b) => b.startIndex - a.startIndex);
+        const resultBlocks = ([...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter(elem => elem !== undefined) as TextResultBlock[]).sort(
+            (a, b) => b.startIndex - a.startIndex,
+        );
 
         let nextBlock = resultBlocks.pop();
         let startIndex = 0;
@@ -66,8 +68,12 @@ export class TextResultComponent {
         }
     }
 
-    private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock {
-        const reference = feedback.reference!;
+    private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
+        const reference = feedback.reference;
+        if (!reference) {
+            return undefined;
+        }
+
         const indexOfReference = this.submissionText.indexOf(reference);
 
         const textBlock = new TextBlock();
