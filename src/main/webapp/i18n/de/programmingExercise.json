@@ -72,7 +72,7 @@
                 "weightsReset": "Die Gewichtung wurde erfolgreich zurückgesetzt.",
                 "weightsResetFailed": "Die Gewichtung konnte nicht zurückgesetzt werden.",
                 "saveTestCases": "Testfälle speichern",
-                "testCasesUpdated": "Die Testfälle wurde erfolgreich gespeichert.",
+                "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
                 "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}."
             }
         }
