@@ -1,5 +1,6 @@
 from sort_strategy import SortStrategy
 
+
 class BubbleSort(SortStrategy):
 
     def perform_sort(self, arr):
@@ -10,6 +11,7 @@ class BubbleSort(SortStrategy):
             for j in range(i):
                 if arr[j] > arr[j + 1]:
                     arr[j], arr[j + 1] = arr[j + 1], arr[j]
+
 
 class MergeSort(SortStrategy):
 

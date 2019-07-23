@@ -1,6 +1,6 @@
-
-class BubbleSort():
+class BubbleSort:
     pass
 
-class MergeSort():
+
+class MergeSort:
     pass

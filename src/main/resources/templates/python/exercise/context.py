@@ -1,3 +1,3 @@
 
-class Context():
+class Context:
     pass

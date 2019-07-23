@@ -1,7 +1,7 @@
 from sorting_algorithms import *
 
-class Policy():
 
+class Policy:
     context = None
 
     def __init__(self, context):

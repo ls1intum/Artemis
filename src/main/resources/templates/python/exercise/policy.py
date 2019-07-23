@@ -1,3 +1,3 @@
 
-class Policy():
+class Policy:
     pass
