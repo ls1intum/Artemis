@@ -165,7 +165,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.parse("2999-06-30T12:30:40Z[UTC]"));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -189,7 +189,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in past.
-        programmingExercise.setDueDate(ZonedDateTime.parse("2012-06-30T12:30:40Z[UTC]"));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -213,7 +213,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate() {
         // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.parse("2999-06-30T12:30:40Z[UTC]"));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
