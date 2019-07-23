@@ -452,7 +452,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(id);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();

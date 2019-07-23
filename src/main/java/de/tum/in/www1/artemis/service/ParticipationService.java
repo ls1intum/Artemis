@@ -90,8 +90,6 @@ public class ParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
@@ -99,8 +97,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -120,7 +117,6 @@ public class ParticipationService {
         this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
         this.authCheckService = authCheckService;
-        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -721,11 +717,11 @@ public class ParticipationService {
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        Participation participation = participationRepository.findById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
-        if (participation instanceof ProgrammingExerciseParticipation) {
-            ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
             if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
             }
@@ -757,6 +753,28 @@ public class ParticipationService {
             complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
+        deleteResultsAndSubmissionsOfParticipation(participation);
+
+        // The following case is necessary, because we might have submissions without result
+        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
+            for (Submission submission : participation.getSubmissions()) {
+                submissionRepository.deleteById(submission.getId());
+            }
+        }
+
+        Exercise exercise = participation.getExercise();
+        exercise.removeParticipation(participation);
+        exerciseRepository.save(exercise);
+        studentParticipationRepository.delete(participation);
+    }
+
+    /**
+     * Remove all results and submissions of the given participation.
+     * Will do nothing if invoked with a participation without results/submissions.
+     * @param participation to delete results/submissions from.
+     */
+    @Transactional
+    public void deleteResultsAndSubmissionsOfParticipation(Participation participation) {
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
@@ -770,20 +788,6 @@ public class ParticipationService {
                     participation.removeSubmissions(submissionToDelete);
                 }
             }
-        }
-        // The following case is necessary, because we might have submissions without result
-        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
-            for (Submission submission : participation.getSubmissions()) {
-                submissionRepository.deleteById(submission.getId());
-            }
-        }
-
-        if (participation instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) participation;
-            Exercise exercise = participation.getExercise();
-            exercise.removeParticipation(studentParticipation);
-            exerciseRepository.save(exercise);
-            studentParticipationRepository.delete(studentParticipation);
         }
     }
 
@@ -828,18 +832,7 @@ public class ParticipationService {
         // if the user is not the owner of the participation, the user can only see it in case he is
         // a teaching assistant or an instructor of the course, or in case he is admin
         User user = userService.getUserWithGroupsAndAuthorities();
-        Course course;
-        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
-        if (participation.getExercise() == null) {
-            Optional<ProgrammingExercise> exercise = programmingExerciseService.getExerciseForSolutionOrTemplateParticipation(participation);
-            if (!exercise.isPresent()) {
-                return false;
-            }
-            course = exercise.get().getCourse();
-        }
-        else {
-            course = participation.getExercise().getCourse();
-        }
+        Course course = participation.getExercise().getCourse();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

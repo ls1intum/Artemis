@@ -77,6 +77,8 @@ public class ProgrammingExerciseService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final ParticipationService participationService;
+
     private final UserService userService;
 
     private final AuthorizationCheckService authCheckService;
@@ -89,7 +91,8 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
             AuthorizationCheckService authCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -100,6 +103,7 @@ public class ProgrammingExerciseService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.resourceLoader = resourceLoader;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participationService = participationService;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -664,5 +668,44 @@ public class ProgrammingExerciseService {
                 }
             }
         }
+    }
+
+    /**
+     * Delete a programming exercise, including its template and solution participations.
+     * @param programmingExercise to delete.
+     * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
+     */
+    @Transactional
+    public void delete(ProgrammingExercise programmingExercise, boolean deleteBaseReposBuildPlans) {
+        if (deleteBaseReposBuildPlans) {
+            if (programmingExercise.getTemplateBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+            }
+            if (programmingExercise.getSolutionBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            }
+            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+
+            if (programmingExercise.getTemplateRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getSolutionRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getTestRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+            }
+            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        }
+
+        SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
+        TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
+        participationService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation);
+        participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation);
+        // This will also delete the template & solution participation.
+        programmingExerciseRepository.delete(programmingExercise);
     }
 }
