@@ -305,7 +305,15 @@ public class TextExerciseResource {
                 result.setFeedbacks(assessments);
             }
 
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+                result.setAssessor(null);
+            }
+
             participation.addSubmissions(textSubmission);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            participation.setStudent(null);
         }
 
         return ResponseEntity.ok(participation);

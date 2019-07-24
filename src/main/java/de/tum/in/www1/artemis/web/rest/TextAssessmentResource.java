@@ -90,6 +90,11 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
+
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -105,6 +110,11 @@ public class TextAssessmentResource extends AssessmentResource {
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -115,6 +125,11 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -167,6 +182,10 @@ public class TextAssessmentResource extends AssessmentResource {
         Comparator<TextBlock> byStartIndexReversed = (TextBlock first, TextBlock second) -> Integer.compare(second.getStartIndex(), first.getStartIndex());
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         textSubmission.getBlocks().sort(byStartIndexReversed);
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
 
         return ResponseEntity.ok(result);
     }
@@ -229,6 +248,10 @@ public class TextAssessmentResource extends AssessmentResource {
             List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
             ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            participation.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -205,6 +206,12 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
+        // CHeck if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
+        }
+
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return ResponseEntity.badRequest()
@@ -213,7 +220,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = shortNamePattern.matcher(programmingExercise.getShortName());
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }

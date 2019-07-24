@@ -488,6 +488,14 @@ public class Result implements Serializable {
         setResultString(totalScore, maxScore);
     }
 
+    /**
+     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
+     * their assessor.
+     */
+    public void filterSensitiveInformation() {
+        setAssessor(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
