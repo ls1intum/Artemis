@@ -307,7 +307,7 @@ public class CourseResource {
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, principal.getName());
+                exercise.filterForCourseDashboard(participations, principal.getName(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -560,51 +560,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
-     *
-     * @param courseId the id of the course to get the results from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
-
-        User student = userService.getUser();
-        Course course = courseService.findOne(courseId);
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
-
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
-
-        for (Exercise exercise : exercises) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
-
-            exercise.setParticipations(new HashSet<>());
-
-            // Removing not needed properties and sensitive information for students
-            exercise.setCourse(null);
-            if (isStudent) {
-                exercise.filterSensitiveInformation();
-            }
-
-            for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
-
-                participation.setResults(participation.getResults());
-                exercise.addParticipation(participation);
-            }
-            course.addExercises(exercise);
-        }
-
-        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
-
-        return ResponseEntity.ok().body(course);
-    }
-
-    /**
      * GET /courses/:courseId/categories : Returns all categories used in a course
      *
      * @param courseId the id of the course to get the categories from
@@ -620,7 +575,7 @@ public class CourseResource {
         User user = userService.getUser();
         Course course = courseService.findOne(courseId);
 
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, user);
+        List<Exercise> exercises = exerciseService.findAllExercisesForCourseAdministration(course, user);
         List<String> categories = new ArrayList<>();
         for (Exercise exercise : exercises) {
             categories.addAll(exercise.getCategories());
