@@ -177,7 +177,6 @@ public class TextSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
@@ -187,12 +186,23 @@ public class TextSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            return ResponseEntity.ok().body(textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId()));
+            textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
         }
 
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            textSubmissions.forEach(textSubmission -> {
+                if (textSubmission.getParticipation() != null) {
+                    textSubmission.getParticipation().filterSensitiveInformation();
+                }
+            });
+        }
 
         return ResponseEntity.ok().body(textSubmissions);
     }
@@ -225,6 +235,11 @@ public class TextSubmissionResource {
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+
+        // tutors should not see information about the student of a submission
+        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null) {
+            textSubmissionWithoutAssessment.get().getParticipation().filterSensitiveInformation();
+        }
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }

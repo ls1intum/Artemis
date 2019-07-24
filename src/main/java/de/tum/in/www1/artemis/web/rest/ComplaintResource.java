@@ -89,6 +89,10 @@ public class ComplaintResource {
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String enityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().setAssessor(null);
+
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, enityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
@@ -117,6 +121,20 @@ public class ComplaintResource {
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintService.getByResultId(resultId);
+
+        if (complaint.isPresent() && complaint.get().getResult() != null) {
+            Exercise exercise = complaint.get().getResult().getParticipation().getExercise();
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                complaint.get().getResult().setAssessor(null);
+
+                if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
+                    complaint.get().filterSensitiveInformation();
+                    complaint.get().getResult().getParticipation().filterSensitiveInformation();
+                }
+            }
+        }
+
         return complaint.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 

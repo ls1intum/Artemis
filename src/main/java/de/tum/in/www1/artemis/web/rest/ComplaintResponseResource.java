@@ -68,6 +68,10 @@ public class ComplaintResponseResource {
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
+
+        // always remove the student from the complaint as we don't need it in the corresponding frontend use case
+        complaintResponse.getComplaint().filterSensitiveInformation();
+
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
@@ -91,6 +95,16 @@ public class ComplaintResponseResource {
         // All tutors and higher can see this, and also the students who first open the complaint
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
 
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
+
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }
 
@@ -111,6 +125,16 @@ public class ComplaintResponseResource {
         }
 
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
+
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
 
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }

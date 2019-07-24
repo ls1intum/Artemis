@@ -5,8 +5,9 @@ package de.tum.in.www1.artemis.service.compass.utils;
  */
 public class CompassConfiguration {
 
-    /* Similarity related parameters */
-
+    /*
+     * Similarity related parameters
+     */
     // Amount that is subtracted from the similarity of two UML elements/diagrams for every missing element
     public final static double MISSING_ELEMENT_PENALTY = 0.05;
 
@@ -49,8 +50,9 @@ public class CompassConfiguration {
     // Weight of the partial name similarity of two UML elements. The partial name similarity compares the first three characters of the names.
     public final static double PARTIALLY_NAME_WEIGHT = 0.8;
 
-    /* Confidence and coverage parameters */
-
+    /*
+     * Confidence and coverage parameters
+     */
     // Threshold of the coverage of a UML diagram. If the coverage for a specific diagram is smaller than this threshold, no automatic result will be created for the diagram.
     /* CURRENTLY DISABLED */
     public static final double COVERAGE_THRESHOLD = 0.8;
@@ -63,13 +65,19 @@ public class CompassConfiguration {
     // created for this element.
     public static final double ELEMENT_CONFIDENCE_THRESHOLD = 0.8;
 
-    /* Calculation engine cleanup parameters */
-
+    /*
+     * Calculation engine cleanup parameters
+     */
     // Number of days to keep unused calculation engines in memory. If an engine is unused for a longer time, it will be removed in the cleanup job running every night.
     public static final int DAYS_TO_KEEP_UNUSED_ENGINE = 1;
 
-    /* Optimal model parameters */
+    /*
+     * Optimal model parameters
+     */
+    // Minimal number of optimal models that should be in cache. If the cache consists of less models, NUMBER_OF_NEW_OPTIMAL_MODELS new optimal models will be loaded.
+    public static final int OPTIMAL_MODEL_THRESHOLD = 10;
 
-    // Number of optimal models to keep in cache
-    public static final int NUMBER_OF_OPTIMAL_MODELS = 10;
+    // Number of optimal models that should be generated and loaded into the cache if the number of models in the cache is smaller than OPTIMAL_MODEL_THRESHOLD.
+    // NUMBER_OF_NEW_OPTIMAL_MODELS should be greater or equal to OPTIMAL_MODEL_THRESHOLD.
+    public static final int NUMBER_OF_NEW_OPTIMAL_MODELS = 10;
 }

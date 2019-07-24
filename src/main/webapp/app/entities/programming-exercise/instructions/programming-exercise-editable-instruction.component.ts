@@ -43,7 +43,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
     @Input() showStatus = true;
-    @Input() enableSave = true;
+    // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
+    @Input() editMode = true;
     @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
@@ -148,31 +149,34 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.testCaseSubscription.unsubscribe();
         }
 
-        this.testCaseSubscription = this.testCaseService
-            .subscribeForTestCases(this.exercise.id)
-            .pipe(
-                switchMap((testCases: ProgrammingExerciseTestCase[] | null) => {
-                    // If there are test cases, map them to their names, sort them and use them for the markdown editor.
-                    if (testCases) {
-                        const sortedTestCaseNames = compose(
-                            map(({ testName }) => testName),
-                            filter(({ active }) => active),
-                            sortBy('testName'),
-                        )(testCases);
-                        return of(sortedTestCaseNames);
-                    } else if (this.exercise.templateParticipation) {
-                        // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
-                        return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation.id);
-                    }
-                    return of();
-                }),
-                tap((testCaseNames: string[]) => {
-                    this.exerciseTestCases = testCaseNames;
-                    this.testCaseCommand.setValues(this.exerciseTestCases);
-                }),
-                catchError(() => of()),
-            )
-            .subscribe();
+        // Only set up a subscription for test cases if the exercise already exists.
+        if (this.editMode) {
+            this.testCaseSubscription = this.testCaseService
+                .subscribeForTestCases(this.exercise.id)
+                .pipe(
+                    switchMap((testCases: ProgrammingExerciseTestCase[] | null) => {
+                        // If there are test cases, map them to their names, sort them and use them for the markdown editor.
+                        if (testCases) {
+                            const sortedTestCaseNames = compose(
+                                map(({ testName }) => testName),
+                                filter(({ active }) => active),
+                                sortBy('testName'),
+                            )(testCases);
+                            return of(sortedTestCaseNames);
+                        } else if (this.exercise.templateParticipation) {
+                            // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
+                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation.id);
+                        }
+                        return of();
+                    }),
+                    tap((testCaseNames: string[]) => {
+                        this.exerciseTestCases = testCaseNames;
+                        this.testCaseCommand.setValues(this.exerciseTestCases);
+                    }),
+                    catchError(() => of()),
+                )
+                .subscribe();
+        }
     }
 
     /**

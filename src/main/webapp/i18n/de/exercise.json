@@ -66,6 +66,21 @@
             "notificiationText": "Optional: Mitteilung über die Änderung",
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
+            },
+            "form": {
+                "title": {
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "shortName": {
+                    "pattern": "Der Kurzname darf nur aus Buchstaben und Zahlen bestehen!",
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
+                },
+                "packageName": {
+                    "pattern": "Der Packagename muss mindestens einen Punkt enthalten und darf nicht mit einer Zahl anfangen!"
+                },
+                "maxScore": {
+                    "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"
+                }
             }
         },
         "exerciseLtiConfiguration": {

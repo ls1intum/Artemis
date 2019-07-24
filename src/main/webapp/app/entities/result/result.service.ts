@@ -44,8 +44,8 @@ export class ResultService implements IResultService {
         return this.http.put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+    find(resultId: number): Observable<EntityResponseType> {
+        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
@@ -82,8 +82,8 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
+    delete(resultId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
     protected convertDateFromClient(result: Result): Result {

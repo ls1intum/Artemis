@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,14 +107,15 @@ public class ExerciseService {
     }
 
     /**
-     * Get all exercises by courseID
+     * Get all exercises for a given course and a given user. This method is used to retrieve this
      *
      * @param course for return of exercises in course
-     * @return the list of entities
+     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercise
+     * @return the list of exercises for the given course and user. This list can be empty, but should not be null
      */
     @Transactional(readOnly = true)
-    public List<Exercise> findAllExercisesByCourseId(Course course, User user) {
-        List<Exercise> exercises = null;
+    public List<Exercise> findAllExercisesForCourseAdministration(Course course, User user) {
+        List<Exercise> exercises = new ArrayList<>();
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findAllByCourseId(course.getId());
@@ -354,7 +356,7 @@ public class ExerciseService {
                     gitService.get().resetToOriginMaster(repo);
                 }
             }
-            catch (IOException | GitException | InterruptedException ex) {
+            catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
         }
@@ -402,7 +404,7 @@ public class ExerciseService {
                         gitService.get().deleteLocalRepository(participation);
                     }
                 }
-                catch (IOException | GitException | InterruptedException ex) {
+                catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                     log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
