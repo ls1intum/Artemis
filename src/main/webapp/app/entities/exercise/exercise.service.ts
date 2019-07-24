@@ -51,11 +51,11 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });
     }
 
-    reset(id: number): Observable<HttpResponse<void>> {
+    reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
+    exportRepos(exerciseId: number, students: string[]): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
             observe: 'response',
             responseType: 'blob',
