@@ -1,35 +1,39 @@
-import { Component, Input, OnChanges, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { Injectable, OnDestroy, OnInit } from '@angular/core';
 import { DOMStorageStrategy } from 'ngx-cacheable/common/DOMStorageStrategy';
-import { Injectable } from '@angular/core';
 import { Cacheable } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, Subscription, pipe, of, isObservable, UnaryFunction } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
+import { switchMap, tap, distinctUntilChanged } from 'rxjs/operators';
 import { AccountService } from 'app/core';
-import { base64StringToBlob, blobToBase64String } from 'blob-util';
+import { blobToBase64String } from 'blob-util';
 
 const logoutSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
-export class CacheableImageService implements OnInit, OnDestroy {
-    private logoutSubscription: Subscription;
+export class CacheableImageService implements OnDestroy {
+    private userChangeSubscription: Subscription;
 
-    constructor(private accountService: AccountService, private httpClient: HttpClient) {}
+    constructor(private accountService: AccountService, private httpClient: HttpClient) {
+        this.init();
+    }
 
-    ngOnInit(): void {
-        this.logoutSubscription = this.accountService
+    /**
+     * Subscribe to the auth service to receive updates about user changes.
+     */
+    init(): void {
+        this.userChangeSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap(console.log),
-                tap(() => console.log('logout!')),
+                // Fires on every event where the user has changed (login/logout).
+                distinctUntilChanged(),
                 tap(() => logoutSubject.next()),
             )
             .subscribe();
     }
 
     ngOnDestroy(): void {
-        if (this.logoutSubscription) {
-            this.logoutSubscription.unsubscribe();
+        if (this.userChangeSubscription) {
+            this.userChangeSubscription.unsubscribe();
         }
     }
 
