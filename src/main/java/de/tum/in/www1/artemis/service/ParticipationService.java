@@ -742,8 +742,6 @@ public class ParticipationService {
     @Transactional
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<Participation> participationsToDelete = findByExerciseId(exerciseId);
-        System.out.println("FranciscoTest:");
-        System.out.println(participationsToDelete.toString());
 
         for (Participation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);

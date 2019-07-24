@@ -183,9 +183,6 @@ public class ExerciseService {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
 
-        System.out.println("FranciscoTest2");
-        System.out.println(exercise.toString());
-
         if (!exercise.isPresent()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
@@ -196,10 +193,7 @@ public class ExerciseService {
     // TODO: we could move this to Exercise.java and override it in the subclasses to avoid the if-else statements
     private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
         if (exercise instanceof QuizExercise) {
-
-            System.out.println(((QuizExercise) exercise).getQuizQuestions().size());
             QuizExercise quizExercise = (QuizExercise) exercise;
-            System.out.println("FranciscoBlub");
             // eagerly load questions and statistic
             quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
@@ -239,10 +233,6 @@ public class ExerciseService {
             quizExercise.setAllowedNumberOfAttempts(null);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
             quizExercise.setReleaseDate(null);
-
-            System.out.println("FranciscoTest3");
-
-            System.out.println(quizExercise.toString());
 
             // TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz
             // exercise resource

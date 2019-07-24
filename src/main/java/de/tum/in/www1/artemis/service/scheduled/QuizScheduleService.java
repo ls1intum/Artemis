@@ -220,10 +220,6 @@ public class QuizScheduleService {
 
     public void clearQuizData(Long quizId) {
         // delete all participation, submission, and result hashmap entries that correspond to this quiz
-
-        System.out.println("FranciscoTest 4");
-        System.out.println(participationHashMap);
-
         participationHashMap.remove(quizId);
         submissionHashMap.remove(quizId);
         resultHashMap.remove(quizId);
