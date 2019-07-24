@@ -18,7 +18,8 @@ export interface IComplaintService {
 }
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
-    private resourceUrl = SERVER_API_URL + 'api/complaints';
+    private apiUrl = SERVER_API_URL + 'api';
+    private resourceUrl = this.apiUrl + '/complaints';
 
     constructor(private http: HttpClient) {}
 
@@ -37,18 +38,18 @@ export class ComplaintService implements IComplaintService {
 
     getComplaintsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${SERVER_API_URL}/exercises/${exerciseId}/complaints-for-tutor-dashboard`, { observe: 'response' })
+            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-tutor-dashboard`, { observe: 'response' })
             .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
     }
 
     getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
-            .get<Complaint[]>(`${SERVER_API_URL}/exercises/${exerciseId}/more-feedback-for-tutor-dashboard`, { observe: 'response' })
+            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/more-feedback-for-tutor-dashboard`, { observe: 'response' })
             .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
     }
 
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
-        return this.http.get<number>(SERVER_API_URL + `api/${courseId}/allowed-complaints`);
+        return this.http.get<number>(`${this.apiUrl}/${courseId}/allowed-complaints`);
     }
 
     updateComplaint(complaint: Complaint): Observable<EntityResponseType> {

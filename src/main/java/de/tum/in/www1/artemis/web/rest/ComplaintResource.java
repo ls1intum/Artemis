@@ -154,7 +154,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /complaints/for-tutor-dashboard/:exerciseId
+     * Get /exercises/:exerciseId/complaints-for-tutor-dashboard
      * <p>
      * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      *
@@ -174,7 +174,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /more-feedback/for-tutor-dashboard/:exerciseId
+     * Get /exercises/:exerciseId/more-feedback-for-tutor-dashboard
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
      * @param exerciseId the id of the exercise we are interested in
