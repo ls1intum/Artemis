@@ -136,6 +136,14 @@ public class Complaint implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    /**
+     * Removes the student from the complaint, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
+     * the student.
+     */
+    public void filterSensitiveInformation() {
+        setStudent(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

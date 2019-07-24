@@ -315,6 +315,10 @@ public class ParticipationResource {
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            participation.filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(participation);
     }
 
