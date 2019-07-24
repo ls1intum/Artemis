@@ -262,21 +262,17 @@ public class AssessmentComplaintIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getSubmittedComplaints_byComplaintType() throws Exception {
         database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
-        modelingAssessment.setAssessor(database.getUserByLogin("tutor2"));
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
-        request.getList("/api/complaints", HttpStatus.BAD_REQUEST, ComplaintResponse.class, params);
-
-        params.add("exerciseId", modelingExercise.getId().toString());
-        List<ComplaintResponse> complaintResponses = request.getList("/api/complaints", HttpStatus.OK, ComplaintResponse.class, params);
+        String url = "/api/exercises/" + modelingExercise.getId() + "/complaints";
+        List<ComplaintResponse> complaintResponses = request.getList(url, HttpStatus.OK, ComplaintResponse.class, params);
         assertThat(complaintResponses.size()).isEqualTo(1);
 
         params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        complaintResponses = request.getList("/api/complaints", HttpStatus.OK, ComplaintResponse.class, params);
+        complaintResponses = request.getList(url, HttpStatus.OK, ComplaintResponse.class, params);
         assertThat(complaintResponses.size()).isEqualTo(2);
-
     }
 
     @Test

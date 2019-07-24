@@ -195,63 +195,78 @@ public class ComplaintResource {
     /**
      * Get /complaints
      * <p>
-     * Get all the complaints filtered by different request parameters.
-     * @param tutorId the id of the tutor by which we want to filter
-     * @param exerciseId the id of the exercise we are interested in
-     * @param courseId the id of the course we are interested in
+     * Get all the complaints.
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("/complaints")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam() ComplaintType complaintType, @RequestParam(required = false) Long tutorId,
-            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long courseId) {
-        if (tutorId == null && exerciseId == null && courseId == null) {
-            throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
-        }
-
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsForInstructor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
         // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
         // exercise.
         // Of course tutors cannot ask for complaints about other tutors.
-        // So, if the courseId is null, and the exerciseId is null, we just use the userId of the caller
-        if (exerciseId == null && courseId == null) {
-            User user = userService.getUser();
-            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
-            return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+        User user = userService.getUser();
+        List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    }
+
+    /**
+     * Get /courses/:courseId/complaints/:complaintType
+     * <p>
+     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * @param tutorId the id of the tutor by which we want to filter
+     * @param courseId the id of the course we are interested in
+     * @param complaintType the type of complaints we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
+            @RequestParam(required = false) Long tutorId) {
+        // Filtering by courseId
+        Course course = courseService.findOne(courseId);
+
+        if (course == null) {
+            throw new BadRequestAlertException("The requested course does not exist", ENTITY_NAME, "wrongCourseId");
         }
 
-        if (courseId != null) {
-            // Filtering by courseId
-            Course course = courseService.findOne(courseId);
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, null);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForCourse(course, null);
 
-            if (course == null) {
-                throw new BadRequestAlertException("The requested course does not exist", ENTITY_NAME, "wrongCourseId");
-            }
-
-            boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, null);
-            boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForCourse(course, null);
-
-            if (!isAtLeastTutor) {
-                throw new AccessForbiddenException("Insufficient permission for these complaints");
-            }
-
-            if (!isAtLeastInstructor) {
-                tutorId = userService.getUser().getId();
-            }
-
-            List<Complaint> complaints;
-
-            if (tutorId == null) {
-                complaints = complaintService.getAllComplaintsByCourseId(courseId, isAtLeastInstructor);
-            }
-            else {
-                complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
-            }
-
-            return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+        if (!isAtLeastTutor) {
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
         }
 
+        if (!isAtLeastInstructor) {
+            tutorId = userService.getUser().getId();
+        }
+
+        List<Complaint> complaints;
+
+        if (tutorId == null) {
+            complaints = complaintService.getAllComplaintsByCourseId(courseId, isAtLeastInstructor);
+        }
+        else {
+            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
+        }
+
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    }
+
+    /**
+     * Get /courses/:courseId/complaints/:complaintType
+     * <p>
+     * Get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
+     * @param tutorId the id of the tutor by which we want to filter
+     * @param exerciseId the id of the exercise we are interested in
+     * @param complaintType the type of complaints we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/exercises/{exerciseId}/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
+            @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseService.findOne(exerciseId);
 

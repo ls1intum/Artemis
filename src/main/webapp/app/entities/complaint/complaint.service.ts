@@ -58,25 +58,25 @@ export class ComplaintService implements IComplaintService {
     }
 
     findAllByTutorIdForCourseId(tutorId: number, courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&tutorId=${tutorId}&complaintType=${complaintType}`;
+        const url = `${this.apiUrl}/courses/${courseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`;
 
         return this.requestComplaintsFromUrl(url);
     }
 
     findAllByTutorIdForExerciseId(tutorId: number, exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&tutorId=${tutorId}&complaintType=${complaintType}`;
+        const url = `${this.apiUrl}/exercises/${exerciseId}/complaints?complaintType=${complaintType}&tutorId=${tutorId}`;
 
         return this.requestComplaintsFromUrl(url);
     }
 
     findAllByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}`;
+        const url = `${this.apiUrl}/courses/${courseId}/complaints?complaintType=${complaintType}`;
 
         return this.requestComplaintsFromUrl(url);
     }
 
     findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}`;
+        const url = `${this.apiUrl}/exercises/${exerciseId}?complaintType=${complaintType}`;
 
         return this.requestComplaintsFromUrl(url);
     }
