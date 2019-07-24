@@ -27,8 +27,10 @@ export class StudentQuestionService {
         return this.http.put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<StudentQuestion>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    find(studentQuestionId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<StudentQuestion>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -38,8 +40,8 @@ export class StudentQuestionService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(studentQuestionId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' });
     }
 
     protected convertDateFromClient(studentQuestion: StudentQuestion): StudentQuestion {

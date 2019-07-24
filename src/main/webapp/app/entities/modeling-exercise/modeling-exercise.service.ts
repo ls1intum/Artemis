@@ -32,17 +32,17 @@ export class ModelingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(modelingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    getStatistics(id: number): Observable<HttpResponse<ModelingStatistic>> {
-        return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${id}/statistics`, { observe: 'response' });
+    getStatistics(modelingExerciseId: number): Observable<HttpResponse<ModelingStatistic>> {
+        return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${modelingExerciseId}/statistics`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 }
