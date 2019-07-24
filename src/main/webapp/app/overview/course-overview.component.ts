@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
-import { CUSTOM_USER_KEY } from 'app/app.constants';
+import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -36,8 +36,8 @@ export class CourseOverviewComponent implements OnInit {
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             const options = {};
-            if (this.localStorageService.retrieve(CUSTOM_USER_KEY)) {
-                options['userId'] = this.localStorageService.retrieve(CUSTOM_USER_KEY);
+            if (this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY)) {
+                options['userId'] = this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY);
             }
             this.courseService.findAll(options).subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);

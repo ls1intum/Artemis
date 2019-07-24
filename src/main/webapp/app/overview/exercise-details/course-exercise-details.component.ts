@@ -10,7 +10,7 @@ import * as moment from 'moment';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
-import { CUSTOM_USER_KEY } from 'app/app.constants';
+import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -69,8 +69,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         const options = {};
-        if (this.localStorageService.retrieve(CUSTOM_USER_KEY)) {
-            options['userId'] = this.localStorageService.retrieve(CUSTOM_USER_KEY);
+        if (this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY)) {
+            options['userId'] = this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY);
         }
         this.exercise = null;
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
@@ -107,7 +107,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const hasStudent = participation.student;
             const isCurrentUser = hasStudent && participation.student.id === this.currentUser.id;
             const isCustomStudent =
-                hasStudent && this.localStorageService.retrieve(CUSTOM_USER_KEY) && this.localStorageService.retrieve(CUSTOM_USER_KEY) === participation.student.login;
+                hasStudent &&
+                this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY) &&
+                this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY) === participation.student.login;
             return isCurrentUser || isCustomStudent;
         });
         filteredParticipations.forEach((participation: Participation) => {

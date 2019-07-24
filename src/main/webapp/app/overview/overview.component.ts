@@ -5,7 +5,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService, UserService } from 'app/core';
-import { CUSTOM_USER_KEY } from 'app/app.constants';
+import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',
@@ -15,9 +15,7 @@ import { CUSTOM_USER_KEY } from 'app/app.constants';
 export class OverviewComponent {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    public startLoginProcess = false;
-    public selectedUserLogin: string | null;
-    public userNotFound: boolean;
+    public selectedUserLogin: string;
 
     constructor(
         private courseService: CourseService,
@@ -28,15 +26,13 @@ export class OverviewComponent {
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
     ) {
-        if (this.localStorageService.retrieve(CUSTOM_USER_KEY)) {
-            this.selectedUserLogin = this.localStorageService.retrieve(CUSTOM_USER_KEY);
-        }
         this.loadAndFilterCourses();
     }
 
     loadAndFilterCourses() {
         const options = {};
-        if (this.selectedUserLogin) {
+        if (this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY)) {
+            this.selectedUserLogin = this.localStorageService.retrieve(CUSTOM_STUDENT_LOGIN_KEY);
             options['userId'] = this.selectedUserLogin;
         }
         this.courseService.findAll(options).subscribe(
@@ -69,39 +65,5 @@ export class OverviewComponent {
             });
         }
         return relevantExercise;
-    }
-
-    startUsingLogin(): void {
-        if (!this.selectedUserLogin) {
-            this.startLoginProcess = false;
-            this.localStorageService.clear(CUSTOM_USER_KEY);
-            return;
-        }
-        this.userService.find(this.selectedUserLogin).subscribe(
-            res => {
-                this.startLoginProcess = false;
-                if (res.body) {
-                    this.localStorageService.store(CUSTOM_USER_KEY, this.selectedUserLogin);
-                    this.loadAndFilterCourses();
-                } else {
-                }
-            },
-            error => {
-                this.userNotFound = true;
-                this.startLoginProcess = false;
-                this.selectedUserLogin = null;
-                this.localStorageService.clear(CUSTOM_USER_KEY);
-                setTimeout(() => {
-                    this.userNotFound = false;
-                }, 1500);
-            },
-        );
-    }
-
-    removeUserLogin(): void {
-        this.selectedUserLogin = null;
-        this.startLoginProcess = false;
-        this.localStorageService.clear(CUSTOM_USER_KEY);
-        this.loadAndFilterCourses();
     }
 }

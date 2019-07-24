@@ -1,0 +1,18 @@
+<div *jhiHasAnyAuthority="['ROLE_ADMIN']">
+    <span class="text-danger" *ngIf="userNotFound">{{ 'artemisApp.studentDashboard.studentLogin.userNotFound' | translate }}</span>
+    <div class="btn btn-primary" *ngIf="!startLoginProcess && !selectedUserLogin" (click)="startLoginProcess = !startLoginProcess">
+        {{ 'artemisApp.studentDashboard.studentLogin.loginAsStudent' | translate }}
+    </div>
+    <div *ngIf="!startLoginProcess && selectedUserLogin">
+        {{ 'artemisApp.studentDashboard.studentLogin.loggedInAs' | translate }} {{ selectedUserLogin }}
+        <div class="btn btn-primary" (click)="removeUserLogin()">
+            {{ 'artemisApp.studentDashboard.studentLogin.logout' | translate }}
+        </div>
+    </div>
+    <div class="input-group" *ngIf="startLoginProcess">
+        <input [(ngModel)]="selectedUserLogin" />
+        <div class="btn btn-primary" (click)="startUsingLogin()">
+            {{ 'artemisApp.studentDashboard.studentLogin.login' | translate }}
+        </div>
+    </div>
+</div>

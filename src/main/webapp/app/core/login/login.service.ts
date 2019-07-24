@@ -4,6 +4,7 @@ import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service'
 import { LocalStorageService } from 'ngx-webstorage';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
@@ -40,7 +41,7 @@ export class LoginService {
     }
 
     logout() {
-        this.localStorageService.clear();
+        this.localStorageService.clear(CUSTOM_STUDENT_LOGIN_KEY);
         this.authServerProvider.logout().subscribe();
         this.accountService.authenticate(null);
     }

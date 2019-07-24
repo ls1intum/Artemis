@@ -30,6 +30,7 @@ import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.mod
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArTEMiSCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
+import { ArTEMiSCustomStudentLogin } from 'app/components/custom-student-login/custom-student-login.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -46,6 +47,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSCourseRegistrationSelector,
+        ArTEMiSCustomStudentLogin,
     ],
     declarations: [
         OverviewComponent,
