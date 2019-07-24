@@ -337,6 +337,10 @@ public class ModelingSubmissionResource {
             modelingSubmission.setResult(null);
         }
 
+        if (modelingSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            modelingSubmission.getResult().setAssessor(null);
+        }
+
         return ResponseEntity.ok(modelingSubmission);
     }
 

@@ -119,8 +119,8 @@ export class CourseService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }
 
-    getStatsForInstructors(id: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
+    getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 
     findAllCategoriesOfCourse(courseId: number): Observable<HttpResponse<string[]>> {
@@ -188,17 +188,6 @@ export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
     constructor(private http: HttpClient) {}
-
-    findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}`).map((res: Exercise) => this.convertDateFromServer(res));
-    }
-
-    findAllExercises(courseId: number, req?: any): Observable<HttpResponse<Exercise[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/${courseId}/exercises/`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Exercise[]>) => this.convertDateArrayFromServer(res));
-    }
 
     // exercise specific calls
 
