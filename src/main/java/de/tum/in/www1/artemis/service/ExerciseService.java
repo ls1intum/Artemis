@@ -183,6 +183,7 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long exerciseId) {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
+
         if (!exercise.isPresent()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
@@ -216,9 +217,7 @@ public class ExerciseService {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
         // delete all participations for this exercise
-        for (Participation participation : exercise.getParticipations()) {
-            participationService.delete(participation.getId(), true, true);
-        }
+        participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
         if (exercise instanceof QuizExercise) {
 
@@ -229,6 +228,7 @@ public class ExerciseService {
             QuizExercise quizExercise = (QuizExercise) exercise;
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
+            quizExercise.setAllowedNumberOfAttempts(null);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
             quizExercise.setReleaseDate(null);
 
