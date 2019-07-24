@@ -303,6 +303,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 const submission = <TextSubmission>response.body!.submission;
                 this.submission.blocks = submission.blocks;
                 this.loadFeedbacks(response.body!.feedbacks || []);
+                this.validateAssessment();
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
