@@ -143,7 +143,7 @@ public class ComplaintResource {
      * @param exerciseId the id of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/complaints/for-tutor-dashboard/{exerciseId}")
+    @GetMapping("/exercises/{exerciseId}/complaints-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -162,7 +162,7 @@ public class ComplaintResource {
      * @param exerciseId the id of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
-    @GetMapping("/more-feedback/for-tutor-dashboard/{exerciseId}")
+    @GetMapping("/exercises/{exerciseId}/more-feedback-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -198,8 +198,8 @@ public class ComplaintResource {
         // Of course tutors cannot ask for complaints about other tutors.
         // So, if the courseId is null, and the exerciseId is null, we just use the userId of the caller
         if (exerciseId == null && courseId == null) {
-            User callerUser = userService.getUser();
-            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(callerUser.getId());
+            User user = userService.getUser();
+            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
             return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
         }
 

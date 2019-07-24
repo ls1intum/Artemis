@@ -148,13 +148,7 @@ public class TutorLeaderboardService {
             for (TutorLeaderboardAnsweredMoreFeedbackRequestsView moreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
                 if (moreFeedbackRequestsView.getUserId().equals(tutor.getId())) {
                     numberOfAnsweredMoreFeedbackRequests += moreFeedbackRequestsView.getAnsweredRequests();
-                    // answered complaints count only 1x
-                    if (moreFeedbackRequestsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the complaint responses
-                        points += moreFeedbackRequestsView.getPoints();
-                    }
-                    else if (moreFeedbackRequestsView.getAnsweredRequests() != null) {
-                        points += moreFeedbackRequestsView.getAnsweredRequests();
-                    }
+                    // answered requests doesn't count, because it only means that the tutor repaired the negative points
                 }
             }
 
