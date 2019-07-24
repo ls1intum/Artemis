@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
@@ -124,7 +124,9 @@ public class CourseResource {
      * POST /courses : Create a new course.
      *
      * @param course the course to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         course, or with status 400 (Bad Request) if the course has already an
+     *         ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses")
@@ -136,7 +138,7 @@ public class CourseResource {
         }
         try {
             // Check if course shortname matches regex
-            Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
+            Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
             if (!shortNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
             }
@@ -155,8 +157,10 @@ public class CourseResource {
      * PUT /courses : Updates an existing updatedCourse.
      *
      * @param updatedCourse the updatedCourse to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse, or with status 400 (Bad Request) if the updatedCourse is not valid, or with status
-     *         500 (Internal Server Error) if the updatedCourse couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         updatedCourse, or with status 400 (Bad Request) if the updatedCourse
+     *         is not valid, or with status 500 (Internal Server Error) if the
+     *         updatedCourse couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
@@ -173,11 +177,12 @@ public class CourseResource {
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         // only allow admins or instructors of the existing updatedCourse to change it
-        // this is important, otherwise someone could put himself into the instructor group of the updated Course
+        // this is important, otherwise someone could put himself into the instructor
+        // group of the updated Course
         if (user.getGroups().contains(existingCourse.get().getInstructorGroupName()) || authCheckService.isAdmin()) {
             try {
                 // Check if course shortname matches regex
-                Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
+                Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
                 if (!shortNameMatcher.matches()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
@@ -200,7 +205,9 @@ public class CourseResource {
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             return;
         }
-        // only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
+        // only execute this method in the production environment because normal
+        // developers might not have the right to call this method on the authentication
+        // server
         if (course.getInstructorGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
@@ -222,9 +229,11 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
-     * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
-     * database.
+     * POST /courses/{courseId}/register : Register for an existing course. This
+     * method registers the current user for the given course id in case the course
+     * has already started and not finished yet. The user is added to the course
+     * student group in the Authentication System and the course student group is
+     * added to the user's groups in the Artemis database.
      */
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -263,7 +272,9 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses : get all courses that the current user can register to. Decided
+     * by the start and end date and if the registrationEnabled flag is set
+     * correctly
      *
      * @return the list of courses which are active)
      */
@@ -278,7 +289,8 @@ public class CourseResource {
      * GET /courses/for-dashboard
      *
      * @param principal the current user principal
-     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
+     * @return the list of courses (the user has access to) including all exercises
+     *         with participation and result for the user
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -293,9 +305,12 @@ public class CourseResource {
 
         log.debug("/courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user
-        // TODO: can we limit the following call to only retrieve participations and results for active courses?
-        // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
-        // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
+        // TODO: can we limit the following call to only retrieve participations and
+        // results for active courses?
+        // TODO: can we only load the relevant result (the latest rated one which is
+        // displayed in the user interface)
+        // Idea: we should save the current rated result in Participation and make sure
+        // that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
         List<Participation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
@@ -307,7 +322,7 @@ public class CourseResource {
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, user.getLogin());
+                exercise.filterForCourseDashboard(participations, user.getName(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -324,7 +339,8 @@ public class CourseResource {
      * GET /courses/:id/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about a course including all exercises, plus some data for the
+     *         tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -371,11 +387,14 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
-     * assessments - number of assessments assessed by the tutor - number of complaints
+     * GET /courses/:id/stats-for-tutor-dashboard A collection of useful statistics
+     * for the tutor course dashboard, including: - number of submissions to the
+     * course - number of assessments - number of assessments assessed by the tutor
+     * - number of complaints
      *
      * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about a course including all exercises, plus some data for the
+     *         tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -407,7 +426,8 @@ public class CourseResource {
      * GET /courses/:id : get the "id" course.
      *
      * @param id the id of the course to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or
+     *         with status 404 (Not Found)
      */
     @GetMapping("/courses/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -423,7 +443,8 @@ public class CourseResource {
      * GET /courses/:id : get the "id" course.
      *
      * @param id the id of the course to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or
+     *         with status 404 (Not Found)
      */
     @GetMapping("/courses/{id}/with-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -436,11 +457,13 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
-     * instructors for the instructor dashboard
+     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id"
+     * course, with text and modelling exercises and their participations It can be
+     * used only by instructors for the instructor dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or
+     *         with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -481,11 +504,14 @@ public class CourseResource {
     /**
      * GET /courses/:id/stats-for-instructor-dashboard
      * <p>
-     * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints - tutor leaderboard data
+     * A collection of useful statistics for the instructor course dashboard,
+     * including: - number of students - number of instructors - number of
+     * submissions - number of assessments - number of complaints - number of open
+     * complaints - tutor leaderboard data
      *
      * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about a course including all exercises, plus some data for the
+     *         tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -560,55 +586,11 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
-     *
-     * @param courseId the id of the course to get the results from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
-
-        User student = userService.getUser();
-        Course course = courseService.findOne(courseId);
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
-
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
-
-        for (Exercise exercise : exercises) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
-
-            exercise.setParticipations(new HashSet<>());
-
-            // Removing not needed properties and sensitive information for students
-            exercise.setCourse(null);
-            if (isStudent) {
-                exercise.filterSensitiveInformation();
-            }
-
-            for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
-
-                participation.setResults(participation.getResults());
-                exercise.addParticipation(participation);
-            }
-            course.addExercises(exercise);
-        }
-
-        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
-
-        return ResponseEntity.ok().body(course);
-    }
-
-    /**
      * GET /courses/:courseId/categories : Returns all categories used in a course
      *
      * @param courseId the id of the course to get the categories from
-     * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and the list of categories or
+     *         with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -620,7 +602,7 @@ public class CourseResource {
         User user = userService.getUser();
         Course course = courseService.findOne(courseId);
 
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, user);
+        List<Exercise> exercises = exerciseService.findAllExercisesForCourseAdministration(course, user);
         List<String> categories = new ArrayList<>();
         for (Exercise exercise : exercises) {
             categories.addAll(exercise.getCategories());

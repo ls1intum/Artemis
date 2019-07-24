@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -111,18 +110,29 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
     }
 
+    /**
+     * Get the result of the modeling submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
+     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
+     * the corresponding exercise is in the future (or not set).
+     *
+     * @param submissionId the id of the submission that should be sent to the client
+     * @return the submission with the given id
+     */
     @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+        log.debug("REST request to get assessment for submission with id {}", submissionId);
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Participation participation = submission.getParticipation();
         Exercise exercise = participation.getExercise();
-        if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
-            return forbidden();
-        }
+
         Result result = submission.getResult();
         if (result == null) {
             return notFound();
+        }
+
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+            return forbidden();
         }
 
         // remove sensitive information for students
@@ -177,25 +187,26 @@ public class ModelingAssessmentResource extends AssessmentResource {
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
-            List<ModelAssessmentConflict> conflicts = new ArrayList<>();
+            // SK: deactivate conflict handling for now, because it is not fully implemented yet.
+            // List<ModelAssessmentConflict> conflicts = new ArrayList<>();
+            // if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            // try {
+            // conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
+            // }
+            // catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
+            // log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
+            // }
+            // }
+            // if (!conflicts.isEmpty() && !ignoreConflict) {
+            // conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
+            // return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
+            // }
+            // else {
+            modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                try {
-                    conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
-                }
-                catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
-                    log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
-                }
+                compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
             }
-            if (!conflicts.isEmpty() && !ignoreConflict) {
-                conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
-            }
-            else {
-                modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
-                if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                    compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
-                }
-            }
+            // }
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
@@ -253,6 +264,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
             result.getParticipation().setResults(null);
+        }
+
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            result.getParticipation().setStudent(null);
         }
 
         return ResponseEntity.ok(result);

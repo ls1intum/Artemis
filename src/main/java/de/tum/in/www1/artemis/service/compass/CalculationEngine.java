@@ -13,12 +13,13 @@ import de.tum.in.www1.artemis.service.compass.grade.Grade;
 public interface CalculationEngine {
 
     /**
-     * Get the id of the next optimal modeling submission. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which can be used for
-     * automatic assessments.
+     * Get the given number of ids of the next optimal modeling submissions. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which
+     * can be used for automatic assessments.
      *
-     * @return the id of the next optimal modeling submission
+     * @param numberOfModels the number of next optimal models to load
+     * @return the ids of the next optimal modeling submissions, or an empty list if there are no unhandled submissions
      */
-    Long getNextOptimalModel();
+    List<Long> getNextOptimalModels(int numberOfModels);
 
     /**
      * Get the assessment result for a model. If no assessment is saved for the given model, it tries to create a new one automatically with the existing information of the engine.

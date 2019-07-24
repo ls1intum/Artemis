@@ -30,13 +30,13 @@ export class ParticipationService {
         return this.http.put<Participation>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+    find(participationId: number): Observable<EntityResponseType> {
+        return this.http.get<Participation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findWithLatestResult(id: number): Observable<EntityResponseType> {
+    findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Participation>(`${this.resourceUrl}/${id}/withLatestResult`, { observe: 'response' })
+            .get<Participation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -64,9 +64,9 @@ export class ParticipationService {
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    delete(id: number, req?: any): Observable<HttpResponse<any>> {
+    delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params: options, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
 
     cleanupBuildPlan(participation: Participation): Observable<EntityResponseType> {
@@ -88,8 +88,8 @@ export class ParticipationService {
         });
     }
 
-    downloadArtifact(id: number) {
-        return this.http.get(`${this.resourceUrl}/${id}/buildArtifact`, { responseType: 'blob' }).map(artifact => {
+    downloadArtifact(participationId: number) {
+        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).map(artifact => {
             return artifact;
         });
     }

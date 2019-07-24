@@ -47,7 +47,7 @@
                 <input
                     #editingInput
                     *ngIf="editing === filteredTestCases[filteredTestCases.indexOf(row)]"
-                    class="edit-weight__input"
+                    class="edit-weight__input form-control mr-2"
                     autofocus
                     (blur)="updateWeight($event)"
                     (keyup.enter)="updateWeight($event)"

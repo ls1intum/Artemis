@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { of, Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -165,5 +166,29 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['testX', 'testY']);
+    }));
+
+    it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.editMode = false;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(0);
+        expect(comp.exerciseTestCases).to.be.empty;
+
+        expect(comp.testCaseSubscription).to.be.undefined;
+        expect(subscribeForTestCaseSpy).not.to.have.been.called;
+        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
+
+        const saveProblemStatementButton = debugElement.query(By.css('#save-instructions-button'));
+        expect(saveProblemStatementButton).not.to.exist;
     }));
 });

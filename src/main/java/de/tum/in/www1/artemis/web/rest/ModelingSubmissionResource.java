@@ -212,7 +212,7 @@ public class ModelingSubmissionResource {
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
-            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }
@@ -335,6 +335,10 @@ public class ModelingSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getResult() != null && (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null)) {
             modelingSubmission.setResult(null);
+        }
+
+        if (modelingSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            modelingSubmission.getResult().setAssessor(null);
         }
 
         return ResponseEntity.ok(modelingSubmission);
