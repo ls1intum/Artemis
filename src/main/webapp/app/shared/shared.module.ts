@@ -12,11 +12,12 @@ import {
     TypeCheckPipe,
     HtmlForMarkdownPipe,
     TruncatePipe,
+    CacheableImageService,
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
 import { NgbDateMomentAdapter } from './util/datepicker-adapter';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ExerciseTypePipe } from 'app/entities/exercise';
 import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
 import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
@@ -28,7 +29,6 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         SafeHtmlPipe,
         SafeUrlPipe,
         RemoveKeysPipe,
-        SecuredImageComponent,
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
@@ -36,6 +36,7 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         HtmlForMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
+        SecuredImageComponent,
     ],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
@@ -46,7 +47,6 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         SafeHtmlPipe,
         SafeUrlPipe,
         RemoveKeysPipe,
-        SecuredImageComponent,
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
@@ -54,6 +54,7 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         HtmlForMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
+        SecuredImageComponent,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

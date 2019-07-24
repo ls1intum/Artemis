@@ -1,11 +1,12 @@
 import { Component, Input, OnChanges, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { DOMStorageStrategy } from 'ngx-cacheable/common/DOMStorageStrategy';
 import { Injectable } from '@angular/core';
 import { Cacheable } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, Subscription, of, isObservable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, pipe, of, isObservable, UnaryFunction } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { DOMStorageStrategy } from 'ngx-cacheable/common/DOMStorageStrategy';
 import { AccountService } from 'app/core';
+import { base64StringToBlob, blobToBase64String } from 'blob-util';
 
 const logoutSubject = new Subject<void>();
 
@@ -43,7 +44,7 @@ export class CacheableImageService implements OnInit, OnDestroy {
     })
     public loadCached(url: string): Observable<any> {
         console.log('calling api');
-        return this.httpClient.get(url, { responseType: 'blob' });
+        return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
     }
 
     /**
@@ -52,6 +53,13 @@ export class CacheableImageService implements OnInit, OnDestroy {
      * @param url
      */
     public loadWithoutCache(url: string): Observable<any> {
-        return this.httpClient.get(url, { responseType: 'blob' });
+        return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
     }
+
+    /**
+     * Map a Blob to a storable base64 url string.
+     */
+    private mapBlobToUrlString = (): UnaryFunction<Observable<Blob>, Observable<string>> => {
+        return pipe(switchMap(blobToBase64String));
+    };
 }

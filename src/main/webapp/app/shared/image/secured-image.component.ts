@@ -1,8 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
+import { BehaviorSubject, isObservable, Observable, of, Subject } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CacheableImageService } from 'app/components/util/cacheable-image.service';
+import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
+import { base64StringToBlob, blobToBase64String } from 'blob-util';
+
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum QuizEmitStatus {
@@ -71,9 +73,14 @@ export class SecuredImageComponent implements OnChanges {
                 // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
                 return isObservable(res) ? res : of(res);
             }),
-            map(e => {
+            map((base64String: string) => {
+/*                const subject = new Subject();
+                const fr = new FileReader();
+                fr.onload = (() => console.log(JSON.stringify(fr.result)));
+                fr.readAsText(base64String);*/
+                const blob = base64StringToBlob(base64String, 'image/png');
                 this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
-                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
+                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
             }),
             catchError(error => {
                 if (this.retryCounter === 0) {
