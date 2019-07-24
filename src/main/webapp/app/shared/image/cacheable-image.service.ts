@@ -10,8 +10,14 @@ import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy'
 
 const logoutSubject = new Subject<void>();
 
+export interface ICacheableImageService {
+    loadCachedLocalStorage(url: string): Observable<any>;
+    loadCachedSessionStorage(url: string): Observable<any>;
+    loadWithoutCache(url: string): Observable<any>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class CacheableImageService implements OnDestroy {
+export class CacheableImageService implements ICacheableImageService, OnDestroy {
     private userChangeSubscription: Subscription;
 
     constructor(private accountService: AccountService, private httpClient: HttpClient) {

@@ -41,10 +41,8 @@ export class SecuredImageComponent implements OnChanges {
     // This part just creates an rxjs stream from the src
     // this makes sure that we can handle it when the src changes
     // or even when the component gets destroyed
-    @Input()
-    mobileDragAndDrop: boolean;
-    @Input()
-    private src: string;
+    @Input() mobileDragAndDrop: boolean;
+    @Input() private src: string;
     @Input() cachingStrategy = CachingStrategy.LOCAL_STORAGE;
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
