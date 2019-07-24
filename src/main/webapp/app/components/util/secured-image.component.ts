@@ -1,7 +1,8 @@
-import { Component, Input, OnChanges, EventEmitter, Output } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
+import { CacheableImageService } from 'app/components/util/cacheable-image.service';
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum QuizEmitStatus {
@@ -37,6 +38,7 @@ export class SecuredImageComponent implements OnChanges {
     mobileDragAndDrop: boolean;
     @Input()
     private src: string;
+    @Input() useCache = true;
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
 
@@ -53,7 +55,7 @@ export class SecuredImageComponent implements OnChanges {
     }
 
     // we need HttpClient to load the image and DomSanitizer to trust the url
-    constructor(private httpClient: HttpClient, private domSanitizer: DomSanitizer) {}
+    constructor(private domSanitizer: DomSanitizer, private cacheableImageService: CacheableImageService) {}
 
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
@@ -63,13 +65,17 @@ export class SecuredImageComponent implements OnChanges {
     }
 
     private loadImage(url: string): Observable<any> {
-        return this.httpClient
-            .get(url, { responseType: 'blob' })
-            .map(e => {
+        return of(null).pipe(
+            switchMap(() => {
+                const res = this.useCache ? this.cacheableImageService.loadCached(url) : this.cacheableImageService.loadWithoutCache(url);
+                // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
+                return isObservable(res) ? res : of(res);
+            }),
+            map(e => {
                 this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
                 return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
-            })
-            .catch(error => {
+            }),
+            catchError(error => {
                 if (this.retryCounter === 0) {
                     this.retryCounter++;
                     return this.loadImage(url);
@@ -77,6 +83,7 @@ export class SecuredImageComponent implements OnChanges {
                     this.endLoadingProcess.emit(QuizEmitStatus.ERROR);
                 }
                 return error;
-            });
+            }),
+        );
     }
 }
