@@ -43,7 +43,6 @@ export class CacheableImageService implements OnInit, OnDestroy {
         cacheBusterObserver: logoutSubject.asObservable(),
     })
     public loadCached(url: string): Observable<any> {
-        console.log('calling api');
         return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
     }
 
