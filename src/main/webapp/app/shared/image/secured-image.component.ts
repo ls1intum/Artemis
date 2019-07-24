@@ -12,6 +12,12 @@ export const enum QuizEmitStatus {
     LOADING = 'loading',
 }
 
+export enum CachingStrategy {
+    LOCAL_STORAGE = 'LOCAL_STORAGE',
+    SESSION_STORAGE = 'SESSION_STORAGE',
+    NONE = 'NONE',
+}
+
 /**
  * Solution taken from: https://stackblitz.com/edit/secure-image-loads?file=app%2Fsecured-image.component.ts
  * Some browsers (i.e. Chrome) perform some toString function on the src attribute, which causes null to become 'null'
@@ -39,7 +45,7 @@ export class SecuredImageComponent implements OnChanges {
     mobileDragAndDrop: boolean;
     @Input()
     private src: string;
-    @Input() useCache = true;
+    @Input() cachingStrategy = CachingStrategy.LOCAL_STORAGE;
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
 
@@ -68,7 +74,14 @@ export class SecuredImageComponent implements OnChanges {
     private loadImage(url: string): Observable<any> {
         return of(null).pipe(
             switchMap(() => {
-                const res = this.useCache ? this.cacheableImageService.loadCached(url) : this.cacheableImageService.loadWithoutCache(url);
+                let res;
+                if (this.cachingStrategy === CachingStrategy.SESSION_STORAGE) {
+                    res = this.cacheableImageService.loadCachedSessionStorage(url);
+                } else if (this.cachingStrategy === CachingStrategy.LOCAL_STORAGE) {
+                    res = this.cacheableImageService.loadCachedLocalStorage(url);
+                } else {
+                    res = this.cacheableImageService.loadWithoutCache(url);
+                }
                 // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
                 return isObservable(res) ? res : of(res);
             }),

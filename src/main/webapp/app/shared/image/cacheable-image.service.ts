@@ -6,6 +6,7 @@ import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { switchMap, tap, distinctUntilChanged } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { blobToBase64String } from 'blob-util';
+import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
 
 const logoutSubject = new Subject<void>();
 
@@ -38,7 +39,8 @@ export class CacheableImageService implements OnDestroy {
     }
 
     /**
-     * Load the image, use a cache. Cache will only be busted on logout.
+     * Load the image, cache it in the LocalStorage. Cache will only be cleared on logout.
+     * Important: Don't use this for large images as the LocalStorage is only 5-10 MB!
      *
      * @param url
      */
@@ -47,7 +49,22 @@ export class CacheableImageService implements OnDestroy {
         cacheBusterObserver: logoutSubject.asObservable(),
         maxCacheCount: 30,
     })
-    public loadCached(url: string): Observable<any> {
+    public loadCachedLocalStorage(url: string): Observable<any> {
+        return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
+    }
+
+    /**
+     * Load the image, cache them in the SessionStorage. Cache will be cleared on logout or when the browser is closed.
+     * Don't overuse this cache, the user could run out of RAM if we store too much in it.
+     *
+     * @param url
+     */
+    @Cacheable({
+        storageStrategy: SessionStorageStrategy,
+        cacheBusterObserver: logoutSubject.asObservable(),
+        maxCacheCount: 100,
+    })
+    public loadCachedSessionStorage(url: string): Observable<any> {
         return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
     }
 
