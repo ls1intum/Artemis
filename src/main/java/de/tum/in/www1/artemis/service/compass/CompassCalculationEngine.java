@@ -265,8 +265,8 @@ public class CompassCalculationEngine implements CalculationEngine {
     @Override
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
         UMLClassDiagram model = this.modelIndex.getModelMap().get(modelId);
-        if (model == null) {
-            return null;
+        if (model == null || grade == null || grade.getJsonIdPointsMapping() == null) {
+            return new ArrayList<>();
         }
 
         List<Feedback> feedbackList = new ArrayList<>();
