@@ -227,7 +227,6 @@ public class ExerciseService {
 
             // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
-
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
             quizExercise.setAllowedNumberOfAttempts(null);
@@ -239,8 +238,8 @@ public class ExerciseService {
             // which delegates some functionality to the exercise service
 
             // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
-            // quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
-            // quizScheduleService.clearQuizData(quizExercise.getId());
+            quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+            quizScheduleService.clearQuizData(quizExercise.getId());
 
             // clean up the statistics
             quizStatisticService.recalculateStatistics(quizExercise);
