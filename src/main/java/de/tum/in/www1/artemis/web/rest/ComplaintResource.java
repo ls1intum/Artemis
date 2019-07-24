@@ -162,7 +162,7 @@ public class ComplaintResource {
      * @param exerciseId the id of the exercise we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
-    @GetMapping("/more-feedback/for-tutor-dashboard//{exerciseId}")
+    @GetMapping("/more-feedback/for-tutor-dashboard/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseService.findOne(exerciseId);
