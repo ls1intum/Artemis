@@ -195,13 +195,13 @@ public class ComplaintResource {
     /**
      * Get /complaints
      * <p>
-     * Get all the complaints.
+     * Get all the complaints for tutor.
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-    public ResponseEntity<List<Complaint>> getComplaintsForInstructor(@RequestParam ComplaintType complaintType) {
+    public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
         // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
         // exercise.
