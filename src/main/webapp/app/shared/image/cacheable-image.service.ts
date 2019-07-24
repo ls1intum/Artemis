@@ -45,6 +45,7 @@ export class CacheableImageService implements OnDestroy {
     @Cacheable({
         storageStrategy: DOMStorageStrategy,
         cacheBusterObserver: logoutSubject.asObservable(),
+        maxCacheCount: 30,
     })
     public loadCached(url: string): Observable<any> {
         return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
