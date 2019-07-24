@@ -105,8 +105,8 @@ public class Complaint implements Serializable {
         return complaintType;
     }
 
-    public Complaint complaintType(ComplaintType ComplaintType) {
-        this.complaintType = ComplaintType;
+    public Complaint complaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
         return this;
     }
 
