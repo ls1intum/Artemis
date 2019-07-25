@@ -62,7 +62,8 @@ public class TextClusteringService {
         Map<Integer, List<TextBlock>> chunks = blocks.stream().collect(groupingBy(block -> counter.getAndIncrement() / embeddingChunkSize, toList()));
         log.debug("Splitted Text Blocks into " + chunks.size() + " chunks.");
 
-        final List<TextEmbedding> textEmbeddings = new ArrayList<>();
+        // Initialize Result Array with final size to prevent overhead of ArrayLists internal array resizing.
+        final List<TextEmbedding> textEmbeddings = new ArrayList<>(blocks.size());
         chunks.forEach((i, chunk) -> {
             log.debug("Computing Language Embeddigns for Chunk " + i + " / " + chunks.size() + ".");
             try {
