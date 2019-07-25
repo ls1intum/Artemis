@@ -11,7 +11,9 @@
                     <fa-icon icon="arrow-right"></fa-icon>
                 </button>
             </div>
-            <ng-template #singleConflict> </ng-template>
+            <ng-template #singleConflict>
+                <span jhiTranslate="modelingAssessmentConflict.conflictResolution">Conflict Resolution</span>
+            </ng-template>
             <jhi-alert></jhi-alert>
             <div class="control-button-container">
                 <button *ngIf="showSave" class="btn btn-primary" (click)="onSave()">
