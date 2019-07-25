@@ -24,6 +24,9 @@ describe('SecuredImageComponent', () => {
     let loadCachedSessionStorageStub: SinonStub;
     let loadWithoutCacheStub: SinonStub;
 
+    // @ts-ignore
+    global.URL.createObjectURL = jest.fn();
+
     let endLoadingProcessStub: SinonStub;
 
     const src = 'this/is/a/fake/url';
@@ -49,9 +52,6 @@ describe('SecuredImageComponent', () => {
                 loadWithoutCacheStub = stub(cacheableImageService, 'loadWithoutCache');
 
                 endLoadingProcessStub = stub(comp.endLoadingProcess, 'emit');
-
-                // @ts-ignore
-                comp.src = src;
             });
     });
 
@@ -62,17 +62,51 @@ describe('SecuredImageComponent', () => {
         endLoadingProcessStub.restore();
     });
 
-    it('should not use cache if cache strategy is set to none', fakeAsync(() => {
+    it('should not use cache if cache strategy is set to none', () => {
         comp.cachingStrategy = CachingStrategy.NONE;
         loadWithoutCacheStub.returns(of(base64String));
 
+        // @ts-ignore
+        comp.src = src;
         comp.ngOnChanges();
 
         fixture.detectChanges();
-        tick();
 
         expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
-        // It should only be triggered once, but this is an implementation detail of the component and only happends because of the way the test is structered.
-        expect(loadWithoutCacheStub).to.have.been.calledTwice;
-    }));
+        expect(loadWithoutCacheStub).to.have.been.calledOnceWithExactly(src);
+        expect(loadCachedSessionStorageStub).not.to.have.been.called;
+        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+    });
+
+    it('should use the local storage as a cache if selected as the storage strategy', () => {
+        comp.cachingStrategy = CachingStrategy.LOCAL_STORAGE;
+        loadCachedLocalStorageStub.returns(of(base64String));
+
+        // @ts-ignore
+        comp.src = src;
+        comp.ngOnChanges();
+
+        fixture.detectChanges();
+
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.to.have.been.called;
+        expect(loadCachedSessionStorageStub).not.to.have.been.called;
+        expect(loadCachedLocalStorageStub).to.have.been.calledOnceWithExactly(src);
+    });
+
+    it('should use the session storage as a cache if selected as the storage strategy', () => {
+        comp.cachingStrategy = CachingStrategy.SESSION_STORAGE;
+        loadCachedSessionStorageStub.returns(of(base64String));
+
+        // @ts-ignore
+        comp.src = src;
+        comp.ngOnChanges();
+
+        fixture.detectChanges();
+
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.to.have.been.called;
+        expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
+        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+    });
 });

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { base64StringToBlob } from 'blob-util';
@@ -53,7 +53,10 @@ export class SecuredImageComponent implements OnChanges {
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
     // new resource would be loaded
-    dataUrl$ = this.src$.switchMap(url => this.loadImage(url));
+    dataUrl$ = this.src$.pipe(
+        filter(url => !!url),
+        switchMap(url => this.loadImage(url)),
+    );
 
     ngOnChanges(): void {
         this.src$.next(this.src);
