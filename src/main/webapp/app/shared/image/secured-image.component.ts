@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
-import { catchError, filter, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { base64StringToBlob } from 'blob-util';
@@ -87,9 +87,13 @@ export class SecuredImageComponent implements OnChanges {
                 return isObservable(res) ? res : of(res);
             }),
             map((base64String: string) => {
-                const blob = base64StringToBlob(base64String, 'application/json');
-                this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
+                return base64StringToBlob(base64String, 'application/json');
+            }),
+            map((blob: Blob) => {
                 return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
+            }),
+            tap(() => {
+                this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
             }),
             catchError(error => {
                 if (this.retryCounter === 0) {
