@@ -21,12 +21,14 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     @Input() modelingExercise: ModelingExercise;
     @Input() leftTitle: string;
+    @Input() leftButtonTitle: string = 'Placeholder';
     @Input() leftModel: UMLModel;
     @Input() leftFeedbacks: Feedback[];
     @Input() leftHighlightedElementIds: Set<string> = new Set<string>();
     @Input() leftCenteredElementId: string;
     @Input() leftConflictingElemenId: string;
     @Input() rightTitle: string;
+    @Input() rightButtonTitle: string = 'Placeholder';
     @Input() rightModel: UMLModel;
     @Input() rightFeedback: Feedback[];
     @Input() rightHighlightedElementIds: Set<string> = new Set<string>();
@@ -53,7 +55,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.updateHighlightColor();
         }
         if (changes.rightFeedback) {
-            this.rightFeedbacksCopy = [...changes.rightFeedback.currentValue];
+            this.rightFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
             // if (this.userInteractionWithConflict) {
             //     this.updateCurrentState();
             // }

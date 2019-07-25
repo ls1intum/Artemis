@@ -19,22 +19,25 @@ export class InstructorConflictResolutionComponent implements OnInit {
     // private conflictId: number;
     conflicts: Conflict[] = [];
     modelingExercise: ModelingExercise;
-
     conflictResolutionStates: ConflictResolutionState[];
-    currentState: ConflictResolutionState;
 
+    currentState: ConflictResolutionState;
     currentConflict: Conflict | undefined;
+
     currentUserId: number | null;
     rightModel: UMLModel;
     rightConflictingResult: ConflictingResult | undefined;
     rightHighlightedElementIds: Set<string>;
     rightCenteredElementId: string;
-    currentFeedbacksCopy: Feedback[];
-
+    rightFeedbacksCopy: Feedback[];
     leftConflictingResult: ConflictingResult;
+
     leftModel: UMLModel;
     leftHighlightedElementIds: Set<string>;
     leftCenteredElementId: string;
+    leftFeedbacksCopy: Feedback[];
+
+    private chosenFeedback: Feedback | undefined;
 
     constructor(
         private route: ActivatedRoute,
@@ -63,28 +66,21 @@ export class InstructorConflictResolutionComponent implements OnInit {
     }
 
     initComponent() {
-        // this.initResolutionStates(this.conflicts);
         this.updateCurentState(ConflictResolutionState.UNHANDLED);
         this.onCurrentConflictChanged(0);
         if (this.currentConflict) {
             this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation!.exercise as ModelingExercise;
         }
-        // if (this.currentConflict && this.rightConflictingResult) {
-        //     this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.rightConflictingResult.result!.feedbacks));
-        //     this.rightModel = JSON.parse((this.rightConflictingResult.result.submission as ModelingSubmission).model);
-        //     this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation!.exercise as ModelingExercise;
-        // }
     }
 
     onCurrentConflictChanged(index: number) {
         this.currentConflict = this.conflicts[index];
         if (this.currentConflict) {
             this.rightConflictingResult = this.currentConflict.causingConflictingResult;
-            // if (this.conflictResolutionStates) {
-            //     this.currentState = this.conflictResolutionStates[conflictIndex];
-            // }
+            this.rightFeedbacksCopy = JSON.parse(JSON.stringify(this.rightConflictingResult.result!.feedbacks));
             this.rightModel = JSON.parse((this.rightConflictingResult.result.submission as ModelingSubmission).model);
             this.leftConflictingResult = this.currentConflict.resultsInConflict[0];
+            this.leftFeedbacksCopy = JSON.parse(JSON.stringify(this.leftConflictingResult.result!.feedbacks));
             this.leftModel = JSON.parse((this.leftConflictingResult.result.submission as ModelingSubmission).model);
             this.updateHighlightedElements();
             this.updateCenteredElements();
@@ -93,12 +89,22 @@ export class InstructorConflictResolutionComponent implements OnInit {
 
     onSubmit(escalatedConflicts: Conflict[]) {}
 
-    onKeepYours() {
+    useRight() {
+        if (this.rightConflictingResult) {
+            this.chosenFeedback = this.rightConflictingResult.getReferencedFeedback();
+        }
         this.updateCurentState(ConflictResolutionState.RESOLVED);
     }
 
-    onTakeOver() {
+    useLeft() {
+        if (this.leftConflictingResult) {
+            this.chosenFeedback = this.leftConflictingResult.getReferencedFeedback();
+        }
         this.updateCurentState(ConflictResolutionState.RESOLVED);
+    }
+
+    private findFeedbackById(feedbacks: Feedback[], referenceId: string): Feedback | undefined {
+        return feedbacks.find(feedback => feedback.referenceId == referenceId);
     }
 
     // onFeedbackChanged(feedbacks: Feedback[]) {

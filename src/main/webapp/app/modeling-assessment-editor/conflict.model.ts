@@ -21,6 +21,10 @@ export class ConflictingResult {
         this.result = result;
         this.updatedFeedback = updatedFeedback;
     }
+
+    getReferencedFeedback(): Feedback | undefined {
+        return this.result.feedbacks.find(value => value.referenceId === this.modelElementId);
+    }
 }
 
 export enum EscalationState {

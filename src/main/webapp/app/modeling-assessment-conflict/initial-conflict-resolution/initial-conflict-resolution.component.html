@@ -1,7 +1,6 @@
-<jhi-conflict-control-bar
+rn start<jhi-conflict-control-bar
     [conflicts]="conflicts"
     [conflictResolutionStates]="conflictResolutionStates"
-    (save)="onSave()"
     (submit)="onSubmit($event)"
     (selectedConflictChanged)="onCurrentConflictChanged($event)"
 >
@@ -10,6 +9,7 @@
     *ngIf="currentConflict"
     [modelingExercise]="modelingExercise"
     [conflictState]="currentState"
+    leftButtonTitle="{{ 'modelingAssessmentConflict.button.acceptTheirs' | translate }}"
     [leftModel]="conflictingModel"
     [leftFeedbacks]="conflictingResult.result.feedbacks"
     [leftHighlightedElementIds]="conflictingHighlightedElementIds"
@@ -17,6 +17,7 @@
     [leftConflictingElemenId]="conflictingCenteredElementId"
     [resultsInConflict]="currentConflict.resultsInConflict"
     rightTitle="{{ 'modelingAssessmentConflict.ownAssessmentTitle' | translate }}"
+    rightButtonTitle="{{ 'modelingAssessmentConflict.button.keepYours' | translate }}"
     [rightModel]="currentModel"
     [rightFeedback]="mergedFeedbacks"
     [rightHighlightedElementIds]="currentHighlightedElementIds"
