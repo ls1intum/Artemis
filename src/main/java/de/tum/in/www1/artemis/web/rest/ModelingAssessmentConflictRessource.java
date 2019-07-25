@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
@@ -121,7 +122,7 @@ public class ModelingAssessmentConflictRessource {
             @ApiResponse(code = 200, message = PUT_ESCALATE_BULK_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/model-assessment-conflicts/escalate")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity escalateConflict(@RequestBody List<ModelAssessmentConflict> conflicts) {
+    public ResponseEntity escalateConflicts(@RequestBody List<ModelAssessmentConflict> conflicts) {
         for (ModelAssessmentConflict conflict : conflicts) {
             Exercise exercise = conflictService.getExerciseOfConflict(conflict.getId());
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -147,5 +148,17 @@ public class ModelingAssessmentConflictRessource {
         }
         conflictService.updateEscalatedConflicts(conflicts, currentUser);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/model-assessment-conflicts/{conflictId}/resolve")
+    @PreAuthorize("hasAnyRole( 'INSTRUCTOR')")
+    public ResponseEntity resolveConflict(@RequestBody Feedback decision, @PathVariable Long conflictId) {
+        Exercise exercise = conflictService.getExerciseOfConflict(conflictId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        ModelAssessmentConflict storedConflict = conflictService.findOne(conflictId);
+        conflictService.resolveConflictByInstructor(storedConflict, decision);
+        return ResponseEntity.ok("");
     }
 }

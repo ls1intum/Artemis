@@ -3,8 +3,12 @@
         "conflictResolution": "Conflict Resolution",
         "conflicts": "Conflict",
         "ownAssessmentTitle": "Your current assessment",
+        "causingAssessment": "Causing Assessment",
+        "conflictingAssessment": "Conflicting Assessment",
         "button": {
             "keepYours": "Keep Yours",
+            "useLeft": "Use Left",
+            "useRight": "Use Right",
             "acceptTheirs": "Take Over",
             "submitAnyways": "Submit Anyways"
         },

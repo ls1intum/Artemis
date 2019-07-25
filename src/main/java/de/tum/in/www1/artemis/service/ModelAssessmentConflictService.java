@@ -124,6 +124,12 @@ public class ModelAssessmentConflictService {
         }));
     }
 
+    @Transactional
+    public Exercise getExerciseOfConflict(Long conflictId) {
+        ModelAssessmentConflict conflict = findOne(conflictId);
+        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
+    }
+
     /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
      *
@@ -140,14 +146,17 @@ public class ModelAssessmentConflictService {
                 conflictingResult -> conflictingResult.setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
     }
 
-    @Transactional
-    public Exercise getExerciseOfConflict(Long conflictId) {
-        ModelAssessmentConflict conflict = findOne(conflictId);
-        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
-    }
-
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
         modelAssessmentConflictRepository.saveAll(conflicts);
+    }
+
+    @Transactional
+    public void resolveConflictByInstructor(ModelAssessmentConflict conflict, Feedback decision) {
+        verifyNotResolved(conflict);
+        compassService.applyUpdateOnSubmittedAssessment(conflict.getCausingConflictingResult().getResult(), decision);
+        conflict.getResultsInConflict().forEach(conflictingResult -> compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), decision));
+        conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
+        conflict.setResolutionDate(ZonedDateTime.now());
     }
 
     /**
@@ -159,10 +168,7 @@ public class ModelAssessmentConflictService {
      */
     @Transactional
     public ModelAssessmentConflict escalateConflict(ModelAssessmentConflict storedConflict) {
-        if (storedConflict.isResolved()) {
-            log.error("Escalating resolved conflict {} is not possible.", storedConflict.getId());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + storedConflict.getId() + "has already been resolved");
-        }
+        verifyNotResolved(storedConflict);
         switch (storedConflict.getState()) {
         case UNHANDLED:
             Set<Result> distinctResultsInConflict = new HashSet<>();
@@ -237,7 +243,7 @@ public class ModelAssessmentConflictService {
                 conflictingResultService.updateExistingConflictingResults(conflict, newFeedbacks);
             }
             else {
-                resolveConflict(conflict);
+                resolveConflictByTutor(conflict);
             }
         });
     }
@@ -275,7 +281,7 @@ public class ModelAssessmentConflictService {
     /**
      * Updates the state of the given conflict to resolved depending on the previous state of the conflict and sets the resolution date
      */
-    private void resolveConflict(ModelAssessmentConflict conflict) {
+    private void resolveConflictByTutor(ModelAssessmentConflict conflict) {
         switch (conflict.getState()) {
         case UNHANDLED:
             conflict.setState(EscalationState.RESOLVED_BY_CAUSER);
@@ -286,12 +292,8 @@ public class ModelAssessmentConflictService {
             conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
             conflict.setResolutionDate(ZonedDateTime.now());
             break;
-        case ESCALATED_TO_INSTRUCTOR:
-            conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
         default:
-            log.error("Tried to resolve already resolved conflict {}", conflict);
+            log.error("Failed to resolve conflict {}. Illegal escalation state", conflict);
             break;
         }
     }
@@ -309,7 +311,7 @@ public class ModelAssessmentConflictService {
         storedConflictingResult.setUpdatedFeedback(updatedConflictingResult.getUpdatedFeedback());
         if (decisionOfAllTutorsPresent(storedConflict)) {
             if (allTutorsAcceptedConflictCausingFeedback(storedConflict)) {
-                resolveConflict(storedConflict);
+                resolveConflictByTutor(storedConflict);
             }
             else {
                 escalateConflict(storedConflict);
@@ -340,5 +342,12 @@ public class ModelAssessmentConflictService {
 
     private boolean decisionOfAllTutorsPresent(ModelAssessmentConflict conflict) {
         return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getUpdatedFeedback() != null);
+    }
+
+    private void verifyNotResolved(ModelAssessmentConflict conflict) {
+        if (conflict.isResolved()) {
+            log.error("Escalating resolved conflict {} is not possible.", conflict.getId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + conflict.getId() + "has already been resolved");
+        }
     }
 }

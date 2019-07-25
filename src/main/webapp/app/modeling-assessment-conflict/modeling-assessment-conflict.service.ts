@@ -4,6 +4,8 @@ import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conf
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { map } from 'rxjs/operators';
+import { Feedback } from 'app/entities/feedback';
 
 @Injectable({
     providedIn: 'root',
@@ -31,15 +33,15 @@ export class ModelingAssessmentConflictService {
     }
 
     getConflict(conflictId: number): Observable<Conflict> {
-        return this.http.get<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/${conflictId}`);
+        return this.http.get<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/${conflictId}`).pipe(map(conflict => this.convertConflict(conflict)));
     }
 
     getConflictsForSubmission(submissionID: number): Observable<Conflict[]> {
-        return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
+        return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`);
     }
 
     getConflictsForResultInConflict(resultId: number): Observable<Conflict[]> {
-        return this.http.get<Conflict[]>(`${this.resourceUrl}/results/${resultId}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
+        return this.http.get<Conflict[]>(`${this.resourceUrl}/results/${resultId}/model-assessment-conflicts`).pipe(map(conflicts => this.convertConflicts(conflicts)));
     }
 
     escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
@@ -50,11 +52,18 @@ export class ModelingAssessmentConflictService {
         return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts`, conflicts);
     }
 
-    convertConflicts(conflicts: Conflict[]) {
-        conflicts.forEach((conflict: Conflict) => {
-            this.modelAssessmentService.convertResult(conflict.causingConflictingResult.result);
-            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelAssessmentService.convertResult(conflictingResult.result));
-        });
+    resolveConflict(conflict: Conflict, decision: Feedback): Observable<any> {
+        return this.http.put(`${this.resourceUrl}/model-assessment-conflicts/${conflict.id}/resolve `, decision);
+    }
+
+    convertConflicts(conflicts: Conflict[]): Conflict[] {
+        conflicts.forEach((conflict: Conflict) => this.convertConflict(conflict));
         return conflicts;
+    }
+
+    private convertConflict(conflict: Conflict): Conflict {
+        this.modelAssessmentService.convertResult(conflict.causingConflictingResult.result);
+        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelAssessmentService.convertResult(conflictingResult.result));
+        return conflict;
     }
 }
