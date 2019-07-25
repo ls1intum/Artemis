@@ -169,6 +169,11 @@ public class JSONParser {
                 umlAssociationList.add(newRelation);
             }
             else {
+                if (source == null && umlPackageMap.containsKey(sourceJSONID) || target == null && umlPackageMap.containsKey(targetJSONID)) {
+                    // workaround: prevent exception when a package is source or target of an association
+                    continue;
+                }
+
                 throw new IOException("Relationship source or target not part of model!");
             }
         }
