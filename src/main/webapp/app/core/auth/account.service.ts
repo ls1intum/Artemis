@@ -144,7 +144,8 @@ export class AccountService {
 
     /**
      * Returns the image url of the user or null.
-     * Returns null if the user not not authenticated or the user does not have an image.
+     *
+     * Returns null if the user is not authenticated or the user does not have an image.
      */
     getImageUrl(): string | null {
         return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : null;
