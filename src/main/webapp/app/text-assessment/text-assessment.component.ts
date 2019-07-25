@@ -362,7 +362,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkPermissions();
 
         // Automatically fetch suggested Feedback for Automatic Assessment Enabled exercises.
-        if (this.exercise.automaticAssessmentEnabled) {
+        const needsAutomaticAssmentSuggestions = this.exercise.automaticAssessmentEnabled && (!this.result.feedbacks || this.result.feedbacks.length === 0);
+        if (needsAutomaticAssmentSuggestions) {
             this.predefineTextBlocks();
         }
     }
