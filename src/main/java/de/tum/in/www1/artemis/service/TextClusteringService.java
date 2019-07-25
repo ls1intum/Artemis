@@ -95,9 +95,6 @@ public class TextClusteringService {
             return;
         }
 
-        // Remove reference on `embeddings` to enable garbage collection.
-        embeddings = null;
-
         // Remove Cluster with Key "-1" as it is only contains the blocks belonging to no cluster.
         clusters.remove(-1);
         final List<TextCluster> savedClusters = textClusterRepository.saveAll(clusters.values());
