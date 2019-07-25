@@ -59,7 +59,8 @@ export class ArtemisMarkdown {
      */
     parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
         // split markdownText into main text, hint and explanation
-        const markdownTextParts = markdownText.split(`/\\${ExplanationCommand.identifier}|\\${HintCommand.identifier}/g`);
+        const regex = new RegExp(`\\${ExplanationCommand.identifier.replace(']', '\\]')}|\\${HintCommand.identifier.replace(']', '\\]')}`, 'g');
+        const markdownTextParts = markdownText.split(regex);
         targetObject.text = markdownTextParts[0].trim();
         if (markdownText.indexOf(HintCommand.identifier) !== -1 && markdownText.indexOf(ExplanationCommand.identifier) !== -1) {
             if (markdownText.indexOf(HintCommand.identifier) < markdownText.indexOf(ExplanationCommand.identifier)) {
