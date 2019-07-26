@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -83,6 +82,11 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
+
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -98,6 +102,11 @@ public class TextAssessmentResource extends AssessmentResource {
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -108,6 +117,11 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+
+        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -137,15 +151,19 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
-    @Transactional
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
-        final Result result = resultService.findOneWithSubmission(resultId);
+        final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
         final Exercise exercise = result.getParticipation().getExercise();
         checkAuthorization(exercise);
 
         textBlockService.prepopulateFeedbackBlocks(result);
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            result.getParticipation().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -205,6 +223,10 @@ public class TextAssessmentResource extends AssessmentResource {
         for (Result result : participation.getResults()) {
             List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            participation.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);

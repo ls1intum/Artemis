@@ -107,14 +107,15 @@ public class ExerciseService {
     }
 
     /**
-     * Get all exercises by courseID
+     * Get all exercises for a given course and a given user. This method is used to retrieve this
      *
      * @param course for return of exercises in course
-     * @return the list of entities
+     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercise
+     * @return the list of exercises for the given course and user. This list can be empty, but should not be null
      */
     @Transactional(readOnly = true)
-    public List<Exercise> findAllExercisesByCourseId(Course course, User user) {
-        List<Exercise> exercises = null;
+    public List<Exercise> findAllExercisesForCourseAdministration(Course course, User user) {
+        List<Exercise> exercises = new ArrayList<>();
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findAllByCourseId(course.getId());
@@ -182,6 +183,7 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long exerciseId) {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
+
         if (!exercise.isPresent()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
@@ -215,9 +217,7 @@ public class ExerciseService {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
         // delete all participations for this exercise
-        for (Participation participation : exercise.getParticipations()) {
-            participationService.delete(participation.getId(), true, true);
-        }
+        participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
         if (exercise instanceof QuizExercise) {
 
@@ -228,6 +228,7 @@ public class ExerciseService {
             QuizExercise quizExercise = (QuizExercise) exercise;
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
+            quizExercise.setAllowedNumberOfAttempts(null);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
             quizExercise.setReleaseDate(null);
 
