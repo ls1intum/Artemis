@@ -14,11 +14,17 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
+import { ArTEMiSSharedModule, SafeHtmlPipe } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, ProgrammingExerciseTestCaseService, TestCaseState } from 'src/main/webapp/app/entities/programming-exercise';
+import {
+    ProgrammingExercise,
+    ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseInstructionTaskStatusComponent,
+    ProgrammingExerciseTestCaseService,
+    TestCaseState,
+} from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
@@ -26,6 +32,11 @@ import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionResultDetail } from 'app/code-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,16 +56,19 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructionComponent, SafeHtmlPipe],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, NgbModule],
+            declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
             providers: [
+                ProgrammingExerciseTaskExtensionWrapper,
+                ProgrammingExercisePlantUmlExtensionWrapper,
+                ProgrammingExerciseInstructionService,
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
@@ -189,7 +203,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
     });
 
-    it('should update markdown if the problemStatement is changed', () => {
+    it('should NOT update markdown if the problemStatement is changed', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const oldProblemStatement = 'lorem ipsum';
@@ -207,11 +221,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
-        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
+        expect(updateMarkdownStub).not.to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
 
-    it('should initially update the markdown if there is no participation and the exercise has changed', () => {
+    it('should NOT update the markdown if there is no participation and the exercise has changed', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const newProblemStatement = 'new lorem ipsum';
@@ -228,7 +242,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
-        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
+        expect(updateMarkdownStub).not.to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
 
@@ -264,12 +278,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
+        comp.ngOnInit();
 
         comp.updateMarkdown();
 
         expect(comp.steps).to.have.lengthOf(2);
-        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.NOT_EXECUTED });
-        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS });
+        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.NOT_EXECUTED, tests: ['testBubbleSort'] });
+        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS, tests: ['testMergeSort'] });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;

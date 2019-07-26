@@ -69,6 +69,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
             this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
             this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
         ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
+        this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TestsForTasks) => {
+            this.steps = testsForTasks.map(([, taskName, tests]) => ({
+                done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
+                title: taskName,
+                tests,
+            }));
+        });
     }
 
     /**
@@ -90,13 +97,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
                 });
             }
             this.setupResultWebsocket();
-            this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TestsForTasks) => {
-                this.steps = testsForTasks.map(([, taskName, tests]) => ({
-                    done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
-                    title: taskName,
-                    tests,
-                }));
-            });
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {

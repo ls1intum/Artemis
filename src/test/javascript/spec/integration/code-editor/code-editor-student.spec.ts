@@ -48,6 +48,7 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -227,6 +228,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
+        const markdownPreview = containerDebugElement.query(By.css('.markdown-preview'));
         expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementNoneExecutedRendered);
 
         // called by build output & instructions
