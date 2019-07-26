@@ -43,7 +43,7 @@ export class SecuredImageComponent implements OnChanges {
     // or even when the component gets destroyed
     @Input() mobileDragAndDrop: boolean;
     @Input() private src: string;
-    @Input() cachingStrategy = CachingStrategy.LOCAL_STORAGE;
+    @Input() cachingStrategy = CachingStrategy.SESSION_STORAGE;
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
 

@@ -109,4 +109,19 @@ describe('SecuredImageComponent', () => {
         expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
         expect(loadCachedLocalStorageStub).not.to.have.been.called;
     });
+
+    it('should use the session storage as a cache as the default storage strategy', () => {
+        loadCachedSessionStorageStub.returns(of(base64String));
+
+        // @ts-ignore
+        comp.src = src;
+        comp.ngOnChanges();
+
+        fixture.detectChanges();
+
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.to.have.been.called;
+        expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
+        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+    });
 });
