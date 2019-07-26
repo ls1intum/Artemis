@@ -586,7 +586,7 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
+    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }

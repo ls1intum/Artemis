@@ -138,7 +138,7 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        Optional<ProgrammingExerciseParticipation> participation = getParticipation(planKey);
+        Optional<ProgrammingExerciseParticipation> participation = getParticipationWithResults(planKey);
         if (participation.isPresent()) {
             resultService.onResultNotifiedOld(participation.get());
             return ResponseEntity.ok().build();
@@ -160,7 +160,7 @@ public class ResultResource {
         try {
             String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
             log.info("PlanKey for received notifyResultNew is {}", planKey);
-            Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipation(planKey);
+            Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
             if (optionalParticipation.isPresent()) {
                 ProgrammingExerciseParticipation participation = optionalParticipation.get();
                 if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
@@ -186,7 +186,7 @@ public class ResultResource {
         }
     }
 
-    private Optional<ProgrammingExerciseParticipation> getParticipation(String planKey) {
+    private Optional<ProgrammingExerciseParticipation> getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
         if (planKey.contains(RepositoryType.TEMPLATE.getName())) {
             Optional<TemplateProgrammingExerciseParticipation> templateParticipation = participationService.findTemplateParticipationByBuildPlanId(planKey);
@@ -208,7 +208,7 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey, InitializationState.INITIALIZED);
         Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));

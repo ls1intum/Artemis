@@ -21,4 +21,6 @@ public interface ProgrammingExerciseParticipation {
     public void setProgrammingExercise(ProgrammingExercise programmingExercise);
 
     public void addSubmissions(ProgrammingSubmission submission);
+
+    public void addResult(Result result);
 }

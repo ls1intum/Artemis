@@ -23,6 +23,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("select p from ProgrammingExerciseStudentParticipation p left join p.results pr where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
 
+    @EntityGraph(attributePaths = "results")
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
 
     // TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new

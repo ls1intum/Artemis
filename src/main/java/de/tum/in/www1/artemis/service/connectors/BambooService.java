@@ -6,12 +6,10 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,19 +65,19 @@ public class BambooService implements ContinuousIntegrationService {
     private final GitService gitService;
     private final ResultRepository resultRepository;
     private final FeedbackRepository feedbackRepository;
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final ParticipationRepository participationRepository;
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, StudentParticipationRepository studentParticipationRepository,
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
                          Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.participationRepository = participationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
@@ -485,6 +483,10 @@ public class BambooService implements ContinuousIntegrationService {
                     programmingSubmission.setCommitHash(commitHash);
                     programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 } else {
+                    //TODO: handle the case that the programming submission alredy has a result
+                    if (programmingSubmission.getResult() != null) {
+                        log.warn("A result for the programming submission " + programmingSubmission.getId() + " does already exist");
+                    }
                     log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
                 }
 
@@ -493,7 +495,10 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
             }
 
+            participation.addResult(result);
             resultRepository.save(result);
+            //TODO: we might need to distinguish the type for saving here
+            participationRepository.save((Participation)participation);
 
             return result;
 

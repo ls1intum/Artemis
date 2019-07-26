@@ -98,10 +98,8 @@ public class ResultService {
      * @param result
      */
     public void setAssessor(Result result) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userService.getUser();
         result.setAssessor(currentUser);
-        resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
     /**
