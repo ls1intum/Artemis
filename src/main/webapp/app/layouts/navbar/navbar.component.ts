@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { distinctUntilChanged, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -51,7 +52,14 @@ export class NavbarComponent implements OnInit {
             },
             reason => {},
         );
-        this.getCurrentAccount();
+
+        this.accountService
+            .getAuthenticationState()
+            .pipe(
+                distinctUntilChanged(),
+                tap((user: User) => (this.currAccount = user)),
+            )
+            .subscribe();
     }
 
     changeLanguage(languageKey: string) {
@@ -64,26 +72,14 @@ export class NavbarComponent implements OnInit {
         this.isNavbarCollapsed = true;
     }
 
-    getCurrentAccount() {
-        if (!this.currAccount && this.accountService.isAuthenticated()) {
-            this.accountService.identity().then(acc => {
-                this.currAccount = acc;
-            });
-        }
-        return true;
-    }
-
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }
 
     logout() {
         this.participationWebsocketService.resetLocalCache();
-        this.currAccount = null;
         this.collapseNavbar();
         this.loginService.logout();
-        // noinspection JSIgnoredPromiseFromCall
-        this.router.navigate(['']);
     }
 
     toggleNavbar() {

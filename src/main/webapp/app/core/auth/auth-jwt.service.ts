@@ -69,9 +69,10 @@ export class AuthServerProvider {
         return new Observable(observer => {
             this.$localStorage.clear('authenticationToken');
             this.$sessionStorage.clear('authenticationToken');
-            observer.complete();
+            observer.next();
             // clear notifications on logout
             this.jhiAlertService.clear();
+            observer.complete();
         });
     }
 }
