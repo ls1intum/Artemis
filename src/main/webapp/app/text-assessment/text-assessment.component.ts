@@ -350,7 +350,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      *   - Each reference feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
-     * Additionally, the total score is calculated if the current assessment is valid.
+     * Additionally, the total score is calculated for all numerical credits.
      */
     public validateAssessment() {
         this.assessmentsAreValid = true;
