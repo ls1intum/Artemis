@@ -209,6 +209,7 @@ public class ModelingSubmissionResource {
 
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
+            // TODO rename this, because if Compass is activated we pass a submission with a partial automatic result
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
