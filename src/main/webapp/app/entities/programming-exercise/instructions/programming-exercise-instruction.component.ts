@@ -158,6 +158,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
         this.steps = [];
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+        // Wait a tick for the template to render before injecting the content.
         setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach(callback => callback()), 0);
     }
 

@@ -62,7 +62,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 const taskRegex = /\[task\]\[.*\]\(.*\)/g;
                 // E.g. Implement BubbleSort, testBubbleSort
                 const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)/;
-                const taskContainer = `<div id="task-${idPlaceholder}"></div>`;
+                // Without class="d-flex" the injected components height would be 0.
+                const taskContainer = `<div id="task-${idPlaceholder}" class="d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
                 const testsForTask: TestsForTasks = tasks
                     .map(task => {
