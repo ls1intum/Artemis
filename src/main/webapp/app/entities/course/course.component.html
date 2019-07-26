@@ -1,7 +1,7 @@
 <div>
-    <h4>
-        <span id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</span>
-        <div class="float-right">
+    <div class="d-flex">
+        <h4 id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
+        <div class="ml-auto">
             <div class="btn-group btn-group-toggle">
                 <label class="btn-primary" ngbButtonLabel>
                     <input type="checkbox" formControlName="toggleOnlyActive" ngbButton (change)="showOnlyActive = !showOnlyActive" />
@@ -15,7 +15,7 @@
                 </span>
             </button>
         </div>
-    </h4>
+    </div>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
     <br />
