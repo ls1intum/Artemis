@@ -33,10 +33,10 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
-import { ProgrammingExerciseTaskExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
 
@@ -98,8 +98,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseService,
         ProgrammingExerciseTestCaseService,
         ProgrammingExercisePopupService,
-        ProgrammingExerciseTaskExtensionFactory,
-        ProgrammingExercisePlantUmlExtensionFactory,
+        ProgrammingExerciseTaskExtensionWrapper,
+        ProgrammingExercisePlantUmlExtensionWrapper,
         ProgrammingExerciseInstructionService,
         ProgrammingExercisePlantUmlService,
     ],

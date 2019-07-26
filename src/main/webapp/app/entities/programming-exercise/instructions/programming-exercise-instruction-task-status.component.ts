@@ -1,7 +1,7 @@
 import { ApplicationRef, Component, ComponentFactoryResolver, Injector, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
-import { TestCaseState } from 'app/entities/programming-exercise';
+import { TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
 

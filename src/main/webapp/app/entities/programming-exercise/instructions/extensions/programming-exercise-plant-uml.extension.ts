@@ -1,20 +1,42 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as showdown from 'showdown';
 import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
-import { TestCaseState } from 'app/entities/programming-exercise';
+import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 
 @Injectable()
-export class ProgrammingExercisePlantUmlExtensionFactory {
+export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     private latestResult: Result | null = null;
+    private injectableElementsFoundSubject = new Subject<() => void>();
 
     constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private plantUmlService: ProgrammingExercisePlantUmlService) {}
 
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
+    }
+
+    subscribeForInjectableElementsFound() {
+        return this.injectableElementsFoundSubject.asObservable();
+    }
+
+    private getInjectableElementsForPlantUmls(plantUmls: string[]) {
+        return plantUmls.map((plantUml, index) => {
+            this.plantUmlService
+                .getPlantUmlImage(plantUml)
+                .pipe(
+                    tap((plantUmlSrcAttribute: string) => {
+                        const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
+                        if (plantUmlHtmlContainer) {
+                            plantUmlHtmlContainer.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                        }
+                    }),
+                )
+                .subscribe();
+        });
     }
 
     getExtension() {
@@ -40,23 +62,7 @@ export class ProgrammingExercisePlantUmlExtensionFactory {
                         return testCaseState === TestCaseState.SUCCESS ? 'green' : testCaseState === TestCaseState.FAIL ? 'red' : 'grey';
                     }),
                 );
-                setTimeout(
-                    () =>
-                        plantUmlsValidated.forEach((plantUml, index) => {
-                            this.plantUmlService
-                                .getPlantUmlImage(plantUml)
-                                .pipe(
-                                    tap((plantUmlSrcAttribute: string) => {
-                                        const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
-                                        if (plantUmlHtmlContainer) {
-                                            plantUmlHtmlContainer.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
-                                        }
-                                    }),
-                                )
-                                .subscribe();
-                        }),
-                    0,
-                );
+                this.injectableElementsFoundSubject.next(() => this.getInjectableElementsForPlantUmls(plantUmlsValidated));
                 return replacedText;
             },
         };

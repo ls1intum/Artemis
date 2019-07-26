@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,11 +9,11 @@ import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
-import { Observable, Subscription } from 'rxjs';
+import { merge, Observable, Subscription } from 'rxjs';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ProgrammingExerciseTaskExtensionFactory, TestsForTasks } from './extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionFactory } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseTaskExtensionWrapper, TestsForTasks } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
 type Step = {
@@ -27,7 +27,7 @@ type Step = {
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
-export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
     public exercise: ProgrammingExercise;
     @Input()
@@ -36,8 +36,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
-    @Output()
-    public resultChange = new EventEmitter<Result>();
 
     public problemStatement: string;
     public participationSubscription: Subscription;
@@ -45,11 +43,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isInitial = true;
     public isLoading: boolean;
     public latestResult: Result | null;
+
     public steps: Array<Step> = [];
     public renderedMarkdown: SafeHtml;
+    private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     private markdownExtensions: ShowdownExtension[];
-    generateHtmlSubscription: Subscription;
+    private injectableContentFoundSubscription: Subscription;
+    private generateHtmlSubscription: Subscription;
 
     constructor(
         private translateService: TranslateService,
@@ -58,10 +59,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private participationWebsocketService: ParticipationWebsocketService,
         private markdownService: ArtemisMarkdown,
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private programmingExerciseTaskFactory: ProgrammingExerciseTaskExtensionFactory,
-        private programmingExercisePlantUmlFactory: ProgrammingExercisePlantUmlExtensionFactory,
-    ) {
-        this.markdownExtensions = [this.programmingExerciseTaskFactory.getExtension(), this.programmingExercisePlantUmlFactory.getExtension()];
+        private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
+        private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
+    ) {}
+
+    ngOnInit(): void {
+        this.markdownExtensions = [this.programmingExerciseTaskWrapper.getExtension(), this.programmingExercisePlantUmlWrapper.getExtension()];
+        this.injectableContentFoundSubscription = merge(
+            this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
+            this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
+        ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
     }
 
     /**
@@ -79,11 +86,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             }
             if (this.generateHtmlEvents) {
                 this.generateHtmlEvents.subscribe(() => {
-                    this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+                    this.updateMarkdown();
                 });
             }
             this.setupResultWebsocket();
-            this.programmingExerciseTaskFactory.subscribeForTestForTasks().subscribe((testsForTasks: TestsForTasks) => {
+            this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TestsForTasks) => {
                 this.steps = testsForTasks.map(([, taskName, tests]) => ({
                     done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
                     title: taskName,
@@ -110,11 +117,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     switchMap(() => this.loadInitialResult()),
                     tap(latestResult => {
                         this.latestResult = latestResult;
-                        this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
-                        this.programmingExercisePlantUmlFactory.setLatestResult(this.latestResult);
+                        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
+                        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
                     }),
                     tap(() => {
-                        this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+                        this.updateMarkdown();
                         this.isInitial = false;
                         this.isLoading = false;
                     }),
@@ -138,10 +145,20 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(filter(participation => !!participation))
             .subscribe((result: Result) => {
                 this.latestResult = result;
-                this.programmingExerciseTaskFactory.setLatestResult(this.latestResult);
-                this.programmingExercisePlantUmlFactory.setLatestResult(this.latestResult);
-                this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+                this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
+                this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+                this.updateMarkdown();
             });
+    }
+
+    /**
+     * Render the markdown into html.
+     */
+    updateMarkdown(): void {
+        this.steps = [];
+        this.injectableContentForMarkdownCallbacks = [];
+        this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+        setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach(callback => callback()), 0);
     }
 
     /**
