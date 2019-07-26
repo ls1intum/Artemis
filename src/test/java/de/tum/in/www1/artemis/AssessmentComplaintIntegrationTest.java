@@ -76,7 +76,7 @@ public class AssessmentComplaintIntegrationTest {
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 2, 0);
+        database.addUsers(1, 2, 1);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
@@ -259,20 +259,23 @@ public class AssessmentComplaintIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getSubmittedComplaints_byComplaintType() throws Exception {
         database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
+        String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
+        String coursesUrl = "/api/courses/" + modelingExercise.getCourse().getId() + "/complaints";
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
-        String url = "/api/exercises/" + modelingExercise.getId() + "/complaints";
-        List<ComplaintResponse> complaintResponses = request.getList(url, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponses.size()).isEqualTo(1);
+        List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        List<ComplaintResponse> complaintResponsesByExercise = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponsesByExercise.size()).isEqualTo(complaintResponsesByCourse.size()).isEqualTo(1);
 
         params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        complaintResponses = request.getList(url, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponses.size()).isEqualTo(2);
+        complaintResponsesByCourse = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        complaintResponsesByExercise = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponsesByCourse.size()).isEqualTo(complaintResponsesByExercise.size()).isEqualTo(2);
     }
 
     @Test
