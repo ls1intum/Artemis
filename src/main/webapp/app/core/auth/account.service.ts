@@ -31,7 +31,7 @@ export class AccountService {
         return this.http.post(SERVER_API_URL + 'api/account', account, { observe: 'response' });
     }
 
-    authenticate(identity: User | null): void {
+    authenticate(identity: User | null) {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
         this.authenticationState.next(this.userIdentity);
