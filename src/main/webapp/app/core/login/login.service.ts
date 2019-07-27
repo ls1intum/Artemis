@@ -55,11 +55,11 @@ export class LoginService {
             .pipe(
                 // 2: Set the user's auth object to null as components might have to act on the user being logged out.
                 tap(() => {
-                    this.accountService.authenticate(null);
+                    return this.accountService.authenticate(null);
                 }),
                 // 3: Clear all existing alerts of the user.
                 tap(() => {
-                    this.alertService.clear();
+                    return this.alertService.clear();
                 }),
                 // 4: Navigate to the login screen.
                 switchMap(() => {

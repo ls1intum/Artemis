@@ -10,8 +10,16 @@ export interface Credentials {
     rememberMe: boolean;
 }
 
+export interface IAuthServerProvider {
+    getToken: () => string;
+    login: (credentials: Credentials) => Observable<string>;
+    loginWithToken: (jwt: string, rememberMe: string) => Promise<string>;
+    storeAuthenticationToken: (jwt: string, rememberMe: string) => void;
+    removeAuthTokenFromCaches: () => Observable<null>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class AuthServerProvider {
+export class AuthServerProvider implements IAuthServerProvider {
     constructor(private http: HttpClient, private $localStorage: LocalStorageService, private $sessionStorage: SessionStorageService) {}
 
     getToken() {
