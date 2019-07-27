@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { distinctUntilChanged, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
@@ -17,13 +18,15 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
     currAccount: User | null;
+
+    private authStateSubscription: Subscription;
 
     constructor(
         private loginService: LoginService,
@@ -53,13 +56,20 @@ export class NavbarComponent implements OnInit {
             reason => {},
         );
 
-        this.accountService
+        // The current user is needed to hide menu items for not logged in users.
+        this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
                 distinctUntilChanged(),
                 tap((user: User) => (this.currAccount = user)),
             )
             .subscribe();
+    }
+
+    ngOnDestroy(): void {
+        if (this.authStateSubscription) {
+            this.authStateSubscription.unsubscribe();
+        }
     }
 
     changeLanguage(languageKey: string) {

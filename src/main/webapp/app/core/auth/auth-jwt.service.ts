@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of, Observable } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from '../../app.constants';
-import { JhiAlertService } from 'ng-jhipster';
 
 export interface Credentials {
     username: string | null;
@@ -13,7 +12,7 @@ export interface Credentials {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider {
-    constructor(private http: HttpClient, private $localStorage: LocalStorageService, private $sessionStorage: SessionStorageService, private jhiAlertService: JhiAlertService) {}
+    constructor(private http: HttpClient, private $localStorage: LocalStorageService, private $sessionStorage: SessionStorageService) {}
 
     getToken() {
         return this.$localStorage.retrieve('authenticationToken') || this.$sessionStorage.retrieve('authenticationToken');
