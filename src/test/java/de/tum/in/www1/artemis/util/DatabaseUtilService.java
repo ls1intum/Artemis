@@ -363,7 +363,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);
@@ -390,7 +390,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);
