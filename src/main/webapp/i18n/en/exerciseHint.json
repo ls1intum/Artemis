@@ -4,12 +4,12 @@
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Create a new Exercise Hint",
-                "createOrEditLabel": "Create or edit a Exercise Hint",
+                "createOrEditLabel": "Create or edit an Exercise Hint",
                 "notFound": "No Exercise Hint found"
             },
             "created": "A new Exercise Hint is created with identifier {{ param }}",
-            "updated": "A Exercise Hint is updated with identifier {{ param }}",
-            "deleted": "A Exercise Hint is deleted with identifier {{ param }}",
+            "updated": "An Exercise Hint is updated with identifier {{ param }}",
+            "deleted": "An Exercise Hint is deleted with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Exercise Hint {{ id }}?"
             },
