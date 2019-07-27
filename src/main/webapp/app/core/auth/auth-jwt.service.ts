@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { of, Observable } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from '../../app.constants';
 import { JhiAlertService } from 'ng-jhipster';
@@ -65,14 +65,14 @@ export class AuthServerProvider {
         }
     }
 
-    logout(): Observable<any> {
-        return new Observable(observer => {
-            this.$localStorage.clear('authenticationToken');
-            this.$sessionStorage.clear('authenticationToken');
-            observer.next();
-            // clear notifications on logout
-            this.jhiAlertService.clear();
-            observer.complete();
-        });
+    /**
+     * Removes the user's auth tokens from the browser's caches.
+     * This will lead to all endpoint requests failing with a 401.
+     */
+    removeAuthTokenFromCaches(): Observable<null> {
+        this.$localStorage.clear('authenticationToken');
+        this.$sessionStorage.clear('authenticationToken');
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        return of(null);
     }
 }
