@@ -262,14 +262,6 @@ public abstract class Participation implements Serializable {
         return findLatestSubmissionOfType(TextSubmission.class);
     }
 
-    /**
-     * Removes the student from the participation, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
-     * the student.
-     */
-    public void filterSensitiveInformation() {
-        setStudent(null);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

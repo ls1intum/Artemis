@@ -321,8 +321,8 @@ public class ParticipationResource {
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            participation.filterSensitiveInformation();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise) && participation instanceof StudentParticipation) {
+            ((StudentParticipation) participation).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);

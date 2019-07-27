@@ -73,6 +73,14 @@ public class StudentParticipation extends Participation {
         this.exercise = exercise;
     }
 
+    /**
+     * Removes the student from the participation, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
+     * the student.
+     */
+    public void filterSensitiveInformation() {
+        setStudent(null);
+    }
+
     @Override
     public String toString() {
         return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + ", exercise=" + exercise + '}';
