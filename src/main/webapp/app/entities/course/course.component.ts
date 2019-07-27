@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course',
@@ -44,10 +43,6 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    get today() {
-        return moment(new Date());
-    }
-
     trackId(index: number, item: Course) {
         return item.id;
     }
@@ -61,4 +56,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     }
 
     callback() {}
+
+    get today(): Date {
+        return new Date();
+    }
 }

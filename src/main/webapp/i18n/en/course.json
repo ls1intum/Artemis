@@ -16,8 +16,7 @@
             "detail": {
                 "title": "Course"
             },
-            "showExpired": "Include expired courses",
-            "hideExpired": "Hide expired courses",
+            "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
             "color": "Color",

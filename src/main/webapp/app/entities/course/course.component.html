@@ -1,13 +1,11 @@
 <div>
     <div class="d-flex">
         <h4 id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
-        <div class="ml-auto">
-            <div class="btn-group btn-group-toggle">
-                <label class="btn-primary" ngbButtonLabel>
-                    <input type="checkbox" formControlName="toggleOnlyActive" ngbButton (change)="showOnlyActive = !showOnlyActive" />
-                    {{ (showOnlyActive ? 'artemisApp.course.showExpired' : 'artemisApp.course.hideExpired') | translate }}
-                </label>
-            </div>
+        <div class="ml-auto row">
+            <label class="d-flex align-items-center mb-0 mr-2">
+                <input type="checkbox" [checked]="showOnlyActive" (change)="showOnlyActive = !showOnlyActive" />
+                <span class="ml-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
+            </label>
             <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary jh-create-entity create-course" [routerLink]="['/course/new']">
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel">
@@ -51,7 +49,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let course of courses | sortBy: predicate:reverse; trackBy: trackId">
-                    <ng-container *ngIf="!showOnlyActive || !course.endDate || course.endDate.isAfter(today)">
+                    <ng-container *ngIf="!showOnlyActive || !course.endDate || (course.endDate | amIsAfter: today:'second')">
                         <td>
                             <a [routerLink]="['/course', course.id, 'view']">{{ course.id }}</a>
                         </td>
