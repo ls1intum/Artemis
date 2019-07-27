@@ -60,7 +60,7 @@
                                     <td>{{ attachment.name }}</td>
                                     <td>{{ attachment.attachmentType }}</td>
                                     <td>
-                                        <a [href]="attachment.link" target="_blank">{{ attachmentFileName(attachment.link) }}</a>
+                                        <a href="javascript:void(0)" (click)="downloadAttachment(attachment.link)">{{ attachmentFileName(attachment.link) }}</a>
                                     </td>
                                     <td>{{ attachment.releaseDate | date: 'dd.MM.yy HH:mm' }}</td>
                                     <td>{{ attachment.uploadDate | date: 'dd.MM.yy HH:mm' }}</td>

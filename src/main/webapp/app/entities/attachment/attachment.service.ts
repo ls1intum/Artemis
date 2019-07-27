@@ -50,6 +50,30 @@ export class AttachmentService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    downloadAttachment(downloadUrl: string) {
+        return new Observable(observer => {
+            return this.http.get('api/files/attachments/access-token', { observe: 'response', responseType: 'text' }).subscribe(
+                response => {
+                    return this.http.get(`${downloadUrl}?access_token=${response.body}`, { observe: 'response', responseType: 'blob' }).subscribe(
+                        response => {
+                            const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.setAttribute('href', url);
+                            link.setAttribute('download', response.headers.get('filename')!);
+                            document.body.appendChild(link); // Required for FF
+                            link.click();
+                            window.URL.revokeObjectURL(url);
+                            observer.next();
+                        },
+                        error => observer.error(error),
+                    );
+                },
+                error => observer.error(error),
+            );
+        });
+    }
+
     protected convertDateFromClient(attachment: Attachment): Attachment {
         const copy: Attachment = Object.assign({}, attachment, {
             releaseDate: attachment.releaseDate != null && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : null,

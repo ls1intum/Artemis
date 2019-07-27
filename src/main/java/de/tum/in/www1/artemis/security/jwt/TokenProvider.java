@@ -30,6 +30,8 @@ public class TokenProvider implements InitializingBean {
 
     private static final String AUTHORITIES_KEY = "auth";
 
+    public static final String DOWNLOAD_FILE_AUTHORITY = "FILE_DOWNLOAD";
+
     private Key key;
 
     private long tokenValidityInMilliseconds;
@@ -74,6 +76,15 @@ public class TokenProvider implements InitializingBean {
         return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
+    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds) {
+        String authorities = DOWNLOAD_FILE_AUTHORITY;
+
+        long now = (new Date()).getTime();
+        Date validity = new Date(now + durationValidityInSeconds * 1000);
+
+        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+    }
+
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody();
 
@@ -83,6 +94,20 @@ public class TokenProvider implements InitializingBean {
         User principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    }
+
+    public boolean validateTokenForAuthority(String authToken, String authority) {
+        if (!validateToken(authToken)) {
+            return false;
+        }
+        try {
+            String tokenAuthorities = (String) Jwts.parser().setSigningKey(key).parseClaimsJws(authToken).getBody().get("auth");
+            return tokenAuthorities.contains(authority);
+        }
+        catch (Exception e) {
+            log.trace("Invalid action: {}", e);
+        }
+        return false;
     }
 
     public boolean validateToken(String authToken) {

@@ -20,12 +20,15 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -49,13 +52,16 @@ public class FileResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TokenProvider tokenProvider;
+
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository) {
+            LectureRepository lectureRepository, TokenProvider tokenProvider) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.lectureRepository = lectureRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -203,6 +209,14 @@ public class FileResource {
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
     }
 
+    @GetMapping("files/attachments/access-token")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getTemporaryFileAccessToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30);
+        return ResponseEntity.ok(temporaryAccessToken);
+    }
+
     /**
      * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
      *
@@ -211,22 +225,18 @@ public class FileResource {
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    // @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
+    public ResponseEntity getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthority(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY)) {
+            log.info("Attachment with invalid token was accessed");
+            return ResponseEntity.status(403).body("Provided token is invalid!");
+        }
         Lecture lecture = optionalLecture.get();
-        // User user = userService.getUserWithGroupsAndAuthorities();
-        // Course course = lecture.getCourse();
-        // if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course,
-        // user)
-        // && !authCheckService.isAdmin()) {
-        // return forbidden();
-        // }
         try {
             byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
             if (file == null) {

@@ -38,7 +38,7 @@
                 <ul>
                     <li class="mb-3" *ngFor="let attachment of lecture!.attachments">
                         <h5 class="mb-1">
-                            <a href="{{ attachment.link }}" target="_blank">
+                            <a href="javascript:void(0)" (click)="downloadAttachment(attachment.link)">
                                 {{ attachment.name }}
                             </a>
                             <span class="ml-1 badge badge-info">
