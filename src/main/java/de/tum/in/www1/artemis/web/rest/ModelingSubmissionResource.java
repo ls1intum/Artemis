@@ -209,6 +209,7 @@ public class ModelingSubmissionResource {
 
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
+            // TODO rename this, because if Compass is activated we pass a submission with a partial automatic result
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
@@ -335,6 +336,10 @@ public class ModelingSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getResult() != null && (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null)) {
             modelingSubmission.setResult(null);
+        }
+
+        if (modelingSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            modelingSubmission.getResult().setAssessor(null);
         }
 
         return ResponseEntity.ok(modelingSubmission);
