@@ -76,6 +76,13 @@ public class TokenProvider implements InitializingBean {
         return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
+    /**
+     * Generates a access token that allows user to download a file. This token is only valid for 30 seconds.
+     *
+     * @param authentication
+     * @param durationValidityInSeconds
+     * @return
+     */
     public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds) {
         String authorities = DOWNLOAD_FILE_AUTHORITY;
 
@@ -96,6 +103,13 @@ public class TokenProvider implements InitializingBean {
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
+    /**
+     * Checks if a certain authority is inside the JWT token. Also validates the JWT token if it is still valid.
+     *
+     * @param authToken
+     * @param authority
+     * @return true if everything matches
+     */
     public boolean validateTokenForAuthority(String authToken, String authority) {
         if (!validateToken(authToken)) {
             return false;
