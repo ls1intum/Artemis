@@ -42,7 +42,17 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResult: Result | null;
+    public latestResultValue: Result | null;
+
+    get latestResult() {
+        return this.latestResultValue;
+    }
+
+    set latestResult(result: Result | null) {
+        this.latestResultValue = result;
+        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+    }
 
     public steps: Array<Step> = [];
     public renderedMarkdown: SafeHtml;
@@ -117,8 +127,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
                     switchMap(() => this.loadInitialResult()),
                     tap(latestResult => {
                         this.latestResult = latestResult;
-                        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
-                        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
                     }),
                     tap(() => {
                         this.updateMarkdown();

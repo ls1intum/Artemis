@@ -23,7 +23,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     testsValue: string[];
     testCaseState: TestCaseState;
-    testResultLabel: string;
 
     successfulTests: string[];
     notExecutedTests: string[];
@@ -41,10 +40,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         this.testsValue = tests;
         const {
             testCaseState,
-            detailed: { successFulTests, notExecutedTests, failedTests },
+            detailed: { successfulTests, notExecutedTests, failedTests },
         } = this.programmingExerciseInstructionService.testStatusForTask(this.tests, this.latestResult);
         this.testCaseState = testCaseState;
-        this.successfulTests = successFulTests;
+        this.successfulTests = successfulTests;
         this.notExecutedTests = notExecutedTests;
         this.failedTests = failedTests;
     }

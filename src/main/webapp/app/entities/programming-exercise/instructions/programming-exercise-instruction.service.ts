@@ -13,7 +13,7 @@ export enum TestCaseState {
 export type TaskResult = {
     testCaseState: TestCaseState;
     detailed: {
-        successFulTests: string[];
+        successfulTests: string[];
         failedTests: string[];
         notExecutedTests: string[];
     };
@@ -21,8 +21,6 @@ export type TaskResult = {
 
 @Injectable()
 export class ProgrammingExerciseInstructionService {
-    constructor(private translateService: TranslateService) {}
-
     /**
      * @function testStatusForTask
      * @desc Callback function for renderers to set the appropiate test status
@@ -30,10 +28,9 @@ export class ProgrammingExerciseInstructionService {
      */
     public testStatusForTask = (tests: string[], latestResult: Result | null): TaskResult => {
         const totalTests = tests.length;
-
         if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length)) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
-            return { testCaseState: TestCaseState.SUCCESS, detailed: { successFulTests: tests, failedTests: [], notExecutedTests: [] } };
+            return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
         } else if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = tests.reduce(
@@ -61,10 +58,10 @@ export class ProgrammingExerciseInstructionService {
 
             // Exercise is done if none of the tests failed
             const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
-            return { testCaseState, detailed: { successFulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
+            return { testCaseState, detailed: { successfulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results
-            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successFulTests: [], failedTests: [], notExecutedTests: tests } };
+            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successfulTests: [], failedTests: [], notExecutedTests: tests } };
         }
     };
 }

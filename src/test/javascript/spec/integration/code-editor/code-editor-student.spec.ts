@@ -228,8 +228,6 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
-        const markdownPreview = containerDebugElement.query(By.css('.markdown-preview'));
-        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementNoneExecutedRendered);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
@@ -308,7 +306,6 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
-        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementNoneExecutedRendered);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;

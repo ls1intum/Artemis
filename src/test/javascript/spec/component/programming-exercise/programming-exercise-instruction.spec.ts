@@ -30,13 +30,13 @@ import { MockRepositoryFileService } from '../../mocks/mock-repository-file.serv
 import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { ProgrammingExerciseInstructionResultDetail } from 'app/code-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -300,7 +300,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetail, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -315,12 +315,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
+        comp.ngOnInit();
 
         comp.updateMarkdown();
 
         expect(comp.steps).to.have.lengthOf(2);
-        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.FAIL });
-        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS });
+        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.FAIL, tests: ['testBubbleSort'] });
+        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS, tests: ['testMergeSort'] });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;
@@ -337,69 +338,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
 
         expect(openModalStub).to.have.been.calledOnce;
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetail, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
     }));
-
-    it('should determine a successful state for all tasks if the result is successful', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: true,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
-        const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
-
-        comp.latestResult = result;
-
-        const [taskState1] = comp.statusForTests(testCases.slice(0, 1));
-        expect(taskState1).to.equal(TestCaseState.SUCCESS);
-
-        const [taskState2] = comp.statusForTests(testCases.slice(2));
-        expect(taskState2).to.equal(TestCaseState.SUCCESS);
-    });
-
-    it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
-        const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
-
-        comp.latestResult = result;
-
-        const [taskState1] = comp.statusForTests(testCases);
-        expect(taskState1).to.equal(TestCaseState.FAIL);
-    });
-
-    it('should determine a failed state for a task if at least one test has failed (legacy case)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2018-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }],
-        } as any;
-        const testCases = ['testBubbleSort', 'testMergeSort'];
-
-        comp.latestResult = result;
-
-        const [taskState1] = comp.statusForTests(testCases);
-        expect(taskState1).to.equal(TestCaseState.FAIL);
-    });
-
-    it('should determine a state if there is no feedback for the specified tests (non legacy only)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ text: 'irrelevantTest', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
-        const testCases = ['testBubbleSort', 'testMergeSort'];
-
-        comp.latestResult = result;
-
-        const [taskState1] = comp.statusForTests(testCases);
-        expect(taskState1).to.equal(TestCaseState.NOT_EXECUTED);
-    });
 });
