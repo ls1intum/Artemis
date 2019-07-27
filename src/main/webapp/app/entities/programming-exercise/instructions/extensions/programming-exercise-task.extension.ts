@@ -7,14 +7,14 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 
-// [task: complete task string, e.g. [task](Implement BubbleSort)[testBubbleSort], taskName: e.g. Implement BubbleSort, tests: testBubbleSort
-export type TestsForTasks = Array<[string, string, string[]]>;
+export type Task = { completeString: string; taskName: string; tests: string[] };
+export type TaskArray = Array<Task>;
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     private latestResult: Result | null = null;
 
-    private testsForTaskSubject = new Subject<TestsForTasks>();
+    private testsForTaskSubject = new Subject<TaskArray>();
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     constructor(
@@ -36,8 +36,12 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         return this.injectableElementsFoundSubject.asObservable();
     }
 
-    private getInjectableElementsForTasks = (tasks: TestsForTasks) => {
-        return tasks.map(([, taskName, tests]: [string, string, string[]], index: number) => {
+    /**
+     * For each task provided, inject a ProgrammingExerciseInstructionTaskStatusComponent into the container div.
+     * @param tasks to inject into the html.
+     */
+    private injectTasks = (tasks: TaskArray) => {
+        tasks.forEach(({ taskName, tests }, index: number) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
             componentRef.instance.taskName = taskName;
             componentRef.instance.latestResult = this.latestResult;
@@ -65,19 +69,19 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 // Without class="d-flex" the injected components height would be 0.
                 const taskContainer = `<div id="task-${idPlaceholder}" class="d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
-                const testsForTask: TestsForTasks = tasks
+                const testsForTask: TaskArray = tasks
                     .map(task => {
-                        const testMatch = task.match(innerTaskRegex);
-                        return testMatch && testMatch.length === 3 ? [task, testMatch[1], testMatch[2]] : [];
+                        return task.match(innerTaskRegex);
                     })
-                    .map(([task, taskName, tests]: [string, string, string]) => [task, taskName, tests.split(',').map(s => s.trim())]);
+                    .filter(testMatch => !!testMatch && testMatch.length === 3)
+                    .map((testMatch: RegExpMatchArray) => {
+                        return { completeString: testMatch[0], taskName: testMatch[1], tests: testMatch[2].split(',').map(s => s.trim()) };
+                    });
                 this.testsForTaskSubject.next(testsForTask);
                 // Emit new found elements that need to be injected into html after it is rendered.
-                this.injectableElementsFoundSubject.next(() => {
-                    return this.getInjectableElementsForTasks(testsForTask);
-                });
+                this.injectableElementsFoundSubject.next(() => this.injectTasks(testsForTask));
                 return testsForTask.reduce(
-                    (acc: string, [task, taskName, tests]: [string, string, string[]], index: number): string =>
+                    (acc: string, { completeString: task, taskName, tests }, index: number): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
                         acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
                     text,

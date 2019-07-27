@@ -147,6 +147,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
+    /**
+     * Signal that the markdown should be rendered into html.
+     */
     generateHtml() {
         this.generateHtmlSubject.next();
     }

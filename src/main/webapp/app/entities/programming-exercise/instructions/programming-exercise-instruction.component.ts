@@ -12,7 +12,7 @@ import { hasParticipationChanged, Participation, ParticipationWebsocketService }
 import { merge, Observable, Subscription } from 'rxjs';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ProgrammingExerciseTaskExtensionWrapper, TestsForTasks } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionWrapper, Task, TaskArray } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
@@ -79,8 +79,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
             this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
             this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
         ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
-        this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TestsForTasks) => {
-            this.steps = testsForTasks.map(([, taskName, tests]) => ({
+        this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TaskArray) => {
+            this.steps = testsForTasks.map(({ taskName, tests }) => ({
                 done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
                 title: taskName,
                 tests,

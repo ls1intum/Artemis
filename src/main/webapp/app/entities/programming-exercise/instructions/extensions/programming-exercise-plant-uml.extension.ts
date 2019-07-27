@@ -23,8 +23,12 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
         return this.injectableElementsFoundSubject.asObservable();
     }
 
-    private getInjectableElementsForPlantUmls(plantUmls: string[]) {
-        return plantUmls.map((plantUml, index) => {
+    /**
+     * For each stringified plantUml provided, render the plantUml on the server and inject it into the html.
+     * @param plantUmls a stringified version of the plantUml.
+     */
+    private loadAndInjectPlantUmls(plantUmls: string[]) {
+        plantUmls.forEach((plantUml, index) => {
             this.plantUmlService
                 .getPlantUmlImage(plantUml)
                 .pipe(
@@ -62,7 +66,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                         return testCaseState === TestCaseState.SUCCESS ? 'green' : testCaseState === TestCaseState.FAIL ? 'red' : 'grey';
                     }),
                 );
-                this.injectableElementsFoundSubject.next(() => this.getInjectableElementsForPlantUmls(plantUmlsValidated));
+                this.injectableElementsFoundSubject.next(() => this.loadAndInjectPlantUmls(plantUmlsValidated));
                 return replacedText;
             },
         };
