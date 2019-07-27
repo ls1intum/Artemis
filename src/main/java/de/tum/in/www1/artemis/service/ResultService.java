@@ -69,9 +69,16 @@ public class ResultService {
         return resultRepository.findByIdWithEagerFeedbacks(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
-    public Result findOneWithSubmission(long id) {
-        log.debug("Request to get Result: {}", id);
-        return resultRepository.findByIdWithSubmission(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
+    /**
+     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    public Result findOneWithEagerSubmissionAndFeedback(long resultId) {
+        log.debug("Request to get Result: {}", resultId);
+        return resultRepository.findWithEagerSubmissionAndFeedbackById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
     }
 
     public Result findLatestResultWithFeedbacksForParticipation(Long participationId) throws EntityNotFoundException {

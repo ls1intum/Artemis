@@ -433,6 +433,10 @@ public class CompassService {
      * @return the rounded compass grade
      */
     private Grade roundGrades(Grade grade) {
+        if (grade == null) {
+            return null;
+        }
+
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
         for (Map.Entry<String, Double> entry : jsonIdPointsMapping.entrySet()) {

@@ -376,6 +376,21 @@ public class ModelingSubmissionIntegrationTest {
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
     }
 
+    @Test
+    @WithMockUser(value = "student1")
+    public void getModelSubmissionForModelingEditor() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
+
+        // set date to UTC for comparison as dates coming from the database are in UTC
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
+    }
+
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
