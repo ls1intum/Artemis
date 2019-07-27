@@ -18,6 +18,6 @@
         }
     },
     "logout": {
-        "failed": "Das Logout war nicht erfolgreich aufgrund des folgenden Fehlers: {{error}}"
+        "failed": "Das Logout war nicht erfolgreich aufgrund des folgenden Fehlers: {{error}}. Sollte der Fehler sich nicht von selbst lösen, lade bitte die Seite erneut."
     }
 }
