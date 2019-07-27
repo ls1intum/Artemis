@@ -126,7 +126,7 @@ public class ExerciseHintResource {
     }
 
     /**
-     * {@code GET  /exercise-hints/by-exercise-id/:id} : get the exerciseHints of a provided exercise.
+     * {@code GET  /exercises/:exerciseId/hints} : get the exerciseHints of a provided exercise.
      *
      * @param exerciseId the exercise id of which to retrieve the exercise hints.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint, or with status {@code 404 (Not Found)}.
