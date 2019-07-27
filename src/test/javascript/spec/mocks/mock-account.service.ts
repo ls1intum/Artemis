@@ -4,7 +4,7 @@ import { IAccountService, User } from 'app/core';
 export class MockAccountService implements IAccountService {
     identity = () => Promise.resolve({ id: 99 } as User);
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
-    hasAnyAuthorityDirect = (authorities: any[]) => Promise.resolve(true);
+    hasAnyAuthorityDirect = (authorities: any[]) => true;
     getAuthenticationState = () => of({ id: 99 } as User);
     isAtLeastInstructorInCourse = (course: Course) => true;
     authenticate = (identity: User | null) => {};

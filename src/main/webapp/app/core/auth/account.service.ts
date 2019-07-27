@@ -15,7 +15,7 @@ export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
     authenticate: (identity: User | null) => void;
     hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
-    hasAnyAuthorityDirect: (authorities: string[]) => Promise<boolean>;
+    hasAnyAuthorityDirect: (authorities: string[]) => boolean;
     hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | null>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
