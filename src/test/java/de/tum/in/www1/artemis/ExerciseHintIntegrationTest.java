@@ -62,19 +62,19 @@ public class ExerciseHintIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void queryAllHintsForAnExerciseAsAStudent() throws Exception {
-        request.getList("/api/exercise-hints/by-exercise-id/" + exercise.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void queryAllHintsForAnExerciseAsATutor() throws Exception {
-        request.getList("/api/exercise-hints/by-exercise-id/" + exercise.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void queryAllHintsForAnExerciseAsAnInstructor() throws Exception {
-        request.getList("/api/exercise-hints/by-exercise-id/" + exercise.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/hints", HttpStatus.OK, ExerciseHint.class);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class ExerciseHintIntegrationTest {
         String contentBefore = exerciseHint.getContent();
 
         exerciseHint.setContent(newContent);
-        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.FORBIDDEN);
 
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(contentBefore);
@@ -147,7 +147,7 @@ public class ExerciseHintIntegrationTest {
         String newContent = "new content value!";
 
         exerciseHint.setContent(newContent);
-        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
 
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
@@ -160,7 +160,7 @@ public class ExerciseHintIntegrationTest {
         String newContent = "new content value!";
 
         exerciseHint.setContent(newContent);
-        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
+        request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
 
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
