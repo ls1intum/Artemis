@@ -123,6 +123,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
+        } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+            this.problemStatement = this.exercise.problemStatement!;
+            this.updateMarkdown();
         } else if (this.exercise && problemStatementHasChanged(changes)) {
             this.problemStatement = this.exercise.problemStatement!;
         }
