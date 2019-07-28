@@ -138,15 +138,16 @@ export class AccountService {
         return this.authenticated;
     }
 
-    isIdentityResolved(): boolean {
-        return this.userIdentity !== undefined;
-    }
-
     getAuthenticationState(): Observable<User> {
         return this.authenticationState.asObservable();
     }
 
+    /**
+     * Returns the image url of the user or null.
+     *
+     * Returns null if the user is not authenticated or the user does not have an image.
+     */
     getImageUrl(): string | null {
-        return this.isIdentityResolved() ? this.userIdentity!.imageUrl : null;
+        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : null;
     }
 }
