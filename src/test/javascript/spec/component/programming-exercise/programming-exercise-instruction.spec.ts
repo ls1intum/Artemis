@@ -211,7 +211,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
-        expect(updateMarkdownStub).not.to.have.been.called;
+        expect(updateMarkdownStub).to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
 
@@ -232,7 +232,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
-        expect(updateMarkdownStub).not.to.have.been.called;
+        expect(updateMarkdownStub).to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
 
