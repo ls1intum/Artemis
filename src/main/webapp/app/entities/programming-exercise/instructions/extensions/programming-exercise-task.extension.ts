@@ -6,9 +6,7 @@ import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
-
-export type Task = { completeString: string; taskName: string; tests: string[] };
-export type TaskArray = Array<Task>;
+import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {

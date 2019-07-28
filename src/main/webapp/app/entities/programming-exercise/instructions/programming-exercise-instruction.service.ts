@@ -25,6 +25,7 @@ export class ProgrammingExerciseInstructionService {
      * @function testStatusForTask
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
+     * @param latestResult
      */
     public testStatusForTask = (tests: string[], latestResult: Result | null): TaskResult => {
         const totalTests = tests.length;

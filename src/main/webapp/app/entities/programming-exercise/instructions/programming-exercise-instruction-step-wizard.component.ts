@@ -1,21 +1,35 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
-import { ProgrammingExerciseService, TestCaseState } from 'app/entities/programming-exercise';
+import { TestCaseState } from 'app/entities/programming-exercise';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
 })
-export class ProgrammingExerciseInstructionStepWizardComponent {
+export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
     TestCaseState = TestCaseState;
+
     @Input() latestResult: Result | null;
-    @Input() steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
+    @Input() tasks: TaskArray;
+
+    steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
 
     constructor(private modalService: NgbModal, private instructionService: ProgrammingExerciseInstructionService) {}
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
+            this.steps = this.tasks.map(({ taskName, tests }) => ({
+                done: this.instructionService.testStatusForTask(tests, this.latestResult).testCaseState,
+                title: taskName,
+                tests,
+            }));
+        }
+    }
 
     /**
      * @function showDetailsForTests
@@ -30,7 +44,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         const {
             detailed: { failedTests, notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, this.latestResult);
-        if (failedTests.length + notExecutedTests.length > 0) {
+        if (failedTests.length + notExecutedTests.length <= 0) {
             return;
         }
         const modalRef = this.modalService.open(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });

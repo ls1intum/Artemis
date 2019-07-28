@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
@@ -10,28 +10,18 @@ import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
 import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { ArTEMiSSharedModule, SafeHtmlPipe } from 'src/main/webapp/app/shared';
+import { ArTEMiSSharedModule } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import {
-    ProgrammingExercise,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTaskStatusComponent,
-    ProgrammingExerciseTestCaseService,
-    TestCaseState,
-} from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
+import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
@@ -278,13 +268,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.ngOnInit();
+        // @ts-ignore
+        comp.setupMarkdownSubscriptions();
 
         comp.updateMarkdown();
 
-        expect(comp.steps).to.have.lengthOf(2);
-        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.NOT_EXECUTED, tests: ['testBubbleSort'] });
-        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS, tests: ['testMergeSort'] });
+        expect(comp.tasks).to.have.lengthOf(2);
+        expect(comp.tasks[0]).to.deep.equal({ completeString: '[task][Implement Bubble Sort](testBubbleSort)', taskName: 'Implement Bubble Sort', tests: ['testBubbleSort'] });
+        expect(comp.tasks[1]).to.deep.equal({ completeString: '[task][Implement Merge Sort](testMergeSort)', taskName: 'Implement Merge Sort', tests: ['testMergeSort'] });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;
@@ -315,13 +306,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.problemStatement = exercise.problemStatement;
         comp.exercise = exercise;
         comp.latestResult = result;
-        comp.ngOnInit();
+        // @ts-ignore
+        comp.setupMarkdownSubscriptions();
 
         comp.updateMarkdown();
 
-        expect(comp.steps).to.have.lengthOf(2);
-        expect(comp.steps[0]).to.deep.equal({ title: 'Implement Bubble Sort', done: TestCaseState.FAIL, tests: ['testBubbleSort'] });
-        expect(comp.steps[1]).to.deep.equal({ title: 'Implement Merge Sort', done: TestCaseState.SUCCESS, tests: ['testMergeSort'] });
+        expect(comp.tasks).to.have.lengthOf(2);
+        expect(comp.tasks[0]).to.deep.equal({ completeString: '[task][Implement Bubble Sort](testBubbleSort)', taskName: 'Implement Bubble Sort', tests: ['testBubbleSort'] });
+        expect(comp.tasks[1]).to.deep.equal({ completeString: '[task][Implement Merge Sort](testMergeSort)', taskName: 'Implement Merge Sort', tests: ['testMergeSort'] });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;

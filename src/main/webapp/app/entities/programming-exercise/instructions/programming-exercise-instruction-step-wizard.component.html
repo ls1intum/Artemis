@@ -1,4 +1,4 @@
-<div class="card-second-header" [hidden]="steps.length === 0">
+<div class="card-second-header" [hidden]="!steps || steps.length === 0">
     <div class="stepwizard">
         <div class="stepwizard-row">
             <div *ngFor="let step of steps; index as i" class="stepwizard-step">

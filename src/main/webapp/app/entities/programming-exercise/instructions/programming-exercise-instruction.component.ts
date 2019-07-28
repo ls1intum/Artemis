@@ -12,9 +12,10 @@ import { hasParticipationChanged, Participation, ParticipationWebsocketService }
 import { merge, Observable, Subscription } from 'rxjs';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ProgrammingExerciseTaskExtensionWrapper, Task, TaskArray } from './extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { Task, TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
 
 type Step = {
     title: string;
@@ -27,7 +28,7 @@ type Step = {
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
-export class ProgrammingExerciseInstructionComponent implements OnInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input()
     public exercise: ProgrammingExercise;
     @Input()
@@ -54,12 +55,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
         this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
     }
 
-    public steps: Array<Step> = [];
+    public tasks: TaskArray;
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     private markdownExtensions: ShowdownExtension[];
     private injectableContentFoundSubscription: Subscription;
+    private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
 
     constructor(
@@ -72,21 +74,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
     ) {}
-
-    ngOnInit(): void {
-        this.markdownExtensions = [this.programmingExerciseTaskWrapper.getExtension(), this.programmingExercisePlantUmlWrapper.getExtension()];
-        this.injectableContentFoundSubscription = merge(
-            this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
-            this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
-        ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
-        this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((testsForTasks: TaskArray) => {
-            this.steps = testsForTasks.map(({ taskName, tests }) => ({
-                done: this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult).testCaseState,
-                title: taskName,
-                tests,
-            }));
-        });
-    }
 
     /**
      * If the participation changes, the participation's instructions need to be loaded and the
@@ -107,6 +94,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
                 });
             }
             this.setupResultWebsocket();
+            this.setupMarkdownSubscriptions();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
@@ -141,6 +129,26 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
     }
 
     /**
+     * Setup the markdown extensions for parsing the tasks and tests and subscriptions necessary to receive injectable content.
+     */
+    private setupMarkdownSubscriptions() {
+        this.markdownExtensions = [this.programmingExerciseTaskWrapper.getExtension(), this.programmingExercisePlantUmlWrapper.getExtension()];
+        if (this.injectableContentFoundSubscription) {
+            this.injectableContentFoundSubscription.unsubscribe();
+        }
+        this.injectableContentFoundSubscription = merge(
+            this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
+            this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
+        ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
+        if (this.tasksSubscription) {
+            this.tasksSubscription.unsubscribe();
+        }
+        this.tasksSubscription = this.programmingExerciseTaskWrapper.subscribeForFoundTestsInTasks().subscribe((tasks: TaskArray) => {
+            this.tasks = tasks;
+        });
+    }
+
+    /**
      * Set up the websocket for retrieving build results.
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
@@ -163,7 +171,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
      * Render the markdown into html.
      */
     updateMarkdown(): void {
-        this.steps = [];
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
         // Wait a tick for the template to render before injecting the content.
@@ -245,9 +252,17 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnChange
     }
 
     ngOnDestroy() {
-        this.steps = [];
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
+        }
+        if (this.generateHtmlSubscription) {
+            this.generateHtmlSubscription.unsubscribe();
+        }
+        if (this.injectableContentFoundSubscription) {
+            this.injectableContentFoundSubscription.unsubscribe();
+        }
+        if (this.tasksSubscription) {
+            this.tasksSubscription.unsubscribe();
         }
     }
 }
