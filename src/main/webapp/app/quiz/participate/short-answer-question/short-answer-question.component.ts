@@ -9,7 +9,7 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss'],
+    styleUrls: ['./short-answer-question.component.scss', '../quiz-question.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {

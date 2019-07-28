@@ -689,3 +689,9 @@ ngb-tooltip-window {
 .warning-modal-window .modal-dialog {
     width: 50%;
 }
+
+/* additional style to overwrite form-control style from parent components */
+.form-control.ace_editor {
+    font-size: 12px;
+    line-height: normal;
+}

@@ -10,6 +10,13 @@
     width: 100%;
     overflow: auto;
 
+    .dnd-instructions {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        font-weight: 500;
+    }
+
     .drag-and-drop-area {
         display: flex;
         justify-content: center;
@@ -18,101 +25,123 @@
             display: block;
         }
 
-        .background-area .click-layer .drop-location {
-            jhi-drag-item,
-            .drag-item {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                background: white;
+        /* background image and click-layer styles */
+        .background-area {
+            position: relative;
+            @include user-select(none);
 
-                .drag-item-text,
-                .drag-item-picture {
-                    line-height: 1;
-
-                    span {
-                        border: none;
-                        padding: 0;
-                        vertical-align: middle;
-                        display: inline-block;
-                        white-space: nowrap;
-                    }
-                }
+            > jhi-secured-image img {
+                max-width: 100%;
             }
 
-            &.drop-hover,
-            &.drop-allowed > *,
-            .dnd-drag-over > * {
-                opacity: 0.5;
-            }
+            .click-layer {
+                @include position-style(absolute, 0, 0, 0, 0, 1);
 
-            &.results {
-                border-color: green;
-                background: rgb(170, 255, 170);
-
-                > * {
-                    opacity: 0.8;
-                }
-
-                &.incorrect {
-                    border-color: red;
-                    background: rgb(255, 170, 170);
-                }
-
-                .drag-item {
-                    background: transparent;
-                }
-            }
-
-            &.sampleSolution {
-                border-color: black;
-                background: white;
-
-                > * {
-                    opacity: 1;
-                }
-            }
-
-            .result-symbol {
-                color: orange;
-                position: absolute;
-                top: 0;
-                left: 0;
-                z-index: 1;
-                opacity: 1;
-                @include transformTranslate3D(-63%, -63%, 0);
-            }
-
-            .invalid {
-                color: red;
-                position: absolute;
-                bottom: 0px;
-                left: 2px;
-                z-index: 1;
-                opacity: 1;
-            }
-
-            .drag-item {
-                img {
-                    max-height: 100%;
-                    max-width: 100%;
-                    height: auto;
-                    width: auto !important;
-                    margin: auto;
+                /* dotted drop-location */
+                .drop-location {
                     position: absolute;
-                    transform: translate(-50%, -50%);
-                    top: 50%;
-                    left: 50%;
-                }
+                    display: flex;
+                    flex-direction: row;
+                    align-items: flex-start;
+                    justify-content: flex-end;
+                    background: white;
+                    border: 1px dashed black;
 
-                div {
-                    @media (max-width: 991.98px) {
-                        padding: 0 !important;
+                    &.drop-hover,
+                    &.drop-allowed > *,
+                    .dnd-drag-over > * {
+                        opacity: 0.5;
+                    }
+
+                    &.results {
+                        border-color: green;
+                        background: rgb(170, 255, 170);
+
+                        > * {
+                            opacity: 0.8;
+                        }
+
+                        &.incorrect {
+                            border-color: red;
+                            background: rgb(255, 170, 170);
+                        }
+
+                        .drag-item {
+                            background: transparent;
+                        }
+                    }
+
+                    &.sampleSolution {
+                        border-color: black;
+                        background: white;
+
+                        > * {
+                            opacity: 1;
+                        }
+                    }
+
+                    .result-symbol {
+                        color: orange;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        z-index: 1;
+                        opacity: 1;
+                        @include transformTranslate3D(-63%, -63%, 0);
+                    }
+
+                    .invalid {
+                        color: red;
+                        position: absolute;
+                        bottom: 0px;
+                        left: 2px;
+                        z-index: 1;
+                        opacity: 1;
+                    }
+
+                    jhi-drag-item,
+                    .drag-item {
+                        width: 100%;
+                        height: 100%;
+                        margin: 0;
+                        background: white;
+
+                        div {
+                            @media (max-width: 991.98px) {
+                                padding: 0 !important;
+                            }
+                        }
+
+                        img {
+                            max-height: 100%;
+                            max-width: 100%;
+                            height: auto;
+                            width: auto !important;
+                            margin: auto;
+                            position: absolute;
+                            transform: translate(-50%, -50%);
+                            top: 50%;
+                            left: 50%;
+                        }
+
+                        .drag-item-text,
+                        .drag-item-picture {
+                            line-height: 1;
+
+                            span {
+                                border: none;
+                                padding: 0;
+                                vertical-align: middle;
+                                display: inline-block;
+                                white-space: nowrap;
+                            }
+                        }
                     }
                 }
             }
         }
 
+        /* drag and drop items area with grey background */
         .drag-and-drop-items {
             @media (min-width: 1200px) {
                 margin: -6px 0 0 20px;
@@ -151,103 +180,5 @@
     .drop-hover,
     .dnd-drag-over {
         background: rgb(144, 238, 144) !important;
-    }
-
-    .dnd-instructions {
-        display: flex;
-        justify-content: space-between;
-        margin: 10px 0;
-        font-weight: 500;
-    }
-
-    .background-area {
-        position: relative;
-        @include user-select(none);
-
-        > jhi-secured-image img {
-            max-width: 100%;
-        }
-    }
-
-    &.result {
-        border-color: green;
-
-        .show-explanation {
-            display: inline-block;
-        }
-
-        &.incorrect {
-            border-color: orange;
-        }
-    }
-
-    h2 {
-        margin: 0 90px 0 0;
-
-        span {
-            color: grey;
-        }
-    }
-
-    p {
-        margin: 10px 0;
-        font-size: 16px;
-    }
-
-    .question-title-display {
-        max-width: 80%;
-    }
-
-    .question-score {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        max-width: 30%;
-
-        @media (max-width: 900px) {
-            position: relative;
-            top: 0;
-            right: 0;
-            max-width: 100%;
-        }
-
-        &.result {
-            font-weight: bold;
-            color: green;
-
-            &.incorrect {
-                color: orange;
-            }
-        }
-    }
-
-    .label {
-        cursor: pointer;
-        margin: 2px 0;
-
-        /* adjust [ngbPopover] window style */
-        & + ngb-popover-window {
-            max-width: 500px;
-        }
-    }
-
-    &.disabled {
-        color: dimgrey;
-        background: #fafafa;
-    }
-
-    .click-layer {
-        @include position-style(absolute, 0, 0, 0, 0, 1);
-
-        /* dotted drop-location */
-        .drop-location {
-            position: absolute;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            justify-content: flex-end;
-            background: white;
-            border: 1px dashed black;
-        }
     }
 }

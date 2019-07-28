@@ -28,7 +28,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
-    styleUrls: ['./edit-short-answer-question.component.scss', '../../../quiz.scss'],
+    styleUrls: ['./edit-short-answer-question.component.scss', '../edit-quiz-question.scss', '../../../quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })

@@ -8,7 +8,7 @@ import { QuizExercise } from 'app/entities/quiz-exercise';
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
-    styleUrls: ['./multiple-choice-question.component.scss'],
+    styleUrls: ['./multiple-choice-question.component.scss', '../quiz-question.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })

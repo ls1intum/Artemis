@@ -25,12 +25,4 @@
             width: 100%;
         }
     }
-
-    .question-content {
-        display: flex;
-        flex-flow: column;
-        > * {
-            height: 350px;
-        }
-    }
 }
