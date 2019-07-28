@@ -50,28 +50,25 @@ export class AttachmentService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    /**
+     * Requests an access token from the server to download the file. If the access token was generated successfully, the file is then downloaded.
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     */
     downloadAttachment(downloadUrl: string) {
-        return new Observable(observer => {
-            return this.http.get('api/files/attachments/access-token', { observe: 'response', responseType: 'text' }).subscribe(
-                response => {
-                    return this.http.get(`${downloadUrl}?access_token=${response.body}`, { observe: 'response', responseType: 'blob' }).subscribe(
-                        response => {
-                            const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.setAttribute('href', url);
-                            link.setAttribute('download', response.headers.get('filename')!);
-                            document.body.appendChild(link); // Required for FF
-                            link.click();
-                            window.URL.revokeObjectURL(url);
-                            observer.next();
-                        },
-                        error => observer.error(error),
-                    );
-                },
-                error => observer.error(error),
-            );
-        });
+        return this.http
+            .get('api/files/attachments/access-token', { observe: 'response', responseType: 'text' })
+            .switchMap(result => this.http.get(`${downloadUrl}?access_token=${result.body}`, { observe: 'response', responseType: 'blob' }))
+            .do(response => {
+                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', response.headers.get('filename')!);
+                document.body.appendChild(link); // Required for FF
+                link.click();
+                window.URL.revokeObjectURL(url);
+            });
     }
 
     protected convertDateFromClient(attachment: Attachment): Attachment {
