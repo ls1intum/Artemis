@@ -16,6 +16,7 @@ import com.google.gson.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -175,14 +176,20 @@ public class DatabaseUtilService {
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setStudent(user);
         participation.setExercise(exercise);
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-" + login.toUpperCase());
+        participation.setInitializationState(InitializationState.INITIALIZED);
         programmingExerciseStudentParticipationRepo.save(participation);
         storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isPresent();
+        exercise.addParticipation((StudentParticipation) storedParticipation.get());
+        programmingExerciseRepository.save(exercise);
         return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
     }
 
     public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-base");
+        participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setTemplateParticipation(participation);
         templateProgrammingExerciseParticipationRepo.save(participation);
         programmingExerciseRepository.save(exercise);
@@ -191,6 +198,8 @@ public class DatabaseUtilService {
 
     public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-solution");
+        participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setSolutionParticipation(participation);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         programmingExerciseRepository.save(exercise);
