@@ -27,6 +27,7 @@ interface BackgroundColorConfig {
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
+    styleUrls: ['./short-answer-question-statistic.component.scss'],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     quizExercise: QuizExercise;
