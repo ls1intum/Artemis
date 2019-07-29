@@ -119,14 +119,14 @@
         </div>
         <hr />
         <div class="question-options row d-flex justify-content-start">
-            <div class="col-lg-2 col-md-2 col-sm-2 ellipsis">
+            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
                 <div class="custom-file">
                     <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" />
-                    <label class="custom-file-label ellipsis" for="backgroundFileInput{{ questionIndex }}">{{ backgroundFileName }}</label>
+                    <label class="custom-file-label overflow-ellipsis" for="backgroundFileInput{{ questionIndex }}">{{ backgroundFileName }}</label>
                 </div>
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
@@ -139,10 +139,10 @@
                 <fa-icon icon="undo"></fa-icon>
             </button>
         </div>
-        <div class="instructions" *ngIf="!question.backgroundFilePath">
+        <div class="dnd-instructions" *ngIf="!question.backgroundFilePath">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
         </div>
-        <div class="instructions" *ngIf="question.backgroundFilePath && !reEvaluationInProgress">
+        <div class="dnd-instructions" *ngIf="question.backgroundFilePath && !reEvaluationInProgress">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
         </div>
         <div class="background-area">
@@ -202,10 +202,10 @@
             </div>
         </div>
         <hr />
-        <div *ngIf="!question.dragItems || !question.dragItems.length" class="instructions">
+        <div *ngIf="!question.dragItems || !question.dragItems.length" class="dnd-instructions">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
         </div>
-        <div *ngIf="question.dragItems && question.dragItems.length" class="instructions">
+        <div *ngIf="question.dragItems && question.dragItems.length" class="dnd-instructions">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
         </div>
         <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
@@ -276,7 +276,7 @@
                         (change)="setDragItemFile($event)"
                         placeholder="Upload file..."
                     />
-                    <label class="custom-file-label ellipsis" for="dragItemFileInput{{ questionIndex }}">{{ dragItemFileName }}</label>
+                    <label class="custom-file-label overflow-ellipsis" for="dragItemFileInput{{ questionIndex }}">{{ dragItemFileName }}</label>
                 </div>
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
