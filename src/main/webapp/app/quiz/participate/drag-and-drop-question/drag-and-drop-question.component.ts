@@ -6,7 +6,7 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 // options are optional ;)
