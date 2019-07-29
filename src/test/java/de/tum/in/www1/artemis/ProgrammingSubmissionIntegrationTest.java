@@ -103,22 +103,8 @@ public class ProgrammingSubmissionIntegrationTest {
     @WithMockUser(username = "student1")
     @Transactional(readOnly = true)
     public void shouldCreateSubmissionOnNotifyPushForStudentSubmission() throws Exception {
-        programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
-        programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipation.setExercise(exercise);
-        programmingExerciseStudentParticipation = studentParticipationRepository.save(programmingExerciseStudentParticipation);
+        postStudentSubmission();
 
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
-
-        // Api should return ok.
-        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + programmingExerciseStudentParticipation.getId(), obj, HttpStatus.OK, new HttpHeaders());
-        // Submission should have been created for the participation.
-        assertThat(submissionRepository.findAll()).hasSize(1);
-
-        // Make sure that both the submission and participation are correctly linked with each other.
-        submission = (ProgrammingSubmission) submissionRepository.findAll().get(0);
         assertThat(submission.getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
         ProgrammingExerciseStudentParticipation updatedParticipation = studentParticipationRepository.getOne(programmingExerciseStudentParticipation.getId());
         assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
@@ -134,14 +120,8 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @Transactional(readOnly = true)
     public void shouldHandleNewBuildResultCreatedByStudentCommit() throws Exception {
-        shouldCreateSubmissionOnNotifyPushForStudentSubmission();
-
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BAMBOO_REQUEST);
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", "<secrettoken>");
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, HttpStatus.OK, httpHeaders);
+        postStudentSubmission();
+        postStudentCommit();
 
         // Check that the result was created successfully and is linked to the participation and submission.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(programmingExerciseStudentParticipation.getId());
@@ -153,5 +133,41 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(programmingExerciseStudentParticipation.getSubmissions()).hasSize(1);
         assertThat(programmingExerciseStudentParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
+    }
+
+    @Test
+    @Transactional(readOnly = true)
+    public void whatWillHappen() throws Exception {
+        postStudentSubmission();
+        postStudentCommit();
+        postStudentCommit();
+    }
+
+    private void postStudentSubmission() throws Exception {
+        programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
+        programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
+        programmingExerciseStudentParticipation.setExercise(exercise);
+        programmingExerciseStudentParticipation = studentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+
+        // Api should return ok.
+        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + programmingExerciseStudentParticipation.getId(), obj, HttpStatus.OK, new HttpHeaders());
+
+        // Submission should have been created for the participation.
+        assertThat(submissionRepository.findAll()).hasSize(1);
+        // Make sure that both the submission and participation are correctly linked with each other.
+        submission = (ProgrammingSubmission) submissionRepository.findAll().get(0);
+    }
+
+    private void postStudentCommit() throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "<secrettoken>");
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, HttpStatus.OK, httpHeaders);
     }
 }
