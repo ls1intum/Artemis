@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -15,7 +15,7 @@ public class TextBlockServiceTest {
 
     TextBlockService textBlockService;
 
-    @Before
+    @BeforeEach
     public void prepareFreshService() {
         textBlockService = new TextBlockService();
     }

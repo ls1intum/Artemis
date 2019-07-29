@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
@@ -53,7 +53,7 @@ public class TextSimilarityClusteringServiceTest {
         assertThat(distanceMatrix[0][1], is(both(greaterThan(0.5)).and(lessThan(0.7))));
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void runClassOnlyIfTextAssessmentClusteringIsAvailable() {
         assumeTrue(isTextAssessmentClusteringAvailable());
     }
