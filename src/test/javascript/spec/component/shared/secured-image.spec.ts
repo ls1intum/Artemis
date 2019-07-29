@@ -8,7 +8,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArTEMiSTestModule } from '../../test.module';
 import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArTEMiSSharedModule, CacheableImageService, CachingStrategy, QuizEmitStatus, SecuredImageComponent } from 'app/shared';
+import { ArTEMiSSharedModule, CacheableImageService, CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared';
 import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
 
 chai.use(sinonChai);
@@ -72,7 +72,7 @@ describe('SecuredImageComponent', () => {
 
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
         expect(loadWithoutCacheStub).to.have.been.calledOnceWithExactly(src);
         expect(loadCachedSessionStorageStub).not.to.have.been.called;
         expect(loadCachedLocalStorageStub).not.to.have.been.called;
@@ -88,7 +88,7 @@ describe('SecuredImageComponent', () => {
 
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
         expect(loadWithoutCacheStub).not.to.have.been.called;
         expect(loadCachedSessionStorageStub).not.to.have.been.called;
         expect(loadCachedLocalStorageStub).to.have.been.calledOnceWithExactly(src);
@@ -104,7 +104,7 @@ describe('SecuredImageComponent', () => {
 
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
         expect(loadWithoutCacheStub).not.to.have.been.called;
         expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
         expect(loadCachedLocalStorageStub).not.to.have.been.called;
@@ -119,7 +119,7 @@ describe('SecuredImageComponent', () => {
 
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(QuizEmitStatus.SUCCESS);
+        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
         expect(loadWithoutCacheStub).not.to.have.been.called;
         expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
         expect(loadCachedLocalStorageStub).not.to.have.been.called;

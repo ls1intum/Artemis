@@ -6,7 +6,7 @@ import { CacheableImageService } from 'app/shared/image/cacheable-image.service'
 import { base64StringToBlob } from 'blob-util';
 
 // Status that is emitted to the client to describe the loading status of the picture
-export const enum QuizEmitStatus {
+export const enum ImageLoadingStatus {
     SUCCESS = 'success',
     ERROR = 'error',
     LOADING = 'loading',
@@ -48,7 +48,7 @@ export class SecuredImageComponent implements OnChanges {
     private retryCounter = 0;
 
     @Output()
-    endLoadingProcess = new EventEmitter<QuizEmitStatus>();
+    endLoadingProcess = new EventEmitter<ImageLoadingStatus>();
 
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
@@ -68,12 +68,20 @@ export class SecuredImageComponent implements OnChanges {
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
         this.retryCounter = 0;
-        this.endLoadingProcess.emit(QuizEmitStatus.LOADING);
+        this.endLoadingProcess.emit(ImageLoadingStatus.LOADING);
         this.ngOnChanges();
     }
 
+    /**
+     * Load the image and decide by the active cache strategy if a cache should be used.
+     * The requested image will be declared as safe by this method so that angular will not complain.
+     * This method has a retry mechanism and will try a couple of times to retry downloading the file if it fails.
+     *
+     * @param url of the image on the server.
+     */
     private loadImage(url: string): Observable<any> {
         return of(null).pipe(
+            // Load the image from the server with the active caching strategy.
             switchMap(() => {
                 let res;
                 if (this.cachingStrategy === CachingStrategy.SESSION_STORAGE) {
@@ -86,21 +94,24 @@ export class SecuredImageComponent implements OnChanges {
                 // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
                 return isObservable(res) ? res : of(res);
             }),
+            // The image will be loaded as a base64 string, so it needs to be converted to a blob before it can be used.
             map((base64String: string) => {
                 return base64StringToBlob(base64String, 'application/json');
             }),
+            // We need to declare the blob as safe, otherwise angular will complain about the inserted element.
             map((blob: Blob) => {
                 return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
             }),
+            // Emit that the file was loaded successfully.
             tap(() => {
-                this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
+                this.endLoadingProcess.emit(ImageLoadingStatus.SUCCESS);
             }),
             catchError(error => {
                 if (this.retryCounter === 0) {
                     this.retryCounter++;
                     return this.loadImage(url);
                 } else {
-                    this.endLoadingProcess.emit(QuizEmitStatus.ERROR);
+                    this.endLoadingProcess.emit(ImageLoadingStatus.ERROR);
                 }
                 return error;
             }),
