@@ -1,15 +1,16 @@
 .sa-question {
+    background: #fefefe;
+    border: 1px solid lightgrey;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 20px;
+    position: relative;
+    width: 100%;
+
     .short-answer-question-display {
-        background: #fefefe;
-        border: 1px solid lightgrey;
-        box-sizing: border-box;
         display: flex;
         flex-wrap: wrap;
-        margin-bottom: 18px;
         max-width: 100%;
-        padding: 20px;
-        position: relative;
-        width: 100%;
 
         &__element {
             display: inline-flex;

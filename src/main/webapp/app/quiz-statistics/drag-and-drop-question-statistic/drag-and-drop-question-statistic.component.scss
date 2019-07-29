@@ -22,8 +22,10 @@
         margin: 6px 0;
         width: 100%;
 
-        jhi-drag-item,
         .drag-item {
+            border: 1px solid #696969;
+            background: #fafafa;
+
             .drag-item-picture {
                 cursor: default !important;
             }

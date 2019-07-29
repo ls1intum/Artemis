@@ -202,6 +202,28 @@
     &.btn-light {
         border-color: #ffffff;
     }
+
+    @media (max-width: 990px) {
+        width: 23px;
+        height: 23px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .fa {
+            font-size: 10px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .fa {
+            font-size: 6px;
+        }
+    }
 }
 
 @media (max-width: 990px) {
@@ -213,19 +235,6 @@
         align-items: center;
         .fa {
             font-size: 10px;
-        }
-    }
-}
-
-@media (max-width: 767.98px) {
-    .btn-circle.btn-circle {
-        width: 16px;
-        height: 16px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        .fa {
-            font-size: 6px;
         }
     }
 }

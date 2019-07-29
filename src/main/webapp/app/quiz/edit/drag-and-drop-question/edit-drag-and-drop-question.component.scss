@@ -1,6 +1,22 @@
 @import '../../../../content/scss/_artemis-mixins.scss';
 
 .edit-dnd-question {
+    .drag-items {
+        .drag-item {
+            img {
+                max-height: 100%;
+                max-width: 100%;
+                height: auto;
+                width: auto !important;
+                margin: auto;
+                position: absolute;
+                transform: translate(-50%, -50%);
+                top: 50%;
+                left: 50%;
+            }
+        }
+    }
+
     /* highlight drop location in light blue when selecting a drag item */
     .drop-allowed {
         background: rgba(173, 216, 230, 0.8) !important;

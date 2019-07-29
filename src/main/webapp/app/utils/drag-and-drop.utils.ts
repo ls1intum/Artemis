@@ -4,15 +4,14 @@
 export function resizeImage(isStatisticsPage?: boolean) {
     /* set timeout as workaround to render all necessary elements */
     setTimeout(() => {
-        const image = isStatisticsPage
-            ? (document.querySelector('.drag-and-drop-quizStatistic-picture jhi-secured-image img') as HTMLImageElement)
-            : (document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement);
-
+        const image = !isStatisticsPage
+            ? (document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement)
+            : (document.querySelector('.drag-and-drop-quizStatistic-picture jhi-secured-image img') as HTMLImageElement);
         const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
 
         if (image && clickLayer) {
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
         }
-    }, 500);
+    }, 400);
 }
