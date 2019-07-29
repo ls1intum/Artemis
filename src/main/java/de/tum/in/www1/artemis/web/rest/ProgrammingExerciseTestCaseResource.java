@@ -56,6 +56,12 @@ public class ProgrammingExerciseTestCaseResource {
         this.userService = userService;
     }
 
+    /**
+     * Get the exercise's test cases for the the given exercise id.
+     *
+     * @param exerciseId of the the exercise.
+     * @return the found test cases or an empty list if no test cases were found.
+     */
     @GetMapping(value = "programming-exercise/{exerciseId}/test-cases")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
