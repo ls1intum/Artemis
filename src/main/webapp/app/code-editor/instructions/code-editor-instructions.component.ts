@@ -51,10 +51,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
                 // Set maximum width
-                restrictSize: {
-                    min: { width: this.minInstructionsWidth },
-                    max: { width: this.initialInstructionsWidth },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.minInstructionsWidth, height: 0 },
+                        max: { width: this.initialInstructionsWidth, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

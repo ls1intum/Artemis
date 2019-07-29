@@ -53,10 +53,12 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: false, right: false, bottom: '.rg-main-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeightMain },
-                    max: { height: this.resizableMaxHeightMain },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeightMain },
+                        max: { width: 2000, height: this.resizableMaxHeightMain },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -79,10 +81,12 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: false, right: '.rg-sidebar-left', bottom: false, top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { width: this.resizableMinWidthLeft },
-                    max: { width: this.resizableMaxWidthLeft },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidthLeft, height: 0 },
+                        max: { width: this.resizableMaxWidthLeft, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -105,10 +109,12 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: '.rg-sidebar-right', right: false, bottom: false, top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { width: this.resizableMinWidthRight },
-                    max: { width: this.resizableMaxWidthRight },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidthRight, height: 0 },
+                        max: { width: this.resizableMaxWidthRight, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -130,10 +136,12 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeightBottom },
-                    max: { height: this.resizableMaxHeightBottom },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinHeightBottom, height: 0 },
+                        max: { width: this.resizableMaxHeightBottom, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

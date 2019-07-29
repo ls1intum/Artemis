@@ -79,10 +79,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeight },
+                        max: { width: 2000, height: this.resizableMaxHeight },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

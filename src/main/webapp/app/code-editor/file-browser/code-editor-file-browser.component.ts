@@ -129,10 +129,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 // Enable resize from right edge; triggered by class rg-right
                 edges: { left: false, right: '.rg-right', bottom: false, top: false },
                 // Set min and max width
-                restrictSize: {
-                    min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidth, height: 0 },
+                        max: { width: this.resizableMaxWidth, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
