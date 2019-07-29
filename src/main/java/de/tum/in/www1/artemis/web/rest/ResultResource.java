@@ -208,7 +208,8 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey, InitializationState.INITIALIZED);
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey,
+                InitializationState.INITIALIZED);
         Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));

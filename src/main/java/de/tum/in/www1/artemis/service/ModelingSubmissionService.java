@@ -197,7 +197,8 @@ public class ModelingSubmissionService extends SubmissionService {
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         modelingSubmission.setResult(null);
 
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(), username);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
+                username);
         if (!optionalParticipation.isPresent()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
