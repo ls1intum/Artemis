@@ -14,6 +14,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
@@ -84,7 +86,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
                 const tempResults: Result[] = res.body!;
                 tempResults.forEach(result => {
                     result.participation!.results = [result];
-                    result.participation!.exercise = this.exercise;
+                    (result.participation! as StudentParticipation).exercise = this.exercise;
                     result.durationInMinutes = this.durationInMinutes(
                         result.completionDate!,
                         result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
@@ -115,7 +117,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     }
 
     goToRepository(result: Result) {
-        window.open(result.participation!.repositoryUrl);
+        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
     }
 
     showDetails(result: Result) {
@@ -132,9 +134,10 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                let studentName = result.participation!.student.firstName!;
-                if (result.participation!.student.lastName != null && result.participation!.student.lastName !== '') {
-                    studentName = studentName + ' ' + result.participation!.student.lastName;
+                const studentParticipation = result.participation! as StudentParticipation;
+                let studentName = studentParticipation.student.firstName!;
+                if (studentParticipation.student.lastName != null && studentParticipation.student.lastName !== '') {
+                    studentName = studentName + ' ' + studentParticipation.student.lastName;
                 }
                 rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
             });
@@ -152,24 +155,25 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                let studentName = result.participation!.student.firstName!;
-                if (result.participation!.student.lastName != null && result.participation!.student.lastName !== '') {
-                    studentName = studentName + ' ' + result.participation!.student.lastName;
+                const studentParticipation = result.participation! as StudentParticipation;
+                let studentName = studentParticipation.student.firstName!;
+                if (studentParticipation.student.lastName != null && studentParticipation.student.lastName !== '') {
+                    studentName = studentName + ' ' + studentParticipation.student.lastName;
                 }
-                const studentId = result.participation!.student.login;
+                const studentId = studentParticipation.student.login;
                 const score = result.score;
 
                 if (index === 0) {
-                    if (this.exercise.type === ExerciseType.QUIZ) {
+                    if (this.exercise.type !== ExerciseType.PROGRAMMING) {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score');
                     } else {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link');
                     }
                 }
-                if (this.exercise.type === ExerciseType.QUIZ) {
+                if (this.exercise.type !== ExerciseType.PROGRAMMING) {
                     rows.push(studentName + ', ' + studentId + ', ' + score);
                 } else {
-                    const repoLink = result.participation!.repositoryUrl;
+                    const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
                     rows.push(studentName + ', ' + studentId + ', ' + score + ', ' + repoLink);
                 }
             });

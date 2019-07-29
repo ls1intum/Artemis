@@ -22,6 +22,7 @@ import {
     ProgrammingExerciseInstructorStatusComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
+    ProgrammingExerciseParticipationService,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseInstructionTaskStatusComponent,
 } from './';
@@ -102,6 +103,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePlantUmlExtensionWrapper,
         ProgrammingExerciseInstructionService,
         ProgrammingExercisePlantUmlService,
+        ProgrammingExerciseParticipationService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

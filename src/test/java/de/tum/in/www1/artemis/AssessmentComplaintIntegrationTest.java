@@ -21,11 +21,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -151,7 +147,7 @@ public class AssessmentComplaintIntegrationTest {
         Result receivedResult = request.postWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
-        assertThat(receivedResult.getParticipation().getStudent()).as("student is hidden in response").isNull();
+        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isNull();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);

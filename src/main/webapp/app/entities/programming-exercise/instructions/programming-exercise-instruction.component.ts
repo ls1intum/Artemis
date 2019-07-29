@@ -1,8 +1,22 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import {
+    ApplicationRef,
+    Component,
+    ComponentFactoryResolver,
+    ElementRef,
+    EventEmitter,
+    Injector,
+    Input,
+    OnChanges,
+    OnDestroy,
+    Output,
+    Renderer2,
+    SimpleChanges,
+} from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as Remarkable from 'remarkable';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
@@ -15,13 +29,8 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { Task, TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
-
-type Step = {
-    title: string;
-    done: TestCaseState;
-    tests: string[];
-};
+import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -73,6 +82,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
 
     /**
@@ -204,16 +214,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id).pipe(
             catchError(() => Observable.of(null)),
-            map((latestResult: HttpResponse<Result[]>) => {
-                if (latestResult && latestResult.body && latestResult.body.length) {
-                    return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                } else {
-                    return null;
-                }
-            }),
-            flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : Observable.of(latestResult))),
         );
     }
 

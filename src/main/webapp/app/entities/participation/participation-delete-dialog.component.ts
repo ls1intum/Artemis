@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { Participation, ParticipationPopupService, ParticipationService } from '../participation';
+import { Participation, ParticipationPopupService, ParticipationService, StudentParticipation } from '../participation';
 import { ExerciseType } from '../exercise';
 
 import { Subscription } from 'rxjs/Subscription';
@@ -19,7 +19,7 @@ export class ParticipationDeleteDialogComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    participation: Participation;
+    participation: StudentParticipation;
     deleteBuildPlan: boolean;
     deleteRepository: boolean;
 
