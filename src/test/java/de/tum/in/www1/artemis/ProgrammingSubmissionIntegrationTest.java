@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -60,7 +59,7 @@ public class ProgrammingSubmissionIntegrationTest {
     @Autowired
     ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
-    @MockBean
+    @Autowired
     BitbucketService versionControlService;
 
     private final static String BITBUCKET_REQUEST = "{\n" + "   \"eventKey\":\"repo:refs_changed\",\n" + "   \"date\":\"2019-07-27T17:07:34+0000\",\n" + "   \"actor\":{\n"
@@ -230,15 +229,12 @@ public class ProgrammingSubmissionIntegrationTest {
     @WithMockUser(username = "student1")
     @Transactional(readOnly = true)
     public void notifyPushForStudentParticipationShouldCreateSubmission() throws Exception {
-        String fakedCommitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(1L);
         studentParticipationRepository.save(participation);
 
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
-
-        when(versionControlService.getLastCommitHash(any(Object.class))).thenReturn(fakedCommitHash);
 
         // Api should return ok.
         request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId(), obj, HttpStatus.OK);
@@ -253,7 +249,7 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
         // Make sure the submission has the correct commit hash.
-        assertThat(submission.getCommitHash()).isEqualTo(fakedCommitHash);
+        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         // The submission should be manual and submitted.
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
