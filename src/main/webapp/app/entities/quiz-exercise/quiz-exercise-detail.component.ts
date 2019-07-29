@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -40,6 +40,8 @@ interface Warning {
     templateUrl: './quiz-exercise-detail.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
+    styleUrls: ['./quiz-exercise-detail.component.scss', '../../quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, ComponentCanDeactivate {
     // Make constants available to html for comparison

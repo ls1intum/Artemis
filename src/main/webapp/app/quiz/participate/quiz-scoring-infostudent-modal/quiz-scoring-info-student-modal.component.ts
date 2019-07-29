@@ -16,7 +16,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-subm
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
-    styles: [],
+    styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
