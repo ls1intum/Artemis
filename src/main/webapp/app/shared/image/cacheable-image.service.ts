@@ -46,7 +46,7 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
 
     /**
      * Load the image, cache it in the LocalStorage. Cache will only be cleared on logout.
-     * Important: Don't use this for large images as the LocalStorage is only 5-10 MB!
+     * Important: Do _not_ use this for large images with more than 150KB because the LocalStorage is only 5-10 MB!
      *
      * @param url
      */
