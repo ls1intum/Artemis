@@ -131,11 +131,12 @@ public class ProgrammingExerciseService {
                 submission.setCommitHash(lastCommitHash);
             }
             catch (Exception ex) {
-                log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
+                log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseStudentParticipation, ex);
             }
 
             submissionRepository.save(submission);
-            studentParticipationRepository.save(participation);
+            programmingExerciseStudentParticipation.addSubmissions(submission);
+            studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
             continuousIntegrationUpdateService.get().triggerUpdate(programmingExerciseStudentParticipation.getBuildPlanId(), false);
         }

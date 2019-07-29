@@ -493,6 +493,7 @@ public class BambooService implements ContinuousIntegrationService {
                 result.setSubmission(programmingSubmission);
                 programmingSubmission.setResult(result);
                 programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
+                participation.addSubmissions(programmingSubmission);
             }
 
             participation.addResult(result);

@@ -257,6 +257,34 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(results).hasSize(2);
         assertThat(results.get(0).getSubmission().getId().equals(submissions.get(0).getId())).isTrue();
         assertThat(results.get(1).getSubmission().getId().equals(submissions.get(1).getId())).isTrue();
+        assertThat(participations.get(0).getSubmissions()).hasSize(1);
+        assertThat(participations.get(1).getSubmissions()).hasSize(1);
+    }
+
+    /**
+     * This is the case where an instructor manually triggers the build from the CI.
+     * Here no submission exists yet and now needs to be created on the result notification.
+     */
+    @Test
+    @Transactional(readOnly = true)
+    public void shouldCreateSubmissionForManualBuildRun() throws Exception {
+        postStudentResult(getStudentLoginFromParticipation(0));
+
+        StudentParticipation participation = studentParticipationRepository.getOne(exercise.getParticipations().stream().findFirst().get().getId());
+
+        // Now a submission for the manual build should exist.
+        List<Submission> submissions = submissionRepository.findAll();
+        List<Result> results = resultRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        ProgrammingSubmission submission = (ProgrammingSubmission) submissions.get(0);
+        assertThat(results).hasSize(1);
+        Result result = results.get(0);
+        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        // The submission should be other as it was not created by a commit.
+        assertThat(submission.getType()).isEqualTo(SubmissionType.OTHER);
+        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(participation.getSubmissions().size()).isEqualTo(1);
     }
 
     /**
