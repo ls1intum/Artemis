@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,10 +103,10 @@ public class TextSubmissionIntegrationTest {
 
         StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
 
-        Assert.assertThat(participation.getResults(), is(notNullValue()));
-        Assert.assertThat(participation.getResults(), hasSize(1));
+        assertThat(participation.getResults(), is(notNullValue()));
+        assertThat(participation.getResults(), hasSize(1));
 
-        Assert.assertThat(participation.getSubmissions(), is(notNullValue()));
+        assertThat(participation.getSubmissions(), is(notNullValue()));
     }
 
 }
