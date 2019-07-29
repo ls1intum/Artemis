@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.simple.parser.JSONParser;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,7 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -87,7 +87,7 @@ public class ProgrammingSubmissionIntegrationTest {
 
     ProgrammingSubmission submission;
 
-    @Before
+    @BeforeEach
     public void reset() {
         database.resetDatabase();
         database.addUsers(2, 2, 2);
@@ -176,7 +176,7 @@ public class ProgrammingSubmissionIntegrationTest {
      * Only the last result should be linked to the created submission.
      */
     // TODO: Fix defective test.
-    @Ignore
+    @Disabled
     @Test
     @Transactional(readOnly = true)
     public void shouldNotLinkTwoResultsToTheSameSubmission() throws Exception {
@@ -209,7 +209,7 @@ public class ProgrammingSubmissionIntegrationTest {
      * This should not create two identical submissions.
      */
     // TODO: Fix defective test.
-    @Ignore
+    @Disabled
     @Test
     @Transactional(readOnly = true)
     public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits() throws Exception {
