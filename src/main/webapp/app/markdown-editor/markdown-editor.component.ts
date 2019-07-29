@@ -115,6 +115,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
 
+    @Output() onPreviewSelect = new EventEmitter();
+
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
@@ -344,6 +346,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     togglePreview(event: any): void {
         this.previewMode = !this.previewMode;
+        if (this.previewMode) {
+            this.onPreviewSelect.emit();
+        }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();
