@@ -2,7 +2,7 @@
     <div class="col-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="headline">
-                <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage"> </jhi-secured-image>
+                <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>
                 <div *ngIf="!croppedImage" class="no-image"></div>
                 <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">
                     Create new Course

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from '../../../app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorService {
+export class ProgrammingExercisePlantUmlService {
     private resourceUrl = SERVER_API_URL + 'api/plantuml';
     private encoder: HttpParameterCodec;
 
@@ -39,7 +39,7 @@ export class CodeEditorService {
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
-    private convertPlantUmlResponseToBase64(res: any) {
+    private convertPlantUmlResponseToBase64(res: any): string {
         return Buffer.from(res, 'binary').toString('base64');
     }
 }
