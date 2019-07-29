@@ -8,6 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-participation',
@@ -19,7 +20,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    participations: Participation[];
+    participations: StudentParticipation[];
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
@@ -65,7 +66,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
     }
 
-    addPresentation(participation: Participation) {
+    addPresentation(participation: StudentParticipation) {
         participation.presentationScore = 1;
         this.participationService.update(participation).subscribe(
             () => {},
@@ -75,7 +76,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
-    removePresentation(participation: Participation) {
+    removePresentation(participation: StudentParticipation) {
         participation.presentationScore = 0;
         this.participationService.update(participation).subscribe(
             () => {},

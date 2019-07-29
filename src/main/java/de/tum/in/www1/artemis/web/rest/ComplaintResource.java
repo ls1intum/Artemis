@@ -16,10 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -83,6 +80,10 @@ public class ComplaintResource {
         }
 
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().setAssessor(null);
+
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
     }
@@ -111,6 +112,22 @@ public class ComplaintResource {
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintService.getByResultId(resultId);
+
+        if (complaint.isPresent() && complaint.get().getResult() != null) {
+            Exercise exercise = complaint.get().getResult().getParticipation().getExercise();
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                complaint.get().getResult().setAssessor(null);
+
+                if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
+                    complaint.get().filterSensitiveInformation();
+                    if (complaint.get().getResult().getParticipation() instanceof StudentParticipation) {
+                        ((StudentParticipation) complaint.get().getResult().getParticipation()).filterSensitiveInformation();
+                    }
+                }
+            }
+        }
+
         return complaint.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 

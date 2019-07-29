@@ -20,6 +20,7 @@ buildscript {
 }
 
 plugins {
+    id "checkstyle"
     id "java"
     id "maven"
     id "idea"
@@ -105,7 +106,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.4.0'
+version = '3.4.1'
 description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
@@ -317,6 +318,17 @@ if (project.hasProperty('nodeInstall')) {
     }
 }
 
+checkstyle {
+    toolVersion = '6.16.1'
+    config = rootProject.resources.text.fromFile('checkstyle/rules.xml')
+    maxErrors = 550
+}
+
+task executeCheckstyle (type: Exec) {
+    commandLine './gradlew', 'checkstyleMain', '-x', 'yarn_install', '-x', 'webpackBuildDev', '-x', 'webpack'
+}
+
 task buildJarForDocker (type: Exec) {
     commandLine './gradlew', 'build', '-x', 'webpackBuildDev', '-x', 'webpack', '-x', 'test'
 }
+
