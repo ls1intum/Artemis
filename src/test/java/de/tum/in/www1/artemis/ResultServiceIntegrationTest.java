@@ -47,14 +47,15 @@ public class ResultServiceIntegrationTest {
 
     private ProgrammingExercise programmingExercise;
 
-    private Participation participation;
+    private SolutionProgrammingExerciseParticipation participation;
 
     @Before
     public void reset() {
         ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
-        participation = new Participation();
-        participation.exercise(programmingExercise).setId(1L);
+        participation = new SolutionProgrammingExerciseParticipation();
+        participation.setProgrammingExercise(programmingExercise);
+        participation.setId(1L);
         programmingExercise.setSolutionParticipation(participation);
     }
 

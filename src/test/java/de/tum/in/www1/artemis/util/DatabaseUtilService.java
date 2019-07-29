@@ -55,7 +55,16 @@ public class DatabaseUtilService {
     ResultRepository resultRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    StudentParticipationRepository participationRepo;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
+
+    @Autowired
+    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+
+    @Autowired
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
@@ -101,6 +110,9 @@ public class DatabaseUtilService {
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
+        programmingExerciseStudentParticipationRepo.deleteAll();
+        templateProgrammingExerciseParticipationRepo.deleteAll();
+        solutionProgrammingExerciseParticipationRepo.deleteAll();
         exerciseRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         testCaseRepository.deleteAll();
@@ -141,19 +153,57 @@ public class DatabaseUtilService {
      * @param login    login of the user
      * @return eagerly loaded representation of the participation object stored in the database
      */
-    public Participation addParticipationForExercise(Exercise exercise, String login) {
-        Optional<Participation> storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+    public StudentParticipation addParticipationForExercise(Exercise exercise, String login) {
+        Optional<StudentParticipation> storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isPresent()) {
             return storedParticipation.get();
         }
         User user = getUserByLogin(login);
-        Participation participation = new Participation();
+        StudentParticipation participation = new StudentParticipation();
         participation.setStudent(user);
         participation.setExercise(exercise);
         participationRepo.save(participation);
         storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isPresent();
         return participationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+    }
+
+    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+        Optional<ProgrammingExerciseStudentParticipation> storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(),
+                login);
+        if (storedParticipation.isPresent()) {
+            return storedParticipation.get();
+        }
+        User user = getUserByLogin(login);
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setStudent(user);
+        participation.setExercise(exercise);
+        programmingExerciseStudentParticipationRepo.save(participation);
+        storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        assertThat(storedParticipation).isPresent();
+        return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
+    }
+
+    public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        exercise.setTemplateParticipation(participation);
+        templateProgrammingExerciseParticipationRepo.save(participation);
+        programmingExerciseRepository.save(exercise);
+        return participation;
+    }
+
+    public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        exercise.setSolutionParticipation(participation);
+        solutionProgrammingExerciseParticipationRepo.save(participation);
+        programmingExerciseRepository.save(exercise);
+        return participation;
+    }
+
+    public Result addResultToParticipation(Participation participation) {
+        Result result = new Result().participation(participation).resultString("x of y passed").rated(true).score(100L);
+        resultRepo.save(result);
+        return result;
     }
 
     public void addCourseWithOneModelingExercise() {
@@ -275,7 +325,7 @@ public class DatabaseUtilService {
      * @return submission stored in the modelingSubmissionRepository
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, login);
         Result result = new Result();
@@ -290,7 +340,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -300,7 +350,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);
@@ -316,7 +366,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);
@@ -333,7 +383,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         textSubmissionRepo.save(submission);
@@ -343,7 +393,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);

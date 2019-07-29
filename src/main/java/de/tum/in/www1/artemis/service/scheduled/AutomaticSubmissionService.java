@@ -87,7 +87,8 @@ public class AutomaticSubmissionService {
                     notifyCompassAboutNewModelingSubmission((ModelingSubmission) unsubmittedSubmission, (ModelingExercise) exercise);
                 }
 
-                String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
+                StudentParticipation studentParticipation = (StudentParticipation) unsubmittedSubmission.getParticipation();
+                String username = studentParticipation.getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
                     messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
                 }
@@ -116,15 +117,15 @@ public class AutomaticSubmissionService {
      */
     private Submission updateParticipation(Submission submission) {
         if (submission != null) {
-            Participation participation = submission.getParticipation();
-            if (participation == null) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            if (studentParticipation == null) {
                 log.error("The submission {} has no participation.", submission);
                 return null;
             }
 
-            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipation.setInitializationState(InitializationState.FINISHED);
 
-            participationService.save(participation);
+            participationService.save(studentParticipation);
 
             return submission;
         }

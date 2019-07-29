@@ -51,7 +51,8 @@ public class ComplaintService {
     public Complaint createComplaint(Complaint complaint, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
-        User originalSubmissor = originalResult.getParticipation().getStudent();
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        User originalSubmissor = studentParticipation.getStudent();
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
@@ -132,7 +133,8 @@ public class ComplaintService {
 
             if (!assessor.getLogin().equals(submissorName)) {
                 // Remove data about the student
-                complaint.getResult().getParticipation().setStudent(null);
+                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+                studentParticipation.setStudent(null);
                 complaint.setStudent(null);
                 complaint.setResultBeforeComplaint(null);
 
@@ -183,7 +185,8 @@ public class ComplaintService {
         complaint.setResultBeforeComplaint(null);
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
-            complaint.getResult().getParticipation().setStudent(null);
+            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+            studentParticipation.setStudent(null);
         }
     }
 
@@ -192,7 +195,7 @@ public class ComplaintService {
             return;
         }
 
-        Participation originalParticipation = complaint.getResult().getParticipation();
+        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
         if (originalParticipation != null && originalParticipation.getExercise() != null) {
             Exercise exerciseWithOnlyTitle;
             exerciseWithOnlyTitle = originalParticipation.getExercise() instanceof TextExercise ? new TextExercise() : new ModelingExercise();

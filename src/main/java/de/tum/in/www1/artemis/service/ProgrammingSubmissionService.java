@@ -9,11 +9,10 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -28,7 +27,9 @@ public class ProgrammingSubmissionService {
 
     private final ParticipationService participationService;
 
-    private final ParticipationRepository participationRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -36,32 +37,36 @@ public class ProgrammingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.participationRepository = participationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
-    public void notifyPush(Long participationId, Object requestBody) {
-        Optional<Participation> optionalParticipation = participationRepository.findById(participationId);
-        if (!optionalParticipation.isPresent()) {
-            log.warn("Invalid participation received while notifying about push: " + participationId);
-            return;
-        }
-        Participation participation = optionalParticipation.get();
-        if (participation.getInitializationState() == InitializationState.INACTIVE) {
+    public void notifyPush(Long participationId, Object requestBody) throws IllegalArgumentException {
+        Participation participation = participationService.findOne(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+
+        if (participation instanceof ProgrammingExerciseStudentParticipation
+                && ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to
             // reactivate the
             // build plan by resuming the participation
-            participationService.resumeExercise(participation.getExercise(), participation);
+            participationService.resumeExercise(programmingExerciseParticipation.getProgrammingExercise(),
+                    (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // in addition we need to trigger a build so that we receive a result in a few
             // seconds
-            continuousIntegrationService.get().triggerBuild(participation);
+            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();

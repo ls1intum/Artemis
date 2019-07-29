@@ -43,14 +43,14 @@ public interface ContinuousIntegrationService {
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
-    public void configureBuildPlan(Participation participation);
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation);
 
     /**
      * triggers a build for the build plan in the given participation
      * 
      * @param participation the participation with the id of the build plan that should be triggered
      */
-    public void triggerBuild(Participation participation);
+    public void triggerBuild(ProgrammingExerciseParticipation participation);
 
     /**
      * Delete project with given identifier from CI system.
@@ -74,7 +74,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which build has completed
      */
     @Deprecated
-    public Result onBuildCompletedOld(Participation participation);
+    public Result onBuildCompletedOld(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -95,7 +95,7 @@ public interface ContinuousIntegrationService {
      * @return the result of the build
      * @throws Exception if the Body could not be parsed
      */
-    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception;
+    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -103,7 +103,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get status
      * @return build status
      */
-    public BuildStatus getBuildStatus(Participation participation);
+    public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation);
 
     /**
      * Check if the given build plan ID is valid and accessible.
@@ -128,7 +128,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build logs
      * @return list of build log entries
      */
-    public List<BuildLogEntry> getLatestBuildLogs(Participation participation);
+    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
 
     /**
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
@@ -136,7 +136,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build plan URL
      * @return
      */
-    public URL getBuildPlanWebUrl(Participation participation);
+    public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -144,7 +144,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build artifact
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
-    public ResponseEntity retrieveLatestArtifact(Participation participation);
+    public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
      * Checks if the project with the given projectKey already exists

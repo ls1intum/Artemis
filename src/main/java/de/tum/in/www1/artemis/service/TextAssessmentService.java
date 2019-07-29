@@ -23,8 +23,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
