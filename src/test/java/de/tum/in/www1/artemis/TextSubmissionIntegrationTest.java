@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
@@ -89,6 +93,20 @@ public class TextSubmissionIntegrationTest {
         Exercise returnedExercise = request.get("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Exercise.class);
 
         assertThat(returnedExercise.getParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getDataForTextEditorWithResult() throws Exception {
+        TextSubmission textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, this.textSubmission, "student1", "tutor1");
+        Long participationId = textSubmission.getParticipation().getId();
+
+        StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(participation.getResults(), is(notNullValue()));
+        assertThat(participation.getResults(), hasSize(1));
+
+        assertThat(participation.getSubmissions(), is(notNullValue()));
     }
 
 }
