@@ -454,6 +454,22 @@ public class ParticipationService {
     }
 
     /**
+     * Get one student participation by id with fetched Result, Submissions, Exercise and Course.
+     *
+     * @param participationId the id of the entity
+     * @return the entity
+     **/
+    @Transactional(readOnly = true)
+    public StudentParticipation findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAndExerciseAndCourseById(participationId);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
      * Get one programming exercise participation by id.
      *
      * @param participationId the id of the entity

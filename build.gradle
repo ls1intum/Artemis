@@ -116,6 +116,7 @@ springBoot {
 // Execute the test cases: ./gradlew executeTests
 
 test {
+    useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
 
     // uncomment if the tests reports are not generated
@@ -250,7 +251,8 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.assertj:assertj-core"
-    testImplementation "junit:junit"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.3'
     testImplementation "org.mockito:mockito-core:2.28.2"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2"
