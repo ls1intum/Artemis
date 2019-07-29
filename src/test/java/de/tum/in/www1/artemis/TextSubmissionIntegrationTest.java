@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -63,7 +64,7 @@ public class TextSubmissionIntegrationTest {
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(textSubmissions.get(0).getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -76,7 +77,7 @@ public class TextSubmissionIntegrationTest {
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(textSubmissionWithoutAssessment.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test

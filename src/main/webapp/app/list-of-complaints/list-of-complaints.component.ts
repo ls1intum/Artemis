@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import * as moment from 'moment';
+import { StudentParticipation } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -79,7 +80,8 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        const exercise: Exercise = complaint.result.participation.exercise;
+        const studentParticipation = complaint.result.participation as StudentParticipation;
+        const exercise = studentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
 
         if (!exercise || !exercise.type || !submissionId) {

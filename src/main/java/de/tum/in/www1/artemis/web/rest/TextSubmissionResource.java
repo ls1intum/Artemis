@@ -198,8 +198,8 @@ public class TextSubmissionResource {
         // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null) {
-                    textSubmission.getParticipation().filterSensitiveInformation();
+                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
+                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
                 }
             });
         }
@@ -237,8 +237,9 @@ public class TextSubmissionResource {
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
 
         // tutors should not see information about the student of a submission
-        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null) {
-            textSubmissionWithoutAssessment.get().getParticipation().filterSensitiveInformation();
+        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
+                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);

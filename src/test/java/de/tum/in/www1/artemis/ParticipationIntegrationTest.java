@@ -18,14 +18,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -43,7 +41,7 @@ public class ParticipationIntegrationTest {
     ExerciseRepository exerciseRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    StudentParticipationRepository participationRepo;
 
     @Autowired
     UserRepository userRepo;
@@ -75,7 +73,7 @@ public class ParticipationIntegrationTest {
     public void participateInModelingExercise() throws Exception {
         URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
-        Participation participation = request.get(location.getPath(), HttpStatus.OK, Participation.class);
+        StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student1");
@@ -89,7 +87,7 @@ public class ParticipationIntegrationTest {
     public void participateInTextExercise() throws Exception {
         URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
 
-        Participation participation = request.get(location.getPath(), HttpStatus.OK, Participation.class);
+        StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student2");

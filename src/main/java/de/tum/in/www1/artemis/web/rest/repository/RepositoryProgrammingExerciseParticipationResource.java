@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -16,14 +16,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
@@ -31,12 +29,13 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 @RestController
 @RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-public class RepositoryParticipationResource extends RepositoryResource {
+public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
-    private final ParticipationService participationService;
+    private final ProgrammingExerciseParticipationService participationService;
 
-    public RepositoryParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ParticipationService participationService) {
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
+            ProgrammingExerciseParticipationService participationService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
     }
@@ -53,12 +52,14 @@ public class RepositoryParticipationResource extends RepositoryResource {
      */
     @Override
     Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
-        Participation participation = participationService.findOne(participationId);
-        boolean hasPermissions = participationService.canAccessParticipation(participation);
+        Participation participation = participationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+        boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
             throw new IllegalAccessError();
         }
-        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+        URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
         return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
@@ -69,9 +70,11 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      */
     @Override
-    URL getRepositoryUrl(Long participationId) {
-        Participation participation = participationService.findOne(participationId);
-        return participation.getRepositoryUrlAsUrl();
+    URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+        Participation participation = participationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+        return ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
     }
 
     /**
@@ -81,9 +84,11 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      */
     @Override
-    boolean canAccessRepository(Long participationId) {
-        Participation participation = participationService.findOne(participationId);
-        return participationService.canAccessParticipation(participation);
+    boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
+        Participation participation = participationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     /**
@@ -219,11 +224,20 @@ public class RepositoryParticipationResource extends RepositoryResource {
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Participation participation = participationService.findOne(participationId);
-        if (!participationService.canAccessParticipation(participation))
+        Participation participation;
+        try {
+            participation = participationService.findParticipation(participationId);
+        }
+        catch (EntityNotFoundException ex) {
+            return notFound();
+        }
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            return badRequest();
+
+        if (!participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation))
             return forbidden();
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(((ProgrammingExerciseParticipation) participation).getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }
