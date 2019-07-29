@@ -16,7 +16,7 @@
                 "title": "Modeling Exercise"
             },
             "diagramType": "Diagram Type",
-            "problemStatement": "<strong>Problem Statement:</strong> {{ problemStatement }}",
+            "problemStatement": "Problem Statement:",
             "exampleSolution": "Example Solution",
             "exampleSolutionExplanation": "Example Solution Explanation",
             "createExampleSolution": "Create Example Solution",

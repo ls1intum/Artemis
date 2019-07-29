@@ -62,6 +62,10 @@ public class ComplaintResponseResource {
     public ResponseEntity<ComplaintResponse> createComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
+
+        // always remove the student from the complaint as we don't need it in the corresponding frontend use case
+        complaintResponse.getComplaint().filterSensitiveInformation();
+
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
@@ -85,6 +89,16 @@ public class ComplaintResponseResource {
         // All tutors and higher can see this, and also the students who first open the complaint
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
 
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
+
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }
 
@@ -105,6 +119,16 @@ public class ComplaintResponseResource {
         }
 
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
+
+        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            complaintResponse.get().getComplaint().setStudent(null);
+        }
+
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            complaintResponse.get().setReviewer(null);
+        }
 
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }

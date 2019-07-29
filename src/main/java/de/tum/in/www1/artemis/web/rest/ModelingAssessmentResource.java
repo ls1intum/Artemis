@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -91,7 +90,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     // submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
@@ -124,7 +123,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
         Result result = submission.getResult();
@@ -181,39 +180,41 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
-            List<ModelAssessmentConflict> conflicts = new ArrayList<>();
+            // SK: deactivate conflict handling for now, because it is not fully implemented yet.
+            // List<ModelAssessmentConflict> conflicts = new ArrayList<>();
+            // if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            // try {
+            // conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
+            // }
+            // catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
+            // log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
+            // }
+            // }
+            // if (!conflicts.isEmpty() && !ignoreConflict) {
+            // conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
+            // return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
+            // }
+            // else {
+            modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                try {
-                    conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
-                }
-                catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
-                    log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
-                }
+                compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
             }
-            if (!conflicts.isEmpty() && !ignoreConflict) {
-                conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
-            }
-            else {
-                modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
-                if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                    compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
-                }
-            }
+            // }
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            result.getParticipation().setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
-        if (submit && (result.getParticipation().getExercise().getAssessmentDueDate() == null
-                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && (((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || ((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
@@ -251,7 +252,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
@@ -264,6 +266,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
             result.getParticipation().setResults(null);
+        }
+
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 
         return ResponseEntity.ok(result);

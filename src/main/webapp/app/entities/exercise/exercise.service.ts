@@ -31,40 +31,40 @@ export class ExerciseService {
         return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
-    archive(id: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${id}/archive`, { observe: 'response', responseType: 'blob' });
+    archive(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/archive`, { observe: 'response', responseType: 'blob' });
     }
 
-    cleanup(id: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
+    cleanup(exerciseId: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${id}/cleanup`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });
     }
 
-    reset(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}/reset`, { observe: 'response' });
+    reset(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, {
+    exportRepos(exerciseId: number, students: string[]): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
             observe: 'response',
             responseType: 'blob',
         });
     }
 
-    findResultsForExercise(id: number): Observable<EntityResponseType> {
+    findResultsForExercise(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}/results`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/results`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
@@ -189,7 +189,7 @@ export class ExerciseLtiConfigurationService {
 
     constructor(private http: HttpClient) {}
 
-    find(id: number): Observable<HttpResponse<LtiConfiguration>> {
-        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    find(exerciseId: number): Observable<HttpResponse<LtiConfiguration>> {
+        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 }
