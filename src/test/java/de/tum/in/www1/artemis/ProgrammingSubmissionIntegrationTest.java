@@ -40,6 +40,10 @@ import de.tum.in.www1.artemis.web.rest.ResultResource;
 @ActiveProfiles("artemis, bamboo, bitbucket")
 public class ProgrammingSubmissionIntegrationTest {
 
+    private enum IntegrationTestParticipationType {
+        STUDENT, TEMPLATE, SOLUTION
+    }
+
     @Autowired
     DatabaseUtilService database;
 
@@ -62,6 +66,12 @@ public class ProgrammingSubmissionIntegrationTest {
     ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -72,7 +82,7 @@ public class ProgrammingSubmissionIntegrationTest {
 
     ProgrammingExercise exercise;
 
-    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+    Participation participation;
 
     ProgrammingSubmission submission;
 
@@ -111,10 +121,10 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @Transactional(readOnly = true)
     public void shouldCreateSubmissionOnNotifyPushForStudentSubmission() throws Exception {
-        postStudentSubmission();
+        postSubmission(IntegrationTestParticipationType.STUDENT);
 
-        assertThat(submission.getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
-        ProgrammingExerciseStudentParticipation updatedParticipation = studentParticipationRepository.getOne(programmingExerciseStudentParticipation.getId());
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = studentParticipationRepository.getOne(participation.getId());
         assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
@@ -136,19 +146,19 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @Transactional(readOnly = true)
     public void shouldHandleNewBuildResultCreatedByStudentCommit() throws Exception {
-        postStudentSubmission();
+        postSubmission(IntegrationTestParticipationType.STUDENT);
         postStudentResult();
 
         // Check that the result was created successfully and is linked to the participation and submission.
-        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(programmingExerciseStudentParticipation.getId());
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
-        programmingExerciseStudentParticipation = studentParticipationRepository.getOne(programmingExerciseStudentParticipation.getId());
+        participation = studentParticipationRepository.getOne(participation.getId());
         submission = (ProgrammingSubmission) submissionRepository.getOne(submission.getId());
-        assertThat(createdResult.getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId());
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
-        assertThat(programmingExerciseStudentParticipation.getSubmissions()).hasSize(1);
-        assertThat(programmingExerciseStudentParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
     }
 
     /**
@@ -163,7 +173,7 @@ public class ProgrammingSubmissionIntegrationTest {
     @Transactional(readOnly = true)
     public void shouldNotLinkTwoResultsToTheSameSubmission() throws Exception {
         // Create 1 submission.
-        postStudentSubmission();
+        postSubmission(IntegrationTestParticipationType.STUDENT);
         // Create 2 results for the same submission.
         postStudentResult();
         postStudentResult();
@@ -194,8 +204,8 @@ public class ProgrammingSubmissionIntegrationTest {
     @Transactional(readOnly = true)
     public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits() throws Exception {
         // Post the same submission twice.
-        postStudentSubmission();
-        postStudentSubmission();
+        postSubmission(IntegrationTestParticipationType.STUDENT);
+        postSubmission(IntegrationTestParticipationType.STUDENT);
         // Post the build result once.
         postStudentResult();
 
@@ -211,18 +221,22 @@ public class ProgrammingSubmissionIntegrationTest {
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
-    private void postStudentSubmission() throws Exception {
-        programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
-        programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipation.setExercise(exercise);
-        programmingExerciseStudentParticipation = studentParticipationRepository.save(programmingExerciseStudentParticipation);
+    private void postSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        switch (participationType) {
+        case SOLUTION:
+            participation = createSolutionParticipation();
+        case TEMPLATE:
+            participation = createTemplateParticipation();
+        default:
+            participation = createStudentParticipation();
+            break;
+        }
 
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
 
         // Api should return ok.
-        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + programmingExerciseStudentParticipation.getId(), obj, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId(), obj, HttpStatus.OK, new HttpHeaders());
 
         // Submission should have been created for the participation.
         assertThat(submissionRepository.findAll()).hasSize(1);
@@ -240,5 +254,29 @@ public class ProgrammingSubmissionIntegrationTest {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", "<secrettoken>");
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, HttpStatus.OK, httpHeaders);
+    }
+
+    private ProgrammingExerciseStudentParticipation createStudentParticipation() {
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setExercise(exercise);
+        return studentParticipationRepository.save(participation);
+    }
+
+    private SolutionProgrammingExerciseParticipation createSolutionParticipation() {
+        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setExercise(exercise);
+        return solutionProgrammingExerciseParticipationRepository.save(participation);
+    }
+
+    private TemplateProgrammingExerciseParticipation createTemplateParticipation() {
+        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setExercise(exercise);
+        return templateProgrammingExerciseParticipationRepository.save(participation);
     }
 }
