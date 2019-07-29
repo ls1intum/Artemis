@@ -1,22 +1,7 @@
-import {
-    ApplicationRef,
-    Component,
-    ComponentFactoryResolver,
-    ElementRef,
-    EventEmitter,
-    Injector,
-    Input,
-    OnChanges,
-    OnDestroy,
-    Output,
-    Renderer2,
-    SimpleChanges,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as Remarkable from 'remarkable';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
@@ -28,7 +13,7 @@ import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 
