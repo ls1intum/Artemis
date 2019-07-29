@@ -102,7 +102,7 @@ public class TextSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-        Participation savedParticipation = studentParticipationRepository.save(participation);
+        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
             Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
             if (optionalTextSubmission.isPresent()) {
@@ -145,7 +145,7 @@ public class TextSubmissionService extends SubmissionService {
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
         Random r = new Random();
         List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
