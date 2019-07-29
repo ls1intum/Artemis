@@ -158,7 +158,7 @@
                     </li>
                     <div class="dropdown-divider"></div>
                     <li>
-                        <a class="dropdown-item" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                        <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>

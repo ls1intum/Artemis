@@ -17,8 +17,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
@@ -129,7 +129,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public URL getRepositoryWebUrl(Participation participation) {
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
         try {
             return new URL(BITBUCKET_SERVER_URL + "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) + "/repos/"
                     + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");

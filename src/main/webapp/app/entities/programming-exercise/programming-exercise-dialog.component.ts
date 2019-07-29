@@ -40,7 +40,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
         private fileService: FileService,
-        private resultService: ResultService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
     ) {}
@@ -77,14 +76,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         } else {
             this.problemStatementLoaded = true;
             this.templateParticipationResultLoaded = false;
-            this.resultService
-                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
-                    catchError(() => of(null)),
-                )
-                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 

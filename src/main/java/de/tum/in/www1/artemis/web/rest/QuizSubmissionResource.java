@@ -153,7 +153,7 @@ public class QuizSubmissionResource {
         quizSubmission.calculateAndUpdateScores(quizExercise);
 
         // create Participation stub
-        Participation participation = new Participation().exercise(quizExercise);
+        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
 
         // create result
         Result result = new Result().participation(participation).submission(quizSubmission);

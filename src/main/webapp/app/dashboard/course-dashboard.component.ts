@@ -8,6 +8,7 @@ import { User } from 'app/core';
 import { Participation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { DecimalPipe } from '@angular/common';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -19,7 +20,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT];
 
     course: Course;
-    participations: Participation[] = [];
+    participations: StudentParticipation[] = [];
     exercises: Exercise[] = [];
     students: Student[] = [];
 
@@ -313,7 +314,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
 class Student {
     user: User;
-    participations: Participation[] = [];
+    participations: StudentParticipation[] = [];
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;

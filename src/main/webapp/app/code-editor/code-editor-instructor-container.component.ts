@@ -3,9 +3,16 @@ import { Observable, of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import {
+    Participation,
+    ParticipationService,
+    ProgrammingExerciseStudentParticipation,
+    SolutionProgrammingExerciseParticipation,
+    StudentParticipation,
+    TemplateProgrammingExerciseParticipation,
+} from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
@@ -59,7 +66,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
     // Can only be null when the test repository is selected.
-    selectedParticipation: Participation | null;
+    selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
     // Needs to be set additionaly to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
@@ -74,9 +81,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     constructor(
         private router: Router,
         private exerciseService: ProgrammingExerciseService,
-        private resultService: ResultService,
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -154,8 +161,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             this.exercise.solutionParticipation,
             this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
         ].filter(Boolean);
-        const selectedParticipation = availableParticipations.find(({ id }: Participation) => id === preferredParticipationId);
-        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: Participation) => !!repositoryUrl);
+        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: ProgrammingExerciseStudentParticipation) => !!repositoryUrl);
     }
 
     /**
@@ -196,11 +203,15 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             this.selectedParticipation = { ...this.exercise.solutionParticipation, exercise };
         } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.participations[0];
-            this.selectedParticipation = { ...this.exercise.participations[0], exercise };
+            this.selectedParticipation = this.exercise.participations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = { ...(this.exercise.participations[0] as ProgrammingExerciseStudentParticipation), exercise };
         } else {
             this.onError('participationNotFound');
         }
+    }
+
+    repositoryUrl(participation: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
 
     /**
@@ -211,17 +222,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
-            : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(
-                  map(({ body }) => body!),
-                  // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
-                  switchMap(exercise =>
-                      this.resultService.getLatestResultWithFeedbacks(exercise.templateParticipation.id).pipe(
-                          map(({ body }) => body!),
-                          map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
-                          catchError(() => of(exercise)),
-                      ),
-                  ),
-              );
+            : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
