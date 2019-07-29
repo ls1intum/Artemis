@@ -454,7 +454,7 @@ public class ParticipationService {
     }
 
     /**
-     * Get one student participation by id with fetched Result and Submissions.
+     * Get one student participation by id with fetched Result, Submissions, Exercise and Course.
      *
      * @param participationId the id of the entity
      * @return the entity
