@@ -20,10 +20,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketService;
@@ -55,6 +56,9 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @Autowired
     ParticipationRepository participationRepository;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @MockBean
     BitbucketService versionControlService;
@@ -217,7 +221,7 @@ public class ProgrammingSubmissionIntegrationTest {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
         // Api should return ok.
-        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + fakeParticipationId, obj, HttpStatus.OK);
+        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND);
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAll()).hasSize(0);
     }
@@ -227,9 +231,9 @@ public class ProgrammingSubmissionIntegrationTest {
     @Transactional(readOnly = true)
     public void notifyPushForStudentParticipationShouldCreateSubmission() throws Exception {
         String fakedCommitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        Participation participation = new StudentParticipation();
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(1L);
-        participationRepository.save(participation);
+        studentParticipationRepository.save(participation);
 
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
