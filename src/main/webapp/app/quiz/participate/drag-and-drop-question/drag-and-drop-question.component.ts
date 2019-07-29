@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -6,7 +6,7 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 // options are optional ;)
@@ -27,6 +27,8 @@ window.addEventListener('touchmove', function() {}, { passive: false });
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../quiz-question.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     /** needed to trigger a manual reload of the drag and drop background picture */

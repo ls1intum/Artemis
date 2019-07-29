@@ -10,11 +10,9 @@
     </div>
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
-        <span class="show-explanation"
-            ><span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span
-            ><span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span
-        ><br />
-
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
+        <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
+        <br />
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
@@ -92,11 +90,9 @@
     </div>
 
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
-        <span class="show-explanation"
-            ><span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span
-            ><span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span
-        ><br />
-
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
+        <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span>
+        <br />
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
