@@ -91,8 +91,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
-        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation();
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -111,8 +111,8 @@ public class TextAssessmentResource extends AssessmentResource {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation();
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -126,8 +126,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            result.getParticipation().filterSensitiveInformation();
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -183,8 +183,8 @@ public class TextAssessmentResource extends AssessmentResource {
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         textSubmission.getBlocks().sort(byStartIndexReversed);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            result.getParticipation().filterSensitiveInformation();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -250,8 +250,8 @@ public class TextAssessmentResource extends AssessmentResource {
             ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            participation.filterSensitiveInformation();
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise) && participation instanceof StudentParticipation) {
+            ((StudentParticipation) participation).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);

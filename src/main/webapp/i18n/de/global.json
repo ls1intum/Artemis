@@ -239,7 +239,8 @@
         "invalid.solution.build.plan.id": "Die Lösung Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "invalid.template.repository.url": "Die Vorlage Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "idnull": "Ungültige ID"
+        "idnull": "Ungültige ID",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",

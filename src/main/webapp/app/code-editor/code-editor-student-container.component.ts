@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -11,7 +11,7 @@ import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
 import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
@@ -30,7 +30,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
     paramSub: Subscription;
-    participation: Participation;
+    participation: StudentParticipation;
     exercise: ProgrammingExercise;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
@@ -40,6 +40,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     constructor(
         private resultService: ResultService,
         private domainService: DomainService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -89,10 +90,9 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<Participation | null> {
-        return this.participationService.findWithLatestResult(participationId).pipe(
-            map(res => res && res.body),
-            flatMap((participation: Participation) =>
+    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
+        return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
+            flatMap((participation: StudentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
                           map(feedback => {
