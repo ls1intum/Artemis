@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RES
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BAMBOO_REQUEST;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.util.List;
 
@@ -19,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,8 +85,13 @@ public class ProgrammingSubmissionIntegrationTest {
         exercise = programmingExerciseRepository.findAll().get(0);
     }
 
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * However the participation id provided by the VCS on the request is invalid.
+     */
     @Test
-    @WithMockUser(username = "student1")
     public void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 1L;
         JSONParser jsonParser = new JSONParser();
@@ -99,8 +102,13 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(submissionRepository.findAll()).hasSize(0);
     }
 
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * However the participation id provided by the VCS on the request is invalid.
+     */
     @Test
-    @WithMockUser(username = "student1")
     @Transactional(readOnly = true)
     public void shouldCreateSubmissionOnNotifyPushForStudentSubmission() throws Exception {
         postStudentSubmission();
@@ -117,11 +125,19 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.isSubmitted()).isTrue();
     }
 
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * Here the participation provided does exist so Artemis can create the submission.
+     *
+     * After that the CI builds the code submission and notifies Artemis so it can create the result.
+     */
     @Test
     @Transactional(readOnly = true)
     public void shouldHandleNewBuildResultCreatedByStudentCommit() throws Exception {
         postStudentSubmission();
-        postStudentCommit();
+        postStudentResult();
 
         // Check that the result was created successfully and is linked to the participation and submission.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(programmingExerciseStudentParticipation.getId());
@@ -135,14 +151,66 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(programmingExerciseStudentParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
     }
 
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
+     *
+     * Only the last result should be linked to the created submission.
+     */
     @Test
     @Transactional(readOnly = true)
-    public void whatWillHappen() throws Exception {
+    public void shouldNotLinkTwoResultsToTheSameSubmission() throws Exception {
+        // Create 1 submission.
         postStudentSubmission();
-        postStudentCommit();
-        postStudentCommit();
+        // Create 2 results for the same submission.
+        postStudentResult();
+        postStudentResult();
+
+        // Make sure there is still only 1 submission.
+        List<Submission> submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        submission = (ProgrammingSubmission) submissions.get(0);
+
+        // There should now be 2 results, but only the last one linked to the submission.
+        List<Result> results = resultRepository.findAll();
+        assertThat(results).hasSize(2);
+        Result result1 = results.get(0);
+        Result result2 = results.get(1);
+        assertThat(result1.getSubmission()).isNull();
+        assertThat(result2.getSubmission()).isNotNull();
+        assertThat(result2.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(submission.getResult().getId()).isEqualTo(result2.getId());
     }
 
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
+     *
+     * This should not create two identical submissions.
+     */
+    @Test
+    @Transactional(readOnly = true)
+    public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits() throws Exception {
+        // Post the same submission twice.
+        postStudentSubmission();
+        postStudentSubmission();
+        // Post the build result once.
+        postStudentResult();
+
+        // There should only be one submission and this submission should be linked to the created result.
+        List<Result> results = resultRepository.findAll();
+        assertThat(results).hasSize(1);
+        Result result = results.get(0);
+        assertThat(result.getSubmission()).isNotNull();
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(submission.getResult().getId()).isEqualTo(result.getId());
+    }
+
+    /**
+     * This is the simulated request from the VCS to Artemis on a new commit.
+     */
     private void postStudentSubmission() throws Exception {
         programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
         programmingExerciseStudentParticipation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-TESTUSER");
@@ -162,7 +230,10 @@ public class ProgrammingSubmissionIntegrationTest {
         submission = (ProgrammingSubmission) submissionRepository.findAll().get(0);
     }
 
-    private void postStudentCommit() throws Exception {
+    /**
+     * This is the simulated request from the CI to Artemis on a new build result.
+     */
+    private void postStudentResult() throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BAMBOO_REQUEST);
 
