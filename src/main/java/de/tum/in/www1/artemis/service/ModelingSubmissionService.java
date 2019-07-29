@@ -63,7 +63,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
-        for (Participation participation : participations) {
+        for (StudentParticipation participation : participations) {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
             if (submission.isPresent()) {
                 if (submittedOnly && !submission.get().isSubmitted()) {
@@ -146,7 +146,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
         List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
-                .stream().map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+                .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -230,7 +230,7 @@ public class ModelingSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-        Participation savedParticipation = studentParticipationRepository.save(participation);
+        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
             Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
             if (optionalModelingSubmission.isPresent()) {
