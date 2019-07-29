@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -226,7 +227,7 @@ public class ProgrammingSubmissionIntegrationTest {
     @Transactional(readOnly = true)
     public void notifyPushForStudentParticipationShouldCreateSubmission() throws Exception {
         String fakedCommitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        Participation participation = new Participation();
+        Participation participation = new StudentParticipation();
         participation.setId(1L);
         participationRepository.save(participation);
 
