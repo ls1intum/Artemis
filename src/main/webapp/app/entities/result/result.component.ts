@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    @Input() participation: Participation;
+    @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;

@@ -22,6 +22,7 @@ import {
     ProgrammingExerciseInstructorStatusComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
+    ProgrammingExerciseParticipationService,
     ProgrammingExerciseManageTestCasesComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
@@ -81,7 +82,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
     ],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService],
+    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {

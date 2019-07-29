@@ -14,8 +14,8 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -30,6 +30,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
@@ -82,6 +83,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -198,16 +200,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id).pipe(
             catchError(() => Observable.of(null)),
-            map((latestResult: HttpResponse<Result[]>) => {
-                if (latestResult && latestResult.body && latestResult.body.length) {
-                    return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                } else {
-                    return null;
-                }
-            }),
-            flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : Observable.of(latestResult))),
         );
     }
 

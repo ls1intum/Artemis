@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 
 public interface VersionControlService {
 
@@ -54,7 +54,7 @@ public interface VersionControlService {
      * @param participation a participation of a programming exercise
      * @return the URL of the repository of the participation
      */
-    public URL getRepositoryWebUrl(Participation participation);
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the clone URL used for cloning

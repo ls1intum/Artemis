@@ -36,11 +36,15 @@ public class RepositoryService {
 
     private ParticipationService participationService;
 
-    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService) {
+    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
         this.userService = userService;
         this.participationService = participationService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -252,5 +256,24 @@ public class RepositoryService {
             throw new IllegalAccessException();
         }
         return gitService.get().getOrCheckoutRepository(repoUrl, true);
+    }
+
+    /**
+     * Retrieve a repository by a participation connected to it.
+     *
+     * @param participation
+     * @return
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
+    public Repository checkoutRepositoryByParticipation(ProgrammingExerciseParticipation participation)
+            throws IOException, IllegalAccessException, GitAPIException, InterruptedException {
+        boolean hasAccess = programmingExerciseParticipationService.canAccessParticipation(participation);
+        if (!hasAccess) {
+            throw new IllegalAccessException();
+        }
+
+        return gitService.get().getOrCheckoutRepository(participation);
     }
 }

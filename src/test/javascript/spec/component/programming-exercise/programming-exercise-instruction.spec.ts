@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
@@ -11,21 +11,24 @@ import { SinonStub, spy, stub } from 'sinon';
 import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { Result } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
-import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, ProgrammingExerciseTestCaseService, TestCaseState } from 'src/main/webapp/app/entities/programming-exercise';
+import {
+    ProgrammingExercise,
+    ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseParticipationService,
+    TestCaseState,
+} from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementBubbleSortNotExecutedHtml, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
+import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
-import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
+import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,19 +39,19 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
-    let resultService: ResultService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let modalService: NgbModal;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFileStub: SinonStub;
     let openModalStub: SinonStub;
-    let findResultsForParticipationStub: SinonStub;
+    let getLatestResultWithFeedbacks: SinonStub;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionComponent, SafeHtmlPipe],
             providers: [
-                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -61,13 +64,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                resultService = debugElement.injector.get(ResultService);
+                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = stub(modalService, 'open');
                 getFileStub = stub(repositoryFileService, 'get');
-                findResultsForParticipationStub = stub(resultService, 'findResultsForParticipation');
+                getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
             });
     });
 
@@ -75,7 +78,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         subscribeForLatestResultOfParticipationStub.restore();
         openModalStub.restore();
         getFileStub.restore();
-        findResultsForParticipationStub.restore();
+        getLatestResultWithFeedbacks.restore();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
@@ -203,7 +206,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.ngOnChanges({
             exercise: {
                 previousValue: { ...exercise, problemStatement: oldProblemStatement },
-                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
@@ -224,7 +227,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.ngOnChanges({
             exercise: {
                 previousValue: undefined,
-                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
@@ -237,7 +240,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const problemStatement = 'lorem ipsum';
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
         const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        findResultsForParticipationStub.returns(throwError('fatal error'));
+        getLatestResultWithFeedbacks.returns(throwError('fatal error'));
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -246,7 +249,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         comp.ngOnChanges({} as SimpleChanges);
 
-        expect(findResultsForParticipationStub).to.have.been.calledOnceWith(exercise.course.id, exercise.id, participation.id);
+        expect(getLatestResultWithFeedbacks).to.have.been.calledOnceWith(participation.id);
         expect(updateMarkdownStub).to.have.been.calledOnce;
         expect(comp.isInitial).to.be.false;
         expect(comp.isLoading).to.be.false;
@@ -336,9 +339,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases.slice(0, 1));
         expect(taskState1).to.equal(TestCaseState.SUCCESS);
 
+        // @ts-ignore
         const [taskState2] = comp.statusForTests(testCases.slice(2));
         expect(taskState2).to.equal(TestCaseState.SUCCESS);
     });
@@ -354,6 +359,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.FAIL);
     });
@@ -369,6 +375,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.FAIL);
     });
@@ -384,6 +391,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.latestResult = result;
 
+        // @ts-ignore
         const [taskState1] = comp.statusForTests(testCases);
         expect(taskState1).to.equal(TestCaseState.NOT_EXECUTED);
     });
