@@ -324,20 +324,4 @@ export class TutorExerciseDashboardComponent implements OnInit {
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
     }
-
-    calculateComplaintStatus(accepted?: boolean) {
-        if (accepted !== undefined) {
-            return this.translateService.instant('artemisApp.tutorExerciseDashboard.complaintEvaluated');
-        }
-        // in the case of 'undefined' the complaint is not yet handled
-        return this.translateService.instant('artemisApp.tutorExerciseDashboard.complaintEvaluated');
-    }
-
-    calculateMoreFeedbackStatus(accepted?: boolean) {
-        if (accepted !== undefined) {
-            return this.translateService.instant('artemisApp.tutorExerciseDashboard.moreFeedbackRequestEvaluated');
-        }
-        // in the case of 'undefined' the more feedback request is not yet handled
-        return this.translateService.instant('artemisApp.tutorExerciseDashboard.moreFeedbackRequestNotEvaluated');
-    }
 }

@@ -248,7 +248,8 @@
                                 <jhi-result [result]="complaint.result"></jhi-result>
                             </td>
                             <td>
-                                {{ calculateComplaintStatus(complaint.accepted) }}
+                                <span *ngIf="complaint.accepted !== undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintEvaluated' | translate }}</span>
+                                <span *ngIf="complaint.accepted === undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintNotEvaluated' | translate }}</span>
                             </td>
                             <td>
                                 <button
@@ -300,7 +301,10 @@
                                 <jhi-result [result]="moreFeedbackRequest.result"></jhi-result>
                             </td>
                             <td>
-                                {{ calculateMoreFeedbackStatus(moreFeedbackRequest.accepted) }}
+                                <span *ngIf="moreFeedbackRequest.accepted !== undefined">{{ 'artemisApp.tutorExerciseDashboard.moreFeedbackRequestEvaluated' | translate }}</span>
+                                <span *ngIf="moreFeedbackRequest.accepted === undefined"
+                                    >{{ 'artemisApp.tutorExerciseDashboard.moreFeedbackRequestNotEvaluated' | translate }}
+                                </span>
                             </td>
                             <td>
                                 <button
