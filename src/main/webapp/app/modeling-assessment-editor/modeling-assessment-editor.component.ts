@@ -15,6 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { StudentParticipation } from 'app/entities/participation';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { filter } from 'rxjs/operators';
@@ -139,7 +140,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
-        this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+        const studentParticipation = this.submission.participation as StudentParticipation;
+        this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);

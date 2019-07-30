@@ -17,10 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -130,7 +127,9 @@ public class ComplaintResource {
                 if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                     // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
                     complaint.get().filterSensitiveInformation();
-                    complaint.get().getResult().getParticipation().filterSensitiveInformation();
+                    if (complaint.get().getResult().getParticipation() instanceof StudentParticipation) {
+                        ((StudentParticipation) complaint.get().getResult().getParticipation()).filterSensitiveInformation();
+                    }
                 }
             }
         }

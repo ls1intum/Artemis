@@ -12,9 +12,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -25,13 +25,14 @@ public class AutomaticBuildPlanCleanupService {
 
     private final Environment env;
 
-    private final ParticipationRepository participationRepository;
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final ParticipationService participationService;
 
-    public AutomaticBuildPlanCleanupService(Environment env, ParticipationRepository participationRepository, ParticipationService participationService) {
+    public AutomaticBuildPlanCleanupService(Environment env, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ParticipationService participationService) {
         this.env = env;
-        this.participationRepository = participationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
     }
 
@@ -51,10 +52,10 @@ public class AutomaticBuildPlanCleanupService {
         long countSuccessfulLatestResultAfter14Days = 0;
         long countUnsuccessfulLatestResultAfter21Days = 0;
 
-        List<Participation> allParticipationsWithBuildPlanId = participationRepository.findAllWithBuildPlanId();
-        Set<Participation> participationsWithBuildPlanToDelete = new HashSet<>();
+        List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId();
+        Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
 
-        for (Participation participation : allParticipationsWithBuildPlanId) {
+        for (ProgrammingExerciseStudentParticipation participation : allParticipationsWithBuildPlanId) {
 
             if (participation.getBuildPlanId() == null) {
                 // already cleaned up
@@ -95,12 +96,12 @@ public class AutomaticBuildPlanCleanupService {
         log.info("  Found " + countSuccessfulLatestResultAfter14Days + " build plans with successful latest result is older than 14 days");
         log.info("  Found " + countUnsuccessfulLatestResultAfter21Days + " build plans with unsuccessful latest result is older than 21 days");
 
-        List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(Participation::getBuildPlanId).collect(Collectors.toList());
+        List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
         // TODO: in the future we could increase the limit even further to e.g. 1000 per day
 
-        for (Participation participation : participationsWithBuildPlanToDelete.stream().limit(300).collect(Collectors.toList())) {
+        for (ProgrammingExerciseStudentParticipation participation : participationsWithBuildPlanToDelete.stream().limit(300).collect(Collectors.toList())) {
             try {
                 participationService.cleanupBuildPlan(participation);
             }

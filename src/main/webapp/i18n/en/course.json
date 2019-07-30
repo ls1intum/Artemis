@@ -16,6 +16,7 @@
             "detail": {
                 "title": "Course"
             },
+            "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
             "color": "Color",

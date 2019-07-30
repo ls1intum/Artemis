@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { Duration, Option, QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +12,8 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
+    styleUrls: ['./quiz-re-evaluate.component.scss', '../../quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [],
 })
 export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {

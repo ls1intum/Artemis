@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
-import { Participation, ParticipationWebsocketService } from '../entities/participation';
+import { Participation, ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
 import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
@@ -34,7 +34,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
 
-    participation: Participation;
+    participation: StudentParticipation;
     modelingExercise: ModelingExercise;
     result: Result | null;
 
@@ -104,7 +104,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (modelingSubmission.result) {
                             modelingSubmission.participation.results = [modelingSubmission.result];
                         }
-                        this.participation = modelingSubmission.participation;
+                        this.participation = modelingSubmission.participation as StudentParticipation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         if (this.modelingExercise.course) {
                             this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {

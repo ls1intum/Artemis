@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -70,7 +69,8 @@ public abstract class RepositoryResource {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    abstract Repository getRepository(Long domainId, boolean pullOnCheckout) throws IOException, IllegalAccessException, InterruptedException, GitAPIException;
+    abstract Repository getRepository(Long domainId, boolean pullOnCheckout)
+            throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException;
 
     abstract URL getRepositoryUrl(Long domainId);
 
@@ -274,7 +274,7 @@ public abstract class RepositoryResource {
             responseEntitySuccess = executor.exec();
         }
         catch (IllegalArgumentException ex) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();

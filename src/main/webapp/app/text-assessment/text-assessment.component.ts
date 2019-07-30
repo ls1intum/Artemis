@@ -14,7 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
-import { Participation } from 'app/entities/participation';
+import { Participation, StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService, WindowRef } from 'app/core';
@@ -33,7 +33,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
-    participation: Participation;
+    participation: StudentParticipation;
     submission: TextSubmission;
     unassessedSubmission: TextSubmission;
     result: Result;
@@ -320,7 +320,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.changeDetectorRef.detectChanges();
     }
 
-    private receiveParticipation(participation: Participation): void {
+    private receiveParticipation(participation: StudentParticipation): void {
         this.participation = participation;
         this.submission = <TextSubmission>this.participation.submissions[0];
         this.exercise = <TextExercise>this.participation.exercise;
@@ -367,9 +367,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      *   - Each reference feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
-     * Additionally, the total score is calculated if the current assessment is valid.
+     * Additionally, the total score is calculated for all numerical credits.
      */
     public validateAssessment() {
+        this.assessmentsAreValid = true;
+        this.invalidError = null;
+
         if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
@@ -379,26 +382,22 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
             this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
-            return;
         }
 
-        const credits = this.referencedFeedback.map(assessment => assessment.credits);
+        let credits = this.referencedFeedback.map(assessment => assessment.credits);
 
-        if (!credits.every(credit => credit !== null && !isNaN(credit))) {
+        if (!this.invalidError && !credits.every(credit => credit !== null && !isNaN(credit))) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
-            return;
+            credits = credits.filter(credit => credit !== null && !isNaN(credit));
         }
 
-        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
+        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
-            return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
-        this.assessmentsAreValid = true;
-        this.invalidError = null;
+        this.totalScore = credits.reduce((a, b) => a + b, 0);
     }
 
     private checkPermissions() {
