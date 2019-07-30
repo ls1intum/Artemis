@@ -60,7 +60,7 @@
                 ></jhi-quiz-scoring-infostudent-modal>
             </span>
         </div>
-        <div class="instructions" *ngIf="showResult">
+        <div class="dnd-instructions" *ngIf="showResult">
             <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution" *ngIf="showingSampleSolution"></span>
             <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
             <div *ngIf="showResult && !forceSampleSolution">
@@ -215,7 +215,7 @@
                 </div>
             </div>
             <div class="drag-and-drop-items">
-                <div class="instructions" *ngIf="!showResult">
+                <div class="dnd-instructions" *ngIf="!showResult">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
                 <div *ngIf="showResult"></div>

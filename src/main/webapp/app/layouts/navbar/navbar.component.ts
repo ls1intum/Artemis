@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, Event, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { distinctUntilChanged, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -17,7 +19,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
@@ -25,6 +27,8 @@ export class NavbarComponent implements OnInit {
     modalRef: NgbModalRef;
     version: string;
     currAccount: User | null;
+
+    private authStateSubscription: Subscription;
 
     constructor(
         private loginService: LoginService,
@@ -60,7 +64,21 @@ export class NavbarComponent implements OnInit {
             },
             reason => {},
         );
-        this.getCurrentAccount();
+
+        // The current user is needed to hide menu items for not logged in users.
+        this.authStateSubscription = this.accountService
+            .getAuthenticationState()
+            .pipe(
+                distinctUntilChanged(),
+                tap((user: User) => (this.currAccount = user)),
+            )
+            .subscribe();
+    }
+
+    ngOnDestroy(): void {
+        if (this.authStateSubscription) {
+            this.authStateSubscription.unsubscribe();
+        }
     }
 
     changeLanguage(languageKey: string) {
@@ -73,26 +91,14 @@ export class NavbarComponent implements OnInit {
         this.isNavbarCollapsed = true;
     }
 
-    getCurrentAccount() {
-        if (!this.currAccount && this.accountService.isAuthenticated()) {
-            this.accountService.identity().then(acc => {
-                this.currAccount = acc;
-            });
-        }
-        return true;
-    }
-
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }
 
     logout() {
         this.participationWebsocketService.resetLocalCache();
-        this.currAccount = null;
         this.collapseNavbar();
         this.loginService.logout();
-        // noinspection JSIgnoredPromiseFromCall
-        this.router.navigate(['']);
     }
 
     toggleNavbar() {

@@ -161,7 +161,7 @@
                     <!-- only display guided tour to ADMIN for now -->
                     <div class="dropdown-divider"></div>
                     <li>
-                        <a class="dropdown-item guided-tour" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                        <a class="dropdown-item guided-tour" *ngIf="currAccount" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>
