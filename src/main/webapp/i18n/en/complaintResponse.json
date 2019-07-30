@@ -9,7 +9,7 @@
             "rejectComplaintTooltip": "Send complaint response and reject complaint"
         },
         "moreFeedbackResponse": {
-            "title": "Request's response",
+            "title": "More Feedback Request's response",
             "created": "Response to More Feedback Request has been submitted",
             "sendResponseTooltip": "Send response to More Feedback Request",
             "provideFeedback": "Provide more feedback"
