@@ -5,14 +5,11 @@ import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BA
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.json.simple.parser.JSONParser;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -27,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -64,6 +62,9 @@ public class ProgrammingSubmissionIntegrationTest {
     SubmissionRepository submissionRepository;
 
     @Autowired
+    ParticipationRepository participationRepository;
+
+    @Autowired
     ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -88,12 +89,13 @@ public class ProgrammingSubmissionIntegrationTest {
     ProgrammingSubmission submission;
 
     @BeforeEach
-    public void reset() {
+    void reset() {
         database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAll().get(0);
+        SecurityUtils.setAuthorizationObject();
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
@@ -108,7 +110,7 @@ public class ProgrammingSubmissionIntegrationTest {
      */
     @Test
     @Transactional(readOnly = true)
-    public void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
+    void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
@@ -116,6 +118,39 @@ public class ProgrammingSubmissionIntegrationTest {
         request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAll()).hasSize(0);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> shouldCreateSubmissionOnNotifyPushForSubmissionTestCollection() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldCreateSubmissionOnNotifyPushFromVCS_for_" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldCreateSubmissionOnNotifyPushForSubmission(participationType);
+                })).collect(Collectors.toList());
+    }
+
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * However the participation id provided by the VCS on the request is invalid.
+     */
+    void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        postSubmission(participationType);
+
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        // Needs to be set for using a custom repository method, known spring bug.
+        SecurityUtils.setAuthorizationObject();
+        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissions(participation.getId());
+        assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
+
+        // Make sure the submission has the correct commit hash.
+        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        // The submission should be manual and submitted.
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(submission.isSubmitted()).isTrue();
     }
 
     /**
