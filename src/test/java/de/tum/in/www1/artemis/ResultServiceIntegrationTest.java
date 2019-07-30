@@ -21,10 +21,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -45,18 +47,27 @@ public class ResultServiceIntegrationTest {
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    ParticipationRepository participationRepository;
+
+    @Autowired
+    DatabaseUtilService database;
+
     private ProgrammingExercise programmingExercise;
 
     private SolutionProgrammingExerciseParticipation participation;
 
     @BeforeEach
     public void reset() {
+        database.resetDatabase();
         ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
         participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(programmingExercise);
         participation.setId(1L);
         programmingExercise.setSolutionParticipation(participation);
+        participationRepository.save(participation);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     @Test
@@ -76,7 +87,7 @@ public class ResultServiceIntegrationTest {
         Object requestDummy = new Object();
 
         when(continuousIntegrationServiceMock.onBuildCompletedNew(participation, requestDummy)).thenReturn(result);
-        resultService.processNewProgrammingExerciseResult(participation, requestDummy);
+        resultService.processNewProgrammingExerciseResult(participation.getId(), requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);
