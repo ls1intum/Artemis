@@ -1,8 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
+import { Course } from 'app/entities/course';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
@@ -21,6 +23,7 @@ import * as moment from 'moment';
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    @Input() course: Course;
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -30,7 +33,21 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     public resultUpdateListener: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private resultService: ResultService) {}
+
+    ngOnInit() {
+        // initialize results array
+        this.resultService
+            .findResultsForParticipation(this.course.id, this.participation.exercise!.id, this.participation.id)
+            .pipe(
+                map((results: HttpResponse<Result[]>) => {
+                    if (results && results.body && results.body.length) {
+                        this.result = results.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                    }
+                }),
+            )
+            .subscribe();
+    }
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
@@ -44,9 +61,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
-
-            console.log('result changes');
-            console.log(this.participation.results);
         }
     }
 

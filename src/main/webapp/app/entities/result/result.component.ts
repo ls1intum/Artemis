@@ -83,8 +83,6 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     init() {
-        console.log(this.participation.exercise.title);
-        console.log(this.participation);
         if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();

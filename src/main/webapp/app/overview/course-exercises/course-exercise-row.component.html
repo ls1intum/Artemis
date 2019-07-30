@@ -36,16 +36,16 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'exercise-submitted'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <!--
                 <span *ngSwitchCase="'exercise-submitted'">
