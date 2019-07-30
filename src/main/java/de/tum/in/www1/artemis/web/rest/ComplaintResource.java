@@ -84,14 +84,14 @@ public class ComplaintResource {
         }
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String enityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
+        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
 
         // Remove assessor information from client request
         savedComplaint.getResult().setAssessor(null);
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, enityName, savedComplaint.getId().toString())).body(savedComplaint);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
     /**
@@ -199,7 +199,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("/complaints")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
         // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /

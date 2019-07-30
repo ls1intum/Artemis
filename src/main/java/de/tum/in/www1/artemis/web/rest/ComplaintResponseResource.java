@@ -66,7 +66,7 @@ public class ComplaintResponseResource {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
 
-        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
+        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
         String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
 
         // always remove the student from the complaint as we don't need it in the corresponding frontend use case

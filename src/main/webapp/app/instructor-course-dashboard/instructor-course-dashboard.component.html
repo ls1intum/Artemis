@@ -37,7 +37,7 @@
                                 ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                             <li>
-                                <a routerLink="/moreFeedbackRequests" [queryParams]="{ courseId: course.id }">
+                                <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id }">
                                     <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
                                 </a>
                                 ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})

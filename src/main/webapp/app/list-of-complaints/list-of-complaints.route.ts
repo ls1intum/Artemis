@@ -16,7 +16,7 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'moreFeedbackRequests',
+        path: 'more-feedback-requests',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
