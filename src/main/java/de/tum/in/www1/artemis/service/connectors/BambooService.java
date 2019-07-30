@@ -497,10 +497,6 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             participation.addResult(result);
-            resultRepository.save(result);
-            //TODO: we might need to distinguish the type for saving here
-            participationRepository.save((Participation)participation);
-
             return result;
 
         } catch (Exception e) {

@@ -123,21 +123,23 @@ public class ResultService {
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
-    public void onResultNotifiedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
+    @Transactional
+    public Optional<Result> processNewProgrammingExerciseResult(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-        if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
+        if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
             extractTestCasesFromResult(participation, result);
         }
-        // Find out which test cases were executed and calculate the score according to their status and weight.
-        // This needs to be done as some test cases might not have been executed.
-        result = testCaseService.updateResultFromTestCases(result, programmingExercise);
-
-        notifyUser(participation, result);
+        else if (result != null) {
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+        }
+        return Optional.ofNullable(result);
     }
 
     /**

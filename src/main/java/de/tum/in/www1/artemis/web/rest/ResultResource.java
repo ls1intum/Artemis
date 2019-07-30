@@ -14,8 +14,10 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -67,9 +70,14 @@ public class ResultResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
+    private final LtiService ltiService;
+
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
+            SimpMessageSendingOperations messageTemplate, LtiService ltiService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -80,6 +88,8 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
+        this.messagingTemplate = messageTemplate;
+        this.ltiService = ltiService;
     }
 
     /**
@@ -149,40 +159,56 @@ public class ResultResource {
     }
 
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
-    @Transactional
-    public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) throws Exception {
         log.info("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
-
+        String planKey;
         try {
-            String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
-            log.info("PlanKey for received notifyResultNew is {}", planKey);
-            Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
-            if (optionalParticipation.isPresent()) {
-                ProgrammingExerciseParticipation participation = optionalParticipation.get();
-                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
-                    participation.setProgrammingExercise(programmingExerciseService.getExercise((TemplateProgrammingExerciseParticipation) participation));
-                }
-                else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
-                    participation.setProgrammingExercise(programmingExerciseService.getExercise((SolutionProgrammingExerciseParticipation) participation));
-                }
-                resultService.onResultNotifiedNew(participation, requestBody);
-                log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
-                return ResponseEntity.ok().build();
-            }
-            else {
-                log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
-                // return ok so that Bamboo does not think it was an error
-                return ResponseEntity.ok().build();
-            }
-
+            planKey = continuousIntegrationService.get().getPlanKey(requestBody);
+            // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
         }
-        catch (Exception e) {
-            log.error("An exception occurred during handling of notifyResultNew", e);
-            return badRequest();
+        catch (Exception ex) {
+            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
+            throw (ex);
+        }
+        log.info("PlanKey for received notifyResultNew is {}", planKey);
+        // Try to retrieve the participation with the build plan key.
+        Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
+        // If the participation exists, process the new build result.
+        if (optionalParticipation.isPresent()) {
+            ProgrammingExerciseParticipation participation = optionalParticipation.get();
+            Optional<Result> result;
+            try {
+                result = resultService.processNewProgrammingExerciseResult(participation, requestBody);
+                // This exception can occur as there is a 1 to 1 relation between results and submissions.
+            }
+            catch (DataIntegrityViolationException ex) {
+                log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
+                throw (ex);
+            }
+            // Only notify the user about the new result if the result was created successfully.
+            if (result.isPresent()) {
+                // notify user via websocket
+                messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
+
+                // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
+                // if (participation.isLti()) {
+                // }
+                // handles new results and sends them to LTI consumers
+                if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                    ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+                }
+            }
+            log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
+            return ResponseEntity.ok().build();
+        }
+        else {
+            log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
+            // return ok so that Bamboo does not think it was an error
+            return ResponseEntity.ok().build();
         }
     }
 
