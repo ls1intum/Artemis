@@ -116,29 +116,32 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise where the test cases got changed
      */
+    @Transactional
     public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
-        for (StudentParticipation participation : programmingExercise.getParticipations()) {
+        // All student repository builds and the builds of the template & solution repository must be triggered now!
+        Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
+        participations.add(programmingExercise.getSolutionParticipation());
+        participations.add(programmingExercise.getTemplateParticipation());
+        participations.addAll(programmingExercise.getParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
 
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+        for (ProgrammingExerciseParticipation participation : participations) {
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
             submission.setSubmissionDate(ZonedDateTime.now());
             submission.setSubmitted(true);
-            submission.setParticipation(participation);
+            submission.setParticipation((Participation) participation);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
                 log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
                 submission.setCommitHash(lastCommitHash);
             }
             catch (Exception ex) {
-                log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseStudentParticipation, ex);
+                log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
             }
 
             submissionRepository.save(submission);
-            programmingExerciseStudentParticipation.addSubmissions(submission);
-            studentParticipationRepository.save(programmingExerciseStudentParticipation);
-
-            continuousIntegrationUpdateService.get().triggerUpdate(programmingExerciseStudentParticipation.getBuildPlanId(), false);
+            participation.addSubmissions(submission);
+            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
     }
 
