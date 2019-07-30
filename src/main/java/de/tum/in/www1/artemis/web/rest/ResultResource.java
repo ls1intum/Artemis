@@ -183,8 +183,8 @@ public class ResultResource {
             Optional<Result> result;
             try {
                 result = resultService.processNewProgrammingExerciseResult(participation, requestBody);
-                // This exception can occur as there is a 1 to 1 relation between results and submissions.
             }
+            // This exception can occur as there is a 1 to 1 relation between results and submissions.
             catch (DataIntegrityViolationException ex) {
                 log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
                 throw (ex);

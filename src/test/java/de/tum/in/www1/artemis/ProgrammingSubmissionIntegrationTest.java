@@ -137,7 +137,7 @@ public class ProgrammingSubmissionIntegrationTest {
      * However the participation id provided by the VCS on the request is invalid.
      */
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
-        postSubmission(participationType);
+        postSubmission(participationType, HttpStatus.OK);
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
         // Needs to be set for using a custom repository method, known spring bug.
@@ -172,7 +172,7 @@ public class ProgrammingSubmissionIntegrationTest {
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType) throws Exception {
-        postSubmission(participationType);
+        postSubmission(participationType, HttpStatus.OK);
         postResult(participationType, 0, HttpStatus.OK);
 
         // Check that the result was created successfully and is linked to the participation and submission.
@@ -189,7 +189,6 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
     }
 
-    // TODO: Fix defective test.
     @TestFactory
     Collection<DynamicTest> shouldNotLinkTwoResultsToTheSameSubmissionTestCollection() {
         return Arrays.stream(IntegrationTestParticipationType.values())
@@ -210,7 +209,7 @@ public class ProgrammingSubmissionIntegrationTest {
      */
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         // Create 1 submission.
-        postSubmission(participationType);
+        postSubmission(participationType, HttpStatus.OK);
         // Create 2 results for the same submission.
         postResult(participationType, 0, HttpStatus.OK);
         postResult(participationType, 0, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -229,29 +228,37 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.getResult().getId()).isEqualTo(result1.getId());
     }
 
+    @TestFactory
+    Collection<DynamicTest> shouldNotCreateTwoSubmissionsForTwoIdenticalCommitsTestCollection() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldNotCreateTwoSubmissionsForTwoIdenticalCommits" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(participationType);
+                })).collect(Collectors.toList());
+    }
+
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
      *
      * This should not create two identical submissions.
      */
-    // TODO: Fix defective test.
-    @Disabled
-    @Test
-    @Transactional(readOnly = true)
-    public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
+    void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         // Post the same submission twice.
-        postSubmission(IntegrationTestParticipationType.STUDENT);
-        postSubmission(IntegrationTestParticipationType.STUDENT);
+        postSubmission(participationType, HttpStatus.OK);
+        postSubmission(participationType, HttpStatus.BAD_REQUEST);
         // Post the build result once.
         postResult(participationType, 0, HttpStatus.OK);
 
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findAll();
         assertThat(results).hasSize(1);
-        Result result = results.get(0);
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
+        submission = submissionRepository.findById(submission.getId()).get();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(submission.getResult()).isNotNull();
         assertThat(submission.getResult().getId()).isEqualTo(result.getId());
     }
 
@@ -317,7 +324,7 @@ public class ProgrammingSubmissionIntegrationTest {
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
-    private void postSubmission(IntegrationTestParticipationType participationType) throws Exception {
+    private void postSubmission(IntegrationTestParticipationType participationType, HttpStatus expectedStatus) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
 
@@ -333,7 +340,7 @@ public class ProgrammingSubmissionIntegrationTest {
         }
 
         // Api should return ok.
-        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId(), obj, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId(), obj, expectedStatus, new HttpHeaders());
 
         // Submission should have been created for the participation.
         assertThat(submissionRepository.findAll()).hasSize(1);
