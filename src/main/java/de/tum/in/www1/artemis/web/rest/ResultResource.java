@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -74,22 +76,29 @@ public class ResultResource {
 
     private final LtiService ltiService;
 
-    public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
-            SimpMessageSendingOperations messageTemplate, LtiService ltiService) {
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
-        this.userService = userService;
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
+            SimpMessageSendingOperations messagingTemplate, LtiService ltiService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.feedbackService = feedbackService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.messagingTemplate = messageTemplate;
+        this.messagingTemplate = messagingTemplate;
         this.ltiService = ltiService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -168,8 +177,8 @@ public class ResultResource {
         String planKey;
         try {
             planKey = continuousIntegrationService.get().getPlanKey(requestBody);
-            // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
         }
+        // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
         catch (Exception ex) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             throw (ex);
@@ -182,6 +191,15 @@ public class ResultResource {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             Optional<Result> result;
             try {
+                // TODO: Why does this have to be done? Seems weird to me that we have to reconnect them here...
+                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
+                    participation.setProgrammingExercise(programmingExerciseService.getExercise((TemplateProgrammingExerciseParticipation) participation));
+                    templateProgrammingExerciseParticipationRepository.save((TemplateProgrammingExerciseParticipation) participation);
+                }
+                else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
+                    participation.setProgrammingExercise(programmingExerciseService.getExercise((SolutionProgrammingExerciseParticipation) participation));
+                    solutionProgrammingExerciseParticipationRepository.save((SolutionProgrammingExerciseParticipation) participation);
+                }
                 result = resultService.processNewProgrammingExerciseResult(participation, requestBody);
             }
             // This exception can occur as there is a 1 to 1 relation between results and submissions.

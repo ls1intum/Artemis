@@ -138,7 +138,6 @@ class ProgrammingSubmissionIntegrationTest {
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
      * However the participation id provided by the VCS on the request is invalid.
      */
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
@@ -312,29 +311,48 @@ class ProgrammingSubmissionIntegrationTest {
      * After a commit into the test repository, the VCS triggers Artemis to create submissions for all participations of the given exercise.
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
-    /*
-     * @Test void shouldCreateStudentSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception { // Phase 1: There has been a commit to the test
-     * repository, the VCS now informs Artemis about it. postTestRepositorySubmission(); // There are two student participations, so after the test notification two new submissions
-     * should have been created. List<Participation> participations = new ArrayList<>();
-     * participations.add(participationRepository.getOneWithEagerSubmissions(templateParticipationId));
-     * participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
-     * participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(0)));
-     * participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(1))); List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-     * assertThat(submissions).hasSize(4); // There should be a 1-1 relationship from submissions to participations.
-     * assertThat(submissions.get(0).getParticipation().getId().equals(participations.get(0).getId())).isTrue();
-     * assertThat(submissions.get(1).getParticipation().getId().equals(participations.get(1).getId())).isTrue();
-     * assertThat(submissions.get(2).getParticipation().getId().equals(participations.get(2).getId())).isTrue();
-     * assertThat(submissions.get(3).getParticipation().getId().equals(participations.get(3).getId())).isTrue(); assertThat(submissions.stream().map(s -> (ProgrammingSubmission)
-     * s).allMatch(s -> { return s.isSubmitted() && s.getCommitHash().equals("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d") && s.getType().equals(SubmissionType.TEST); })).isTrue();
-     * // Phase 2: Now the CI informs Artemis about the student participation build results. postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK);
-     * postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK); postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK);
-     * postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK); // Now for both student's submission a result should have been created and assigned to the
-     * submission. List<Result> results = resultRepository.findAll(); submissions = submissionRepository.findAll(); participations =
-     * participationRepository.getAllWithEagerSubmissionsAndResults(); assertThat(participations).hasSize(4); assertThat(results).hasSize(4); for (Result r : results) { boolean
-     * hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId())); assertThat(hasMatchingSubmission); } for (Participation p :
-     * participations) { assertThat(p.getSubmissions()).hasSize(1); assertThat(p.getResults()).hasSize(1); assertThat(new ArrayList<>(p.getResults()).get(0).getId()).isEqualTo(new
-     * ArrayList<>(p.getSubmissions()).get(0).getResult().getId()); } }
-     */
+    @Test
+    void shouldCreateStudentSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
+        postTestRepositorySubmission();
+        // There are two student participations, so after the test notification two new submissions should have been created.
+        List<Participation> participations = new ArrayList<>();
+        SecurityUtils.setAuthorizationObject();
+        participations.add(participationRepository.getOneWithEagerSubmissions(templateParticipationId));
+        participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
+        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(0)));
+        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(1)));
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(4); // There should be a 1-1 relationship from submissions to participations.
+        assertThat(submissions.get(0).getParticipation().getId().equals(participations.get(0).getId())).isTrue();
+        assertThat(submissions.get(1).getParticipation().getId().equals(participations.get(1).getId())).isTrue();
+        assertThat(submissions.get(2).getParticipation().getId().equals(participations.get(2).getId())).isTrue();
+        assertThat(submissions.get(3).getParticipation().getId().equals(participations.get(3).getId())).isTrue();
+        assertThat(submissions.stream().map(s -> (ProgrammingSubmission) s).allMatch(s -> {
+            return s.isSubmitted() && s.getCommitHash().equals("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d") && s.getType().equals(SubmissionType.TEST);
+        })).isTrue();
+
+        // Phase 2: Now the CI informs Artemis about the student participation build results.
+        postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK);
+        postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK);
+        postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK);
+        postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK);
+        // Now for both student's submission a result should have been created and assigned to the submission.
+        List<Result> results = resultRepository.findAll();
+        submissions = submissionRepository.findAll();
+        participations = participationRepository.getAllWithEagerSubmissionsAndResults();
+        assertThat(participations).hasSize(4);
+        assertThat(results).hasSize(4);
+        for (Result r : results) {
+            boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
+            assertThat(hasMatchingSubmission);
+        }
+        for (Participation p : participations) {
+            assertThat(p.getSubmissions()).hasSize(1);
+            assertThat(p.getResults()).hasSize(1);
+            assertThat(new ArrayList<>(p.getResults()).get(0).getId()).isEqualTo(new ArrayList<>(p.getSubmissions()).get(0).getResult().getId());
+        }
+    }
 
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
@@ -391,7 +409,8 @@ class ProgrammingSubmissionIntegrationTest {
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationRepository.getOne(participationIds.get(participationNumber));
+        SecurityUtils.setAuthorizationObject();
+        StudentParticipation participation = studentParticipationRepository.findByIdWithStudent(participationIds.get(participationNumber)).get();
         return participation.getStudent().getLogin();
     }
 
