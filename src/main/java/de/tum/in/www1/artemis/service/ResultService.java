@@ -124,15 +124,19 @@ public class ResultService {
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
     @Transactional
-    public Optional<Result> processNewProgrammingExerciseResult(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
-        log.info("Received new build result (NEW) for participation " + participation.getId());
+    public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) throws Exception {
+        log.info("Received new build result (NEW) for participation " + participationId);
 
-        Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+        Participation participation = participationService.findOne(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new EntityNotFoundException("Participation with id " + participationId + " is not a programming exercise participation!");
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        Result result = continuousIntegrationService.get().onBuildCompletedNew(programmingExerciseParticipation, requestBody);
 
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
         // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
         if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
-            extractTestCasesFromResult(participation, result);
+            extractTestCasesFromResult(programmingExerciseParticipation, result);
         }
         if (result != null) {
             // Find out which test cases were executed and calculate the score according to their status and weight.

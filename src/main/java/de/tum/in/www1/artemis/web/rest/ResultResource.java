@@ -181,7 +181,7 @@ public class ResultResource {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             Optional<Result> result;
             try {
-                result = resultService.processNewProgrammingExerciseResult(participation, requestBody);
+                result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
             }
             // This exception can occur if the 1 to 1 relation between results and submissions is violated.
             catch (DataIntegrityViolationException ex) {
