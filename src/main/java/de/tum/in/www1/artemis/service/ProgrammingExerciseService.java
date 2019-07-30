@@ -114,10 +114,14 @@ public class ProgrammingExerciseService {
     /**
      * Notifies all particpations of the given programmingExercise about changes of the test cases.
      *
-     * @param programmingExercise The programmingExercise where the test cases got changed
+     * @param exerciseId of programming exercise the test cases got changed.
      */
     @Transactional
-    public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
+    public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
+        if (!exerciseOpt.isPresent())
+            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
+        ProgrammingExercise programmingExercise = exerciseOpt.get();
         // All student repository builds and the builds of the template & solution repository must be triggered now!
         Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
         participations.add(programmingExercise.getSolutionParticipation());

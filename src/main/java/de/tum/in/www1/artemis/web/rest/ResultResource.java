@@ -28,8 +28,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -76,16 +74,10 @@ public class ResultResource {
 
     private final LtiService ltiService;
 
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
-            SimpMessageSendingOperations messagingTemplate, LtiService ltiService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SimpMessageSendingOperations messagingTemplate, LtiService ltiService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -97,8 +89,6 @@ public class ResultResource {
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
         this.ltiService = ltiService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -191,18 +181,9 @@ public class ResultResource {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             Optional<Result> result;
             try {
-                // TODO: Why does this have to be done? Seems weird to me that we have to reconnect them here...
-                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
-                    participation.setProgrammingExercise(programmingExerciseService.getExercise((TemplateProgrammingExerciseParticipation) participation));
-                    templateProgrammingExerciseParticipationRepository.save((TemplateProgrammingExerciseParticipation) participation);
-                }
-                else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
-                    participation.setProgrammingExercise(programmingExerciseService.getExercise((SolutionProgrammingExerciseParticipation) participation));
-                    solutionProgrammingExerciseParticipationRepository.save((SolutionProgrammingExerciseParticipation) participation);
-                }
                 result = resultService.processNewProgrammingExerciseResult(participation, requestBody);
             }
-            // This exception can occur as there is a 1 to 1 relation between results and submissions.
+            // This exception can occur if the 1 to 1 relation between results and submissions is violated.
             catch (DataIntegrityViolationException ex) {
                 log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
                 throw (ex);

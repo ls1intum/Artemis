@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
@@ -95,19 +94,14 @@ public class ProgrammingSubmissionResource {
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
-        // This is needed as a request using a custom query is made using the ExerciseRepository, but the user is not authenticated
-        // as the VCS-server performs the request
-        SecurityUtils.setAuthorizationObject();
-
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (!(exercise instanceof ProgrammingExercise)) {
             log.warn("REST request to inform about changed test cases of non existing ProgrammingExercise : {}", exerciseId);
             return ResponseEntity.notFound().build();
         }
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        programmingExerciseService.notifyChangedTestCases(programmingExercise, requestBody);
+        programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
 
         return ResponseEntity.ok().build();
     }
