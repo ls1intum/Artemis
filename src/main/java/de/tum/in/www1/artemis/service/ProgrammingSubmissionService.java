@@ -50,10 +50,10 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
-    public void notifyPush(Long participationId, Object requestBody) throws IllegalArgumentException {
+    public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
-            throw new IllegalArgumentException();
+            throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
@@ -64,21 +64,28 @@ public class ProgrammingSubmissionService {
             // build plan by resuming the participation
             participationService.resumeExercise(programmingExerciseParticipation.getProgrammingExercise(),
                     (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
-            // in addition we need to trigger a build so that we receive a result in a few
-            // seconds
+            // in addition we need to trigger a build so that we receive a result in a few seconds
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
         }
 
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-
+        String lastCommitHash;
         try {
-            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-            programmingSubmission.setCommitHash(lastCommitHash);
-            log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
+            lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
         }
         catch (Exception ex) {
             log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
+            throw (new IllegalArgumentException(ex.getMessage()));
         }
+
+        // There can't be two submissions for the same participation and commitHash!
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
+        if (programmingSubmission != null) {
+            throw (new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + "already exists!"));
+        }
+
+        programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setCommitHash(lastCommitHash);
+        log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -87,8 +94,6 @@ public class ProgrammingSubmissionService {
         participation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
-
-        // notify user via websocket
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
+        return programmingSubmission;
     }
 }

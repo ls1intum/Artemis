@@ -1,19 +1,24 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -35,11 +40,14 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -51,9 +59,28 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-
         log.info("REST request to inform about new commit+push for participation: {}", participationId);
-        programmingSubmissionService.notifyPush(participationId, requestBody);
+
+        try {
+            ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
+            // notify the user via websocket.
+            messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
+        }
+        catch (IllegalArgumentException ex) {
+            log.error("Exception encountered when trying to extract the commit hash from the request body. Processing submission for participation {} with request object {}: {}",
+                    participationId, requestBody, ex);
+            return badRequest();
+        }
+        catch (IllegalStateException ex) {
+            log.error("Tried to create another submission for the same commitHash and participation! Processing submission for participation {} with request object {}: {}",
+                    participationId, requestBody, ex);
+            return badRequest();
+        }
+        catch (EntityNotFoundException ex) {
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation! Processing submission for participation {} with request object {}: {}", participationId,
+                    participationId, requestBody, ex);
+            return badRequest();
+        }
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
