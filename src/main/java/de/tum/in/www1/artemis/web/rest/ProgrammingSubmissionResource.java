@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +80,7 @@ public class ProgrammingSubmissionResource {
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation! Processing submission for participation {} with request object {}: {}", participationId,
                     participationId, requestBody, ex);
-            return badRequest();
+            return notFound();
         }
 
         return ResponseEntity.status(HttpStatus.OK).build();
