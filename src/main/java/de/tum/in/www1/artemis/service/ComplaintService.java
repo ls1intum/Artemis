@@ -130,32 +130,10 @@ public class ComplaintService {
      */
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId, Principal principal) {
-        List<Complaint> responseComplaints = new ArrayList<>();
+        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId,
+                ComplaintType.COMPLAINT);
 
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
-
-        if (!databaseComplaints.isPresent()) {
-            return responseComplaints;
-        }
-
-        databaseComplaints.get().forEach(complaint -> {
-            if (complaint.getComplaintType() != ComplaintType.MORE_FEEDBACK) {
-                String submissorName = principal.getName();
-                User assessor = complaint.getResult().getAssessor();
-
-                if (!assessor.getLogin().equals(submissorName)) {
-                    // Remove data about the student
-                    StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-                    studentParticipation.setStudent(null);
-                    complaint.setStudent(null);
-                    complaint.setResultBeforeComplaint(null);
-
-                    responseComplaints.add(complaint);
-                }
-            }
-        });
-
-        return responseComplaints;
+        return buildComplaintsListForAssessor(databaseComplaints, principal, false);
     }
 
     /**
@@ -167,32 +145,10 @@ public class ComplaintService {
      */
     @Transactional(readOnly = true)
     public List<Complaint> getMyMoreFeedbackRequests(long exerciseId, Principal principal) {
-        List<Complaint> responseComplaints = new ArrayList<>();
+        Optional<List<Complaint>> databaseMoreFeedbackRequests = complaintRepository
+                .findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
 
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
-
-        if (!databaseComplaints.isPresent()) {
-            return responseComplaints;
-        }
-
-        databaseComplaints.get().forEach(complaint -> {
-            if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-                String submissorName = principal.getName();
-                User assessor = complaint.getResult().getAssessor();
-
-                if (assessor.getLogin().equals(submissorName)) {
-                    // Remove data about the student
-                    StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-                    studentParticipation.setStudent(null);
-                    complaint.setStudent(null);
-                    complaint.setResultBeforeComplaint(null);
-
-                    responseComplaints.add(complaint);
-                }
-            }
-        });
-
-        return responseComplaints;
+        return buildComplaintsListForAssessor(databaseMoreFeedbackRequests, principal, true);
     }
 
     @Transactional(readOnly = true)
@@ -271,6 +227,31 @@ public class ComplaintService {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
 
         return complaints;
+    }
+
+    private List<Complaint> buildComplaintsListForAssessor(Optional<List<Complaint>> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
+        List<Complaint> responseComplaints = new ArrayList<>();
+
+        if (!databaseComplaints.isPresent()) {
+            return responseComplaints;
+        }
+
+        databaseComplaints.get().forEach(complaint -> {
+            String submissorName = principal.getName();
+            User assessor = complaint.getResult().getAssessor();
+
+            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
+                // Remove data about the student
+                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+                studentParticipation.setStudent(null);
+                complaint.setStudent(null);
+                complaint.setResultBeforeComplaint(null);
+
+                responseComplaints.add(complaint);
+            }
+        });
+
+        return responseComplaints;
     }
 
     /**
