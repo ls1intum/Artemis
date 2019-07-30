@@ -308,16 +308,37 @@ public class ProgrammingSubmissionIntegrationTest {
         }
     }
 
+    @TestFactory
+    Collection<DynamicTest> shouldCreateSubmissionForManualBuildRunTestFactory() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldCreateSubmissionForManualBuildRun" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldCreateSubmissionForManualBuildRun(participationType);
+                })).collect(Collectors.toList());
+    }
+
     /**
      * This is the case where an instructor manually triggers the build from the CI.
      * Here no submission exists yet and now needs to be created on the result notification.
      */
-    @Test
-    @Transactional(readOnly = true)
     public void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         postResult(participationType, 0, HttpStatus.OK);
 
-        StudentParticipation participation = studentParticipationRepository.getOne(exercise.getParticipations().stream().findFirst().get().getId());
+        Long participationId;
+        switch (participationType) {
+        case SOLUTION:
+            participationId = exercise.getSolutionParticipation().getId();
+            break;
+        case TEMPLATE:
+            participationId = exercise.getTemplateParticipation().getId();
+            break;
+        default:
+            participationId = exercise.getParticipations().stream().findFirst().get().getId();
+        }
+
+        SecurityUtils.setAuthorizationObject();
+        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();

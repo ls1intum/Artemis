@@ -482,6 +482,8 @@ public class BambooService implements ContinuousIntegrationService {
                     programmingSubmission.setType(SubmissionType.OTHER);
                     programmingSubmission.setCommitHash(commitHash);
                     programmingSubmission.setSubmissionDate(result.getCompletionDate());
+                    // Save to avoid TransientPropertyValueException.
+                    programmingSubmissionRepository.save(programmingSubmission);
                 } else {
                     //TODO: handle the case that the programming submission alredy has a result
                     if (programmingSubmission.getResult() != null) {
