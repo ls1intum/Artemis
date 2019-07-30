@@ -59,7 +59,7 @@ public class ProgrammingSubmissionIntegrationTest {
     ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     ParticipationRepository participationRepository;
@@ -153,27 +153,14 @@ public class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.isSubmitted()).isTrue();
     }
 
-    /**
-     * The student commits, the code change is pushed to the VCS.
-     * The VCS notifies Artemis about a new submission.
-     *
-     * However the participation id provided by the VCS on the request is invalid.
-     */
-    @Test
-    @Transactional(readOnly = true)
-    public void shouldCreateSubmissionOnNotifyPushForStudentSubmission() throws Exception {
-        postSubmission(IntegrationTestParticipationType.STUDENT);
-
-        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
-        ProgrammingExerciseStudentParticipation updatedParticipation = studentParticipationRepository.getOne(participation.getId());
-        assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
-        assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
-
-        // Make sure the submission has the correct commit hash.
-        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        // The submission should be manual and submitted.
-        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
-        assertThat(submission.isSubmitted()).isTrue();
+    @TestFactory
+    Collection<DynamicTest> shouldHandleNewBuildResultCreatedByCommitTestCollection() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldHandleNewBuildResultCreatedByCommit" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldHandleNewBuildResultCreatedByCommit(participationType);
+                })).collect(Collectors.toList());
     }
 
     /**
@@ -184,22 +171,33 @@ public class ProgrammingSubmissionIntegrationTest {
      *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
-    @Test
-    @Transactional(readOnly = true)
-    public void shouldHandleNewBuildResultCreatedByStudentCommit() throws Exception {
-        postSubmission(IntegrationTestParticipationType.STUDENT);
-        postStudentResult(getStudentLoginFromParticipation(0));
+    void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType) throws Exception {
+        postSubmission(participationType);
+        postResult(participationType, 0, HttpStatus.OK);
 
         // Check that the result was created successfully and is linked to the participation and submission.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
-        participation = studentParticipationRepository.getOne(participation.getId());
-        submission = (ProgrammingSubmission) submissionRepository.getOne(submission.getId());
+        // Needs to be set for using a custom repository method, known spring bug.
+        SecurityUtils.setAuthorizationObject();
+        participation = participationRepository.getOneWithEagerSubmissions(participation.getId());
+        submission = submissionRepository.findByIdWithEagerResult(submission.getId());
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submission.getId()))).isTrue();
+    }
+
+    // TODO: Fix defective test.
+    @TestFactory
+    Collection<DynamicTest> shouldNotLinkTwoResultsToTheSameSubmissionTestCollection() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldNotLinkTwoResultsToTheSameSubmission" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldNotLinkTwoResultsToTheSameSubmission(participationType);
+                })).collect(Collectors.toList());
     }
 
     /**
@@ -210,31 +208,25 @@ public class ProgrammingSubmissionIntegrationTest {
      *
      * Only the last result should be linked to the created submission.
      */
-    // TODO: Fix defective test.
-    @Disabled
-    @Test
-    @Transactional(readOnly = true)
-    public void shouldNotLinkTwoResultsToTheSameSubmission() throws Exception {
+    void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         // Create 1 submission.
-        postSubmission(IntegrationTestParticipationType.STUDENT);
+        postSubmission(participationType);
         // Create 2 results for the same submission.
-        postStudentResult(getStudentLoginFromParticipation(0));
-        postStudentResult(getStudentLoginFromParticipation(0));
+        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 0, HttpStatus.INTERNAL_SERVER_ERROR);
 
         // Make sure there is still only 1 submission.
-        List<Submission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
-        submission = (ProgrammingSubmission) submissions.get(0);
+        SecurityUtils.setAuthorizationObject();
+        submission = submissionRepository.findByIdWithEagerResult(submissions.get(0).getId());
 
-        // There should now be 2 results, but only the last one linked to the submission.
+        // There should now be 1 results linked to the submission.
         List<Result> results = resultRepository.findAll();
-        assertThat(results).hasSize(2);
-        Result result1 = results.get(0);
-        Result result2 = results.get(1);
-        assertThat(result1.getSubmission()).isNull();
-        assertThat(result2.getSubmission()).isNotNull();
-        assertThat(result2.getSubmission().getId()).isEqualTo(submission.getId());
-        assertThat(submission.getResult().getId()).isEqualTo(result2.getId());
+        assertThat(results).hasSize(1);
+        Result result1 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
+        assertThat(result1.getSubmission()).isNotNull();
+        assertThat(submission.getResult().getId()).isEqualTo(result1.getId());
     }
 
     /**
@@ -247,12 +239,12 @@ public class ProgrammingSubmissionIntegrationTest {
     @Disabled
     @Test
     @Transactional(readOnly = true)
-    public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits() throws Exception {
+    public void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         // Post the same submission twice.
         postSubmission(IntegrationTestParticipationType.STUDENT);
         postSubmission(IntegrationTestParticipationType.STUDENT);
         // Post the build result once.
-        postStudentResult(getStudentLoginFromParticipation(0));
+        postResult(participationType, 0, HttpStatus.OK);
 
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findAll();
@@ -269,12 +261,12 @@ public class ProgrammingSubmissionIntegrationTest {
      */
     @Test
     @Transactional(readOnly = true)
-    public void shouldCreateStudentSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+    public void shouldCreateStudentSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit(IntegrationTestParticipationType participationType) throws Exception {
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>(exercise.getParticipations());
-        List<Submission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(2);
         // There should be a 1-1 relationship from submissions to participations.
         assertThat(submissions.get(0).getParticipation().getId().equals(participations.get(0).getId())
@@ -284,8 +276,8 @@ public class ProgrammingSubmissionIntegrationTest {
         })).isTrue();
 
         // Phase 2: Now the CI informs Artemis about the student participation build results.
-        postStudentResult(getStudentLoginFromParticipation(0));
-        postStudentResult(getStudentLoginFromParticipation(1));
+        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 1, HttpStatus.OK);
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
@@ -302,16 +294,16 @@ public class ProgrammingSubmissionIntegrationTest {
      */
     @Test
     @Transactional(readOnly = true)
-    public void shouldCreateSubmissionForManualBuildRun() throws Exception {
-        postStudentResult(getStudentLoginFromParticipation(0));
+    public void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
+        postResult(participationType, 0, HttpStatus.OK);
 
         StudentParticipation participation = studentParticipationRepository.getOne(exercise.getParticipations().stream().findFirst().get().getId());
 
         // Now a submission for the manual build should exist.
-        List<Submission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         List<Result> results = resultRepository.findAll();
         assertThat(submissions).hasSize(1);
-        ProgrammingSubmission submission = (ProgrammingSubmission) submissions.get(0);
+        ProgrammingSubmission submission = submissions.get(0);
         assertThat(results).hasSize(1);
         Result result = results.get(0);
         assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -326,18 +318,19 @@ public class ProgrammingSubmissionIntegrationTest {
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private void postSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+
         switch (participationType) {
         case SOLUTION:
             participation = exercise.getSolutionParticipation();
+            break;
         case TEMPLATE:
             participation = exercise.getTemplateParticipation();
+            break;
         default:
             participation = exercise.getParticipations().stream().findFirst().get();
-            break;
         }
-
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
 
         // Api should return ok.
         request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId(), obj, HttpStatus.OK, new HttpHeaders());
@@ -362,17 +355,28 @@ public class ProgrammingSubmissionIntegrationTest {
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
-    private void postStudentResult(String user) throws Exception {
+    private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+        String id;
+        switch (participationType) {
+        case TEMPLATE:
+            id = "BASE";
+            break;
+        case SOLUTION:
+            id = "SOLUTION";
+            break;
+        default:
+            id = getStudentLoginFromParticipation(participationNumber);
+        }
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BAMBOO_REQUEST);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
         Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-        planMap.put("key", "TEST201904BPROGRAMMINGEXERCISE6-" + user.toUpperCase());
+        planMap.put("key", "TEST201904BPROGRAMMINGEXERCISE6-" + id.toUpperCase());
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", "<secrettoken>");
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {

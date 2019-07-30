@@ -192,7 +192,7 @@ public class DatabaseUtilService {
 
     public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-base");
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
         participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setTemplateParticipation(participation);
         templateProgrammingExerciseParticipationRepo.save(participation);
@@ -202,7 +202,7 @@ public class DatabaseUtilService {
 
     public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-solution");
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
         participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setSolutionParticipation(participation);
         solutionProgrammingExerciseParticipationRepo.save(participation);
