@@ -126,7 +126,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType
      */
     findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.apiUrl}/exercises/${exerciseId}?complaintType=${complaintType}`;
+        const url = `${this.apiUrl}/exercises/${exerciseId}/complaints?complaintType=${complaintType}`;
 
         return this.requestComplaintsFromUrl(url);
     }
