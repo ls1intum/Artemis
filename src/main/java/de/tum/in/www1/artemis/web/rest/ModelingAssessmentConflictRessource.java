@@ -157,8 +157,7 @@ public class ModelingAssessmentConflictRessource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        ModelAssessmentConflict storedConflict = conflictService.findOne(conflictId);
-        conflictService.resolveConflictByInstructor(storedConflict, decision);
+        conflictService.resolveConflictByInstructor(conflictId, decision);
         return ResponseEntity.ok("");
     }
 }

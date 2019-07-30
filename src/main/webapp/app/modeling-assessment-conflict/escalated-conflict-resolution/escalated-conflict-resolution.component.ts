@@ -137,7 +137,9 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     private submit() {
         this.storeDecisionsToConflicts();
-        this.conflictService.updateConflicts(this.conflicts).subscribe(() => this.router.navigate(['course', 2, 'exercise', 2, 'tutor-dashboard']));
+        this.conflictService
+            .updateConflicts(this.conflicts)
+            .subscribe(() => this.router.navigate(['course', this.modelingExercise.course!.id, 'exercise', this.modelingExercise.id, 'tutor-dashboard']));
     }
 
     private initResolutionStates(conflicts: Conflict[]) {

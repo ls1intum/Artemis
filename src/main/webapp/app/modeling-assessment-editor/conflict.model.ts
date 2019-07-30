@@ -16,14 +16,14 @@ export class ConflictingResult {
     result: Result;
     updatedFeedback: Feedback;
 
+    static getReferencedFeedback(conflictingResult: ConflictingResult): Feedback | undefined {
+        return conflictingResult.result.feedbacks.find(value => value.referenceId === conflictingResult.modelElementId);
+    }
+
     constructor(modelElementId: string, result: Result, updatedFeedback: Feedback) {
         this.modelElementId = modelElementId;
         this.result = result;
         this.updatedFeedback = updatedFeedback;
-    }
-
-    getReferencedFeedback(): Feedback | undefined {
-        return this.result.feedbacks.find(value => value.referenceId === this.modelElementId);
     }
 }
 

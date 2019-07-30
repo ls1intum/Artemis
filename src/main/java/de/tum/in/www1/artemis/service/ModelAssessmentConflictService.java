@@ -151,10 +151,11 @@ public class ModelAssessmentConflictService {
     }
 
     @Transactional
-    public void resolveConflictByInstructor(ModelAssessmentConflict conflict, Feedback decision) {
+    public void resolveConflictByInstructor(Long conflictId, Feedback decision) {
+        ModelAssessmentConflict conflict = findOne(conflictId);
         verifyNotResolved(conflict);
-        compassService.applyUpdateOnSubmittedAssessment(conflict.getCausingConflictingResult().getResult(), decision);
-        conflict.getResultsInConflict().forEach(conflictingResult -> compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), decision));
+        applyInstructorDecisionToCompass(conflict.getCausingConflictingResult(), decision);
+        conflict.getResultsInConflict().forEach(conflictingResult -> applyInstructorDecisionToCompass(conflictingResult, decision));
         conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
         conflict.setResolutionDate(ZonedDateTime.now());
     }
@@ -326,6 +327,12 @@ public class ModelAssessmentConflictService {
         });
     }
 
+    private void applyInstructorDecisionToCompass(ConflictingResult conflictingResult, Feedback decision) {
+        Feedback feedbackToUpdate = findFeedbackByReferenceId(conflictingResult.getResult(), conflictingResult.getModelElementId()).get();
+        feedbackToUpdate.setCredits(decision.getCredits());
+        compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), feedbackToUpdate);
+    }
+
     private boolean allTutorsAcceptedConflictCausingFeedback(ModelAssessmentConflict conflict) {
         ConflictingResult firstConflictingResult = conflict.getResultsInConflict().iterator().next();
         boolean tutorsDecisionUniform = conflict.getResultsInConflict().stream()
@@ -349,5 +356,9 @@ public class ModelAssessmentConflictService {
             log.error("Escalating resolved conflict {} is not possible.", conflict.getId());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + conflict.getId() + "has already been resolved");
         }
+    }
+
+    private Optional<Feedback> findFeedbackByReferenceId(Result result, String referenceId) {
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getReferenceElementId().equals(referenceId)).findFirst();
     }
 }

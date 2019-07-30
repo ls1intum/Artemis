@@ -87,18 +87,22 @@ export class InstructorConflictResolutionComponent implements OnInit {
         }
     }
 
-    onSubmit(escalatedConflicts: Conflict[]) {}
+    onSubmit(escalatedConflicts: Conflict[]) {
+        this.conflictService
+            .resolveConflict(this.currentConflict, this.chosenFeedback)
+            .subscribe(() => this.router.navigate(['course', this.modelingExercise.course!.id, 'exercise', this.modelingExercise.id, 'tutor-dashboard']));
+    }
 
     useRight() {
         if (this.rightConflictingResult) {
-            this.chosenFeedback = this.rightConflictingResult.getReferencedFeedback();
+            this.chosenFeedback = ConflictingResult.getReferencedFeedback(this.rightConflictingResult);
         }
         this.updateCurentState(ConflictResolutionState.RESOLVED);
     }
 
     useLeft() {
         if (this.leftConflictingResult) {
-            this.chosenFeedback = this.leftConflictingResult.getReferencedFeedback();
+            this.chosenFeedback = ConflictingResult.getReferencedFeedback(this.leftConflictingResult);
         }
         this.updateCurentState(ConflictResolutionState.RESOLVED);
     }

@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -240,8 +241,9 @@ public class CompassService {
     }
 
     public void applyUpdateOnSubmittedAssessment(Result result, Feedback newFeedback) {
-        CompassCalculationEngine engine = getCalculationEngine(result.getSubmission().getId());
-        engine.updateFeedback((ModelingSubmission) result.getSubmission(), newFeedback);
+        ModelingSubmission submission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
+        CompassCalculationEngine engine = getCalculationEngine(submission.getParticipation().getExercise().getId());
+        engine.updateFeedback(submission, newFeedback);
         // TODO MJ trigger complete recalculation of all assessments
     }
 
