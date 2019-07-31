@@ -22,7 +22,9 @@ import {
     ProgrammingExerciseInstructorStatusComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
+    ProgrammingExerciseParticipationService,
     ProgrammingExerciseManageTestCasesComponent,
+    ProgrammingExerciseInstructionTaskStatusComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -32,6 +34,12 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
+import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -59,7 +67,10 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseInstructionStepWizardComponent,
+        ProgrammingExerciseInstructionResultDetailComponent,
         ProgrammingExerciseInstructionTestcaseStatusComponent,
+        ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
     ],
     entryComponents: [
@@ -71,6 +82,9 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseInstructionTaskStatusComponent,
+        ProgrammingExerciseInstructionStepWizardComponent,
+        ProgrammingExerciseInstructionResultDetailComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
@@ -81,7 +95,16 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
     ],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService],
+    providers: [
+        ProgrammingExerciseService,
+        ProgrammingExerciseTestCaseService,
+        ProgrammingExercisePopupService,
+        ProgrammingExerciseTaskExtensionWrapper,
+        ProgrammingExercisePlantUmlExtensionWrapper,
+        ProgrammingExerciseInstructionService,
+        ProgrammingExercisePlantUmlService,
+        ProgrammingExerciseParticipationService,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {

@@ -5,6 +5,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
+import { CachingStrategy } from 'app/shared';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -14,6 +15,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
+    CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
     public course: Course | null;

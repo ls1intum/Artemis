@@ -62,7 +62,8 @@ public class ModelAssessmentConflictService {
             return Collections.EMPTY_LIST;
         }
         else {
-            Exercise exercise = conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
             return conflictsForSubmission.stream().filter(conflict -> currentUserIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
         }
     }
@@ -114,7 +115,8 @@ public class ModelAssessmentConflictService {
     @Transactional
     public Exercise getExerciseOfConflict(Long conflictId) {
         ModelAssessmentConflict conflict = findOne(conflictId);
-        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) conflict.getCausingConflictingResult().getResult().getParticipation();
+        return studentParticipation.getExercise();
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {

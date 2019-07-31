@@ -312,10 +312,10 @@ public class CourseResource {
         // Idea: we should save the current rated result in Participation and make sure
         // that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
-        List<Participation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
-
         long exerciseCount = 0;
+
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());

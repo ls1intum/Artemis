@@ -45,7 +45,7 @@ export class OverviewComponent {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
     }
 
     get nextRelevantExercise(): Exercise | null {

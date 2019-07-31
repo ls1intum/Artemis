@@ -1,11 +1,11 @@
 import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
-import { Participation } from '../participation';
 import { Moment } from 'moment';
 import { ExampleSubmission } from '../example-submission';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -56,7 +56,7 @@ export abstract class Exercise implements BaseEntity {
     public categories: string[];
     public type: ExerciseType;
 
-    public participations: Participation[];
+    public participations: StudentParticipation[];
     public tutorParticipations: TutorParticipation[];
     public course: Course | null;
     public participationStatus: ParticipationStatus;

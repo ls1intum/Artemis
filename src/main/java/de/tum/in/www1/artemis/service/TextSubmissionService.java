@@ -17,8 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -29,7 +29,7 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ParticipationService participationService;
 
@@ -37,11 +37,12 @@ public class TextSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository, ParticipationRepository participationRepository,
-            ParticipationService participationService, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
@@ -61,11 +62,11 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
             if (!optionalParticipation.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
             }
-            Participation participation = optionalParticipation.get();
+            StudentParticipation participation = optionalParticipation.get();
 
             if (participation.getInitializationState() == InitializationState.FINISHED) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
@@ -84,7 +85,7 @@ public class TextSubmissionService extends SubmissionService {
      * @return the textSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission, Participation participation) {
+    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
@@ -101,9 +102,7 @@ public class TextSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-
-        Participation savedParticipation = participationRepository.save(participation);
-
+        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
             Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
             if (optionalTextSubmission.isPresent()) {
@@ -146,7 +145,7 @@ public class TextSubmissionService extends SubmissionService {
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
         Random r = new Random();
         List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -189,10 +188,10 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
-        for (Participation participation : participations) {
+        for (StudentParticipation participation : participations) {
             Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
             if (!optionalTextSubmission.isPresent()) {

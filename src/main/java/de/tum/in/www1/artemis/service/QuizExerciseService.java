@@ -267,7 +267,8 @@ public class QuizExerciseService {
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise);
             // update Successful-Flag in Result
-            result.getParticipation().setExercise(quizExercise);
+            StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+            studentParticipation.setExercise(quizExercise);
             result.setSubmission(quizSubmission);
             result.evaluateSubmission();
 
