@@ -35,7 +35,7 @@
                 {{
                     complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.alreadySubmitted' | translate) : ('artemisApp.complaint.alreadySubmitted' | translate)
                 }}
-                <span [ngbTooltip]="submittedDate | date: 'dd/MM/yy HH:mm'">{{ submittedDate! | amTimeAgo }}</span>
+                <span [ngbTooltip]="submittedDate | date: 'dd/MM/yy HH:mm'">{{ submittedDate | amTimeAgo }}</span>
                 <span *ngIf="handled && accepted" class="text-light bg-success">
                     &nbsp;{{
                         complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.acceptedLong' | translate) : ('artemisApp.complaint.acceptedLong' | translate)

@@ -48,8 +48,7 @@ describe('ComplaintsComponent', () => {
         expect(comp.submittedDate).to.be.undefined;
         expect(comp.accepted).to.be.undefined;
         expect(comp.handled).to.be.false;
-        tick();
-
+        tick(1000);
         const textarea = debugElement.query(By.css('#complainTextArea')).nativeElement;
         expect(textarea.disabled).to.be.true;
         expect(textarea.value).to.be.equal(MockComplaintResponse.body.complaintText);
