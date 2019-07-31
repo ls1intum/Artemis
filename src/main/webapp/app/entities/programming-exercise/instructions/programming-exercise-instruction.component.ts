@@ -76,6 +76,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param changes
      */
     public ngOnChanges(changes: SimpleChanges) {
+        // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
+        if (!this.markdownExtensions) {
+            this.setupMarkdownSubscriptions();
+        }
         const participationHasChanged = hasParticipationChanged(changes);
         // It is possible that the exercise does not have an id in case it is being created now.
         if (participationHasChanged) {
@@ -89,7 +93,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 });
             }
             this.setupResultWebsocket();
-            this.setupMarkdownSubscriptions();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
