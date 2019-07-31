@@ -53,7 +53,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    private markdownExtensions: ShowdownExtension[];
+    markdownExtensions: ShowdownExtension[];
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
