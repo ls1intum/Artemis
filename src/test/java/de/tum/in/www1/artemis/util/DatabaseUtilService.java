@@ -111,12 +111,12 @@ public class DatabaseUtilService {
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
-        exerciseRepo.deleteAll();
-        programmingExerciseRepository.deleteAll();
         participationRepo.deleteAll();
         programmingExerciseStudentParticipationRepo.deleteAll();
         templateProgrammingExerciseParticipationRepo.deleteAll();
         solutionProgrammingExerciseParticipationRepo.deleteAll();
+        exerciseRepo.deleteAll();
+        programmingExerciseRepository.deleteAll();
         testCaseRepository.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
