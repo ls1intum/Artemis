@@ -10,8 +10,23 @@ import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
 
+export interface IAccountService {
+    fetch: () => Observable<HttpResponse<User>>;
+    save: (account: any) => Observable<HttpResponse<any>>;
+    authenticate: (identity: User | null) => void;
+    hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
+    hasAnyAuthorityDirect: (authorities: string[]) => boolean;
+    hasAuthority: (authority: string) => Promise<boolean>;
+    identity: (force?: boolean) => Promise<User | null>;
+    isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastInstructorInCourse: (course: Course) => boolean;
+    isAuthenticated: () => boolean;
+    getAuthenticationState: () => Observable<User>;
+    getImageUrl: () => string | null;
+}
+
 @Injectable({ providedIn: 'root' })
-export class AccountService {
+export class AccountService implements IAccountService {
     private userIdentity: User | null;
     private authenticated = false;
     private authenticationState = new Subject<any>();

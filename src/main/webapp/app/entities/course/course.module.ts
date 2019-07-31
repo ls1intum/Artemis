@@ -27,6 +27,7 @@ import { FormDateTimePickerModule } from '../../shared/date-time-picker/date-tim
 import { ArTEMiSColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
+import { MomentModule } from 'ngx-moment';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
@@ -44,6 +45,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         ReactiveFormsModule,
         ArTEMiSColorSelectorModule,
         ImageCropperModule,
+        MomentModule,
     ],
     declarations: [
         CourseComponent,

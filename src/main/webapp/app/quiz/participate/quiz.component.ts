@@ -31,6 +31,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
     providers: [ParticipationService],
+    styleUrls: ['./quiz.component.scss'],
 })
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison

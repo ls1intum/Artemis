@@ -14,7 +14,6 @@ import { TreeviewModule } from 'ngx-treeview';
 
 import {
     // services
-    CodeEditorService,
     DomainService,
     CodeEditorRepositoryService,
     CodeEditorRepositoryFileService,
@@ -33,7 +32,6 @@ import {
     CodeEditorFileBrowserCreateNodeComponent,
     CodeEditorBuildOutputComponent,
     CodeEditorStatusComponent,
-    EditorInstructionsResultDetailComponent,
     CodeEditorActionsComponent,
     CodeEditorInstructionsComponent,
     CodeEditorResolveConflictModalComponent,
@@ -74,7 +72,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
-        EditorInstructionsResultDetailComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
@@ -84,7 +81,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,
-        EditorInstructionsResultDetailComponent,
         ExerciseHintStudentDialogComponent,
         CodeEditorResolveConflictModalComponent,
     ],
@@ -92,7 +88,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         JhiAlertService,
         ResultService,
         ParticipationService,
-        CodeEditorService,
         DomainService,
         CodeEditorRepositoryService,
         CodeEditorRepositoryFileService,

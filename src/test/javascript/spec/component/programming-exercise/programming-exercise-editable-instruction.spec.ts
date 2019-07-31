@@ -26,6 +26,10 @@ import {
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +52,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgbModule],
             declarations: [
+                ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
                 MockComponent(MarkdownEditorComponent),
@@ -55,6 +60,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 SafeHtmlPipe,
             ],
             providers: [
+                ProgrammingExerciseInstructionService,
+                ProgrammingExerciseTaskExtensionWrapper,
+                ProgrammingExercisePlantUmlExtensionWrapper,
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
