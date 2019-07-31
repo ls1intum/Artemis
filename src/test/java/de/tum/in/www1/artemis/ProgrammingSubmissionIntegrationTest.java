@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BAMBOO_REQUEST;
-import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
+import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
@@ -331,7 +330,7 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(submissions.get(2).getParticipation().getId().equals(participations.get(2).getId())).isTrue();
         assertThat(submissions.get(3).getParticipation().getId().equals(participations.get(3).getId())).isTrue();
         assertThat(submissions.stream().map(s -> (ProgrammingSubmission) s).allMatch(s -> {
-            return s.isSubmitted() && s.getCommitHash().equals("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d") && s.getType().equals(SubmissionType.TEST);
+            return s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST);
         })).isTrue();
 
         // Phase 2: Now the CI informs Artemis about the student participation build results.
@@ -378,6 +377,10 @@ class ProgrammingSubmissionIntegrationTest {
     private void postTestRepositorySubmission() throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+
+        Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
+        List<HashMap<String, Object>> changes = (List<HashMap<String, Object>>) requestBodyMap.get("changes");
+        changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());

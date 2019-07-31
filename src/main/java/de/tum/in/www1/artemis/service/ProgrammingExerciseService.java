@@ -116,7 +116,7 @@ public class ProgrammingExerciseService {
      *
      * @param exerciseId of programming exercise the test cases got changed.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
         if (!exerciseOpt.isPresent())
@@ -144,6 +144,8 @@ public class ProgrammingExerciseService {
             }
 
             submissionRepository.save(submission);
+            // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
+            // It could be that Artemis is not available and the results come in before the submission is ready.
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
     }

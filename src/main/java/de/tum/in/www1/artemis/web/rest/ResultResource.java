@@ -177,38 +177,36 @@ public class ResultResource {
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
         // If the participation exists, process the new build result.
-        if (optionalParticipation.isPresent()) {
-            ProgrammingExerciseParticipation participation = optionalParticipation.get();
-            Optional<Result> result;
-            try {
-                result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
-            }
-            // This exception can occur if the 1 to 1 relation between results and submissions is violated.
-            catch (DataIntegrityViolationException ex) {
-                log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
-                throw (ex);
-            }
-            // Only notify the user about the new result if the result was created successfully.
-            if (result.isPresent()) {
-                // notify user via websocket
-                messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
-
-                // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
-                // if (participation.isLti()) {
-                // }
-                // handles new results and sends them to LTI consumers
-                if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                    ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
-                }
-            }
-            log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
-            return ResponseEntity.ok().build();
-        }
-        else {
+        if (!optionalParticipation.isPresent()) {
             log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             // return ok so that Bamboo does not think it was an error
             return ResponseEntity.ok().build();
         }
+        ProgrammingExerciseParticipation participation = optionalParticipation.get();
+        Optional<Result> result;
+        try {
+            result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
+        }
+        // This exception can occur if the 1 to 1 relation between results and submissions is violated.
+        catch (DataIntegrityViolationException ex) {
+            log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
+            throw (ex);
+        }
+        // Only notify the user about the new result if the result was created successfully.
+        if (result.isPresent()) {
+            // notify user via websocket
+            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
+
+            // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
+            // if (participation.isLti()) {
+            // }
+            // handles new results and sends them to LTI consumers
+            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+            }
+        }
+        log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
+        return ResponseEntity.ok().build();
     }
 
     private Optional<ProgrammingExerciseParticipation> getParticipationWithResults(String planKey) {

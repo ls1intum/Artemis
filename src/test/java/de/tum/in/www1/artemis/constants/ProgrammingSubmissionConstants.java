@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.constants;
 
 public class ProgrammingSubmissionConstants {
 
+    public final static String TEST_COMMIT = "a6250b6f03c3ae8fa8fb8fdf6bb1dc1c4cc57bad";
+
     public final static String BITBUCKET_REQUEST = "{\n" + "   \"eventKey\":\"repo:refs_changed\",\n" + "   \"date\":\"2019-07-27T17:07:34+0000\",\n" + "   \"actor\":{\n"
             + "      \"name\":\"admin\",\n" + "      \"emailAddress\":\"admin@bitbucket.de\",\n" + "      \"id\":1,\n" + "      \"displayName\":\"Admin\",\n"
             + "      \"active\":true,\n" + "      \"slug\":\"admin\",\n" + "      \"type\":\"NORMAL\",\n" + "      \"links\":{\n" + "         \"self\":[\n" + "            {\n"

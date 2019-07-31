@@ -131,7 +131,6 @@ public class ProgrammingExerciseTestCaseService {
      * @param exercise the result belongs to.
      * @return
      */
-    @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // If there are no feedbacks, the build has failed.

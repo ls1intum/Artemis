@@ -123,6 +123,7 @@ public class ResultService {
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
+    @Transactional
     public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participationId);
 

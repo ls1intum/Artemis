@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 @Service
 @Profile("bamboo")
@@ -369,8 +369,8 @@ public class BambooService implements ContinuousIntegrationService {
         result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResults);
-        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
-        resultRepository.save(result);
+/*        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+        resultRepository.save(result);*/
 
         if (buildResults.containsKey("vcsRevisionKey") || buildResults.containsKey("changesetId")) {
             //we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
@@ -434,74 +434,84 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
             Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
-            String buildReason = (String) buildMap.get("reason");
-            if (buildReason != null && buildReason.contains("First build for this plan")) {
-                //Filter the first build plan that was automatically executed when the build plan was created
-                return null;
-            }
 
-            Result result = new Result();
-            result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
-            result.setAssessmentType(AssessmentType.AUTOMATIC);
-            result.setSuccessful((Boolean) buildMap.get("successful"));
+            // Filter the first build plan that was automatically executed when the build plan was created.
+            if (isFirstBuildForThisPlan(buildMap)) return null;
 
-            Map<String, Object> testSummary = (Map<String, Object>) buildMap.get("testSummary");
-            result.setResultString((String) testSummary.get("description"));
+            // TODO: This should only fetch the submissions that don't have a result (yet).
+            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdOrderByIdDesc(participation.getId());
+            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(s -> s.getResult() == null).filter(s -> {
+                String matchingCommitHashInBuildMap = getCommitHash(buildMap, s.getType());
+                return matchingCommitHashInBuildMap.equals(s.getCommitHash());
+            }).findFirst();
 
-            result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
-            result.setScore(calculateScoreForResult(result));
-            result.setBuildArtifact((Boolean) buildMap.get("artifact"));
-            result.setParticipation((Participation) participation);
-
-            addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
-
+            Result result = createResultFromBuildResult(buildMap, participation);
             // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
 
-            List<Object> vcsList = (List<Object>) buildMap.get("vcs");
-
-            String commitHash = null;
-            for (Object changeSet : vcsList) {
-                Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-                if (changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
-                    commitHash = (String) changeSetMap.get("id");
-                }
-            }
-
-            if (commitHash == null) {
-                log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
-
+            ProgrammingSubmission programmingSubmission;
+            if (latestMatchingPendingSubmission.isPresent()) {
+                programmingSubmission = latestMatchingPendingSubmission.get();
             } else {
-                ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), commitHash);
-                if (programmingSubmission == null) { // no matching programming submission
-                    log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
-                    // this might be a wrong build (what could be the reason), or this might be due to test changes
-                    // what happens if only the test has changes? should we then create a new submission?
-                    programmingSubmission = new ProgrammingSubmission();
-                    programmingSubmission.setParticipation((Participation) participation);
-                    programmingSubmission.setSubmitted(true);
-                    programmingSubmission.setType(SubmissionType.OTHER);
-                    programmingSubmission.setCommitHash(commitHash);
-                    programmingSubmission.setSubmissionDate(result.getCompletionDate());
-                    // Save to avoid TransientPropertyValueException.
-                    programmingSubmissionRepository.save(programmingSubmission);
-                } else {
-                    //TODO: handle the case that the programming submission alredy has a result
-                    if (programmingSubmission.getResult() != null) {
-                        log.warn("A result for the programming submission " + programmingSubmission.getId() + " does already exist");
-                    }
-                    log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
-                }
-
-                result.setSubmission(programmingSubmission);
-                programmingSubmission.setResult(result);
+                String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
+                // There can be two reasons for the case that there is no programmingSubmission:
+                // 1) Manual build triggered from Bamboo.
+                // 2) An unknown error that caused the submission not to be created on a code submission.
+                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
+                programmingSubmission = new ProgrammingSubmission();
+                programmingSubmission.setParticipation((Participation) participation);
+                programmingSubmission.setSubmitted(true);
+                programmingSubmission.setType(SubmissionType.OTHER);
+                programmingSubmission.setCommitHash(commitHash);
+                programmingSubmission.setSubmissionDate(result.getCompletionDate());
+                // Save to avoid TransientPropertyValueException.
+                programmingSubmissionRepository.save(programmingSubmission);
             }
+            programmingSubmission.setResult(result);
+            result.setSubmission(programmingSubmission);
             return result;
 
         } catch (Exception e) {
             log.error("Error when getting build result");
             throw new BitbucketException("Could not get build result", e);
         }
+    }
+
+    private boolean isFirstBuildForThisPlan(Map<String, Object> buildMap) {
+        String buildReason = (String) buildMap.get("reason");
+        return buildReason != null && buildReason.contains("First build for this plan");
+    }
+
+    private Result createResultFromBuildResult(Map<String, Object> buildMap, ProgrammingExerciseParticipation participation) {
+        Result result = new Result();
+        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setSuccessful((Boolean) buildMap.get("successful"));
+
+        Map<String, Object> testSummary = (Map<String, Object>) buildMap.get("testSummary");
+        result.setResultString((String) testSummary.get("description"));
+
+        result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
+        result.setScore(calculateScoreForResult(result));
+        result.setBuildArtifact((Boolean) buildMap.get("artifact"));
+        result.setParticipation((Participation) participation);
+
+        return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
+    }
+
+    private String getCommitHash(Map<String, Object> buildMap, SubmissionType submissionType) {
+        List<Object> vcsList = (List<Object>) buildMap.get("vcs");
+
+        String commitHash = null;
+        for (Object changeSet : vcsList) {
+            Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
+            if (!submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
+                commitHash = (String) changeSetMap.get("id");
+            } else if (submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(TEST_REPO_NAME)) {
+                commitHash = (String) changeSetMap.get("id");
+            }
+        }
+        return commitHash;
     }
 
     /**
@@ -557,11 +567,11 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result     the result for which the feedback should be added
-     * @param jobs the jobs list of the requestBody
+     * @param result the result for which the feedback should be added
+     * @param jobs   the jobs list of the requestBody
      * @return a list of feedbacks itemsstored in a result
      */
-    public List<Feedback> addFeedbackToResultNew(Result result, List<Object> jobs) {
+    public Result addFeedbackToResultNew(Result result, List<Object> jobs) {
         if (jobs == null) {
             return null;
         }
@@ -604,7 +614,7 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Could not get feedback from jobs " + e);
         }
 
-        return result.getFeedbacks();
+        return result;
     }
 
     /**

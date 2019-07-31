@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +17,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
-    @EntityGraph(attributePaths = { "result" })
+    @EntityGraph(attributePaths = { "result.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
+
+    @EntityGraph(attributePaths = { "result.feedbacks" })
+    List<ProgrammingSubmission> findByParticipationIdOrderByIdDesc(Long participationId);
 
     @EntityGraph(attributePaths = "result")
     @Query("select distinct s from Submission s where s.id = :#{#submissionId}")
