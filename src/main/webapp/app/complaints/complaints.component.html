@@ -35,7 +35,7 @@
                 {{
                     complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.alreadySubmitted' | translate) : ('artemisApp.complaint.alreadySubmitted' | translate)
                 }}
-                {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}
+                <span [ngbTooltip]="submittedDate | date: 'dd/MM/yy HH:mm'">{{ submittedDate | amTimeAgo }}</span>
                 <span *ngIf="handled && accepted" class="text-light bg-success">
                     &nbsp;{{
                         complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.acceptedLong' | translate) : ('artemisApp.complaint.acceptedLong' | translate)
@@ -66,7 +66,8 @@
         <div class="col-12 col-md-6">
             <p class="col-12" *ngIf="complaintResponse" class="mt-4">
                 {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.responseExists' | translate) : ('artemisApp.complaint.responseExists' | translate) }}
-                {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br />
+                <span [ngbTooltip]="complaintResponse.submittedTime | date: 'dd/MM/yy HH:mm'">{{ complaintResponse.submittedTime | amTimeAgo }}</span
+                >:<br />
             </p>
 
             <textarea class="col-12 px-1" rows="4" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true"></textarea>
