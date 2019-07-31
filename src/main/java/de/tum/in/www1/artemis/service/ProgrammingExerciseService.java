@@ -112,7 +112,8 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Notifies all particpations of the given programmingExercise about changes of the test cases.
+     * Notifies all participations of the given programmingExercise (including the template & solution participation!) about changes of the test cases.
+     * This method creates submissions for the participations so that the result when it comes in can be mapped to them.
      *
      * @param exerciseId of programming exercise the test cases got changed.
      */

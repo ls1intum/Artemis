@@ -87,7 +87,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise. e
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)
@@ -95,6 +95,8 @@ public class ProgrammingSubmissionResource {
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
+        // This is needed as a request using a custom query is made using the ExerciseRepository, but the user is not authenticated
+        // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
         Exercise exercise = exerciseService.findOne(exerciseId);

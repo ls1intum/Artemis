@@ -14,7 +14,6 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -157,6 +156,19 @@ public class ResultResource {
         }
     }
 
+    /**
+     * This method is used by the CI system to inform Artemis about a new programming exercise build result.
+     * It will make sure to:
+     * - Create a result from the build result including its feedbacks
+     * - Assign the result to an existing submission OR create a new submission if needed
+     * - Update the result's score based on the exercise's test cases (weights, etc.)
+     * - Update the exercise's test cases if the build is from a solution participation
+     *
+     * @param token CI auth token
+     * @param requestBody build result of CI system
+     * @return a ResponseEntity to the CI system
+     * @throws Exception
+     */
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) throws Exception {
         log.info("Received result notify (NEW)");
@@ -164,6 +176,8 @@ public class ResultResource {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
+
+        // Retrieving the plan key can fail if e.g. the requestBody is malformated. In this case nothing else can be done.
         String planKey;
         try {
             planKey = continuousIntegrationService.get().getPlanKey(requestBody);
@@ -171,27 +185,22 @@ public class ResultResource {
         // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
         catch (Exception ex) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
-            throw (ex);
+            return badRequest();
         }
         log.info("PlanKey for received notifyResultNew is {}", planKey);
+
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
-        // If the participation exists, process the new build result.
         if (!optionalParticipation.isPresent()) {
             log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
-            // return ok so that Bamboo does not think it was an error
-            return ResponseEntity.ok().build();
+            return notFound();
         }
+
         ProgrammingExerciseParticipation participation = optionalParticipation.get();
         Optional<Result> result;
-        try {
-            result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
-        }
-        // This exception can occur if the 1 to 1 relation between results and submissions is violated.
-        catch (DataIntegrityViolationException ex) {
-            log.error("DataIntegrityViolationException encountered when trying to persist new result for participation {}: {}", participation, ex);
-            throw (ex);
-        }
+        // Process the new result from the build result.
+        result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
+
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
             // notify user via websocket

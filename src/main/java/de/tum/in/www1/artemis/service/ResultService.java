@@ -124,13 +124,21 @@ public class ResultService {
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
     @Transactional
-    public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) throws Exception {
+    public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) {
         log.info("Received new build result (NEW) for participation " + participationId);
 
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new EntityNotFoundException("Participation with id " + participationId + " is not a programming exercise participation!");
-        Result result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
+
+        Result result;
+        try {
+            result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
+        }
+        catch (Exception ex) {
+            log.error("Result for participation " + participationId + " could not be created due to the following exception: " + ex);
+            return Optional.empty();
+        }
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
         // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.

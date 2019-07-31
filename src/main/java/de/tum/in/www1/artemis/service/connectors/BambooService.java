@@ -427,6 +427,14 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * React to a new build result from Bamboo, create the result and feedbacks and link the result to the submission and participation.
+     *
+     * @param participation The participation for which the build finished.
+     * @param requestBody   The request Body received from the CI-Server.
+     * @return the created result.
+     * @throws Exception
+     */
     @Override
     @Transactional
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
@@ -446,17 +454,17 @@ public class BambooService implements ContinuousIntegrationService {
             }).findFirst();
 
             Result result = createResultFromBuildResult(buildMap, participation);
-            // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+            // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
 
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
             } else {
-                String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
                 // 2) An unknown error that caused the submission not to be created on a code submission.
+                String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
                 log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
                 programmingSubmission.setParticipation((Participation) participation);
@@ -470,10 +478,9 @@ public class BambooService implements ContinuousIntegrationService {
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
             return result;
-
         } catch (Exception e) {
             log.error("Error when getting build result");
-            throw new BitbucketException("Could not get build result", e);
+            throw new BambooException("Could not get build result", e);
         }
     }
 
