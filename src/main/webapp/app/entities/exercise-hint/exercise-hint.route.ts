@@ -4,19 +4,18 @@ import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot, Routes } from '@a
 import { UserRouteAccessService } from 'app/core';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
 import { ExerciseHintDeletePopupComponent } from './exercise-hint-delete-dialog.component';
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseHintResolve implements Resolve<IExerciseHint | null> {
+export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
     constructor(private service: ExerciseHintService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<IExerciseHint | null> {
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ExerciseHint | null> {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
             return this.service.find(id).pipe(

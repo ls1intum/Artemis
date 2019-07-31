@@ -6,8 +6,8 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -18,7 +18,7 @@ import { ExerciseHintService } from './exercise-hint.service';
     styleUrls: ['./exercise-hint-student-dialog.scss'],
 })
 export class ExerciseHintStudentDialogComponent {
-    @Input() exerciseHints: IExerciseHint[];
+    @Input() exerciseHints: ExerciseHint[];
 
     constructor(public activeModal: NgbActiveModal) {}
 
@@ -45,7 +45,7 @@ export class ExerciseHintStudentDialogComponent {
 })
 export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    exerciseHints: IExerciseHint[] | null;
+    exerciseHints: ExerciseHint[] | null;
     protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
@@ -55,7 +55,7 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
             .findByExerciseId(this.exerciseId)
             .pipe(
                 map(({ body }) => body),
-                tap((hints: IExerciseHint[]) => (this.exerciseHints = hints)),
+                tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
                 catchError(() => of()),
             )
             .subscribe();

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Component({
     selector: 'jhi-exercise-hint-detail',
@@ -10,7 +10,7 @@ import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 })
 export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
     exerciseId: number;
-    exerciseHint: IExerciseHint;
+    exerciseHint: ExerciseHint;
 
     paramSub: Subscription;
 

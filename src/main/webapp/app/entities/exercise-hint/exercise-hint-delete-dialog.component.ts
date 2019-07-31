@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 
 @Component({
@@ -12,7 +12,7 @@ import { ExerciseHintService } from './exercise-hint.service';
     templateUrl: './exercise-hint-delete-dialog.component.html',
 })
 export class ExerciseHintDeleteDialogComponent {
-    exerciseHint: IExerciseHint;
+    exerciseHint: ExerciseHint;
 
     constructor(protected exerciseHintService: ExerciseHintService, public activeModal: NgbActiveModal, protected eventManager: JhiEventManager) {}
 

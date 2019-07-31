@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
-import { IExerciseHint, ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { Exercise } from 'app/entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
@@ -94,7 +94,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<IExerciseHint>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {
         result.subscribe(() => this.onSaveSuccess(), () => this.onSaveError());
     }
 

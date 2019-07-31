@@ -529,12 +529,12 @@ public class ProgrammingExerciseService {
     /**
      * Find a programming exercise by its id.
      * 
-     * @param id of the programming exercise.
+     * @param programmingExerciseId of the programming exercise.
      * @return
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    public ProgrammingExercise findById(Long id) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+    public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }

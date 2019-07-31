@@ -8,7 +8,7 @@
     <!--
         Added the entity ExerciseHint.
     -->
-    <changeSet id="20190715204744-1" author="jhipster">
+    <changeSet id="20190715204744-1" author="behnke">
         <createTable tableName="exercise_hint">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
@@ -17,7 +17,7 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="content" type="varchar(2000)">
+            <column name="content" type="LONGTEXT">
                 <constraints nullable="true" />
             </column>
 

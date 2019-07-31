@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { ExerciseHint, IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 const expect = chai.expect;
 
@@ -14,13 +14,13 @@ describe('Service Tests', () => {
         let injector: TestBed;
         let service: ExerciseHintService;
         let httpMock: HttpTestingController;
-        let elemDefault: IExerciseHint;
+        let elemDefault: ExerciseHint;
         let expectedResult: any;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
             });
-            expectedResult = {} as HttpResponse<IExerciseHint>;
+            expectedResult = {} as HttpResponse<ExerciseHint>;
             injector = getTestBed();
             service = injector.get(ExerciseHintService);
             httpMock = injector.get(HttpTestingController);

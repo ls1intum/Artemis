@@ -11,7 +11,7 @@
             "updated": "Exercise Hint aktualisiert mit ID {{ param }}",
             "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise Hint {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Exercise Hint \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Exercise Hint"

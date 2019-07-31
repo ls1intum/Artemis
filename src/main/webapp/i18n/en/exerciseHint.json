@@ -11,7 +11,7 @@
             "updated": "An Exercise Hint is updated with identifier {{ param }}",
             "deleted": "An Exercise Hint is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Exercise Hint {{ id }}?"
+                "question": "Are you sure you want to delete Exercise Hint \"{{ title }}\"?"
             },
             "detail": {
                 "title": "Exercise Hint"

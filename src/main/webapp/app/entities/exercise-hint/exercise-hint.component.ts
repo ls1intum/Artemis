@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { IExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { AccountService } from 'app/core';
 import { ExerciseHintService } from './exercise-hint.service';
 import { Exercise } from 'app/entities/exercise';
@@ -16,7 +16,7 @@ import { Exercise } from 'app/entities/exercise';
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
     exerciseId: number;
-    exerciseHints: IExerciseHint[];
+    exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
 
     paramSub: Subscription;
@@ -53,18 +53,18 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         this.exerciseHintService
             .findByExerciseId(this.exerciseId)
             .pipe(
-                filter((res: HttpResponse<IExerciseHint[]>) => res.ok),
-                map((res: HttpResponse<IExerciseHint[]>) => res.body),
+                filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
+                map((res: HttpResponse<ExerciseHint[]>) => res.body),
             )
             .subscribe(
-                (res: IExerciseHint[]) => {
+                (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
                 },
                 (res: HttpErrorResponse) => this.onError(res.message),
             );
     }
 
-    trackId(index: number, item: IExerciseHint) {
+    trackId(index: number, item: ExerciseHint) {
         return item.id;
     }
 
