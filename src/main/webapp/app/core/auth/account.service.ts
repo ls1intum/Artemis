@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Observable, Subject } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
@@ -21,15 +21,15 @@ export interface IAccountService {
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
-    getAuthenticationState: () => Observable<User>;
+    getAuthenticationState: () => Observable<User | null>;
     getImageUrl: () => string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private userIdentity: User | null;
+    private userIdentityValue: User | null;
     private authenticated = false;
-    private authenticationState = new Subject<any>();
+    private authenticationState: BehaviorSubject<User | null>;
 
     constructor(
         private languageService: JhiLanguageService,
@@ -37,6 +37,20 @@ export class AccountService implements IAccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
     ) {}
+
+    get userIdentity() {
+        return this.userIdentityValue;
+    }
+
+    set userIdentity(user: User | null) {
+        this.userIdentityValue = user;
+        // Alert subscribers about new users.
+        if (!this.authenticationState) {
+            this.authenticationState = new BehaviorSubject<User | null>(this.userIdentity);
+        } else {
+            this.authenticationState.next(this.userIdentity);
+        }
+    }
 
     fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
@@ -49,7 +63,6 @@ export class AccountService implements IAccountService {
     authenticate(identity: User | null) {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
-        this.authenticationState.next(this.userIdentity);
     }
 
     syncGroups(identity: User) {
@@ -153,7 +166,7 @@ export class AccountService implements IAccountService {
         return this.authenticated;
     }
 
-    getAuthenticationState(): Observable<User> {
+    getAuthenticationState(): Observable<User | null> {
         return this.authenticationState.asObservable();
     }
 
