@@ -123,20 +123,18 @@ public class ResultService {
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
-    @Transactional
     public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participationId);
 
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new EntityNotFoundException("Participation with id " + participationId + " is not a programming exercise participation!");
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        Result result = continuousIntegrationService.get().onBuildCompletedNew(programmingExerciseParticipation, requestBody);
+        Result result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
 
-        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
         // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
         if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
-            extractTestCasesFromResult(programmingExerciseParticipation, result);
+            extractTestCasesFromResult(programmingExercise, result);
         }
         if (result != null) {
             // Find out which test cases were executed and calculate the score according to their status and weight.
@@ -153,13 +151,12 @@ public class ResultService {
      * @param participation of the given result.
      * @param result        from which to extract the test cases.
      */
-    private void extractTestCasesFromResult(ProgrammingExerciseParticipation participation, Result result) {
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
+    private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
+        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getProgrammingExercise().getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getProgrammingExercise().getId() + "/test-cases", testCases);
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 

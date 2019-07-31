@@ -116,7 +116,7 @@ public class ProgrammingExerciseService {
      *
      * @param exerciseId of programming exercise the test cases got changed.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
         if (!exerciseOpt.isPresent())
@@ -144,7 +144,6 @@ public class ProgrammingExerciseService {
             }
 
             submissionRepository.save(submission);
-            participation.addSubmissions(submission);
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
     }

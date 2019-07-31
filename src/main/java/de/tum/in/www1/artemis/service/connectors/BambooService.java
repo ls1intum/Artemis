@@ -428,6 +428,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
+    @Transactional
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
         log.debug("Retrieving build result (NEW) ...");
         try {
@@ -494,10 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                 result.setSubmission(programmingSubmission);
                 programmingSubmission.setResult(result);
-                participation.addSubmissions(programmingSubmission);
             }
-
-            participation.addResult(result);
             return result;
 
         } catch (Exception e) {

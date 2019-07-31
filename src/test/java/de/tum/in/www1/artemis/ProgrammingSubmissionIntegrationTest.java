@@ -89,7 +89,7 @@ class ProgrammingSubmissionIntegrationTest {
 
     private List<Long> participationIds;
 
-    @BeforeEach
+    /* @BeforeEach */
     void reset() {
         database.resetDatabase();
         database.addUsers(2, 2, 2);
@@ -116,6 +116,7 @@ class ProgrammingSubmissionIntegrationTest {
      */
     @Test
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
+        reset();
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
@@ -312,7 +313,8 @@ class ProgrammingSubmissionIntegrationTest {
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
     @Test
-    void shouldCreateStudentSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+    void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        reset();
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
