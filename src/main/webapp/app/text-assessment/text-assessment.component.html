@@ -17,7 +17,7 @@
             <button
                 class="btn btn-primary ml-3"
                 (click)="save()"
-                [disabled]="!assessmentsAreValid || !isAuthorized"
+                [disabled]="!assessmentsAreValid || !isAssessor"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="artemisApp.textAssessment.save"
             >
@@ -26,7 +26,7 @@
             <button
                 class="btn btn-success ml-3"
                 (click)="submit()"
-                [disabled]="!assessmentsAreValid || !isAuthorized || !result.id"
+                [disabled]="!assessmentsAreValid || !isAssessor || !result.id"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="artemisApp.textAssessment.submit"
             >
@@ -35,7 +35,7 @@
             <button
                 class="btn btn-danger ml-3"
                 (click)="cancelAssessment()"
-                [disabled]="!isAuthorized"
+                [disabled]="!isAssessor"
                 *ngIf="result && !result.completionDate"
                 jhiTranslate="artemisApp.textAssessment.cancel"
             >
@@ -56,7 +56,7 @@
                 id="assessNextButton"
                 (click)="assessNextOptimal()"
                 [disabled]="!assessmentsAreValid"
-                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor) && !hasComplaint"
+                *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !complaint"
                 jhiTranslate="artemisApp.tutorExerciseDashboard.nextAssessment"
             ></button>
         </div>
@@ -81,8 +81,9 @@
     <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.loading"></span></span>
 </h2>
 
-<div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="artemisApp.complaint.hint">
-    You find the complaint at the end of the page
+<div class="alert alert-info" *ngIf="complaint">
+    <ng-container *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
+    <ng-container *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</ng-container>
 </div>
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
@@ -144,10 +145,11 @@
     </div>
 </ng-container>
 
-<div class="mt-4" *ngIf="hasComplaint && result?.id">
-    <h2 jhiTranslate="modelingAssessmentEditor.reviewComplaint">
-        Review Complaint
-    </h2>
-    <jhi-complaints-for-tutor-form [resultId]="result.id" [isAllowedToRespond]="!isAuthorized" (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)">
+<div class="mt-4" *ngIf="complaint">
+    <jhi-complaints-for-tutor-form
+        [complaint]="complaint"
+        [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
+        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    >
     </jhi-complaints-for-tutor-form>
 </div>

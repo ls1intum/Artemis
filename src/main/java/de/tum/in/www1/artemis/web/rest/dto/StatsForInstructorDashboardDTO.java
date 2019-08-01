@@ -14,6 +14,10 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfOpenComplaints;
 
+    private Long numberOfMoreFeedbackRequests;
+
+    private Long numberOfOpenMoreFeedbackRequests;
+
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
     public StatsForInstructorDashboardDTO() {
@@ -57,6 +61,22 @@ public class StatsForInstructorDashboardDTO {
 
     public void setNumberOfOpenComplaints(Long numberOfOpenComplaints) {
         this.numberOfOpenComplaints = numberOfOpenComplaints;
+    }
+
+    public Long getNumberOfMoreFeedbackRequests() {
+        return numberOfMoreFeedbackRequests;
+    }
+
+    public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
+        this.numberOfMoreFeedbackRequests = numberOfMoreFeedbackRequests;
+    }
+
+    public Long getNumberOfOpenMoreFeedbackRequests() {
+        return numberOfOpenMoreFeedbackRequests;
+    }
+
+    public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
+        this.numberOfOpenMoreFeedbackRequests = numberOfOpenMoreFeedbackRequests;
     }
 
     public List<TutorLeaderboardDTO> getTutorLeaderboardEntries() {
