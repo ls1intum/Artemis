@@ -3,8 +3,8 @@
         "conflictResolution": "Conflict Resolution",
         "conflicts": "Conflict",
         "ownAssessmentTitle": "Your current assessment",
-        "causingAssessment": "Causing Assessment",
-        "conflictingAssessment": "Conflicting Assessment",
+        "causingAssessment": "Causing Assessment (Chosen by {{count}} tutors)",
+        "conflictingAssessment": "Conflicting Assessment  (Chosen by {{count}} tutors)",
         "button": {
             "keepYours": "Keep Yours",
             "useLeft": "Use Left",

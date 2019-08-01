@@ -30,12 +30,14 @@ export class InstructorConflictResolutionComponent implements OnInit {
     rightHighlightedElementIds: Set<string>;
     rightCenteredElementId: string;
     rightFeedbacksCopy: Feedback[];
-    leftConflictingResult: ConflictingResult;
+    tutorsChosenRightModel: number;
 
+    leftConflictingResult: ConflictingResult;
     leftModel: UMLModel;
     leftHighlightedElementIds: Set<string>;
     leftCenteredElementId: string;
     leftFeedbacksCopy: Feedback[];
+    tutorsChosenLeftModel: number;
 
     private chosenFeedback: Feedback | undefined;
 
@@ -84,13 +86,16 @@ export class InstructorConflictResolutionComponent implements OnInit {
             this.leftModel = JSON.parse((this.leftConflictingResult.result.submission as ModelingSubmission).model);
             this.updateHighlightedElements();
             this.updateCenteredElements();
+            this.updateDicisionCounters();
         }
     }
 
     onSubmit(escalatedConflicts: Conflict[]) {
-        this.conflictService
-            .resolveConflict(this.currentConflict, this.chosenFeedback)
-            .subscribe(() => this.router.navigate(['course', this.modelingExercise.course!.id, 'exercise', this.modelingExercise.id, 'tutor-dashboard']));
+        if (this.currentConflict && this.chosenFeedback) {
+            this.conflictService
+                .resolveConflict(this.currentConflict, this.chosenFeedback)
+                .subscribe(() => this.router.navigate(['course', this.modelingExercise.course!.id, 'exercise', this.modelingExercise.id, 'tutor-dashboard']));
+        }
     }
 
     useRight() {
@@ -107,39 +112,17 @@ export class InstructorConflictResolutionComponent implements OnInit {
         this.updateCurentState(ConflictResolutionState.RESOLVED);
     }
 
+    private updateDicisionCounters() {
+        if (this.currentConflict && this.rightConflictingResult) {
+            const causingFeedbackCredit = this.findFeedbackById(this.rightConflictingResult.result.feedbacks, this.rightConflictingResult.modelElementId)!.credits;
+            this.tutorsChosenRightModel = this.currentConflict.resultsInConflict.filter(conflRes => conflRes.updatedFeedback.credits === causingFeedbackCredit).length + 1;
+            this.tutorsChosenLeftModel = this.currentConflict.resultsInConflict.length - this.tutorsChosenRightModel + 1;
+        }
+    }
+
     private findFeedbackById(feedbacks: Feedback[], referenceId: string): Feedback | undefined {
         return feedbacks.find(feedback => feedback.referenceId == referenceId);
     }
-
-    // onFeedbackChanged(feedbacks: Feedback[]) {
-    //     // this.mergedFeedbacks = feedbacks;
-    // }
-
-    // onConflictStateChanged(newState: ConflictResolutionState) {
-    //     this.conflictResolutionStates[this.conflictIndex] = newState;
-    //     this.currentState = newState;
-    //     this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
-    // }
-
-    // private initResolutionStates(conflicts: Conflict[]) {
-    //     // TODO MJ move into service
-    //     this.conflictResolutionStates = [];
-    //     if (conflicts && conflicts.length > 0) {
-    //         const mergedFeedbacks = conflicts[0].causingConflictingResult!.result.feedbacks;
-    //         for (let i = 0; i < this.conflicts.length; i++) {
-    //             const currentConflict: Conflict = conflicts[i];
-    //             const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
-    //             const mergedFeedback = mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
-    //             const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
-    //             if (mergedFeedback && conflictingFeedback && mergedFeedback.credits !== conflictingFeedback.credits) {
-    //                 this.conflictResolutionStates.push(ConflictResolutionState.UNHANDLED);
-    //             } else {
-    //                 this.conflictResolutionStates.push(ConflictResolutionState.RESOLVED);
-    //             }
-    //         }
-    //     }
-    //     this.currentState = this.conflictResolutionStates[this.conflictIndex];
-    // }
 
     private updateCurentState(newState: ConflictResolutionState) {
         this.currentState = newState;

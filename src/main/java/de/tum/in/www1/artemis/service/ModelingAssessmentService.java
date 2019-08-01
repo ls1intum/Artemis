@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -35,15 +36,14 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final CompassService compassService;
 
-    public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
-            ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
-            ModelingSubmissionService modelingSubmissionService) {
+    public ModelingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService, UserService userService,
+            ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository, CompassService compassService) {
         super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.userService = userService;
-        this.compassService = compassService;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.compassService = compassService;
     }
 
     /**
@@ -62,6 +62,9 @@ public class ModelingAssessmentService extends AssessmentService {
         result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for
         // modeling and text exercises (i.e. total score is sum of feedback credits)
         resultRepository.save(result);
+        if (compassService.isSupported(exercise.getDiagramType())) {
+            compassService.addAssessment(exercise.getId(), result.getSubmission().getId(), result.getFeedbacks());
+        }
         return result;
     }
 
@@ -102,6 +105,16 @@ public class ModelingAssessmentService extends AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
+    }
+
+    /**
+     * Updates
+     * @param result
+     * @param updatedFeedback
+     */
+    public void updateSubmittedManualAssessment(Result result, Feedback updatedFeedback) {
+        ModelingSubmission submission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
+        compassService.applyUpdateOnSubmittedAssessment(submission, updatedFeedback);
     }
 
     /**

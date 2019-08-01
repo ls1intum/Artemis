@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,7 +79,8 @@ public class ParticipationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ModelAssessmentConflictService conflictService;
+    @Autowired
+    private ModelAssessmentConflictService conflictService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -88,8 +90,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService) {
+            SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -103,7 +104,6 @@ public class ParticipationService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
-        this.conflictService = conflictService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
     }

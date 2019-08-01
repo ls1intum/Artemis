@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,17 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
 import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -32,12 +31,12 @@ public class ModelAssessmentConflictService {
 
     private final ModelAssessmentConflictRepository modelAssessmentConflictRepository;
 
+    @Autowired
+    private ModelingAssessmentService modelingAssessmentService;
+
     private final ConflictingResultService conflictingResultService;
 
     private final ConflictingResultRepository conflictingResultRepository;
-
-    @Autowired
-    private CompassService compassService;
 
     private final UserService userService;
 
@@ -89,6 +88,9 @@ public class ModelAssessmentConflictService {
         return existingConflicts;
     }
 
+    /**
+     * @return List of conflicts that have the given result as causing conflicting result
+     */
     public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
         List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
         return conflicts;
@@ -119,7 +121,6 @@ public class ModelAssessmentConflictService {
             if (conflictingResult.getResult().getId().equals(result.getId())) {
                 conflict.getResultsInConflict().remove(conflictingResult);
                 conflictingResultRepository.deleteById(conflictingResult.getId());
-                System.out.println("test");
             }
         }));
     }
@@ -158,6 +159,29 @@ public class ModelAssessmentConflictService {
         conflict.getResultsInConflict().forEach(conflictingResult -> applyInstructorDecisionToCompass(conflictingResult, decision));
         conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
         conflict.setResolutionDate(ZonedDateTime.now());
+        submitCausingConflictingResult(conflict);
+    }
+
+    /**
+     * Updates the state of the given conflict to resolved depending on the previous state of the conflict and sets the resolution date
+     */
+    private void resolveConflictByTutor(ModelAssessmentConflict conflict) {
+        switch (conflict.getState()) {
+        case UNHANDLED:
+            conflict.setState(EscalationState.RESOLVED_BY_CAUSER);
+            conflict.setResolutionDate(ZonedDateTime.now());
+            submitCausingConflictingResult(conflict);
+            break;
+        case ESCALATED_TO_TUTORS_IN_CONFLICT:
+            applyTutorsDecisionToCompass(conflict);
+            conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
+            conflict.setResolutionDate(ZonedDateTime.now());
+            submitCausingConflictingResult(conflict);
+            break;
+        default:
+            log.error("Failed to resolve conflict {}. Illegal escalation state", conflict);
+            break;
+        }
     }
 
     /**
@@ -280,26 +304,6 @@ public class ModelAssessmentConflictService {
     }
 
     /**
-     * Updates the state of the given conflict to resolved depending on the previous state of the conflict and sets the resolution date
-     */
-    private void resolveConflictByTutor(ModelAssessmentConflict conflict) {
-        switch (conflict.getState()) {
-        case UNHANDLED:
-            conflict.setState(EscalationState.RESOLVED_BY_CAUSER);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
-        case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            applyTutorsDecisionToCompass(conflict);
-            conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
-        default:
-            log.error("Failed to resolve conflict {}. Illegal escalation state", conflict);
-            break;
-        }
-    }
-
-    /**
      * Updates the given storedConflict with the decision of a tutor to whom the storedConflict got escalated to. When all tutors posted their decision the conflict is either
      * escalated to an instructor or resolved in case all tutors decided the same way
      *
@@ -322,21 +326,26 @@ public class ModelAssessmentConflictService {
     }
 
     private void applyTutorsDecisionToCompass(ModelAssessmentConflict conflict) {
-        conflict.getResultsInConflict().forEach(conflictingResult -> {
-            compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), conflictingResult.getUpdatedFeedback());
-        });
+        conflict.getResultsInConflict()
+                .forEach(conflictingResult -> modelingAssessmentService.updateSubmittedManualAssessment(conflictingResult.getResult(), conflictingResult.getUpdatedFeedback()));
     }
 
     private void applyInstructorDecisionToCompass(ConflictingResult conflictingResult, Feedback decision) {
+        List<Feedback> feedbacks = (List<Feedback>) Hibernate.unproxy(conflictingResult.getResult().getFeedbacks());
+        conflictingResult.getResult().setFeedbacks(feedbacks);
         Feedback feedbackToUpdate = findFeedbackByReferenceId(conflictingResult.getResult(), conflictingResult.getModelElementId()).get();
         feedbackToUpdate.setCredits(decision.getCredits());
-        compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), feedbackToUpdate);
+        modelingAssessmentService.updateSubmittedManualAssessment(conflictingResult.getResult(), feedbackToUpdate);
     }
 
     private boolean allTutorsAcceptedConflictCausingFeedback(ModelAssessmentConflict conflict) {
         ConflictingResult firstConflictingResult = conflict.getResultsInConflict().iterator().next();
-        boolean tutorsDecisionUniform = conflict.getResultsInConflict().stream()
-                .allMatch(cR -> cR.getUpdatedFeedback().getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits()));
+        boolean tutorsDecisionUniform = conflict.getResultsInConflict().stream().allMatch(cR -> {
+            if (cR.getUpdatedFeedback() != null) {
+                return cR.getUpdatedFeedback().getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits());
+            }
+            return false;
+        });
         if (tutorsDecisionUniform) {
             Feedback causingFeedback = conflict.getCausingConflictingResult().getResult().getFeedbacks().stream()
                     .filter(feedback -> feedback.getReferenceElementId().equals(conflict.getCausingConflictingResult().getModelElementId())).findFirst().get();
@@ -360,5 +369,16 @@ public class ModelAssessmentConflictService {
 
     private Optional<Feedback> findFeedbackByReferenceId(Result result, String referenceId) {
         return result.getFeedbacks().stream().filter(feedback -> feedback.getReferenceElementId().equals(referenceId)).findFirst();
+    }
+
+    private void submitCausingConflictingResult(ModelAssessmentConflict conflict) {
+        Result result = conflict.getCausingConflictingResult().getResult();
+        ModelingSubmission submission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
+        Participation participation = (Participation) Hibernate.unproxy(submission.getParticipation());
+        ModelingExercise exercise = (ModelingExercise) Hibernate.unproxy(participation.getExercise());
+        List<ModelAssessmentConflict> conflictsCausedByResult = getConflictsForResult(result);
+        if (conflictsCausedByResult.stream().allMatch(c -> c.isResolved())) {
+            modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+        }
     }
 }

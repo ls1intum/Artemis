@@ -192,9 +192,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
             }
             else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
-                if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                    compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
-                }
             }
         }
         // remove information about the student for tutors to ensure double-blind assessment

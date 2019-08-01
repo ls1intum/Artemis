@@ -3,6 +3,8 @@
         "conflictResolution": "Konflikt Behandlung",
         "conflicts": "Konflikt",
         "ownAssessmentTitle": "Deine aktuelle Bewertung",
+        "causingAssessment": "Causing Assessment (Chosen by {{count}} tutors)",
+        "conflictingAssessment": "Conflicting Assessment  (Chosen by {{count}} tutors)",
         "button": {
             "keepYours": "Beibehalten",
             "acceptTheirs": "Übernehmen",
