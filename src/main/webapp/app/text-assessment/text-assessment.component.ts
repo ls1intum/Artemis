@@ -19,9 +19,10 @@ import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService, WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -42,12 +43,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError: string | null;
-    isAuthorized = true;
+    isAssessor = true;
     isAtLeastInstructor = false;
     busy = true;
     showResult = true;
-    hasComplaint = false;
     complaint: Complaint;
+    ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
     canOverride = false;
@@ -83,6 +84,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private artemisMarkdown: ArtemisMarkdown,
         private translateService: TranslateService,
         private textSubmissionService: TextSubmissionService,
+        private complaintService: ComplaintService,
     ) {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
@@ -328,7 +330,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
-        this.hasComplaint = this.result.hasComplaint;
+        if (this.result.hasComplaint) {
+            this.getComplaint();
+        }
 
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
@@ -336,6 +340,19 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkPermissions();
     }
 
+    getComplaint(): void {
+        this.complaintService.findByResultId(this.result.id).subscribe(
+            res => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
+    }
     goToExerciseDashboard() {
         if (this.exercise && this.exercise.course) {
             this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
@@ -384,10 +401,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private checkPermissions() {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     toggleCollapse($event: any) {
