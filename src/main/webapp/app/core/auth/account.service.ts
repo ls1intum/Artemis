@@ -5,7 +5,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { of, Observable, BehaviorSubject } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
@@ -44,8 +45,9 @@ export class AccountService implements IAccountService {
 
     set userIdentity(user: User | null) {
         this.userIdentityValue = user;
+        this.authenticated = !!user;
         // Alert subscribers about user updates, that is when the user logs in or logs out (null).
-        this.authenticationState.next(this.userIdentity);
+        this.authenticationState.next(user);
     }
 
     fetch(): Observable<HttpResponse<User>> {
@@ -58,7 +60,6 @@ export class AccountService implements IAccountService {
 
     authenticate(identity: User | null) {
         this.userIdentity = identity;
-        this.authenticated = identity !== null;
     }
 
     syncGroups(identity: User) {
@@ -120,32 +121,31 @@ export class AccountService implements IAccountService {
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
         return this.fetch()
-            .toPromise()
-            .then(response => {
-                const user = response.body!;
-                if (user) {
-                    this.userIdentity = user;
-                    this.authenticated = true;
-                    this.websocketService.connect();
+            .pipe(
+                map((response: HttpResponse<User>) => {
+                    const user = response.body!;
+                    if (user) {
+                        this.userIdentity = user;
+                        this.websocketService.connect();
 
-                    // After retrieve the account info, the language will be changed to
-                    // the user's preferred language configured in the account setting
-                    const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
-                    this.languageService.changeLanguage(langKey);
-                } else {
+                        // After retrieve the account info, the language will be changed to
+                        // the user's preferred language configured in the account setting
+                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                        this.languageService.changeLanguage(langKey);
+                    } else {
+                        this.userIdentity = null;
+                    }
+                    return this.userIdentity;
+                }),
+                catchError(() => {
+                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                        this.websocketService.disconnect();
+                    }
                     this.userIdentity = null;
-                    this.authenticated = false;
-                }
-                return this.userIdentity;
-            })
-            .catch(err => {
-                if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
-                    this.websocketService.disconnect();
-                }
-                this.userIdentity = null;
-                this.authenticated = false;
-                return null;
-            });
+                    return of(null);
+                }),
+            )
+            .toPromise();
     }
 
     isAtLeastTutorInCourse(course: Course): boolean {
