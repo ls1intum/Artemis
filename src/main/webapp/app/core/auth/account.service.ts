@@ -140,7 +140,6 @@ export class AccountService implements IAccountService {
                     this.userIdentity = null;
                     this.authenticated = false;
                 }
-                this.authenticationState.next(this.userIdentity);
                 return this.userIdentity;
             })
             .catch(err => {
@@ -149,7 +148,6 @@ export class AccountService implements IAccountService {
                 }
                 this.userIdentity = null;
                 this.authenticated = false;
-                this.authenticationState.next(this.userIdentity);
                 return null;
             });
     }
