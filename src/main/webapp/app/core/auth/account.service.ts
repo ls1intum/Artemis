@@ -44,7 +44,7 @@ export class AccountService implements IAccountService {
 
     set userIdentity(user: User | null) {
         this.userIdentityValue = user;
-        // Alert subscribers about new users.
+        // Alert subscribers about user updates, that is when the user logs in or logs out (null).
         if (!this.authenticationState) {
             this.authenticationState = new BehaviorSubject<User | null>(this.userIdentity);
         } else {
