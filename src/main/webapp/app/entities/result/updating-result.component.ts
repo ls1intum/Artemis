@@ -8,6 +8,8 @@ import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
+import { ExerciseType } from 'app/entities/exercise';
+import { SubmissionWebsocketService } from 'app/entities/submission/submission-websocket.service';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -21,6 +23,7 @@ import * as moment from 'moment';
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    @Input() exerciseType: ExerciseType;
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -28,9 +31,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
-    public resultUpdateListener: Subscription;
+    public resultSubscription: Subscription;
+    public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: SubmissionWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
@@ -44,20 +48,21 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
+            this.subscribeForNewSubmissions();
         }
     }
 
     ngOnDestroy() {
-        if (this.resultUpdateListener) {
-            this.resultUpdateListener.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
     }
 
     subscribeForNewResults() {
-        if (this.resultUpdateListener) {
-            this.resultUpdateListener.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
-        this.resultUpdateListener = this.participationWebsocketService
+        this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
                 // Ignore initial null result of subscription
@@ -66,6 +71,19 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
+            )
+            .subscribe();
+    }
+
+    subscribeForNewSubmissions() {
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+        this.submissionSubscription = this.submissionWebsocketService
+            .getLatestPendingSubmission(this.participation.id)
+            .pipe(
+                tap(console.log),
+                tap(pendingSubmission => (this.isBuilding = !!pendingSubmission)),
             )
             .subscribe();
     }

@@ -140,7 +140,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
-        const unsubscribeSpy = spy(comp.resultUpdateListener, 'unsubscribe');
+        const unsubscribeSpy = spy(comp.resultSubscription, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, results: [{ id: 1, rated: true }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).to.have.been.calledOnce;

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -39,6 +38,7 @@ import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -84,12 +84,14 @@ public class ParticipationResource {
 
     private final ResultService resultService;
 
+    private final SubmissionRepository submissionRepository;
+
     private final UserService userService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService) {
+            ResultService resultService, SubmissionRepository submissionRepository, UserService userService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -100,6 +102,7 @@ public class ParticipationResource {
         this.versionControlService = versionControlService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
+        this.submissionRepository = submissionRepository;
         this.userService = userService;
     }
 
@@ -207,7 +210,7 @@ public class ParticipationResource {
 
     /**
      * This makes sure the client can display the latest result immediately after loading this participation
-     * 
+     *
      * @param participation
      */
     private void addLatestResultToParticipation(Participation participation) {
@@ -606,6 +609,21 @@ public class ParticipationResource {
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
+    }
+
+    /**
+     * GET /participations/:id/latest-submission : get the latest submission for the participation.
+     *
+     * @param id the id of the participation get the latest submission for
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @GetMapping("/participations/{participationId}/latest-submission")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Submission> getLatestSubmission(@PathVariable Long participationId) {
+        Optional<Submission> submission = submissionRepository.findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(participationId);
+        // TODO: Implement permission check
+        /* Participation participation = participationService.findOne(participationId); */
+        return submission.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
     private void checkAccessPermissionAtInstructor(StudentParticipation participation) {
