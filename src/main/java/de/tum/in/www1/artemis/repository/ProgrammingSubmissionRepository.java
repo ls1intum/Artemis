@@ -21,7 +21,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
     @EntityGraph(attributePaths = { "result.feedbacks" })
-    List<ProgrammingSubmission> findByParticipationIdOrderByIdDesc(Long participationId);
+    List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(attributePaths = "result")
     @Query("select distinct s from Submission s where s.id = :#{#submissionId}")

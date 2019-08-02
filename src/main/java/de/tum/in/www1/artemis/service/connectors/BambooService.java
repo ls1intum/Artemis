@@ -446,9 +446,8 @@ public class BambooService implements ContinuousIntegrationService {
             // Filter the first build plan that was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildMap)) return null;
 
-            // TODO: This should only fetch the submissions that don't have a result (yet).
-            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdOrderByIdDesc(participation.getId());
-            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(s -> s.getResult() == null).filter(s -> {
+            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
+            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(s -> {
                 String matchingCommitHashInBuildMap = getCommitHash(buildMap, s.getType());
                 return matchingCommitHashInBuildMap.equals(s.getCommitHash());
             }).findFirst();
