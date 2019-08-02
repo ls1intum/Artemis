@@ -484,11 +484,24 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Check if the build result received is the initial build of the plan.
+     *
+     * @param buildMap data provided by build.
+     * @return true if build is the first build.
+     */
     private boolean isFirstBuildForThisPlan(Map<String, Object> buildMap) {
         String buildReason = (String) buildMap.get("reason");
         return buildReason != null && buildReason.contains("First build for this plan");
     }
 
+    /**
+     * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
+     *
+     * @param buildMap data provided by build.
+     * @param participation to attach result to.
+     * @return the created result (is not persisted in this method, only constructed!)
+     */
     private Result createResultFromBuildResult(Map<String, Object> buildMap, ProgrammingExerciseParticipation participation) {
         Result result = new Result();
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
@@ -506,6 +519,13 @@ public class BambooService implements ContinuousIntegrationService {
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
     }
 
+    /**
+     * Get the commit hash from the build map, the commit hash will be different for submission types or null.
+     *
+     * @param buildMap data provided by build.
+     * @param submissionType describes why the build was started.
+     * @return if the commit hash for the given submission type was found, otherwise null.
+     */
     private String getCommitHash(Map<String, Object> buildMap, SubmissionType submissionType) {
         List<Object> vcsList = (List<Object>) buildMap.get("vcs");
 
