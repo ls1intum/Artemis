@@ -28,7 +28,7 @@ export interface IAccountService {
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private userIdentityValue: User | null;
+    private userIdentityValue: User | null = null;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | null>(null);
 
