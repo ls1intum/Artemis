@@ -207,7 +207,9 @@ public class ProgrammingExercise extends Exercise {
 
     public void setTemplateParticipation(TemplateProgrammingExerciseParticipation templateParticipation) {
         this.templateParticipation = templateParticipation;
-        this.templateParticipation.setProgrammingExercise(this);
+        if (this.templateParticipation != null) {
+            this.templateParticipation.setProgrammingExercise(this);
+        }
     }
 
     public SolutionProgrammingExerciseParticipation getSolutionParticipation() {
@@ -216,7 +218,9 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSolutionParticipation(SolutionProgrammingExerciseParticipation solutionParticipation) {
         this.solutionParticipation = solutionParticipation;
-        this.solutionParticipation.setProgrammingExercise(this);
+        if (this.solutionParticipation != null) {
+            this.solutionParticipation.setProgrammingExercise(this);
+        }
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
