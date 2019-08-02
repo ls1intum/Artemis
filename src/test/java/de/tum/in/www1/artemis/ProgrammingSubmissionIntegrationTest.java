@@ -220,20 +220,24 @@ class ProgrammingSubmissionIntegrationTest {
         postSubmission(participationId, HttpStatus.OK);
         // Create 2 results for the same submission.
         postResult(participationType, 0, HttpStatus.OK);
-        postResult(participationType, 0, HttpStatus.INTERNAL_SERVER_ERROR);
+        postResult(participationType, 0, HttpStatus.OK);
 
-        // Make sure there is still only 1 submission.
+        // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(1);
+        assertThat(submissions).hasSize(2);
         SecurityUtils.setAuthorizationObject();
-        ProgrammingSubmission submission = submissionRepository.findByIdWithEagerResult(submissions.get(0).getId());
+        ProgrammingSubmission submission1 = submissionRepository.findByIdWithEagerResult(submissions.get(0).getId());
+        ProgrammingSubmission submission2 = submissionRepository.findByIdWithEagerResult(submissions.get(1).getId());
 
-        // There should now be 1 results linked to the submission.
+        // There should be 1 result linked to each submission.
         List<Result> results = resultRepository.findAll();
-        assertThat(results).hasSize(1);
+        assertThat(results).hasSize(2);
         Result result1 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
+        Result result2 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(1).getId()).get();
         assertThat(result1.getSubmission()).isNotNull();
-        assertThat(submission.getResult().getId()).isEqualTo(result1.getId());
+        assertThat(result2.getSubmission()).isNotNull();
+        assertThat(submission1.getResult().getId()).isEqualTo(result1.getId());
+        assertThat(submission2.getResult().getId()).isEqualTo(result2.getId());
     }
 
     @TestFactory
