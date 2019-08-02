@@ -31,10 +31,13 @@ describe('Component Tests', () => {
         it('Should call load all on init', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
+            const hint = new ExerciseHint();
+            hint.id = 123;
+
             spyOn(service, 'findByExerciseId').and.returnValue(
                 of(
                     new HttpResponse({
-                        body: [new ExerciseHint(123)],
+                        body: [hint],
                         headers,
                     }),
                 ),
