@@ -29,6 +29,8 @@ import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { MockComplaintService } from '../../mocks/mock-complaint.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,6 +63,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
             .compileComponents()
@@ -108,7 +111,7 @@ describe('TextAssessmentComponent', () => {
                 hasFeedback: false,
                 submission: comp.submission,
             };
-            comp.isAuthorized = true;
+            comp.isAssessor = true;
             comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };

@@ -11,6 +11,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.*;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -91,7 +93,11 @@ public class RequestUtilService {
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
+    }
+
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
                 assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
@@ -102,7 +108,11 @@ public class RequestUtilService {
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return getList(path, expectedStatus, listElementType, new LinkedMultiValueMap<>());
+    }
+
+    public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).with(csrf()).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
                 assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();

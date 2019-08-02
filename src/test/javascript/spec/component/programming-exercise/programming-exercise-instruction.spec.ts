@@ -240,6 +240,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 firstChange: false,
             } as SimpleChange,
         } as SimpleChanges);
+        expect(comp.markdownExtensions).to.have.lengthOf(2);
         expect(updateMarkdownStub).to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
@@ -258,6 +259,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         comp.ngOnChanges({} as SimpleChanges);
 
+        expect(comp.markdownExtensions).to.have.lengthOf(2);
         expect(getLatestResultWithFeedbacks).to.have.been.calledOnceWith(participation.id);
         expect(updateMarkdownStub).to.have.been.calledOnce;
         expect(comp.isInitial).to.be.false;
