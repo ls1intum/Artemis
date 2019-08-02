@@ -148,7 +148,7 @@ public class ModelAssessmentConflictService {
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
-        modelAssessmentConflictRepository.saveAll(conflicts);
+        conflicts.forEach(this::saveConflict);
     }
 
     @Transactional
@@ -211,7 +211,7 @@ public class ModelAssessmentConflictService {
             log.error("Escalating conflict {} with state {} failed .", storedConflict.getId(), storedConflict.getState());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict: " + storedConflict.getId() + " can´t be escalated");
         }
-        modelAssessmentConflictRepository.save(storedConflict);
+        saveConflict(storedConflict);
         return storedConflict;
     }
 
@@ -292,7 +292,7 @@ public class ModelAssessmentConflictService {
         ModelAssessmentConflict conflict = new ModelAssessmentConflict();
         Set<ConflictingResult> resultsInConflict = new HashSet<>();
         feedbacksInConflict.forEach(feedback -> {
-            ConflictingResult conflictingResult = conflictingResultService.createConflictingResult(conflict, feedback);
+            ConflictingResult conflictingResult = conflictingResultService.createConflictingResult(feedback.getReferenceElementId(), feedback.getResult());
             resultsInConflict.add(conflictingResult);
         });
         ConflictingResult causingConflictingResult = conflictingResultService.createConflictingResult(causingModelElementId, causingResult);
@@ -322,7 +322,12 @@ public class ModelAssessmentConflictService {
                 escalateConflict(storedConflict);
             }
         }
-        modelAssessmentConflictRepository.save(storedConflict);
+        saveConflict(storedConflict);
+    }
+
+    private void saveConflict(ModelAssessmentConflict conflict) {
+        conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult.setConflict(conflict));
+        modelAssessmentConflictRepository.save(conflict);
     }
 
     private void applyTutorsDecisionToCompass(ModelAssessmentConflict conflict) {
@@ -357,7 +362,7 @@ public class ModelAssessmentConflictService {
     }
 
     private boolean decisionOfAllTutorsPresent(ModelAssessmentConflict conflict) {
-        return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getUpdatedFeedback() != null);
+        return conflict.getResultsInConflict().stream().allMatch(conflictingResult -> conflictingResult.getUpdatedFeedback() != null);
     }
 
     private void verifyNotResolved(ModelAssessmentConflict conflict) {

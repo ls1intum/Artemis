@@ -46,7 +46,6 @@ public class ModelAssessmentConflict {
      * Already persisted results (i.e. element assessments) that are in conflict with the new assessment in causingConflictingResult
      */
     @OneToMany(mappedBy = "conflict", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Column(name = "conflictingResults")
     private Set<ConflictingResult> resultsInConflict;
 
     public Long getId() {

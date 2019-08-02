@@ -32,6 +32,7 @@ public class ConflictingResult {
 
     @JsonIgnore
     @ManyToOne
+    @JoinColumn(name = "conflict_id")
     private ModelAssessmentConflict conflict;
 
     /**
