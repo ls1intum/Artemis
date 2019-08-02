@@ -6,7 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of, Observable, BehaviorSubject } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { distinctUntilChanged, map, catchError } from 'rxjs/operators';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
@@ -161,7 +161,10 @@ export class AccountService implements IAccountService {
     }
 
     getAuthenticationState(): Observable<User | null> {
-        return this.authenticationState.asObservable();
+        return this.authenticationState.asObservable().pipe(
+            // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
+            distinctUntilChanged(),
+        );
     }
 
     /**
