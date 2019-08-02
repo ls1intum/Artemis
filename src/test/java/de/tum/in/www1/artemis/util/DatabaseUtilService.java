@@ -48,6 +48,9 @@ public class DatabaseUtilService {
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    ExerciseHintRepository exerciseHintRepository;
+
+    @Autowired
     UserRepository userRepo;
 
     @Autowired
@@ -506,5 +509,16 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public void addHintsToExercise(Exercise exercise) {
+        ExerciseHint exerciseHint1 = new ExerciseHint().exercise(exercise).title("title 1").content("content 1");
+        ExerciseHint exerciseHint2 = new ExerciseHint().exercise(exercise).title("title 2").content("content 2");
+        ExerciseHint exerciseHint3 = new ExerciseHint().exercise(exercise).title("title 3").content("content 3");
+        Set<ExerciseHint> hints = new HashSet<>();
+        hints.add(exerciseHint1);
+        hints.add(exerciseHint2);
+        hints.add(exerciseHint3);
+        exerciseHintRepository.saveAll(hints);
     }
 }
