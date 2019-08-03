@@ -124,6 +124,15 @@ public class StudentParticipation extends Participation {
         return findLatestSubmissionOfType(TextSubmission.class);
     }
 
+    /**
+     * Same functionality as findLatestSubmission() with the difference that this function only returns the found submission, if it is a file upload submission.
+     *
+     * @return the latest file upload submission or null
+     */
+    public Optional<FileUploadSubmission> findLatestFileUploadSubmission() {
+        return findLatestSubmissionOfType(FileUploadSubmission.class);
+    }
+
     @Override
     public String toString() {
         return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + ", exercise=" + exercise + '}';
