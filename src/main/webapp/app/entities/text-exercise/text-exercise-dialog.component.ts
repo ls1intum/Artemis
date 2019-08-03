@@ -16,6 +16,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
+import { MAX_SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -27,7 +28,7 @@ export class TextExerciseDialogComponent implements OnInit {
 
     textExercise: TextExercise;
     isSaving: boolean;
-    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText: string | null;
