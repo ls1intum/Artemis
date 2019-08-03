@@ -5,17 +5,13 @@
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",
             "description": "You can submit up to {{ maxComplaintNumber }} complaints in total in this course.",
             "descriptionExtended": "Every student is allowed to submit up to {{ maxComplaintNumber }} complaints in total in this course. You still have <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
-            "moreFeedback": "More feedback",
-            "moreFeedbackDescription": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
-            "moreFeedbackButton": "Request more feedback",
-            "beDescriptive": "Please describe in detail why the assessment is wrong. Your complaint will then be evaluated by a second reviewer.",
-            "alreadySubmitted": "You have already submitted a complaint on",
+            "beDescriptive": "Please describe in detail why the assessment is wrong. Your request will then be evaluated by a second reviewer.",
+            "alreadySubmitted": "You have already submitted a complaint",
             "submit": "Submit a complaint",
             "created": "Your complaint has been submitted!",
-            "moreInfo": "Complain or ask for more feedback",
-            "moreInfo_temp": "Complain",
+            "moreInfo": "Complain",
             "complaintNotAllowedTooltip": "Currently not allowed: complaint limit reached or assessment is older than one week",
-            "responseExists": "Response to your complaint of",
+            "responseExists": "Response to your complaint",
             "hint": "Scroll down to review the complaint",
             "accepted": "Accepted",
             "acceptedLong": "Complaint was accepted",
@@ -23,14 +19,6 @@
             "rejectedLong": "Complaint was rejected",
             "tooManyComplaints": "Complaint limit reached. You cannot have more than {{ maxComplaintNumber }} open or rejected complaints at the same time.",
             "complaintAlreadyHandled": "The complaint has been resolved",
-            "complaintResponse": {
-                "title": "Complaint's response",
-                "created": "Response to complaint has been submitted",
-                "updateAssessment": "Update assessment",
-                "updateAssessmentTooltip": "Send complaint response and update assessment",
-                "rejectComplaint": "Reject complaint",
-                "rejectComplaintTooltip": "Send complaint response and reject complaint"
-            },
             "listOfComplaints": {
                 "exercise": "Exercise",
                 "submissionId": "Submission ID",
@@ -46,7 +34,29 @@
                 "rejected": "Rejected",
                 "showAddressedComplaints": "Show addressed complaints",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
-            }
+            },
+            "review": "Review Complaint"
+        },
+        "moreFeedback": {
+            "title": "More Feedback Request",
+            "description": "If something is not clear enough, or you need more explanations, you can request the tutor to provide more feedback",
+            "beDescriptive": "Please describe in detail what is unclear for you in the assessment. Your request will then be evaluated by the same reviewer.",
+            "created": "Your More Feedback Request has been submitted!",
+            "button": "Request more feedback",
+            "info": "Submitting feedback request will not affect number of maximum complaints, but your score will remain unchanged.",
+            "review": "Review More Feedback Request",
+            "alreadyHandled": "The request has been resolved",
+            "alreadySubmitted": "You have already requested more feedback",
+            "acceptedLong": "Request was answered",
+            "responseExists": "Response to your request",
+            "notAllowedTooltip": "Currently not allowed: assessment is older than one week",
+            "accepted": "Answered",
+            "list": {
+                "title": "List of More Feedback Requests",
+                "showAnsweredRequests": "Show answered requests",
+                "noRequestsToShow": "There are no requests to show at the moment"
+            },
+            "hint": "Scroll down to review More Feedback Request"
         }
     }
 }

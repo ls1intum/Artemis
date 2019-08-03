@@ -7,9 +7,9 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,26 +17,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -59,6 +58,9 @@ public class AssessmentComplaintIntegrationTest {
     ComplaintRepository complaintRepo;
 
     @Autowired
+    ComplaintResponseRepository complaintResponseRepo;
+
+    @Autowired
     ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
@@ -69,14 +71,17 @@ public class AssessmentComplaintIntegrationTest {
 
     private Complaint complaint;
 
-    @Before
+    private Complaint moreFeedbackRequest;
+
+    @BeforeEach
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 2, 0);
+        database.addUsers(1, 2, 1);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
-        complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair");
+        complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -99,14 +104,30 @@ public class AssessmentComplaintIntegrationTest {
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
+    }
 
+    @Test
+    @WithMockUser(username = "student1")
+    public void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+
+        // Only one complaint is possible for exercise regardless of its type
+        request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
+                .isFalse();
     }
 
     @Test
@@ -144,8 +165,10 @@ public class AssessmentComplaintIntegrationTest {
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(true)).responseText("accepted");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
-        request.postWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        Result receivedResult = request.postWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+                Result.class, HttpStatus.OK);
 
+        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isNull();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);
@@ -167,6 +190,104 @@ public class AssessmentComplaintIntegrationTest {
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("accepted flag of complaint is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintByResultId_assessorHiddenForStudent() throws Exception {
+        complaintRepo.save(complaint);
+
+        Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+
+        assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintResponse_reviewerHiddenForStudent() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1")
+    public void getComplaintResponse_studentHiddenForTutor() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponse = complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1")
+    public void getComplaintResponseByComplaintId_studentHiddenForTutor() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmittedComplaints_byComplaintType() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+
+        String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
+        String coursesUrl = "/api/courses/" + modelingExercise.getCourse().getId() + "/complaints";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        List<ComplaintResponse> complaintResponsesByExercise = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponsesByExercise.size()).isEqualTo(complaintResponsesByCourse.size()).isEqualTo(1);
+
+        params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
+        complaintResponsesByCourse = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        complaintResponsesByExercise = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
+        assertThat(complaintResponsesByCourse.size()).isEqualTo(complaintResponsesByExercise.size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getSubmittedComplaints_asStudent_forbidden() throws Exception {
+        complaintRepo.save(complaint);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        params.add("exerciseId", modelingExercise.getId().toString());
+
+        request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
     }
 
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {

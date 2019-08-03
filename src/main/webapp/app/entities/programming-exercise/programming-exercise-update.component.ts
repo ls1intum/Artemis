@@ -28,9 +28,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText: string | null;
 
-    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    maxScorePattern = '^[1-9]{1}[0-9]{0,3}$'; // make sure max score is a positive natural integer and not too large
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+    titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     courses: Course[];
@@ -41,7 +42,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
-        private resultService: ResultService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
@@ -88,15 +88,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
-            this.templateParticipationResultLoaded = false;
-            this.resultService
-                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
-                    catchError(() => of(null)),
-                )
-                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 

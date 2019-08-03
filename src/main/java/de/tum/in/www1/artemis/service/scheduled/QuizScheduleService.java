@@ -17,9 +17,9 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -31,7 +31,7 @@ public class QuizScheduleService {
 
     private static Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
 
-    private static Map<Long, Map<String, Participation>> participationHashMap = new ConcurrentHashMap<>();
+    private static Map<Long, Map<String, StudentParticipation>> participationHashMap = new ConcurrentHashMap<>();
 
     private static Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
 
@@ -48,7 +48,7 @@ public class QuizScheduleService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
@@ -60,10 +60,10 @@ public class QuizScheduleService {
 
     private final QuizStatisticService quizStatisticService;
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, ParticipationRepository participationRepository, ResultRepository resultRepository,
+    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.userService = userService;
@@ -113,7 +113,7 @@ public class QuizScheduleService {
      * @param quizId        the quizId of the quiz the result belongs to (first Key)
      * @param participation the result, which should be added
      */
-    private static void addParticipation(Long quizId, Participation participation) {
+    private static void addParticipation(Long quizId, StudentParticipation participation) {
 
         if (quizId != null && participation != null) {
             // check if there is already a result with the same quiz
@@ -158,7 +158,7 @@ public class QuizScheduleService {
      * @param username the username of the user, the participation belongs to (second Key)
      * @return the participation with the given quizId and username -> return null if there is no participation -> return null if the quizId or if the username is null
      */
-    public static Participation getParticipation(Long quizId, String username) {
+    public static StudentParticipation getParticipation(Long quizId, String username) {
         if (quizId == null || username == null) {
             return null;
         }
@@ -282,7 +282,7 @@ public class QuizScheduleService {
                     // send the participation with containing result and quiz back to the users via websocket
                     // and remove the participation from the ParticipationHashMap
                     int counter = 0;
-                    for (Participation participation : participationHashMap.remove(quizId).values()) {
+                    for (StudentParticipation participation : participationHashMap.remove(quizId).values()) {
                         if (participation.getStudent() == null || participation.getStudent().getLogin() == null) {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
@@ -400,7 +400,7 @@ public class QuizScheduleService {
         if (quizExercise != null && username != null && quizSubmission != null) {
 
             // create and save new participation
-            Participation participation = new Participation();
+            StudentParticipation participation = new StudentParticipation();
             Optional<User> user = userService.getUserByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());
@@ -429,7 +429,7 @@ public class QuizScheduleService {
             participation.setExercise(quizExercise);
 
             // save participation, result and quizSubmission
-            participationRepository.save(participation);
+            studentParticipationRepository.save(participation);
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
 

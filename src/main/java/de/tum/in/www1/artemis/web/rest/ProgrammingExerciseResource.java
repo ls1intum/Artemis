@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -27,8 +28,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -63,7 +64,7 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -73,7 +74,7 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ParticipationRepository participationRepository,
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
@@ -83,7 +84,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -150,9 +151,6 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
-        // we only initiate the programming exercises when creating the links
-        programmingExerciseService.initParticipations(programmingExercise);
-
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
 
@@ -205,6 +203,12 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
+        // CHeck if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
+        }
+
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return ResponseEntity.badRequest()
@@ -213,7 +217,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = shortNamePattern.matcher(programmingExercise.getShortName());
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
@@ -309,10 +313,10 @@ public class ProgrammingExerciseResource {
         // When updating the participations, we need to make sure that the exercise is attached to each of them.
         // Otherwise we would remove the link between participation and exercise.
         if (programmingExercise.getTemplateParticipation() != null) {
-            programmingExercise.getTemplateParticipation().setExercise(programmingExercise);
+            programmingExercise.getTemplateParticipation().setProgrammingExercise(programmingExercise);
         }
         if (programmingExercise.getSolutionParticipation() != null) {
-            programmingExercise.getSolutionParticipation().setExercise(programmingExercise);
+            programmingExercise.getSolutionParticipation().setProgrammingExercise(programmingExercise);
         }
         programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
         // Only save after checking for errors
@@ -381,7 +385,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
-        for (Exercise exercise : exercises) {
+        for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
@@ -427,8 +431,9 @@ public class ProgrammingExerciseResource {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();
 
-            Optional<Participation> assignmentParticipation = participationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
-            Set<Participation> participations = new HashSet<>();
+            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
+                    user.getId());
+            Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
             programmingExercise.setParticipations(participations);
 
@@ -454,7 +459,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(id);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();

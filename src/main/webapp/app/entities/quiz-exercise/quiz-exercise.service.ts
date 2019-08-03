@@ -40,13 +40,15 @@ export class QuizExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<QuizExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    find(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    recalculate(id: number): Observable<EntityResponseType> {
+    recalculate(quizExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${id}/recalculate-statistics`, { observe: 'response' })
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/recalculate-statistics`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
@@ -62,34 +64,34 @@ export class QuizExerciseService {
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    openForPractice(id: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/open-for-practice`, { observe: 'response' });
+    openForPractice(quizExerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, { observe: 'response' });
     }
 
-    findForStudent(id: number): Observable<EntityResponseType> {
+    findForStudent(quizExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${id}/for-student`, { observe: 'response' })
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/for-student`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    start(id: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/start-now`, { observe: 'response' });
+    start(quizExerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/start-now`, { observe: 'response' });
     }
 
-    setVisible(id: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/set-visible`, { observe: 'response' });
+    setVisible(quizExerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
         return this.http.get<QuizExercise[]>(this.resourceUrl, { observe: 'response' }).map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 
-    reset(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${SERVER_API_URL + 'api/exercises'}/${id}/reset`, { observe: 'response' });
+    reset(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${SERVER_API_URL + 'api/exercises'}/${quizExerciseId}/reset`, { observe: 'response' });
     }
 
     /**

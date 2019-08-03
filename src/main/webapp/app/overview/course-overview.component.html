@@ -9,7 +9,13 @@
                 <h6 class="d-sm-none" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">{{ 'artemisApp.courseOverview.showLess' | translate }}</h6>
             </div>
             <div class="col-4 d-none d-md-flex justify-content-end course-icon">
-                <jhi-secured-image *ngIf="course.courseIcon" [src]="course.courseIcon" [alt]="'artemisApp.courseOverview.noCourseIcon' | translate"> </jhi-secured-image>
+                <jhi-secured-image
+                    *ngIf="course.courseIcon"
+                    [src]="course.courseIcon"
+                    [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
+                    [alt]="'artemisApp.courseOverview.noCourseIcon' | translate"
+                >
+                </jhi-secured-image>
             </div>
         </div>
     </div>
@@ -23,7 +29,6 @@
         <div class="tab-item" routerLink="statistics" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
         </div>
-        <!--<div class="tab-item" routerLink="gradebook" routerLinkActive="active"><b>Gradebook</b></div>-->
     </div>
     <router-outlet></router-outlet>
 </div>

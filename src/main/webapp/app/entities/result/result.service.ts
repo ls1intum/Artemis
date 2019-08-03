@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
-import { Participation } from 'app/entities/participation';
+import { Participation, StudentParticipation } from 'app/entities/participation';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -44,8 +44,8 @@ export class ResultService implements IResultService {
         return this.http.put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+    find(resultId: number): Observable<EntityResponseType> {
+        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
@@ -82,8 +82,8 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
+    delete(resultId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
     protected convertDateFromClient(result: Result): Result {
@@ -97,7 +97,7 @@ export class ResultService implements IResultService {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-                result.participation = this.convertParticipationDateFromServer(result.participation!);
+                result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
             });
         }
         return res;
@@ -106,12 +106,12 @@ export class ResultService implements IResultService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation!);
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
         }
         return res;
     }
 
-    convertParticipationDateFromServer(participation: Participation) {
+    convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
             if (participation.exercise) {

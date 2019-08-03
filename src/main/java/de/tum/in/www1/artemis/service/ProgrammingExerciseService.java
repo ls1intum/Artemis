@@ -43,9 +43,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -73,7 +71,13 @@ public class ProgrammingExerciseService {
 
     private final SubmissionRepository submissionRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ParticipationService participationService;
 
     private final UserService userService;
 
@@ -87,7 +91,10 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationRepository participationRepository, UserService userService, AuthorizationCheckService authCheckService) {
+            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -95,8 +102,11 @@ public class ProgrammingExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.resourceLoader = resourceLoader;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.participationService = participationService;
         this.submissionRepository = submissionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
     }
@@ -107,8 +117,9 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise where the test cases got changed
      */
     public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
-        for (Participation participation : programmingExercise.getParticipations()) {
+        for (StudentParticipation participation : programmingExercise.getParticipations()) {
 
+            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
             submission.setSubmissionDate(ZonedDateTime.now());
@@ -124,13 +135,13 @@ public class ProgrammingExerciseService {
             }
 
             submissionRepository.save(submission);
-            participationRepository.save(participation);
+            studentParticipationRepository.save(participation);
 
-            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
+            continuousIntegrationUpdateService.get().triggerUpdate(programmingExerciseStudentParticipation.getBuildPlanId(), false);
         }
     }
 
-    public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, Participation participation) {
+    public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String studentId = participation.getStudent().getLogin();
 
         // Get all files in repository expect .git files
@@ -253,14 +264,14 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
-        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         if (templateParticipation == null) {
-            templateParticipation = new Participation();
+            templateParticipation = new TemplateProgrammingExerciseParticipation();
             programmingExercise.setTemplateParticipation(templateParticipation);
         }
-        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         if (solutionParticipation == null) {
-            solutionParticipation = new Participation();
+            solutionParticipation = new SolutionProgrammingExerciseParticipation();
             programmingExercise.setSolutionParticipation(solutionParticipation);
         }
 
@@ -273,10 +284,10 @@ public class ProgrammingExerciseService {
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
         // Save participations to get the ids required for the webhooks
-        templateParticipation.setExercise(programmingExercise);
-        solutionParticipation.setExercise(programmingExercise);
-        templateParticipation = participationRepository.save(templateParticipation);
-        solutionParticipation = participationRepository.save(solutionParticipation);
+        templateParticipation.setProgrammingExercise(programmingExercise);
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
@@ -333,6 +344,22 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
 
         return programmingExercise;
+    }
+
+    /**
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void initParticipations(ProgrammingExercise programmingExercise) {
+
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
     }
 
     // Copy template and push, if no file is in the directory
@@ -475,7 +502,7 @@ public class ProgrammingExerciseService {
      * @param participation The template participation
      * @return The ProgrammingExercise where the given Participation is the template Participation
      */
-    public ProgrammingExercise getExerciseForTemplateParticipation(Participation participation) {
+    public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
 
@@ -485,7 +512,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution participation
      * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
-    public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
+    public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
 
@@ -500,41 +527,19 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This methods sets the values (initialization date and initialization state) of the template and solution participation
-     *
-     * @param programmingExercise The programming exercise
-     */
-    public void initParticipations(ProgrammingExercise programmingExercise) {
-
-        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
-        Participation templateParticipation = programmingExercise.getTemplateParticipation();
-
-        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
-        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
-        solutionParticipation.setInitializationDate(ZonedDateTime.now());
-        templateParticipation.setInitializationDate(ZonedDateTime.now());
-    }
-
-    /**
      * Find a programming exercise by its id.
      * 
-     * @param id of the programming exercise.
+     * @param programmingExerciseId of the programming exercise.
      * @return
-     * @throws NoSuchElementException the programming exercise could not be found.
-     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    public ProgrammingExercise findById(Long id) throws NoSuchElementException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+    public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
-            Course course = programmingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new IllegalAccessException();
-            }
             return programmingExercise.get();
         }
         else {
-            throw new NoSuchElementException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found");
         }
     }
 
@@ -567,11 +572,11 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programming exercise
      */
     public void saveParticipations(ProgrammingExercise programmingExercise) {
-        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
-        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
 
-        participationRepository.save(solutionParticipation);
-        participationRepository.save(templateParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
     }
 
     /**
@@ -657,5 +662,44 @@ public class ProgrammingExerciseService {
                 }
             }
         }
+    }
+
+    /**
+     * Delete a programming exercise, including its template and solution participations.
+     * @param programmingExercise to delete.
+     * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
+     */
+    @Transactional
+    public void delete(ProgrammingExercise programmingExercise, boolean deleteBaseReposBuildPlans) {
+        if (deleteBaseReposBuildPlans) {
+            if (programmingExercise.getTemplateBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+            }
+            if (programmingExercise.getSolutionBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            }
+            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+
+            if (programmingExercise.getTemplateRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getSolutionRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getTestRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+            }
+            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        }
+
+        SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
+        TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
+        participationService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation);
+        participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation);
+        // This will also delete the template & solution participation.
+        programmingExerciseRepository.delete(programmingExercise);
     }
 }

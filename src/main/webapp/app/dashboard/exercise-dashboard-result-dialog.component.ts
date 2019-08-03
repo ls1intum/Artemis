@@ -12,13 +12,14 @@ import * as moment from 'moment';
 import { Observable } from 'rxjs';
 
 import { Subscription } from 'rxjs/Subscription';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
     templateUrl: './exercise-dashboard-result-dialog.component.html',
 })
 export class ExerciseDashboardResultDialogComponent implements OnInit {
-    participation: Participation;
+    participation: StudentParticipation;
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
@@ -29,7 +30,7 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
     ngOnInit() {
         if (this.participation) {
             this.result.participation = this.participation;
-            this.isOpenForSubmission = this.result.participation.exercise.dueDate === null || this.result.participation.exercise.dueDate.isAfter(moment());
+            this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
         } else {
             this.clear();
         }

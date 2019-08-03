@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-public class ProgrammingExercise extends Exercise implements Serializable {
+public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
@@ -47,15 +46,17 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
-    @JsonIgnoreProperties("exercise")
-    private Participation templateParticipation;
+    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "template_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private TemplateProgrammingExerciseParticipation templateParticipation;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
-    @JsonIgnoreProperties("exercise")
-    private Participation solutionParticipation;
+    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "solution_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -200,20 +201,26 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         this.packageName = packageName;
     }
 
-    public Participation getTemplateParticipation() {
+    public TemplateProgrammingExerciseParticipation getTemplateParticipation() {
         return templateParticipation;
     }
 
-    public void setTemplateParticipation(Participation templateParticipation) {
+    public void setTemplateParticipation(TemplateProgrammingExerciseParticipation templateParticipation) {
         this.templateParticipation = templateParticipation;
+        if (this.templateParticipation != null) {
+            this.templateParticipation.setProgrammingExercise(this);
+        }
     }
 
-    public Participation getSolutionParticipation() {
+    public SolutionProgrammingExerciseParticipation getSolutionParticipation() {
         return solutionParticipation;
     }
 
-    public void setSolutionParticipation(Participation solutionParticipation) {
+    public void setSolutionParticipation(SolutionProgrammingExerciseParticipation solutionParticipation) {
         this.solutionParticipation = solutionParticipation;
+        if (this.solutionParticipation != null) {
+            this.solutionParticipation.setProgrammingExercise(this);
+        }
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
@@ -263,7 +270,8 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     }
 
     @JsonIgnore
-    public boolean isParticipationSolutionParticipationOfThisExercise(Participation participation) {
+    @Deprecated
+    public boolean isParticipationSolutionParticipationOfThisExercise(ProgrammingExerciseParticipation participation) {
         return this.getSolutionParticipation() != null && this.getSolutionParticipation().getId().equals(participation.getId());
     }
 

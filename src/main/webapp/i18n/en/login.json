@@ -16,5 +16,8 @@
         "password": {
             "forgot": "Did you forget your password?"
         }
+    },
+    "logout": {
+        "failed": "The logout was unsuccessful due to the following error: {{error}}. If the issue persists please reload the page."
     }
 }
