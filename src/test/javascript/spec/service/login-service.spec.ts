@@ -8,6 +8,8 @@ import { MockRouter } from '../mocks/mock-router.service';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { MockAuthServerProviderService } from '../mocks/mock-auth-server-provider.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../mocks/mock-sync.storage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,7 +35,7 @@ describe('LoginService', () => {
         router = new MockRouter();
         alertService = new MockAlertService();
         // @ts-ignore
-        loginService = new LoginService(accountService, websocketService, authServerProvider, router, alertService);
+        loginService = new LoginService(accountService, websocketService, authServerProvider, router, alertService, { provide: LocalStorageService, useClass: MockSyncStorage });
 
         removeAuthTokenFromCachesStub = stub(authServerProvider, 'removeAuthTokenFromCaches');
         authenticateStub = stub(accountService, 'authenticate');
