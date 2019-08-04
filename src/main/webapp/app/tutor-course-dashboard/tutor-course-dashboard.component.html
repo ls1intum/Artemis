@@ -40,6 +40,19 @@
         </div>
     </div>
 
+    <div class="row justify-content-around">
+        <div class="col-4 text-center">
+            <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id, tutorId: tutor.id }">
+                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
+                <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
+            </a>
+        </div>
+        <div class="col-4 text-center">
+            <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}:</p>
+            <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <div class="form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />

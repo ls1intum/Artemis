@@ -12,7 +12,7 @@ import org.eclipse.jgit.lib.BaseRepositoryBuilder;
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
-    private Participation participation;
+    private ProgrammingExerciseParticipation participation;
 
     private Path localPath;
 
@@ -50,11 +50,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return isValidFile(file.getParentFile());
     }
 
-    public Participation getParticipation() {
+    public ProgrammingExerciseParticipation getParticipation() {
         return participation;
     }
 
-    public void setParticipation(Participation participation) {
+    public void setParticipation(ProgrammingExerciseParticipation participation) {
         this.participation = participation;
     }
 

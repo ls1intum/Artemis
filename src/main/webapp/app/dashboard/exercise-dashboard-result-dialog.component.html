@@ -1,8 +1,9 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result.participation">
     <div class="modal-header">
         <h4 class="modal-title" id="myResultLabel">
-            <span jhiTranslate="artemisApp.result.createManual">Create manual result for </span> {{ result.participation?.student.firstName }}
-            {{ result.participation?.student.lastName }} ({{ result.participation?.exercise.title }})
+            <span jhiTranslate="artemisApp.result.createManual">Create manual result for </span> {{ participation.student.firstName }} {{ participation.student.lastName }} ({{
+                participation.exercise.title
+            }})
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
