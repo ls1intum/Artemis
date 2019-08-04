@@ -31,6 +31,8 @@ bootRun {
 
 task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
     inputs.dir("src/main/webapp/")
+    inputs.files("yarn.lock")
+    inputs.files("build.gradle")
 
     def webpackDevFiles = fileTree("webpack//")
     webpackDevFiles.exclude("webpack.prod.js")
@@ -39,9 +41,12 @@ task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
     outputs.dir("build/resources/main/static/")
 
     args = ["run", "webpack:build"]
+    environment = [APP_VERSION: project.version]
 }
 
 processResources {
+    inputs.property('version', version)
+    inputs.property('springProfiles', profiles)
     filesMatching("**/application.yml") {
         filter {
             it.replace("#project.version#", version)
