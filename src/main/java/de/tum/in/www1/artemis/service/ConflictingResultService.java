@@ -56,7 +56,7 @@ public class ConflictingResultService {
      */
     @Transactional
     void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
-        Set<String> newFeedbacksElementIds = newFeedbacks.stream().map(feedback -> feedback.getReferenceElementId()).collect(Collectors.toSet());
+        Set<String> newFeedbacksElementIds = newFeedbacks.stream().map(Feedback::getReferenceElementId).collect(Collectors.toSet());
         Set<ConflictingResult> newResultsInConflictCopy = conflict.getResultsInConflict().stream()
                 .filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId())).collect(Collectors.toSet());
         conflict.getResultsInConflict().clear();
@@ -71,9 +71,8 @@ public class ConflictingResultService {
      */
     @Transactional
     void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
-        Set<String> existingConflictingResultsElementIds = conflict.getResultsInConflict().stream().map(conflictingResult -> conflictingResult.getModelElementId())
-                .collect(Collectors.toSet());
+        Set<String> existingConflictingResultsElementIds = conflict.getResultsInConflict().stream().map(ConflictingResult::getModelElementId).collect(Collectors.toSet());
         newFeedbacks.stream().filter(feedback -> !existingConflictingResultsElementIds.contains(feedback.getReferenceElementId()))
-                .forEach(feedback -> conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback)));
+                .forEach(feedback -> conflict.getResultsInConflict().add(createConflictingResult(feedback.getReferenceElementId(), feedback.getResult())));
     }
 }

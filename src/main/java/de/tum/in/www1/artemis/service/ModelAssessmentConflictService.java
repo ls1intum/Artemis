@@ -69,6 +69,9 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
+    /**
+     * @return List of conflicts, that exist with the given submissionId, the requesting user is responsible for handling based on the state of the conflict
+     */
     @Transactional(readOnly = true)
     public List<ModelAssessmentConflict> getConflictsForCurrentUserForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> conflictsForSubmission = getConflictsForSubmission(submissionId);
@@ -82,6 +85,9 @@ public class ModelAssessmentConflictService {
         }
     }
 
+    /**
+     * @return List of conflicts that have been caused by the given submission
+     */
     public List<ModelAssessmentConflict> getConflictsForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingSubmission(submissionId);
         loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(existingConflicts);
@@ -91,7 +97,7 @@ public class ModelAssessmentConflictService {
     /**
      * @return List of conflicts that have the given result as causing conflicting result
      */
-    public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
+    public List<ModelAssessmentConflict> getConflictsByCausingResult(Result result) {
         List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
         return conflicts;
     }
@@ -103,16 +109,26 @@ public class ModelAssessmentConflictService {
     }
 
     public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
-        List<ModelAssessmentConflict> existingConflicts = getConflictsForResult(result);
+        List<ModelAssessmentConflict> existingConflicts = getConflictsByCausingResult(result);
         return existingConflicts.stream().filter(conflict -> !conflict.isResolved()).collect(Collectors.toList());
     }
 
-    public List<ModelAssessmentConflict> getConflictsForResultWithState(Result result, EscalationState state) {
-        List<ModelAssessmentConflict> existingConflicts = getConflictsForResult(result);
-        return existingConflicts.stream().filter(conflict -> conflict.getState().equals(state)).collect(Collectors.toList());
+    /**
+     * @return exercise the given conflict belongs to
+     */
+    @Transactional
+    public Exercise getExerciseOfConflict(Long conflictId) {
+        ModelAssessmentConflict conflict = findOne(conflictId);
+        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
     }
 
-    // TODO MJ JavaDoc
+    /**
+     * Updates all conflicts that involve the given result. Conflicts with the given result as causing conflicting result are deleted.
+     * The given result is also removed from all resultsInConflict lists. Conflicts that have an empty resultsInConflict list after the update
+     * are getting deleted after the causing conflicting result is submitted.
+     *
+     * @param result result that is about to be deleted
+     */
     public void updateConflictsOnResultRemoval(Result result) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
         modelAssessmentConflictRepository.deleteAll(existingConflicts);
@@ -123,23 +139,22 @@ public class ModelAssessmentConflictService {
                 conflictingResultRepository.deleteById(conflictingResult.getId());
             }
         }));
-    }
-
-    @Transactional
-    public Exercise getExerciseOfConflict(Long conflictId) {
-        ModelAssessmentConflict conflict = findOne(conflictId);
-        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
+        existingConflicts.stream().filter(conflict -> conflict.getResultsInConflict().isEmpty()).forEach(conflict -> {
+            submitCausingConflictingResult(conflict);
+            modelAssessmentConflictRepository.delete(conflict);
+        });
     }
 
     /**
-     * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
-     *
-     * @param conflicts
+     * Loads for each given conflict the properties that are needed by the conflict resolution view of the client
      */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(this::loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults);
     }
 
+    /**
+     * Loads the given conflict all properties that are needed by the conflict resolution view of the client
+     */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(ModelAssessmentConflict conflict) {
         conflict.getCausingConflictingResult()
                 .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
@@ -147,6 +162,10 @@ public class ModelAssessmentConflictService {
                 conflictingResult -> conflictingResult.setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
     }
 
+    /**
+     * Sets the conflict attribute of each conflictingResult in the resultsInConflict list before saving the given conflicts
+     * to make sure conflicting results do not get duplicated in the database when saved.
+     */
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(this::saveConflict);
     }
@@ -188,8 +207,8 @@ public class ModelAssessmentConflictService {
      * Updates the state of the given conflict by escalating the conflict to the next authority. The assessors or instructors then responsible for handling the conflict are getting
      * notified.
      *
-     * @param conflictId id of the conflict to escalate
-     * @return escalated conflict of the given conflictId
+     * @param storedConflict conflict to escalate
+     * @return the given conflict with updated state
      */
     @Transactional
     public ModelAssessmentConflict escalateConflict(ModelAssessmentConflict storedConflict) {
@@ -217,9 +236,6 @@ public class ModelAssessmentConflictService {
 
     /**
      * Used to update the list of conflicts according to the decisions of the currentUser to whom the list of conflicts got escalated to.
-     *
-     * @param conflicts
-     * @param currentUser
      */
     @Transactional
     public void updateEscalatedConflicts(List<ModelAssessmentConflict> conflicts, User currentUser) {
@@ -325,6 +341,10 @@ public class ModelAssessmentConflictService {
         saveConflict(storedConflict);
     }
 
+    /**
+     * Sets the conflict attribute of each conflictingResult in the resultsInConflict list before saving the given conflict
+     * to make sure conflicting results do not get duplicated in the database when saved.
+     */
     private void saveConflict(ModelAssessmentConflict conflict) {
         conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult.setConflict(conflict));
         modelAssessmentConflictRepository.save(conflict);
@@ -381,7 +401,7 @@ public class ModelAssessmentConflictService {
         ModelingSubmission submission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
         Participation participation = (Participation) Hibernate.unproxy(submission.getParticipation());
         ModelingExercise exercise = (ModelingExercise) Hibernate.unproxy(participation.getExercise());
-        List<ModelAssessmentConflict> conflictsCausedByResult = getConflictsForResult(result);
+        List<ModelAssessmentConflict> conflictsCausedByResult = getConflictsByCausingResult(result);
         if (conflictsCausedByResult.stream().allMatch(c -> c.isResolved())) {
             modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         }
