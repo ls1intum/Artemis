@@ -1,25 +1,26 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { BehaviorSubject, Observable, merge, Subject, Subscription, timer, of } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, first, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
-// Current value: 2 minutes.
-const EXPECTED_RESULT_CREATION_TIME_MS = 2 * 120 * 1000;
-
 @Injectable({ providedIn: 'root' })
 export class SubmissionWebsocketService implements OnDestroy {
-    private newSubmissionRouteTopic = '/topic/participation/%participationId%/newSubmission';
-    private subscriptions: { [participationId: number]: string } = {};
+    // Current value: 2 minutes.
+    private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 120 * 1000;
+    private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
+
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
-    private subjects: { [participationId: number]: BehaviorSubject<Submission | null> } = {};
-    private latestValue: { [participationId: number]: Submission | null } = {};
+    private submissionTopicsSubscribed: { [participationId: number]: string } = {};
+    private submissionSubjects: { [participationId: number]: BehaviorSubject<Submission | null> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
+
+    private latestValue: { [participationId: number]: Submission | null } = {};
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -31,14 +32,29 @@ export class SubmissionWebsocketService implements OnDestroy {
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
+        Object.values(this.submissionTopicsSubscribed).forEach(topic => this.websocketService.unsubscribe(topic));
     }
 
+    /**
+     * Fetch the latest pending submission for a participation, which means:
+     * - Submission is the newest one (by submissionDate)
+     * - Submission does not have a result (yet)
+     * - Submission is not older than 2 minutes (in this case it could be that never a result will come due to an error)
+     *
+     * @param participationId
+     */
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
         return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-submission');
     };
 
+    /**
+     * Start a timer after which the timer subject will notify the corresponding subject.
+     * Side effect: Timer will also emit an alert when the time runs out as it means here that no result came for a submission.
+     *
+     * @param participationId
+     */
     private startResultWaitingTimer = (participationId: number) => {
-        timer(EXPECTED_RESULT_CREATION_TIME_MS)
+        timer(this.EXPECTED_RESULT_CREATION_TIME_MS)
             .pipe(
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
@@ -55,17 +71,24 @@ export class SubmissionWebsocketService implements OnDestroy {
         }
     };
 
+    /**
+     * Set up a submission subscription for the latest pending submission if not yet existing.
+     *
+     * @param participationId
+     */
     private setupWebsocketSubscription = (participationId: number): void => {
-        if (!this.subscriptions[participationId]) {
-            const newSubmissionTopic = this.newSubmissionRouteTopic.replace('%participationId%', participationId.toString());
+        if (!this.submissionTopicsSubscribed[participationId]) {
+            const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
+            this.submissionTopicsSubscribed[participationId] = newSubmissionTopic;
             this.websocketService.subscribe(newSubmissionTopic);
             this.resultTimerSubjects[participationId] = new Subject<null>();
             this.websocketService
                 .receive(newSubmissionTopic)
                 .pipe(
                     tap((submission: Submission) => {
-                        const subject = this.subjects[participationId];
+                        const subject = this.submissionSubjects[participationId];
                         subject.next(submission);
+                        // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
                     }),
                     tap((submission: Submission) => (this.latestValue[participationId] = submission)),
@@ -74,7 +97,13 @@ export class SubmissionWebsocketService implements OnDestroy {
         }
     };
 
-    private subscribeForLatestResult = (participationId: number) => {
+    /**
+     * Waits for a new result to come in while a pending submission exists.
+     * Will stop waiting after the timer subject has emited a value.
+     *
+     * @param participationId
+     */
+    private subscribeForNewResult = (participationId: number) => {
         if (this.resultSubscriptions[participationId]) {
             return;
         }
@@ -85,14 +114,28 @@ export class SubmissionWebsocketService implements OnDestroy {
                 filter(() => !!this.latestValue[participationId]),
                 tap(() => {
                     this.resetResultWaitingTimer(participationId);
-                    this.subjects[participationId].next(null);
+                    this.submissionSubjects[participationId].next(null);
                 }),
             )
             .subscribe();
     };
 
+    /**
+     * Subscribe for the latest pending submission for the given participation.
+     * A latest pending submission is characterized by the following properties:
+     * - Submission is the newest one (by submissionDate)
+     * - Submission does not have a result (yet)
+     * - Submission is not older than 2 minutes (in this case it could be that never a result will come due to an error)
+     *
+     * Will emit:
+     * - A submission if a last pending submission exists.
+     * - A null value when there is no pending submission.
+     * - A null value when no result arrived in time for the submission.
+     *
+     * @param participationId
+     */
     public getLatestPendingSubmission = (participationId: number) => {
-        const subject = this.subjects[participationId];
+        const subject = this.submissionSubjects[participationId];
         if (subject) {
             return subject.asObservable();
         }
@@ -101,10 +144,10 @@ export class SubmissionWebsocketService implements OnDestroy {
             tap(() => this.setupWebsocketSubscription(participationId)),
             switchMap((submission: Submission | null) => {
                 const newSubject = new BehaviorSubject(submission);
-                this.subjects[participationId] = newSubject;
+                this.submissionSubjects[participationId] = newSubject;
                 return newSubject.asObservable();
             }),
-            tap(() => this.subscribeForLatestResult(participationId)),
+            tap(() => this.subscribeForNewResult(participationId)),
         );
     };
 }
