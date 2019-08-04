@@ -11,6 +11,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
  * A Complaint.
@@ -36,6 +37,10 @@ public class Complaint implements Serializable {
 
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "complaint_type")
+    private ComplaintType complaintType;
 
     @Column(name = "result_before_complaint")
     @Lob
@@ -94,6 +99,19 @@ public class Complaint implements Serializable {
 
     public void setSubmittedTime(ZonedDateTime submittedTime) {
         this.submittedTime = submittedTime;
+    }
+
+    public ComplaintType getComplaintType() {
+        return complaintType;
+    }
+
+    public Complaint complaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
+        return this;
+    }
+
+    public void setComplaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
     }
 
     public String getResultBeforeComplaint() {

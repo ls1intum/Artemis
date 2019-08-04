@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
@@ -33,6 +34,8 @@ public class ComplaintResponseResource {
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "complaintResponse";
+
+    private static final String MORE_FEEDBACK_RESPONSE_ENITY_NAME = "moreFeedbackResponse";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -63,11 +66,14 @@ public class ComplaintResponseResource {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
 
+        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
+        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
+
         // always remove the student from the complaint as we don't need it in the corresponding frontend use case
         complaintResponse.getComplaint().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
 
     /**

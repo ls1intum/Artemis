@@ -67,6 +67,7 @@
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
+                "exerciseHint": "Aufgabenhinweis",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -195,7 +196,8 @@
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
-            "scores": "Bewertungen"
+            "scores": "Bewertungen",
+            "manageHints": "Verwalte Hinweise"
         },
         "detail": {
             "field": "Feld",

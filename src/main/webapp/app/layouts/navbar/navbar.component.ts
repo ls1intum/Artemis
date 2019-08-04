@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, Event, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -68,10 +68,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // The current user is needed to hide menu items for not logged in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
-            .pipe(
-                distinctUntilChanged(),
-                tap((user: User) => (this.currAccount = user)),
-            )
+            .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
     }
 
