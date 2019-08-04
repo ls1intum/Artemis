@@ -91,7 +91,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     // submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
@@ -111,18 +111,29 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
     }
 
+    /**
+     * Get the result of the modeling submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
+     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
+     * the corresponding exercise is in the future (or not set).
+     *
+     * @param submissionId the id of the submission that should be sent to the client
+     * @return the submission with the given id
+     */
     @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+        log.debug("REST request to get assessment for submission with id {}", submissionId);
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
-        if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
-            return forbidden();
-        }
+
         Result result = submission.getResult();
         if (result == null) {
             return notFound();
+        }
+
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+            return forbidden();
         }
 
         // remove sensitive information for students
@@ -170,7 +181,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
@@ -196,10 +208,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            result.getParticipation().setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
-        if (submit && (result.getParticipation().getExercise().getAssessmentDueDate() == null
-                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && (((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || ((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
@@ -237,7 +249,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
@@ -250,6 +263,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
             result.getParticipation().setResults(null);
+        }
+
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 
         return ResponseEntity.ok(result);

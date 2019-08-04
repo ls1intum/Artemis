@@ -58,7 +58,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 export class ArTEMiSTutorExerciseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

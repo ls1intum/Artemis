@@ -15,6 +15,10 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { StudentParticipation } from 'app/entities/participation';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { filter } from 'rxjs/operators';
 import { ModelingAssessmentConflictService } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.service';
 
 @Component({
@@ -36,10 +40,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     assessmentsAreValid = false;
     busy: boolean;
     userId: number;
-    isAuthorized = false;
+    isAssessor = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
-    hasComplaint: boolean;
+    complaint: Complaint;
+    ComplaintType = ComplaintType;
     canOverride = false;
     isLoading: boolean;
     hasAutomaticFeedback = false;
@@ -59,6 +64,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private location: Location,
         private translateService: TranslateService,
+        private complaintService: ComplaintService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
@@ -136,9 +142,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
-        this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+        const studentParticipation = this.submission.participation as StudentParticipation;
+        this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = this.submission.result;
-        this.hasComplaint = this.result.hasComplaint;
+        if (this.result.hasComplaint) {
+            this.getComplaint(this.result.id);
+        }
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
@@ -163,6 +172,22 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.checkPermissions();
         this.validateFeedback();
         this.isLoading = false;
+    }
+
+    private getComplaint(id: number): void {
+        if (this.result) {
+            this.complaintService
+                .findByResultId(id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(
+                    res => {
+                        this.complaint = res.body!;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError();
+                    },
+                );
+        }
     }
 
     /**
@@ -193,10 +218,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private checkPermissions(): void {
-        this.isAuthorized = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {

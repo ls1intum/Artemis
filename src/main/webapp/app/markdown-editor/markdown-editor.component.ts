@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -58,6 +58,7 @@ const getAceMode = (mode: EditorMode) => {
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
@@ -113,6 +114,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
+
+    @Output() onPreviewSelect = new EventEmitter();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -262,9 +265,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if (this.showDefaultPreview) {
             this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
             this.html.emit(this.previewTextAsHtml);
-            return;
         }
-        if (this.domainCommands && this.domainCommands.length) {
+        if (this.domainCommands && this.domainCommands.length && this.markdown) {
             /** create array with domain command identifier */
             const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which
@@ -344,6 +346,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     togglePreview(event: any): void {
         this.previewMode = !this.previewMode;
+        if (this.previewMode) {
+            this.onPreviewSelect.emit();
+        }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();

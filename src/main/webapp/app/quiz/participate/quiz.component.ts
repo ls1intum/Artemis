@@ -25,11 +25,13 @@ import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
     providers: [ParticipationService],
+    styleUrls: ['./quiz.component.scss'],
 })
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -202,7 +204,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         // load the quiz (and existing submission if quiz has started)
         this.participationService.findParticipation(1, this.quizId).subscribe(
-            (response: HttpResponse<Participation>) => {
+            (response: HttpResponse<StudentParticipation>) => {
                 this.applyParticipationFull(response.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
@@ -306,7 +308,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         if (!this.participationChannel) {
             this.participationWebsocketService.addExerciseForNewParticipation(this.quizId);
-            this.participationChannel = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+            this.participationChannel = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
                 if (changedParticipation && this.quizExercise && changedParticipation.exercise.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
@@ -550,7 +552,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     /**
      * Apply the data of the participation, replacing all old data
      */
-    applyParticipationFull(participation: Participation) {
+    applyParticipationFull(participation: StudentParticipation) {
         this.applyQuizFull(participation.exercise as QuizExercise);
 
         // apply submission if it exists
@@ -624,7 +626,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     /*
      * This method only handles the update of the quiz after the quiz has ended
      */
-    applyParticipationAfterStart(participation: Participation) {
+    applyParticipationAfterStart(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
         if (participation.results.length && participation.results[0].resultString && quizExercise.ended) {
             // quiz has ended and results are available
@@ -927,7 +929,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = result.participation!.exercise as QuizExercise;
+        const quizExercise = (result.participation! as StudentParticipation).exercise as QuizExercise;
         this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
         this.showResult(result);

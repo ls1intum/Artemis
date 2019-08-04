@@ -7,7 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
-import { Participation } from 'app/entities/participation';
+import { Participation, SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -55,15 +55,15 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    findWithTemplateAndSolutionParticipation(id: number): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${id}`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${programmingExerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
@@ -74,11 +74,11 @@ export class ProgrammingExerciseService {
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    delete(id: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
         params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
     convertDataFromClient(exercise: ProgrammingExercise) {
@@ -86,10 +86,10 @@ export class ProgrammingExerciseService {
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as Participation;
+            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as TemplateProgrammingExerciseParticipation;
         }
         if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as Participation;
+            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
         }
 
         return copy;

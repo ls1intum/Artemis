@@ -36,7 +36,7 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
 export class ArTEMiSModelingAssessmentEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -52,6 +53,10 @@ public class AuthorizationCheckService {
 
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
         return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), user);
+    }
+
+    public boolean isAtLeastStudentForExercise(Exercise exercise) {
+        return isStudentInCourse(exercise.getCourse(), null) || isAtLeastTeachingAssistantForExercise(exercise);
     }
 
     public boolean isAtLeastTeachingAssistantInCourse(Course course, User user) {
@@ -131,7 +136,7 @@ public class AuthorizationCheckService {
      * @param participation participation to check the rights for
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(Participation participation) {
+    public boolean isOwnerOfParticipation(StudentParticipation participation) {
         // A template/solution participation doesn't have a student, this is done to avoid null pointer exceptions
         if (participation.getStudent() == null) {
             return false;
@@ -148,7 +153,7 @@ public class AuthorizationCheckService {
      * @param principal     websocket user
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(Participation participation, Principal principal) {
+    public boolean isOwnerOfParticipation(StudentParticipation participation, Principal principal) {
         return participation.getStudent() != null && participation.getStudent().getLogin().equals(principal.getName());
     }
 
@@ -176,5 +181,20 @@ public class AuthorizationCheckService {
      */
     public boolean isAdmin() {
         return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
+    }
+
+    /**
+     * Checks if the current user is allowed to retrieve the given result. The user is allowed to retrieve the result if he is at least a student in the corresponding course, the
+     * submission is his submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
+     *
+     * @param exercise      the corresponding exercise
+     * @param participation the participation the result belongs to
+     * @param result        the result that should be sent to the client
+     * @return true if the user is allowed to retrieve the given result, false otherwise
+     */
+    public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
+        return isAtLeastStudentForExercise(exercise) && isOwnerOfParticipation(participation)
+                && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
+                && result.getCompletionDate() != null;
     }
 }

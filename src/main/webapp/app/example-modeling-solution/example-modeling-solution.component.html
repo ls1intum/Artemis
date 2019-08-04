@@ -18,14 +18,10 @@
     </div>
 
     <div class="col-12">
-        <p
-            *ngIf="formattedProblemStatement"
-            class="my-3"
-            jhiTranslate="artemisApp.modelingExercise.problemStatement"
-            [translateValues]="{ problemStatement: formattedProblemStatement }"
-        >
-            <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br />
-        </p>
+        <div *ngIf="formattedProblemStatement" class="my-3">
+            <strong jhiTranslate="artemisApp.modelingExercise.problemStatement">Problem Statement:</strong>
+            <span [innerHTML]="formattedProblemStatement"></span><br />
+        </div>
     </div>
 
     <div class="col-12 editor-container">

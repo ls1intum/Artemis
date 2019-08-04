@@ -67,6 +67,7 @@
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
+                "exerciseHint": "Aufgabenhinweis",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -194,7 +195,8 @@
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
-            "scores": "Bewertungen"
+            "scores": "Bewertungen",
+            "manageHints": "Verwalte Hinweise"
         },
         "detail": {
             "field": "Feld",
@@ -238,7 +240,8 @@
         "invalid.solution.build.plan.id": "Die Lösung Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "invalid.template.repository.url": "Die Vorlage Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "idnull": "Ungültige ID"
+        "idnull": "Ungültige ID",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",

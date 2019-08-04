@@ -53,6 +53,13 @@ You can download the required jar files here:
 * [liquibase-core-3.5.3.jar](http://central.maven.org/maven2/org/liquibase/liquibase-core/3.5.3/liquibase-core-3.5.3.jar)
 * [mysql-connector-java-5.1.43.jar](http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.43/mysql-connector-java-5.1.43.jar)
 
+As an alternative you can use this gradle command:
+
+```
+./gradlew liquibaseClearChecksums
+```
+
+If you use a password, you need to adapt it in Artemis/gradle/liquibase.gradle.
 
 **Please note:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
