@@ -77,13 +77,13 @@ describe('Component Tests', () => {
                 comp.startTour();
                 tourCompfixture.detectChanges();
                 expect(tourCompfixture.debugElement.query(By.css('.tour-step'))).to.exist;
-                expect(service.onFirstStep).to.be.true;
+                expect(service.isOnFirstStep).to.be.true;
 
                 // Navigate to next TourStep
                 const nextButton = tourCompfixture.debugElement.query(By.css('.next-button'));
                 expect(nextButton).to.exist;
                 nextButton.nativeElement.click();
-                expect(service.onLastStep).to.be.true;
+                expect(service.isOnLastStep).to.be.true;
 
                 // Finish GuidedTour
                 spyOn(service, 'updateGuidedTourSettings').and.returnValue(of());

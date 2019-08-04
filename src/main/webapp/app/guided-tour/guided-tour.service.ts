@@ -13,42 +13,42 @@ import { AccountService } from 'app/core';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    public guidedTourCurrentStepStream: Observable<TourStep>;
+    public guidedTourCurrentStepStream: Observable<TourStep | null>;
     public currentTourSteps: TourStep[];
     public guidedTourSettings: GuidedTourSettings;
 
-    private _guidedTourCurrentStepSubject = new Subject<TourStep>();
-    private _currentTourStepIndex = 0;
-    private _currentTour: GuidedTour | undefined;
-    private _onFirstStep = true;
-    private _onLastStep = true;
-    private _onResizeMessage = false;
+    private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
+    private currentTourStepIndex = 0;
+    private currentTour: GuidedTour | null;
+    private onFirstStep = true;
+    private onLastStep = true;
+    private onResizeMessage = false;
 
     private guidedTourNotification = new Subject<any>();
 
     constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService) {
         this.getGuidedTourSettings();
 
-        this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
+        this.guidedTourCurrentStepStream = this.guidedTourCurrentStepSubject.asObservable();
 
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this._currentTour && this._currentTourStepIndex > -1) {
-                    if (this._currentTour.minimumScreenSize && this._currentTour.minimumScreenSize >= window.innerWidth) {
-                        this._onResizeMessage = true;
-                        this._guidedTourCurrentStepSubject.next({
+                if (this.currentTour && this.currentTourStepIndex > -1) {
+                    if (this.currentTour.minimumScreenSize && this.currentTour.minimumScreenSize >= window.innerWidth) {
+                        this.onResizeMessage = true;
+                        this.guidedTourCurrentStepSubject.next({
                             headlineTranslateKey: 'tour.resize.headline',
                             contentType: ContentType.TEXT,
                             contentTranslateKey: 'tour.resize.content',
                         });
                     } else {
-                        this._onResizeMessage = false;
-                        this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
+                        this.onResizeMessage = false;
+                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                     }
                 }
             });
@@ -80,43 +80,37 @@ export class GuidedTourService {
      * Navigate to next tour step
      */
     public nextStep(): void {
-        if (this._currentTour) {
-            const currentStep = this._currentTour.steps[this._currentTourStepIndex];
-            if (currentStep.closeAction) {
-                currentStep.closeAction();
+        if (!this.currentTour) {
+            return;
+        }
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        if (currentStep.closeAction) {
+            currentStep.closeAction();
+        }
+        if (this.currentTour.steps[this.currentTourStepIndex + 1]) {
+            this.currentTourStepIndex++;
+            this._setFirstAndLast();
+            if (currentStep.action) {
+                currentStep.action();
             }
-            if (this._currentTour.steps[this._currentTourStepIndex + 1]) {
-                this._currentTourStepIndex++;
-                this._setFirstAndLast();
-                if (currentStep.action) {
-                    currentStep.action();
-
-                    // Usually an action is opening something so we need to give it time to render.
-                    setTimeout(() => {
-                        if (this._checkSelectorValidity()) {
-                            this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
-                        } else {
-                            this.nextStep();
-                        }
-                    });
+            // Usually an action is opening something so we need to give it time to render.
+            setTimeout(() => {
+                if (this.checkSelectorValidity()) {
+                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                 } else {
-                    if (this._checkSelectorValidity()) {
-                        this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
-                    } else {
-                        this.nextStep();
-                    }
+                    this.nextStep();
                 }
-            } else {
-                if (this._currentTour.completeCallback) {
-                    this._currentTour.completeCallback();
-                }
-                this.updateGuidedTourSettings(this._currentTour.settingsId, false).subscribe(guidedTourSettings => {
-                    if (guidedTourSettings.body) {
-                        this.guidedTourSettings = guidedTourSettings.body;
-                    }
-                });
-                this.resetTour();
+            });
+        } else {
+            if (this.currentTour.completeCallback) {
+                this.currentTour.completeCallback();
             }
+            this.updateGuidedTourSettings(this.currentTour.settingsId, false).subscribe(guidedTourSettings => {
+                if (guidedTourSettings.body) {
+                    this.guidedTourSettings = guidedTourSettings.body;
+                }
+            });
+            this.resetTour();
         }
     }
 
@@ -124,30 +118,24 @@ export class GuidedTourService {
      * Navigate to previous tour step
      */
     public backStep(): void {
-        if (this._currentTour) {
-            const currentStep = this._currentTour.steps[this._currentTourStepIndex];
+        if (this.currentTour) {
+            const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.closeAction) {
                 currentStep.closeAction();
             }
-            if (this._currentTour.steps[this._currentTourStepIndex - 1]) {
-                this._currentTourStepIndex--;
+            if (this.currentTour.steps[this.currentTourStepIndex - 1]) {
+                this.currentTourStepIndex--;
                 this._setFirstAndLast();
                 if (currentStep.action) {
                     currentStep.action();
-                    setTimeout(() => {
-                        if (this._checkSelectorValidity()) {
-                            this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
-                        } else {
-                            this.backStep();
-                        }
-                    });
-                } else {
-                    if (this._checkSelectorValidity()) {
-                        this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
+                }
+                setTimeout(() => {
+                    if (this.checkSelectorValidity()) {
+                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                     } else {
                         this.backStep();
                     }
-                }
+                });
             } else {
                 this.resetTour();
             }
@@ -158,9 +146,9 @@ export class GuidedTourService {
      * Skip tour
      */
     public skipTour(): void {
-        if (this._currentTour) {
-            if (this._currentTour.skipCallback) {
-                this._currentTour.skipCallback(this._currentTourStepIndex);
+        if (this.currentTour) {
+            if (this.currentTour.skipCallback) {
+                this.currentTour.skipCallback(this.currentTourStepIndex);
             }
             this.resetTour();
         }
@@ -171,9 +159,9 @@ export class GuidedTourService {
      */
     public resetTour(): void {
         document.body.classList.remove('tour-open');
-        this._currentTour = undefined;
-        this._currentTourStepIndex = 0;
-        this._guidedTourCurrentStepSubject.next(undefined);
+        this.currentTour = null;
+        this.currentTourStepIndex = 0;
+        this.guidedTourCurrentStepSubject.next(null);
     }
 
     /**
@@ -190,18 +178,18 @@ export class GuidedTourService {
             }
         });
 
-        this._currentTour = cloneDeep(tour);
-        this._currentTour.steps = this._currentTour.steps.filter(step => !step.skipStep);
-        this._currentTourStepIndex = 0;
+        this.currentTour = cloneDeep(tour);
+        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep);
+        this.currentTourStepIndex = 0;
         this._setFirstAndLast();
-        if (this._currentTour.steps.length > 0 && (!this._currentTour.minimumScreenSize || window.innerWidth >= this._currentTour.minimumScreenSize)) {
-            const currentStep = this._currentTour.steps[this._currentTourStepIndex];
+        if (this.currentTour.steps.length > 0 && (!this.currentTour.minimumScreenSize || window.innerWidth >= this.currentTour.minimumScreenSize)) {
+            const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
             }
 
-            if (this._checkSelectorValidity()) {
-                this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
+            if (this.checkSelectorValidity()) {
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
             } else {
                 this.nextStep();
             }
@@ -213,68 +201,67 @@ export class GuidedTourService {
      * @private
      */
     private _setFirstAndLast(): void {
-        if (this._currentTour) {
-            this._onLastStep = this._currentTour.steps.length - 1 === this._currentTourStepIndex;
-            this._onFirstStep = this._currentTourStepIndex === 0;
+        if (this.currentTour) {
+            this.onLastStep = this.currentTour.steps.length - 1 === this.currentTourStepIndex;
+            this.onFirstStep = this.currentTourStepIndex === 0;
         }
     }
 
     /* Check if highlighted element is available */
-    private _checkSelectorValidity(): boolean {
-        if (this._currentTour) {
-            if (this._currentTour.steps[this._currentTourStepIndex].selector) {
-                const selectedElement = document.querySelector(this._currentTour.steps[this._currentTourStepIndex].selector!);
-                if (!selectedElement) {
-                    this.errorHandler.handleError(
-                        // If error handler is configured this should not block the browser.
-                        new Error(
-                            `Error finding selector ${this._currentTour.steps[this._currentTourStepIndex].selector} on step ${this._currentTourStepIndex + 1} during guided tour: ${
-                                this._currentTour.settingsId
-                            }`,
-                        ),
-                    );
-                    return false;
-                }
-            }
-            return true;
-        } else {
+    private checkSelectorValidity(): boolean {
+        if (!this.currentTour) {
             return false;
         }
+        if (this.currentTour.steps[this.currentTourStepIndex].selector) {
+            const selectedElement = document.querySelector(this.currentTour.steps[this.currentTourStepIndex].selector!);
+            if (!selectedElement) {
+                this.errorHandler.handleError(
+                    // If error handler is configured this should not block the browser.
+                    new Error(
+                        `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                            this.currentTour.settingsId
+                        }`,
+                    ),
+                );
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
      *  Is last tour step
      */
-    public get onLastStep(): boolean {
-        return this._onLastStep;
+    public get isOnLastStep(): boolean {
+        return this.onLastStep;
     }
 
     /**
      * Is first tour step
      */
-    public get onFirstStep(): boolean {
-        return this._onFirstStep;
+    public get isOnFirstStep(): boolean {
+        return this.onFirstStep;
     }
 
     /* Show resize message */
-    public get onResizeMessage(): boolean {
-        return this._onResizeMessage;
+    public get isOnResizeMessage(): boolean {
+        return this.onResizeMessage;
     }
 
     /* Current tour step number */
     public get currentTourStepDisplay(): number {
-        return this._currentTourStepIndex + 1;
+        return this.currentTourStepIndex + 1;
     }
 
     /* Total count of tour steps */
     public get currentTourStepCount(): any {
-        return this._currentTour && this._currentTour.steps ? this._currentTour.steps.length : 0;
+        return this.currentTour && this.currentTour.steps ? this.currentTour.steps.length : 0;
     }
 
     /* Prevents the tour from advancing by clicking the backdrop */
     public get preventBackdropFromAdvancing(): boolean {
-        if (this._currentTour) {
-            return this._currentTour && (this._currentTour.preventBackdropFromAdvancing ? this._currentTour.preventBackdropFromAdvancing : false);
+        if (this.currentTour) {
+            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
         }
         return false;
     }
@@ -284,8 +271,8 @@ export class GuidedTourService {
      * @param index current tour step index
      */
     private getPreparedTourStep(index: number): TourStep | undefined {
-        if (this._currentTour) {
-            return this.setTourOrientation(this._currentTour.steps[index]);
+        if (this.currentTour) {
+            return this.setTourOrientation(this.currentTour.steps[index]);
         } else {
             return undefined;
         }

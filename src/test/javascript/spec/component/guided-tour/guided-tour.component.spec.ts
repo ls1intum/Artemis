@@ -57,8 +57,8 @@ describe('Component Tests', () => {
                 service.startTour(courseOverviewTour);
 
                 expect(service.currentTourSteps.length).to.eq(2);
-                expect(service.onFirstStep).to.be.true;
-                expect(service.onLastStep).to.be.false;
+                expect(service.isOnFirstStep).to.be.true;
+                expect(service.isOnLastStep).to.be.false;
                 expect(comp.currentTourStep).to.exist;
             }),
         ));

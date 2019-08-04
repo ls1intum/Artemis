@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div class="tour-block__buttons">
-                <button [disabled]="guidedTourService.onFirstStep || guidedTourService.onResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
+                <button [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
@@ -47,12 +47,12 @@
                         </li>
                     </ul>
                 </div>
-                <button *ngIf="!guidedTourService.onLastStep && !guidedTourService.onResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
+                <button *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
                     <span jhiTranslate="tour.navigation.next"></span>
                     <fa-icon icon="chevron-right"></fa-icon>
                 </button>
-                <button *ngIf="guidedTourService.onLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
-                <button *ngIf="guidedTourService.onResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
+                <button *ngIf="guidedTourService.isOnLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
+                <button *ngIf="guidedTourService.isOnResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
             </div>
         </div>
     </div>
