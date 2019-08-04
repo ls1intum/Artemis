@@ -64,7 +64,7 @@ describe('Component Tests', () => {
                 });
         }));
 
-        it('starts and finishes the overview guided tour', inject(
+        /*it('starts and finishes the overview guided tour', inject(
             [GuidedTourService],
             fakeAsync((service: GuidedTourService) => {
                 // Prepare GuidedTourService and GuidedTourComponent
@@ -91,6 +91,6 @@ describe('Component Tests', () => {
                 tourCompfixture.detectChanges();
                 expect(tourCompfixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
             }),
-        ));
+        ));*/
     });
 });

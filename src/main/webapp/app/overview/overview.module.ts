@@ -47,7 +47,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSCourseRegistrationSelector,
-        GuidedTourModule.forRoot(),
     ],
     declarations: [
         OverviewComponent,
@@ -64,7 +63,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseDetailsStudentActionsComponent,
     ],
     entryComponents: [],
-    providers: [GuidedTourService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     exports: [],
 })

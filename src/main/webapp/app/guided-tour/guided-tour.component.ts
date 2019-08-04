@@ -54,22 +54,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public ngAfterViewInit(): void {
         this.guidedTourService.guidedTourCurrentStepStream.subscribe((step: TourStep) => {
             this.currentTourStep = step;
-            if (step) {
-                let hasPermission = true;
-                if (step.permission) {
-                    hasPermission = this.accountService.hasAnyAuthorityDirect(step.permission);
-                }
-                if (step.selector && hasPermission) {
-                    const selectedElement = document.querySelector(step.selector);
-                    if (selectedElement) {
-                        this.scrollToAndSetElement();
-                    } else {
-                        this.selectedElementRect = null;
-                    }
-                } else {
-                    this.selectedElementRect = null;
+            if (!step) {
+                return;
+            }
+            const hasPermission = !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission);
+            if (step.selector && hasPermission) {
+                const selectedElement = document.querySelector(step.selector);
+                if (selectedElement) {
+                    this.scrollToAndSetElement();
+                    return;
                 }
             }
+            this.selectedElementRect = null;
         });
 
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
@@ -126,55 +122,30 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public scrollToAndSetElement(): void {
         this.updateStepLocation();
+        if (this.isTourOnScreen()) {
+            return;
+        }
         // Allow things to render to scroll to the correct location
         setTimeout(() => {
-            if (!this.isTourOnScreen()) {
-                if (this.selectedElementRect && this.isBottom()) {
-                    // Scroll so the element is on the top of the screen.
-                    const topPos = this.currentTourStep
-                        ? window.scrollY +
-                          this.selectedElementRect.top -
-                          this.topOfPageAdjustment -
-                          (this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0) +
-                          this.getStepScreenAdjustment()
-                        : 0;
-                    try {
-                        window.scrollTo({
-                            left: 0,
-                            top: topPos,
-                            behavior: 'smooth',
-                        });
-                    } catch (err) {
-                        if (err instanceof TypeError) {
-                            window.scroll(0, topPos);
-                        } else {
-                            throw err;
-                        }
-                    }
+            let topPosition = 0;
+            if (this.selectedElementRect && this.currentTourStep) {
+                const scrollAdjustment = this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
+                const positionAdjustment = this.isBottom()
+                    ? -this.topOfPageAdjustment - scrollAdjustment + this.getStepScreenAdjustment()
+                    : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - this.getStepScreenAdjustment();
+                topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
+            }
+            try {
+                window.scrollTo({
+                    left: 0,
+                    top: topPosition,
+                    behavior: 'smooth',
+                });
+            } catch (err) {
+                if (err instanceof TypeError) {
+                    window.scroll(0, topPosition);
                 } else {
-                    // Scroll so the element is on the bottom of the screen.
-                    const topPos =
-                        this.selectedElementRect && this.currentTourStep
-                            ? window.scrollY +
-                              this.selectedElementRect.top +
-                              this.selectedElementRect.height -
-                              window.innerHeight +
-                              (this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0) -
-                              this.getStepScreenAdjustment()
-                            : 0;
-                    try {
-                        window.scrollTo({
-                            left: 0,
-                            top: topPos,
-                            behavior: 'smooth',
-                        });
-                    } catch (err) {
-                        if (err instanceof TypeError) {
-                            window.scroll(0, topPos);
-                        } else {
-                            throw err;
-                        }
-                    }
+                    throw err;
                 }
             }
         });
@@ -236,15 +207,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Update tour step location
      */
     public updateStepLocation(): void {
+        this.selectedElementRect = null;
         if (this.currentTourStep && this.currentTourStep.selector) {
             const selectedElement = document.querySelector(this.currentTourStep.selector);
             if (selectedElement) {
                 this.selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            } else {
-                this.selectedElementRect = null;
             }
-        } else {
-            this.selectedElementRect = null;
         }
     }
 
@@ -269,8 +237,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.selectedElementRect) {
             return 0;
         }
-        const paddingAdjustment = this.getHighlightPadding();
         if (this.isBottom()) {
+            const paddingAdjustment = this.getHighlightPadding();
             return this.selectedElementRect.top + this.selectedElementRect.height + paddingAdjustment;
         }
 

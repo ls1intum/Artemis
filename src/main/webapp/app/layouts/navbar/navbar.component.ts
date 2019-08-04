@@ -123,7 +123,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * */
     startGuidedTour() {
         if (this.router.url === '/overview') {
-            this.guidedTourService.startTourForComponent('overview');
+            this.guidedTourService.getOverviewTour().subscribe(tour => {
+                this.guidedTourService.startTour(tour);
+            });
         }
     }
 }

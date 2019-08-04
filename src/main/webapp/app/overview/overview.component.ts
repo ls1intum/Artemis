@@ -13,12 +13,9 @@ import { Subscription } from 'rxjs';
     templateUrl: './overview.component.html',
     styleUrls: [],
 })
-export class OverviewComponent implements OnDestroy {
+export class OverviewComponent {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    public overviewTour: GuidedTour;
-
-    subscription: Subscription;
 
     constructor(
         private courseService: CourseService,
@@ -26,25 +23,8 @@ export class OverviewComponent implements OnDestroy {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        private guidedTourService: GuidedTourService,
     ) {
         this.loadAndFilterCourses();
-
-        setTimeout(() => {
-            if (guidedTourService.guidedTourSettings && guidedTourService.guidedTourSettings.showCourseOverviewTour) {
-                this.startTour();
-            }
-        }, 500);
-
-        this.subscription = this.guidedTourService.getGuidedTourNotification().subscribe(component => {
-            if (component && component.name === 'overview') {
-                this.startTour();
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
     }
 
     loadAndFilterCourses() {
@@ -78,13 +58,5 @@ export class OverviewComponent implements OnDestroy {
             });
         }
         return relevantExercise;
-    }
-
-    /* Start guided tour for course overview page */
-    public startTour(): void {
-        this.guidedTourService.getOverviewTour().subscribe(tour => {
-            this.overviewTour = tour;
-            this.guidedTourService.startTour(this.overviewTour);
-        });
     }
 }
