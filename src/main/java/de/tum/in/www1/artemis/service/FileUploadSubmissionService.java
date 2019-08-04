@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
@@ -46,12 +47,12 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Handles text submissions sent from the client and saves them in the database.
+     * Handles file upload submissions sent from the client and saves them in the database.
      *
      * @param fileUploadSubmission the file upload submission that should be saved
      * @param fileUploadExercise   the corresponding file upload exercise
      * @param principal      the user principal
-     * @return the saved text submission
+     * @return the saved file upload submission
      */
     @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, FileUploadExercise fileUploadExercise, Principal principal) {
@@ -102,7 +103,53 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
+     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of file upload Submissions
+     */
+    @Transactional(readOnly = true)
+    public List<FileUploadSubmission> getAllFileUploadSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
+        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
+
+        return results.stream().map(result -> {
+            Submission submission = result.getSubmission();
+            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+
+            result.setSubmission(null);
+            fileUploadSubmission.setLanguage(submission.getLanguage());
+            fileUploadSubmission.setResult(result);
+            fileUploadSubmission.setParticipation(submission.getParticipation());
+            fileUploadSubmission.setId(submission.getId());
+            fileUploadSubmission.setSubmissionDate(submission.getSubmissionDate());
+
+            return fileUploadSubmission;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     *
+     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
+        Random r = new Random();
+        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(fileUploadExercise.getId())
+                .stream().map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    /**
+     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
      *
      * @param fileUploadSubmission the submission that should be saved
      * @param participation  the participation the participation the submission belongs to

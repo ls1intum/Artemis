@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,14 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.FileUploadExerciseService;
-import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -49,8 +51,15 @@ public class FileUploadSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseService exerciseService;
+
+    private final UserService userService;
+
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
-            FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService) {
+            FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
+            UserService userService, ExerciseService exerciseService) {
+        this.userService = userService;
+        this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
@@ -66,7 +75,7 @@ public class FileUploadSubmissionResource {
      *         ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("exercise/{exerciseId}/file-upload-submissions")
+    @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
@@ -86,7 +95,7 @@ public class FileUploadSubmissionResource {
      *         with status 500 (Internal Server Error) if the fileUploadSubmission couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("exercise/{exerciseId}/file-upload-submissions")
+    @PutMapping("exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
@@ -94,17 +103,6 @@ public class FileUploadSubmissionResource {
             return createFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
         }
         return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
-    }
-
-    /**
-     * GET /file-upload-submissions : get all the fileUploadSubmissions.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of fileUploadSubmissions in body
-     */
-    @GetMapping("/file-upload-submissions")
-    public List<FileUploadSubmission> getAllFileUploadSubmissions() {
-        log.debug("REST request to get all FileUploadSubmissions");
-        return fileUploadSubmissionRepository.findAll();
     }
 
     /**
@@ -118,6 +116,83 @@ public class FileUploadSubmissionResource {
         log.debug("REST request to get FileUploadSubmission : {}", id);
         Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(fileUploadSubmission);
+    }
+
+    /**
+     * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+        log.debug("REST request to get all file upload submissions");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<FileUploadSubmission> fileUploadSubmissions;
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+        }
+
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            fileUploadSubmissions.forEach(fileUploadSubmission -> {
+                if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation() instanceof StudentParticipation) {
+                    ((StudentParticipation) fileUploadSubmission.getParticipation()).filterSensitiveInformation();
+                }
+            });
+        }
+
+        return ResponseEntity.ok().body(fileUploadSubmissions);
+    }
+
+    /**
+     * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a file upload submission without assessment");
+        Exercise exercise = fileUploadExerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+        if (!(exercise instanceof FileUploadExercise)) {
+            return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        fileUploadSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
+        Optional<FileUploadSubmission> fileUploadSubmissionWithoutAssessment = this.fileUploadSubmissionService
+                .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) exercise);
+
+        // tutors should not see information about the student of a submission
+        if (fileUploadSubmissionWithoutAssessment.isPresent() && fileUploadSubmissionWithoutAssessment.get().getParticipation() != null
+                && fileUploadSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) fileUploadSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        }
+
+        return ResponseUtil.wrapOrNotFound(fileUploadSubmissionWithoutAssessment);
     }
 
     /**
