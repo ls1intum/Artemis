@@ -46,7 +46,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.router.events.subscribe((event: Event) => {
             if (event instanceof NavigationEnd) {
-                this.checkGuidedTourAvailability();
+                this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
             }
         });
     }
@@ -104,28 +104,5 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     getImageUrl(): string | null {
         return this.accountService.getImageUrl();
-    }
-
-    /**
-     * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
-     * that provide tours.
-     */
-    checkGuidedTourAvailability() {
-        if (this.router.url === '/overview') {
-            this.isTourAvailable = true;
-        } else {
-            this.isTourAvailable = false;
-        }
-    }
-
-    /**
-     * Starts the guided tour of the current component
-     * */
-    startGuidedTour() {
-        if (this.router.url === '/overview') {
-            this.guidedTourService.getOverviewTour().subscribe(tour => {
-                this.guidedTourService.startTour(tour);
-            });
-        }
     }
 }

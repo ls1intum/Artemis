@@ -163,7 +163,7 @@
                             <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTour">Guided Tour</h6>
                         </li>
                         <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
-                            <a class="dropdown-item" jhiTranslate="global.menu.startTour" (click)="startGuidedTour()">Start tour</a>
+                            <a class="dropdown-item" jhiTranslate="global.menu.startTour" (click)="this.guidedTourService.startGuidedTourForCurrentRoute()">Start tour</a>
                         </li>
                     </ng-template>
                     <!-- only display guided tour to ADMIN for now -->

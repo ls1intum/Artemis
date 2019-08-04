@@ -80,7 +80,7 @@ export const courseOverviewTour: GuidedTour = {
         },
         {
             contentType: ContentType.TEXT,
-            selector: '.card-header',
+            selector: 'jhi-overview-course-card .card',
             headlineTranslateKey: 'tour.course-overview.course.headline',
             contentTranslateKey: 'tour.course-overview.course.content',
             orientation: Orientation.Right,

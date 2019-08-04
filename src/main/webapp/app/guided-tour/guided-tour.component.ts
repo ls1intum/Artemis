@@ -52,7 +52,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Subscribe to guidedTourCurrentStepStream and set tour step if the user has the right permission
      */
     public ngAfterViewInit(): void {
-        this.guidedTourService.guidedTourCurrentStepStream.subscribe((step: TourStep) => {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
             this.currentTourStep = step;
             if (!step) {
                 return;

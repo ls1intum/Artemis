@@ -1,5 +1,6 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, of, Subject } from 'rxjs';
@@ -17,21 +18,21 @@ export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    public guidedTourCurrentStepStream: Observable<TourStep | null>;
     public currentTourSteps: TourStep[];
-    public guidedTourSettings: GuidedTourSettings;
-
+    private guidedTourSettings: GuidedTourSettings;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private currentTourStepIndex = 0;
     private currentTour: GuidedTour | null;
-    private onFirstStep = true;
-    private onLastStep = true;
     private onResizeMessage = false;
 
-    constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService) {
+    constructor(
+        public errorHandler: ErrorHandler,
+        private http: HttpClient,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
+        private router: Router,
+    ) {
         this.getGuidedTourSettings();
-
-        this.guidedTourCurrentStepStream = this.guidedTourCurrentStepSubject.asObservable();
 
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
@@ -50,6 +51,10 @@ export class GuidedTourService {
                     }
                 }
             });
+    }
+
+    public getGuidedTourCurrentStepStream(): Observable<TourStep | null> {
+        return this.guidedTourCurrentStepSubject.asObservable();
     }
 
     /**
@@ -72,7 +77,6 @@ export class GuidedTourService {
         }
         if (this.currentTour.steps[this.currentTourStepIndex + 1]) {
             this.currentTourStepIndex++;
-            this._setFirstAndLast();
             if (currentStep.action) {
                 currentStep.action();
             }
@@ -108,7 +112,6 @@ export class GuidedTourService {
             }
             if (this.currentTour.steps[this.currentTourStepIndex - 1]) {
                 this.currentTourStepIndex--;
-                this._setFirstAndLast();
                 if (currentStep.action) {
                     currentStep.action();
                 }
@@ -151,7 +154,7 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      * @param tour  guided tour
      */
-    public startTour(tour: GuidedTour): void {
+    private startTour(tour: GuidedTour): void {
         this.currentTourSteps = tour.steps;
 
         // adjust tour steps according to permissions
@@ -164,7 +167,6 @@ export class GuidedTourService {
         this.currentTour = cloneDeep(tour);
         this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep);
         this.currentTourStepIndex = 0;
-        this._setFirstAndLast();
         if (this.currentTour.steps.length > 0 && (!this.currentTour.minimumScreenSize || window.innerWidth >= this.currentTour.minimumScreenSize)) {
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
@@ -176,17 +178,6 @@ export class GuidedTourService {
             } else {
                 this.nextStep();
             }
-        }
-    }
-
-    /**
-     * Define first and last tour step based on amount of tour steps
-     * @private
-     */
-    private _setFirstAndLast(): void {
-        if (this.currentTour) {
-            this.onLastStep = this.currentTour.steps.length - 1 === this.currentTourStepIndex;
-            this.onFirstStep = this.currentTourStepIndex === 0;
         }
     }
 
@@ -216,14 +207,17 @@ export class GuidedTourService {
      *  Is last tour step
      */
     public get isOnLastStep(): boolean {
-        return this.onLastStep;
+        if (!this.currentTour) {
+            return false;
+        }
+        return this.currentTour.steps.length - 1 === this.currentTourStepIndex;
     }
 
     /**
      * Is first tour step
      */
     public get isOnFirstStep(): boolean {
-        return this.onFirstStep;
+        return this.currentTourStepIndex === 0;
     }
 
     /* Show resize message */
@@ -293,11 +287,12 @@ export class GuidedTourService {
     /**
      * Send a GET request for the guided tour settings of the current user
      */
-    private findGuidedTourSettings(): Observable<GuidedTourSettings | undefined> {
+    private fetchGuidedTourSettings(): Observable<GuidedTourSettings> {
         return this.http.get<GuidedTourSettings>(this.resourceUrl, { observe: 'response' }).map((res: EntityResponseType) => {
-            if (res.body) {
-                return res.body;
+            if (!res.body) {
+                throw new Error('Empty response returned while fetching guided tour settings');
             }
+            return res.body;
         });
     }
 
@@ -307,6 +302,9 @@ export class GuidedTourService {
      * @param settingValue  boolean value that defines if the tour for [settingName] should be displayed automatically
      */
     public updateGuidedTourSettings(settingName: string, settingValue: boolean): Observable<EntityResponseType> {
+        if (!this.guidedTourSettings) {
+            throw new Error('Cannot update non existing guided tour settings');
+        }
         this.guidedTourSettings[settingName] = settingValue;
         return this.http.put<GuidedTourSettings>(this.resourceUrl, this.guidedTourSettings, { observe: 'response' });
     }
@@ -315,10 +313,32 @@ export class GuidedTourService {
      * Subscribe to guided tour settings and store value in service class variable
      */
     public getGuidedTourSettings() {
-        this.findGuidedTourSettings().subscribe(guidedTourSettings => {
+        this.fetchGuidedTourSettings().subscribe(guidedTourSettings => {
             if (guidedTourSettings) {
                 this.guidedTourSettings = guidedTourSettings;
             }
         });
+    }
+
+    /**
+     * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
+     * that provide tours.
+     */
+    public checkGuidedTourAvailabilityForCurrentRoute(): boolean {
+        if (this.router.url === '/overview') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Starts the guided tour of the current component
+     * */
+    public startGuidedTourForCurrentRoute() {
+        if (this.router.url === '/overview') {
+            this.getOverviewTour().subscribe(tour => {
+                this.startTour(tour);
+            });
+        }
     }
 }
