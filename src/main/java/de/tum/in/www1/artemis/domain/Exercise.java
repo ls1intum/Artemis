@@ -113,6 +113,10 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
+
     // Helpers
     // variable names must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
@@ -125,6 +129,9 @@ public abstract class Exercise implements Serializable {
 
     @Transient
     private Long numberOfComplaintsTransient;
+
+    @Transient
+    private Long numberOfMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -381,6 +388,14 @@ public abstract class Exercise implements Serializable {
         this.studentQuestions = studentQuestions;
     }
 
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
+    }
+
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean isEnded() {
@@ -614,5 +629,13 @@ public abstract class Exercise implements Serializable {
 
     public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
+    }
+
+    public Long getNumberOfMoreFeedbackRequests() {
+        return numberOfMoreFeedbackRequestsTransient;
+    }
+
+    public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
+        this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
     }
 }

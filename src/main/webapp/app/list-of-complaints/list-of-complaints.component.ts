@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -18,6 +18,8 @@ import { StudentParticipation } from 'app/entities/participation';
 export class ListOfComplaintsComponent implements OnInit {
     public complaints: Complaint[] = [];
     public hasStudentInformation = false;
+    public complaintType: ComplaintType;
+    ComplaintType = ComplaintType;
 
     private courseId: number;
     private exerciseId: number;
@@ -44,20 +46,21 @@ export class ListOfComplaintsComponent implements OnInit {
             this.exerciseId = Number(queryParams['exerciseId']);
             this.tutorId = Number(queryParams['tutorId']);
         });
+        this.route.data.subscribe(data => (this.complaintType = data.complaintType));
 
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId);
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
             }
         } else {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId);
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             } else {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId);
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
             }
         }
 

@@ -25,7 +25,7 @@ const ENTITY_STATES = [...listOfComplaintsRoute];
 export class ArTEMiSListOfComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

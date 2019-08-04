@@ -38,7 +38,7 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
 export class ArTEMiSQuizEditModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

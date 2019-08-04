@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -44,6 +45,9 @@ public class DatabaseUtilService {
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -444,7 +448,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @param path path relative to the test resources folder
+     * @param path path relative to the test resources foldercomplaint
      * @return string representation of given file
      * @throws Exception
      */
@@ -484,12 +488,23 @@ public class DatabaseUtilService {
         resultRepo.save(result);
     }
 
-    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints) {
+    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);
             dummyResult = resultRepo.save(dummyResult);
-            Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult);
+            Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public void addHintsToExercise(Exercise exercise) {
+        ExerciseHint exerciseHint1 = new ExerciseHint().exercise(exercise).title("title 1").content("content 1");
+        ExerciseHint exerciseHint2 = new ExerciseHint().exercise(exercise).title("title 2").content("content 2");
+        ExerciseHint exerciseHint3 = new ExerciseHint().exercise(exercise).title("title 3").content("content 3");
+        Set<ExerciseHint> hints = new HashSet<>();
+        hints.add(exerciseHint1);
+        hints.add(exerciseHint2);
+        hints.add(exerciseHint3);
+        exerciseHintRepository.saveAll(hints);
     }
 }

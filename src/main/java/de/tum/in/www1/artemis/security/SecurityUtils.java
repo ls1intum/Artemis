@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.security.core.Authentication;
@@ -60,9 +62,11 @@ public final class SecurityUtils {
      */
     public static boolean isAuthenticated() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        return Optional.ofNullable(securityContext.getAuthentication()).map(
-                authentication -> authentication.getAuthorities().stream().noneMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(AuthoritiesConstants.ANONYMOUS)))
-                .orElse(false);
+        return Optional.ofNullable(securityContext.getAuthentication()).map(authentication -> {
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            authorities.addAll(authentication.getAuthorities());
+            return authorities.stream().noneMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(AuthoritiesConstants.ANONYMOUS));
+        }).orElse(false);
     }
 
     /**
@@ -75,8 +79,11 @@ public final class SecurityUtils {
      */
     public static boolean isCurrentUserInRole(String authority) {
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        return Optional.ofNullable(securityContext.getAuthentication())
-                .map(authentication -> authentication.getAuthorities().stream().anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority))).orElse(false);
+        return Optional.ofNullable(securityContext.getAuthentication()).map(authentication -> {
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            authorities.addAll(authentication.getAuthorities());
+            return authorities.stream().anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
+        }).orElse(false);
     }
 
     /**

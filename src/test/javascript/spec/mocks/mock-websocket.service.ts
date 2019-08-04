@@ -4,7 +4,7 @@ import { IWebsocketService } from '../../../../main/webapp/app/core';
 export class MockWebsocketService implements IWebsocketService {
     bind(event: string, callback: () => void): void {}
 
-    connect(): void {}
+    connect = () => {};
 
     disableReconnect(): void {}
 
