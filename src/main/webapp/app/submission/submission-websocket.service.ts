@@ -10,8 +10,8 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionWebsocketService implements OnDestroy {
-    // Current value: 2 minutes.
-    private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 120 * 1000;
+    // Current value: 1 minute.
+    private EXPECTED_RESULT_CREATION_TIME_MS = 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
