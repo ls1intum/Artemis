@@ -19,3 +19,5 @@ export * from './shared-common.module';
 export * from '../components/table';
 export * from './shared.module';
 export * from './guard/pending-changes.guard';
+export * from './image/cacheable-image.service';
+export * from './image/secured-image.component';

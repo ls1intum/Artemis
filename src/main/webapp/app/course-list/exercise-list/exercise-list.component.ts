@@ -208,7 +208,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     resumeExercise(exercise: Exercise) {
         exercise.loading = true;
         this.courseExerciseService
-            .resumeExercise(this.course.id, exercise.id)
+            .resumeProgrammingExercise(this.course.id, exercise.id)
             .finally(() => (exercise.loading = false))
             .subscribe(
                 participation => {
