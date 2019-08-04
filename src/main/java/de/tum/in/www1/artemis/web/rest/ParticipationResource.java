@@ -623,9 +623,17 @@ public class ParticipationResource {
     @GetMapping("/participations/{participationId}/latest-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Submission> getLatestSubmission(@PathVariable Long participationId) {
-        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(participationId);
+        Participation participation = participationService.findOne(participationId);
+        if (participation == null) {
+            return notFound();
+        }
+        if (participation instanceof ProgrammingExerciseParticipation
+                && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)
+                || !participationService.canAccessParticipation((StudentParticipation) participation)) {
+            return forbidden();
+        }
 
-        // TODO: Implement permission check
+        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(participationId);
         if (!submissionOpt.isPresent()) {
             return ResponseEntity.ok(null);
         }
