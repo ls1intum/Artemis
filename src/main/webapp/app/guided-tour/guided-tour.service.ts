@@ -18,12 +18,10 @@ export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
     public guidedTourCurrentStepStream: Observable<TourStep>;
-    public guidedTourOrbShowingStream: Observable<boolean>;
     public currentTourSteps: TourStep[];
     public guidedTourSettings: GuidedTourSettings;
 
     private _guidedTourCurrentStepSubject = new Subject<TourStep>();
-    private _guidedTourOrbShowingSubject = new Subject<boolean>();
     private _currentTourStepIndex = 0;
     private _currentTour: GuidedTour | undefined;
     private _onFirstStep = true;
@@ -36,7 +34,6 @@ export class GuidedTourService {
         this.getGuidedTourSettings();
 
         this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
-        this.guidedTourOrbShowingStream = this._guidedTourOrbShowingSubject.asObservable();
 
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
@@ -197,11 +194,7 @@ export class GuidedTourService {
         this._currentTour.steps = this._currentTour.steps.filter(step => !step.skipStep);
         this._currentTourStepIndex = 0;
         this._setFirstAndLast();
-        this._guidedTourOrbShowingSubject.next(this._currentTour.useOrb);
         if (this._currentTour.steps.length > 0 && (!this._currentTour.minimumScreenSize || window.innerWidth >= this._currentTour.minimumScreenSize)) {
-            if (!this._currentTour.useOrb) {
-                document.body.classList.add('tour-open');
-            }
             const currentStep = this._currentTour.steps[this._currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
@@ -213,12 +206,6 @@ export class GuidedTourService {
                 this.nextStep();
             }
         }
-    }
-
-    /* Start tour with orb */
-    public activateOrb(): void {
-        this._guidedTourOrbShowingSubject.next(false);
-        document.body.classList.add('tour-open');
     }
 
     /**

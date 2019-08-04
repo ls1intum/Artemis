@@ -20,7 +20,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public highlightPadding = 4;
     public currentTourStep: TourStep | null;
     public selectedElementRect: DOMRect | null;
-    public isOrbShowing = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
@@ -71,10 +70,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     this.selectedElementRect = null;
                 }
             }
-        });
-
-        this.guidedTourService.guidedTourOrbShowingStream.subscribe((value: boolean) => {
-            this.isOrbShowing = value;
         });
 
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
@@ -133,7 +128,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.updateStepLocation();
         // Allow things to render to scroll to the correct location
         setTimeout(() => {
-            if (!this.isOrbShowing && !this.isTourOnScreen()) {
+            if (!this.isTourOnScreen()) {
                 if (this.selectedElementRect && this.isBottom()) {
                     // Scroll so the element is on the top of the screen.
                     const topPos = this.currentTourStep
@@ -183,16 +178,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 }
             }
         });
-    }
-
-    /**
-     * Handle orb event
-     */
-    public handleOrb(): void {
-        this.guidedTourService.activateOrb();
-        if (this.currentTourStep && this.currentTourStep.selector) {
-            this.scrollToAndSetElement();
-        }
     }
 
     /**
@@ -293,23 +278,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get orb top position
-     */
-    public get orbTopPosition(): number {
-        if (this.selectedElementRect && this.currentTourStep) {
-            if (this.isBottom()) {
-                return this.selectedElementRect.top + this.selectedElementRect.height;
-            }
-
-            if (this.currentTourStep.orientation === Orientation.Right || this.currentTourStep.orientation === Orientation.Left) {
-                return this.selectedElementRect.top + this.selectedElementRect.height / 2;
-            }
-            return this.selectedElementRect.top;
-        }
-        return 0;
-    }
-
-    /**
      * Calculate left position of current tour step / highlighted element
      */
     private get calculatedLeftPosition(): number {
@@ -353,32 +321,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get orb left position
-     */
-    public get orbLeftPosition(): number {
-        if (this.selectedElementRect && this.currentTourStep) {
-            if (this.currentTourStep.orientation === Orientation.TopRight || this.currentTourStep.orientation === Orientation.BottomRight) {
-                return this.selectedElementRect.right;
-            }
-
-            if (this.currentTourStep.orientation === Orientation.TopLeft || this.currentTourStep.orientation === Orientation.BottomLeft) {
-                return this.selectedElementRect.left;
-            }
-
-            if (this.currentTourStep.orientation === Orientation.Left) {
-                return this.selectedElementRect.left;
-            }
-
-            if (this.currentTourStep.orientation === Orientation.Right) {
-                return this.selectedElementRect.left + this.selectedElementRect.width;
-            }
-
-            return this.selectedElementRect.right - this.selectedElementRect.width / 2;
-        }
-        return 0;
-    }
-
-    /**
      * Transform position of tour steps which are shown on top of the highlighted element
      */
     public get transform(): string {
@@ -390,32 +332,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.currentTourStep.orientation === Orientation.TopLeft
             ) {
                 return 'translateY(-100%)';
-            }
-        }
-        return '';
-    }
-
-    /**
-     * Transform orb position according to tour step orientation
-     */
-    public get orbTransform(): string {
-        if (this.currentTourStep) {
-            if (
-                !this.currentTourStep.orientation ||
-                this.currentTourStep.orientation === Orientation.Top ||
-                this.currentTourStep.orientation === Orientation.Bottom ||
-                this.currentTourStep.orientation === Orientation.TopLeft ||
-                this.currentTourStep.orientation === Orientation.BottomLeft
-            ) {
-                return 'translateY(-50%)';
-            }
-
-            if (this.currentTourStep.orientation === Orientation.TopRight || this.currentTourStep.orientation === Orientation.BottomRight) {
-                return 'translate(-100%, -50%)';
-            }
-
-            if (this.currentTourStep.orientation === Orientation.Right || this.currentTourStep.orientation === Orientation.Left) {
-                return 'translate(-50%, -50%)';
             }
         }
         return '';

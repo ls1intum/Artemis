@@ -5,7 +5,6 @@ import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tou
  */
 export const courseOverviewTour: GuidedTour = {
     settingsId: 'showCourseOverviewTour',
-    useOrb: false,
     steps: [
         {
             contentType: ContentType.IMAGE,

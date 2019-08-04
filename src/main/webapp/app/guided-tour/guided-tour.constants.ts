@@ -42,8 +42,6 @@ export interface TourStep {
 export interface GuidedTour {
     /** Identifier for tour */
     settingsId: string;
-    /** Use orb to start tour */
-    useOrb?: boolean;
     /** Steps fo the tour */
     steps: TourStep[];
     /** Function will be called when tour is skipped */
@@ -67,16 +65,16 @@ export interface OrientationConfiguration {
 }
 
 /* Orientation of the tour step position next to the highlighted element */
-export class Orientation {
-    public static readonly Bottom = 'bottom';
-    public static readonly BottomLeft = 'bottom-left';
-    public static readonly BottomRight = 'bottom-right';
-    public static readonly Center = 'center';
-    public static readonly Left = 'left';
-    public static readonly Right = 'right';
-    public static readonly Top = 'top';
-    public static readonly TopLeft = 'top-left';
-    public static readonly TopRight = 'top-right';
+export enum Orientation {
+    Bottom = 'bottom',
+    BottomLeft = 'bottom-left',
+    BottomRight = 'bottom-right',
+    Center = 'center',
+    Left = 'left',
+    Right = 'right',
+    Top = 'top',
+    TopLeft = 'top-left',
+    TopRight = 'top-right',
 }
 
 /* Content type of tour step content */

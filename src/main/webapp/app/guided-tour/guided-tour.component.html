@@ -1,18 +1,8 @@
-<div
-    *ngIf="currentTourStep && selectedElementRect && isOrbShowing"
-    (mouseenter)="handleOrb()"
-    class="tour-orb tour-{{ currentTourStep.orientation }}"
-    [style.top.px]="orbTopPosition"
-    [style.left.px]="orbLeftPosition"
-    [style.transform]="orbTransform"
->
-    <div class="tour-orb-ring"></div>
-</div>
-<div *ngIf="currentTourStep && !isOrbShowing">
+<div *ngIf="currentTourStep">
     <div class="guided-tour-user-input-mask" (click)="backdropClick($event)"></div>
     <div class="guided-tour-spotlight-overlay" [style.top.px]="overlayTop" [style.left.px]="overlayLeft" [style.height.px]="overlayHeight" [style.width.px]="overlayWidth"></div>
 </div>
-<div *ngIf="currentTourStep && !isOrbShowing">
+<div *ngIf="currentTourStep">
     <div
         #tourStep
         *ngIf="currentTourStep"

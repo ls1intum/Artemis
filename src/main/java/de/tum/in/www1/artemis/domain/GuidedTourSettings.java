@@ -9,19 +9,25 @@ import com.google.gson.Gson;
  */
 public class GuidedTourSettings implements Serializable {
 
-    private boolean showCourseOverviewTour = false;
+    private boolean showCourseOverviewTour;
 
-    private boolean showNavigationTour = false;
+    private boolean showNavigationTour;
 
-    private boolean showProgrammingExerciseTour = false;
+    private boolean showProgrammingExerciseTour;
 
-    private boolean showQuizExerciseTour = false;
+    private boolean showQuizExerciseTour;
 
-    private boolean showModelingExerciseTour = false;
+    private boolean showModelingExerciseTour;
 
-    private boolean showTextExerciseTour = false;
+    private boolean showTextExerciseTour;
 
     public GuidedTourSettings() {
+        this.showCourseOverviewTour = false;
+        this.showNavigationTour = false;
+        this.showProgrammingExerciseTour = false;
+        this.showQuizExerciseTour = false;
+        this.showModelingExerciseTour = false;
+        this.showTextExerciseTour = false;
     }
 
     public GuidedTourSettings(boolean showCourseOverviewTour, boolean showNavigationTour, boolean showProgrammingExerciseTour, boolean showQuizExerciseTour,

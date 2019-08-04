@@ -14,7 +14,6 @@ const expect = chai.expect;
 describe('Component Tests', () => {
     const courseOverviewTour: GuidedTour = {
         settingsId: 'showCourseOverviewTour',
-        useOrb: false,
         steps: [
             {
                 contentType: ContentType.IMAGE,
