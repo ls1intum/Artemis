@@ -20,7 +20,8 @@
             "type": "Type",
             "result": "Ergebnis",
             "participation": "Participation",
-            "lockedSubmissionsLimitReached": "Du hast die maximale Anzahl von unvollständigen Bewertungen in diesem Kurs erreicht. Bitte beende deine offenen Bewertungen, bevor du eine neue beginnen kannst."
+            "lockedSubmissionsLimitReached": "Du hast die maximale Anzahl von unvollständigen Bewertungen in diesem Kurs erreicht. Bitte beende deine offenen Bewertungen, bevor du eine neue beginnen kannst.",
+            "resultTimeout": "Das Ergebnis zu deiner Abgabe {{ id }} vom {{ submissionDate }} ist bisher nicht eingetroffen."
         }
     }
 }

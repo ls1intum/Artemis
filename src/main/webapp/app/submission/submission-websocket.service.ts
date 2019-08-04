@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JhiAlertService } from 'ng-jhipster';
 import { BehaviorSubject, Observable, merge, Subject, Subscription, timer, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, first, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
@@ -7,7 +8,8 @@ import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
-const EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
+// Current value: 2 minutes.
+const EXPECTED_RESULT_CREATION_TIME_MS = 2 * 120 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionWebsocketService implements OnDestroy {
@@ -19,7 +21,12 @@ export class SubmissionWebsocketService implements OnDestroy {
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private http: HttpClient,
+        private participationWebsocketService: ParticipationWebsocketService,
+        private alertService: JhiAlertService,
+    ) {}
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
@@ -32,7 +39,13 @@ export class SubmissionWebsocketService implements OnDestroy {
 
     private startResultWaitingTimer = (participationId: number) => {
         timer(EXPECTED_RESULT_CREATION_TIME_MS)
-            .pipe(tap(() => this.resultTimerSubjects[participationId].next(null)))
+            .pipe(
+                tap(() => {
+                    this.resultTimerSubjects[participationId].next(null);
+                    const currentSubmission = this.latestValue[participationId] || { id: undefined, submissionDate: undefined };
+                    this.alertService.error('artemisApp.submission.resultTimeout', { id: currentSubmission.id, submissionDate: currentSubmission.submissionDate });
+                }),
+            )
             .subscribe();
     };
 
