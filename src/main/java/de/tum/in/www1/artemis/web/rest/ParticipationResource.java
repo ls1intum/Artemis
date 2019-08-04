@@ -7,6 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -612,18 +614,30 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:id/latest-submission : get the latest submission for the participation.
+     * GET /participations/:id/latest-submission : get the latest pending submission for the participation.
+     * A pending submission is one that does not have a result yet and is not older than 2 minutes.
      *
-     * @param id the id of the participation get the latest submission for
+     * @param participationId the id of the participation get the latest submission for
      * @return the ResponseEntity with status 200 (OK)
      */
     @GetMapping("/participations/{participationId}/latest-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Submission> getLatestSubmission(@PathVariable Long participationId) {
-        Optional<Submission> submission = submissionRepository.findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(participationId);
+        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(participationId);
+
         // TODO: Implement permission check
-        /* Participation participation = participationService.findOne(participationId); */
-        return submission.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
+        if (!submissionOpt.isPresent()) {
+            return ResponseEntity.ok(null);
+        }
+        Submission submission = submissionOpt.get();
+        boolean submissionIsNotOlderThanTwoMinutes = ChronoUnit.SECONDS.between(ZonedDateTime.now(), submission.getSubmissionDate()) < 120;
+        if (submissionIsNotOlderThanTwoMinutes) {
+            return ResponseEntity.ok(submission);
+        }
+        else {
+            return ResponseEntity.ok(null);
+        }
+
     }
 
     private void checkAccessPermissionAtInstructor(StudentParticipation participation) {

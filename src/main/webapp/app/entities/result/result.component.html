@@ -3,7 +3,7 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <ng-container *ngIf="isBuilding; else resultContainer">
-    <span class="text-primary"><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="artemisApp.editor.building">&nbsp;Building...</span></span>
+    <span class="text-primary"><fa-icon icon="circle-notch" size="lg" [spin]="true" class="mr-2"></fa-icon><span jhiTranslate="artemisApp.editor.building">Building...</span></span>
 </ng-container>
 <ng-template #resultContainer>
     <ng-container *ngIf="result && (result.score || result.score === 0); else noResultContainer">

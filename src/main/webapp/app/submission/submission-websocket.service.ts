@@ -1,18 +1,25 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { userMgmtRoute } from 'app/admin';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
 @Injectable({ providedIn: 'root' })
-export class SubmissionWebsocketService {
+export class SubmissionWebsocketService implements OnDestroy {
     private newSubmissionRouteTopic = '/topic/participation/%participationId%/newSubmission';
     private subscriptions: { [participationId: number]: string } = {};
+    private resultSubscriptions: { [participationId: number]: Subscription } = {};
     private subjects: { [participationId: number]: BehaviorSubject<Submission | null> } = {};
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {}
+    private latestValue: { [participationId: number]: Submission | null } = {};
+
+    constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
+
+    ngOnDestroy(): void {
+        Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
+    }
 
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
         return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-submission');
@@ -30,9 +37,24 @@ export class SubmissionWebsocketService {
                         const subject = this.subjects[participationId];
                         subject.next(submission);
                     }),
+                    tap((submission: Submission) => (this.latestValue[participationId] = submission)),
                 )
                 .subscribe();
         }
+    };
+
+    private subscribeForLatestResult = (participationId: number) => {
+        if (this.resultSubscriptions[participationId]) {
+            return;
+        }
+        this.resultSubscriptions[participationId] = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(participationId)
+            .pipe(
+                filter(() => !!this.latestValue[participationId]),
+                distinctUntilChanged(),
+                tap(() => this.subjects[participationId].next(null)),
+            )
+            .subscribe();
     };
 
     public getLatestPendingSubmission = (participationId: number) => {
@@ -48,6 +70,7 @@ export class SubmissionWebsocketService {
                 this.subjects[participationId] = newSubject;
                 return newSubject.asObservable();
             }),
+            tap(() => this.subscribeForLatestResult(participationId)),
         );
     };
 }

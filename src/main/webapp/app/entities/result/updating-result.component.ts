@@ -9,7 +9,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
 import { ExerciseType } from 'app/entities/exercise';
-import { SubmissionWebsocketService } from 'app/entities/submission/submission-websocket.service';
+import { SubmissionWebsocketService } from 'app/submission/submission-websocket.service';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -56,6 +56,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
     }
 
     subscribeForNewResults() {
@@ -71,8 +74,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
-                // When a new result comes in, the build process must be done.
-                tap(() => (this.isBuilding = false)),
             )
             .subscribe();
     }
