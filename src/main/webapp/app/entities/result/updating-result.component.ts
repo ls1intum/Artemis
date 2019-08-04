@@ -71,6 +71,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
+                // When a new result comes in, the build process must be done.
+                tap(() => (this.isBuilding = false)),
             )
             .subscribe();
     }
