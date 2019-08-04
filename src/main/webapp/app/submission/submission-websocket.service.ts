@@ -1,11 +1,13 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, merge, Subject, Subscription, timer, of } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, first, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+
+const EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionWebsocketService implements OnDestroy {
@@ -14,28 +16,44 @@ export class SubmissionWebsocketService implements OnDestroy {
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     private subjects: { [participationId: number]: BehaviorSubject<Submission | null> } = {};
     private latestValue: { [participationId: number]: Submission | null } = {};
+    private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
+    private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
+        Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
     }
 
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
         return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-submission');
     };
 
+    private startResultWaitingTimer = (participationId: number) => {
+        timer(EXPECTED_RESULT_CREATION_TIME_MS)
+            .pipe(tap(() => this.resultTimerSubjects[participationId].next(null)))
+            .subscribe();
+    };
+
+    private resetResultWaitingTimer = (participationId: number) => {
+        if (this.resultTimerSubscriptions[participationId]) {
+            this.resultTimerSubscriptions[participationId].unsubscribe();
+        }
+    };
+
     private setupWebsocketSubscription = (participationId: number): void => {
         if (!this.subscriptions[participationId]) {
             const newSubmissionTopic = this.newSubmissionRouteTopic.replace('%participationId%', participationId.toString());
             this.websocketService.subscribe(newSubmissionTopic);
-            this.subscriptions[participationId] = newSubmissionTopic;
+            this.resultTimerSubjects[participationId] = new Subject<null>();
             this.websocketService
                 .receive(newSubmissionTopic)
                 .pipe(
                     tap((submission: Submission) => {
                         const subject = this.subjects[participationId];
                         subject.next(submission);
+                        this.startResultWaitingTimer(participationId);
                     }),
                     tap((submission: Submission) => (this.latestValue[participationId] = submission)),
                 )
@@ -47,12 +65,15 @@ export class SubmissionWebsocketService implements OnDestroy {
         if (this.resultSubscriptions[participationId]) {
             return;
         }
-        this.resultSubscriptions[participationId] = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(participationId)
+        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId).pipe(distinctUntilChanged());
+
+        this.resultSubscriptions[participationId] = merge(this.resultTimerSubjects[participationId], resultObservable)
             .pipe(
                 filter(() => !!this.latestValue[participationId]),
-                distinctUntilChanged(),
-                tap(() => this.subjects[participationId].next(null)),
+                tap(() => {
+                    this.resetResultWaitingTimer(participationId);
+                    this.subjects[participationId].next(null);
+                }),
             )
             .subscribe();
     };
