@@ -82,7 +82,8 @@ public class ModelAssessmentConflictService {
         else {
             StudentParticipation studentParticipation = (StudentParticipation) conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation();
             Exercise exercise = studentParticipation.getExercise();
-            return conflictsForSubmission.stream().filter(conflict -> userIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
+
+            return conflictsForSubmission.stream().filter(conflict -> userIsResponsibleForHandling(conflict, exercise, currentUser)).collect(Collectors.toList());
         }
     }
 
