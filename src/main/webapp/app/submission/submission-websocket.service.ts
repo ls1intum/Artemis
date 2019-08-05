@@ -63,7 +63,9 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
                     const currentSubmission = this.latestValue[participationId] || { id: undefined, submissionDate: undefined };
-                    this.alertService.error('artemisApp.submission.resultTimeout', { id: currentSubmission.id, submissionDate: currentSubmission.submissionDate });
+                    this.alertService.error('artemisApp.submission.resultTimeout', {
+                        id: currentSubmission.id,
+                    });
                 }),
             )
             .subscribe();
