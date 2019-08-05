@@ -14,7 +14,7 @@ export interface ISubmissionWebsocketService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class SubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
+export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
     // Current value: 1 minute.
     private EXPECTED_RESULT_CREATION_TIME_MS = 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
@@ -49,7 +49,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
      * @param participationId
      */
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
-        return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-pending-submission');
+        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participation/' + participationId + '/latest-pending-submission');
     };
 
     /**

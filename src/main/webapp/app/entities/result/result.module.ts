@@ -6,10 +6,10 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
-import { ArTEMiSSubmissionModule } from 'app/submission/submission.module';
+import { ArTEMiSProgrammingSubmissionModule } from 'app/submission/submission.module';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, MomentModule, ArTEMiSSubmissionModule],
+    imports: [ArTEMiSSharedModule, MomentModule, ArTEMiSProgrammingSubmissionModule],
     declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],

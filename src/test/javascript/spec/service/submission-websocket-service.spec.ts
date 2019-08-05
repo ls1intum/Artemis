@@ -6,7 +6,7 @@ import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
 import { MockHttpService } from '../mocks/mock-http.service';
-import { ISubmissionWebsocketService, SubmissionWebsocketService } from 'app/submission/submission-websocket.service';
+import { ISubmissionWebsocketService, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Submission } from 'app/entities/submission';
@@ -50,7 +50,7 @@ describe('SubmissionWebsocketService', () => {
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
 
         // @ts-ignore
-        submissionWebsocketService = new SubmissionWebsocketService(websocketService, http, participationWebsocketService, alertService);
+        submissionWebsocketService = new ProgrammingSubmissionWebsocketService(websocketService, http, participationWebsocketService, alertService);
     });
 
     afterEach(() => {

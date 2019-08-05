@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -89,8 +87,6 @@ public class ParticipationResource {
     private final SubmissionRepository submissionRepository;
 
     private final UserService userService;
-
-    private final int RESULT_WAIT_LIMIT_SECONDS = 60;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
@@ -613,41 +609,6 @@ public class ParticipationResource {
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
-    }
-
-    /**
-     * GET /participations/:id/latest-pending-submission : get the latest pending submission for the participation.
-     * A pending submission is one that does not have a result yet and is not older than RESULT_WAIT_LIMIT_SECONDS.
-     *
-     * @param participationId the id of the participation get the latest submission for
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @GetMapping("/participations/{participationId}/latest-pending-submission")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Submission> getLatestPendingSubmission(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
-        if (participation == null) {
-            return notFound();
-        }
-        if (participation instanceof ProgrammingExerciseParticipation
-                && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)
-                || !participationService.canAccessParticipation((StudentParticipation) participation)) {
-            return forbidden();
-        }
-
-        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
-            return ResponseEntity.ok(null);
-        }
-        Submission submission = submissionOpt.get();
-        boolean submissionDateIsWithinWaitLimit = ChronoUnit.SECONDS.between(submission.getSubmissionDate(), ZonedDateTime.now()) <= RESULT_WAIT_LIMIT_SECONDS;
-        if (submissionDateIsWithinWaitLimit) {
-            return ResponseEntity.ok(submission);
-        }
-        else {
-            return ResponseEntity.ok(null);
-        }
-
     }
 
     private void checkAccessPermissionAtInstructor(StudentParticipation participation) {

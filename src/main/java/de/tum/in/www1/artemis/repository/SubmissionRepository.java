@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -45,6 +44,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return true if a submission for the given participation exists, false otherwise
      */
     boolean existsByParticipationId(long participationId);
-
-    Optional<Submission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 }

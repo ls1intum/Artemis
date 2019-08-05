@@ -17,7 +17,7 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { SubmissionWebsocketService } from 'app/submission/submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 
 chai.use(sinonChai);
@@ -28,7 +28,7 @@ describe('UpdatingResultComponent', () => {
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let submissionWebsocketService: SubmissionWebsocketService;
+    let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
@@ -61,7 +61,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: SubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
             ],
         })
             .compileComponents()
@@ -71,7 +71,7 @@ describe('UpdatingResultComponent', () => {
                 debugElement = fixture.debugElement;
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                submissionWebsocketService = debugElement.injector.get(SubmissionWebsocketService);
+                submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(

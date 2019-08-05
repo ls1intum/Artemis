@@ -1,4 +1,4 @@
-import { ISubmissionWebsocketService } from 'app/submission/submission-websocket.service';
+import { ISubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { Observable, of } from 'rxjs';
 import { Submission } from 'app/entities/submission';
 

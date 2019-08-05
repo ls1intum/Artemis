@@ -9,7 +9,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
 import { ExerciseType } from 'app/entities/exercise';
-import { SubmissionWebsocketService } from 'app/submission/submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -34,7 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: SubmissionWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: ProgrammingSubmissionWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
