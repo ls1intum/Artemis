@@ -32,3 +32,8 @@ artemis:
     git:
         name: ArTEMiS
         email: artemis@in.tum.de
+    automatic-text:
+        embedding-url: http://localhost:8000/embed
+        embedding-chunk-size: 50
+        clustering-url: http://localhost:8000/cluster
+        secret: null

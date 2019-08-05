@@ -13,6 +13,7 @@ export const enum FeedbackHighlightColor {
 export const enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
+    AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 
 export class Feedback implements BaseEntity {

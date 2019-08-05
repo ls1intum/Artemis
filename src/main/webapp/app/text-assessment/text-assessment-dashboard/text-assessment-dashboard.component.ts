@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
 import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
-import { AssessmentType, Result } from 'app/entities/result';
+import { Result } from 'app/entities/result';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
