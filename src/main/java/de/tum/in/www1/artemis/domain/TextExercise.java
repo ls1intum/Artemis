@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * A TextExercise.
@@ -18,9 +19,6 @@ public class TextExercise extends Exercise implements Serializable {
     @Column(name = "sample_solution")
     @Lob
     private String sampleSolution;
-
-    @Column(name = "automatic_text_assessment")
-    private boolean automaticAssessmentEnabled = false;
 
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
@@ -40,16 +38,7 @@ public class TextExercise extends Exercise implements Serializable {
     }
 
     public boolean isAutomaticAssessmentEnabled() {
-        return automaticAssessmentEnabled;
-    }
-
-    public TextExercise automaticAssessmentEnabled(boolean automaticAssessmentEnabled) {
-        this.automaticAssessmentEnabled = automaticAssessmentEnabled;
-        return this;
-    }
-
-    public void setAutomaticAssessmentEnabled(boolean automaticAssessmentEnabled) {
-        this.automaticAssessmentEnabled = automaticAssessmentEnabled;
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }
 
     /**

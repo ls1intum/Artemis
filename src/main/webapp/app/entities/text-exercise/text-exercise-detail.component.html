@@ -23,7 +23,7 @@
         </dd>
         <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
         <dd>
-            <span>{{ (textExercise.automaticAssessmentEnabled ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
+            <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
         </dd>
         <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
         <dd>

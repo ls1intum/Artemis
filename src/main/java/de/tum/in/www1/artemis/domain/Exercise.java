@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -68,6 +69,10 @@ public abstract class Exercise implements Serializable {
 
     @Column(name = "max_score")
     private Double maxScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assessment_type")
+    private AssessmentType assessmentType;
 
     @Column(name = "problem_statement")
     @Lob
@@ -226,6 +231,19 @@ public abstract class Exercise implements Serializable {
 
     public void setMaxScore(Double maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public AssessmentType getAssessmentType() {
+        return assessmentType;
+    }
+
+    public Exercise assessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
+        return this;
+    }
+
+    public void setAssessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
     }
 
     public String getProblemStatement() {

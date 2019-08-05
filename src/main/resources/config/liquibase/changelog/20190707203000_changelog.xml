@@ -75,7 +75,7 @@
                                  referencedTableName="exercise"/>
 
         <addColumn tableName="exercise">
-            <column name="automatic_text_assessment" type="Boolean" defaultValueBoolean="false"/>
+            <column name="assessment_type" type="VARCHAR(25)"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

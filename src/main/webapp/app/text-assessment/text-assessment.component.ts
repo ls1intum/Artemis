@@ -4,7 +4,7 @@ import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { HighlightColors } from './highlight-colors';
@@ -14,7 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
-import { Participation, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService, WindowRef } from 'app/core';
@@ -26,6 +26,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -366,7 +367,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkPermissions();
 
         // Automatically fetch suggested Feedback for Automatic Assessment Enabled exercises.
-        const needsAutomaticAssmentSuggestions = this.exercise.automaticAssessmentEnabled && (!this.result.feedbacks || this.result.feedbacks.length === 0);
+        const needsAutomaticAssmentSuggestions = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!this.result.feedbacks || this.result.feedbacks.length === 0);
         if (needsAutomaticAssmentSuggestions) {
             this.predefineTextBlocks();
         }

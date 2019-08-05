@@ -74,7 +74,8 @@
                 <input
                     type="checkbox"
                     id="automatic_assessment_enabled"
-                    [(ngModel)]="textExercise.automaticAssessmentEnabled"
+                    [ngModel]="textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
+                    (ngModelChange)="textExercise.assessmentType = $event ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL"
                     class="form-check-input custom-control-input"
                     name="automaticAssessmentEnabled"
                 />

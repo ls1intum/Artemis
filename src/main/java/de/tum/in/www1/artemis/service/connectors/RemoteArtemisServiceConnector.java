@@ -64,7 +64,7 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
 
         final ResponseType responseBody = response.getBody();
         assert responseBody != null;
-        log.info("Finished remote call in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("Finished remote call in " + (System.currentTimeMillis() - start) + "ms");
 
         return responseBody;
     }

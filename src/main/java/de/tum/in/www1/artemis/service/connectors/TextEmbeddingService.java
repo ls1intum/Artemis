@@ -49,6 +49,7 @@ public class TextEmbeddingService {
     }
 
     public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
+        log.info("Calling Remote Service to embed " + blocks.size() + " student text answer blocks.");
         final Request request = new Request(blocks);
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
 

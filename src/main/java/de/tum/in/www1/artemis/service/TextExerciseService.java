@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 @Service
@@ -59,6 +60,6 @@ public class TextExerciseService {
      */
     @Transactional(readOnly = true)
     public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
-        return textExerciseRepository.findByAutomaticAssessmentEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+        return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
     }
 }

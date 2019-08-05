@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * Spring Data JPA repository for the TextExercise entity.
@@ -20,5 +21,5 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("SELECT e FROM TextExercise e WHERE e.course.id = :#{#courseId}")
     List<TextExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    List<TextExercise> findByAutomaticAssessmentEnabledAndDueDateIsAfter(boolean automaticAssessmentEnabled, ZonedDateTime dueDate);
+    List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 }

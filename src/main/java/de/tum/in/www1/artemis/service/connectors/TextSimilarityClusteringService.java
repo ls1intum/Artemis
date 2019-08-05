@@ -50,7 +50,7 @@ public class TextSimilarityClusteringService {
     }
 
     public Map<Integer, TextCluster> clusterTextBlocks(List<TextEmbedding> embeddings, int maxRetries) throws NetworkingError {
-        log.debug("Calling Remote Service to cluster student text answers.");
+        log.info("Calling Remote Service to cluster student text answers.");
         final Request request = new Request(embeddings);
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
 

@@ -4,11 +4,7 @@ import { Feedback } from '../feedback';
 import { Submission } from '../submission';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
-
-export const enum AssessmentType {
-    AUTOMATIC = 'AUTOMATIC',
-    MANUAL = 'MANUAL',
-}
+import { AssessmentType } from 'app/entities/assessment-type';
 
 export class Result implements BaseEntity {
     public id: number;
