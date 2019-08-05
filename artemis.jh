@@ -63,6 +63,7 @@ entity Exercise (exercise) {        //abstract
     dueDate ZonedDateTime,
     assessmentDueDate ZonedDateTime,
     maxScore Double,
+    assessmentType AssessmentType,
     difficulty DifficultyLevel,
     categories String               //List<String>, similar to User --> groups
 }
@@ -220,6 +221,7 @@ entity ExerciseResult (result) {
 
 enum AssessmentType {
     AUTOMATIC,
+    SEMI_AUTOMATIC,
     MANUAL
 }
 
@@ -489,6 +491,7 @@ relationship OneToMany {
     ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
     TextSubmission{blocks} to TextBlock{submission},
     TextCluster{blocks} to TextBlock{cluster},
+    TextExercise{clusters} to TextCluster{exercise}
 }
 
 relationship OneToOne {
