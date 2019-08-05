@@ -18,7 +18,9 @@ h4 {
     font-weight: 300;
 }
 
-a {
+/* Increase contrast of links to get 100% on Lighthouse Accessability Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
+a,
+a:hover {
     color: $primary;
     font-weight: bold;
 }
@@ -187,10 +189,8 @@ Generic styles
     flex-shrink: 0;
 }
 
-/* ==========================================================================
-make sure browsers use the pointer cursor for anchors, even with no href
-========================================================================== */
 a:hover {
+    /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
 

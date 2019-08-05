@@ -22,7 +22,7 @@ export class NotificationContainerComponent implements OnInit {
         if (this.accountService.isAuthenticated()) {
             this.loadNotifications();
         }
-        this.accountService.getAuthenticationState().subscribe((user: User) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
                 this.loadNotifications();
             }

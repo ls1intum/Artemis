@@ -14,6 +14,7 @@ import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
@@ -30,14 +31,18 @@ export class TextEditorComponent implements OnInit {
     answer: string;
     isExampleSubmission = false;
     showComplaintForm = false;
+    showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
-    hasComplaint: boolean;
+    hasComplaint = false;
+    // indicates if more feedback was requested already
+    hasRequestMoreFeedback = false;
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled
     isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
+    ComplaintType = ComplaintType;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -89,7 +94,13 @@ export class TextEditorComponent implements OnInit {
                     if (this.result && this.result.completionDate) {
                         this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
                         this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                            this.hasComplaint = !!res.body;
+                            if (res.body) {
+                                if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                                    this.hasComplaint = true;
+                                } else {
+                                    this.hasRequestMoreFeedback = true;
+                                }
+                            }
                         });
                     }
                 }
@@ -191,5 +202,15 @@ export class TextEditorComponent implements OnInit {
 
     previous() {
         this.location.back();
+    }
+
+    toggleComplaintForm() {
+        this.showRequestMoreFeedbackForm = false;
+        this.showComplaintForm = !this.showComplaintForm;
+    }
+
+    toggleRequestMoreFeedbackForm() {
+        this.showComplaintForm = false;
+        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }
