@@ -24,13 +24,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly IMAGE = ContentType.IMAGE;
-    readonly TEXT = ContentType.TEXT;
-    readonly VIDEO = ContentType.VIDEO;
-
-    // TODO
-    readonly LINK = LinkType.LINK;
-    readonly BUTTON = LinkType.BUTTON;
+    readonly ContentType = ContentType;
+    readonly LinkType = LinkType;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -87,6 +82,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate max width adjustment for tour step
+     * @return {number} maxWidthAdjustmentForTourStep
      */
     private get maxWidthAdjustmentForTourStep(): number {
         return this.tourStepWidth - this.minimalTourStepWidth;
@@ -94,6 +90,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate width adjustment for screen bound
+     * @return {number} widthAdjustmentForScreenBound
      */
     private get widthAdjustmentForScreenBound(): number {
         if (!this.tourStep) {
@@ -112,6 +109,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate tour step width for tour-step div
+     * @return tour step width for tour-step div
      */
     public get calculatedTourStepWidth() {
         return this.tourStepWidth - this.widthAdjustmentForScreenBound;
@@ -152,7 +150,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Return if tour step is visible on screen
+     * @return {boolean} if tour step is visible on screen
      */
     private isTourOnScreen(): boolean {
         if (!this.currentTourStep && !this.currentTourStep!.selector) {
@@ -164,7 +162,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Define if HTMLElement is visible in current viewport
      * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
-     * @param element
+     * @param {element} HTMLElement
+     * @return {boolean} if element is in viewport
      */
     private elementInViewport(element: HTMLElement | null): boolean {
         if (!element) {
@@ -193,7 +192,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Handle backdrop clicking event
-     * @param event
+     * @param {event} event payload
      */
     public backdropClick(event: Event): void {
         if (this.guidedTourService.preventBackdropFromAdvancing) {
@@ -204,7 +203,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Update tour step location
+     * Update tour step location by calling getBoundingClientRect()
      */
     public updateStepLocation(): void {
         this.selectedElementRect = null;
@@ -217,7 +216,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Return true if the current tour step orientation is bottom
+     * @return {boolean} if the current tour step orientation is bottom
      */
     private isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
@@ -231,7 +230,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get top position for current tour step
+     * @return {number} top position for current tour step
      */
     public get topPosition(): number {
         if (!this.selectedElementRect) {
@@ -246,7 +245,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Calculate left position of current tour step / highlighted element
+     * @return {number} left position of current tour step / highlighted element
      */
     private get calculatedLeftPosition(): number {
         if (this.selectedElementRect && this.currentTourStep) {
@@ -274,7 +273,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get left position for current tour step
+     * @return {number} left position for current tour step
      */
     public get leftPosition(): number {
         if (this.calculatedLeftPosition === 0) {
@@ -290,6 +289,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Transform position of tour steps which are shown on top of the highlighted element
+     * @return {string} '' or 'translateY(-100%)'
      */
     public get transform(): string {
         if (this.currentTourStep) {
@@ -306,7 +306,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get overlay top position for highlighted element
+     * @return {number} overlay top position for highlighted element
      */
     public get overlayTop(): number {
         if (this.selectedElementRect) {
@@ -317,6 +317,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Get overlay left position for highlighted element
+     * @return {number} overlay left position
      */
     public get overlayLeft(): number {
         if (this.selectedElementRect) {
@@ -327,6 +328,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Get overlay height for highlighted element
+     * @return {number} overlay height
      */
     public get overlayHeight(): number {
         if (this.selectedElementRect) {
@@ -337,6 +339,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Get overlay width for highlighted element
+     * @return {number} overlay width
      */
     public get overlayWidth(): number {
         if (this.selectedElementRect) {
@@ -345,7 +348,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return 0;
     }
 
-    /* Gets defined padding around tour highlighting in pixels */
+    /**
+     *  Gets defined padding around tour highlighting in pixels
+     *  @return {number} highlight padding
+     */
     private getHighlightPadding(): number {
         if (!this.currentTourStep) {
             return 0;
@@ -359,6 +365,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate a value to add or subtract so the step should not be off screen.
+     * @return {number} step screen adjustment
      */
     private getStepScreenAdjustment(): number {
         if (!this.currentTourStep) {

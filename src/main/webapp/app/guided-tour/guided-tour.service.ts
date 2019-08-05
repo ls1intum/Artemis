@@ -26,7 +26,7 @@ export class GuidedTourService {
     private onResizeMessage = false;
 
     constructor(
-        public errorHandler: ErrorHandler,
+        private errorHandler: ErrorHandler,
         private http: HttpClient,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
@@ -34,6 +34,9 @@ export class GuidedTourService {
     ) {
         this.getGuidedTourSettings();
 
+        /**
+         * Subscribe to window resize events
+         */
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
@@ -53,12 +56,16 @@ export class GuidedTourService {
             });
     }
 
+    /**
+     * @return current tour step as Observable
+     */
     public getGuidedTourCurrentStepStream(): Observable<TourStep | null> {
         return this.guidedTourCurrentStepSubject.asObservable();
     }
 
     /**
      * Load course overview tour
+     * @return guided tour `courseOverviewTour`
      */
     public getOverviewTour(): Observable<GuidedTour> {
         return of(courseOverviewTour);
@@ -129,7 +136,7 @@ export class GuidedTourService {
     }
 
     /**
-     * Skip tour
+     * Skip tour and exit the tour context
      */
     public skipTour(): void {
         if (this.currentTour) {
@@ -141,7 +148,8 @@ export class GuidedTourService {
     }
 
     /**
-     * Close tour and remove overlay
+     * Close tour by resetting `currentTour`, `currentTourStepIndex` and `guidedTourCurrentStepSubject`
+     * and remove overlay
      */
     public resetTour(): void {
         document.body.classList.remove('tour-open');
@@ -152,7 +160,7 @@ export class GuidedTourService {
 
     /**
      * Start guided tour for given guided tour
-     * @param tour  guided tour
+     * @param {tour} guided tour
      */
     private startTour(tour: GuidedTour): void {
         this.currentTourSteps = tour.steps;
@@ -181,7 +189,9 @@ export class GuidedTourService {
         }
     }
 
-    /* Check if highlighted element is available */
+    /**
+     *  @return {boolean} if highlighted element is available
+     */
     private checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
@@ -204,7 +214,7 @@ export class GuidedTourService {
     }
 
     /**
-     *  Is last tour step
+     * @return {boolean} if the current step is the last tour step
      */
     public get isOnLastStep(): boolean {
         if (!this.currentTour) {
@@ -214,28 +224,38 @@ export class GuidedTourService {
     }
 
     /**
-     * Is first tour step
+     * @return {boolean} if the current step is the first tour step
      */
     public get isOnFirstStep(): boolean {
         return this.currentTourStepIndex === 0;
     }
 
-    /* Show resize message */
+    /**
+     * @return {boolean} if the `show resize` message should be displayed
+     */
     public get isOnResizeMessage(): boolean {
         return this.onResizeMessage;
     }
 
-    /* Current tour step number */
+    /**
+     * @return current tour step number
+     */
     public get currentTourStepDisplay(): number {
         return this.currentTourStepIndex + 1;
     }
 
-    /* Total count of tour steps */
+    /**
+     *  @return total count of tour steps of the current tour
+     */
     public get currentTourStepCount(): any {
         return this.currentTour && this.currentTour.steps ? this.currentTour.steps.length : 0;
     }
 
-    /* Prevents the tour from advancing by clicking the backdrop */
+    /**
+     *  Prevents the tour from advancing by clicking the backdrop
+     *  @return {boolean} `preventBackdropFromAdvancing` configuration if tour should advance when clicking on the backdrop
+     *  or false if this configuration is not set
+     */
     public get preventBackdropFromAdvancing(): boolean {
         if (this.currentTour) {
             return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
@@ -246,18 +266,20 @@ export class GuidedTourService {
     /**
      * Get the tour step with defined orientation
      * @param index current tour step index
+     * @return prepared current tour step or null
      */
-    private getPreparedTourStep(index: number): TourStep | undefined {
+    private getPreparedTourStep(index: number): TourStep | null {
         if (this.currentTour) {
             return this.setTourOrientation(this.currentTour.steps[index]);
         } else {
-            return undefined;
+            return null;
         }
     }
 
     /**
      * Set orientation of the passed on tour step
-     * @param step  passed on tour step of a guided tour
+     * @param {step} passed on tour step of a guided tour
+     * @return guided tour step with defined orientation
      */
     private setTourOrientation(step: TourStep): TourStep {
         const convertedStep = cloneDeep(step);
@@ -285,7 +307,19 @@ export class GuidedTourService {
     }
 
     /**
+     * Subscribe to guided tour settings GET request and store response value in service class variable
+     */
+    public getGuidedTourSettings() {
+        this.fetchGuidedTourSettings().subscribe(guidedTourSettings => {
+            if (guidedTourSettings) {
+                this.guidedTourSettings = guidedTourSettings;
+            }
+        });
+    }
+
+    /**
      * Send a GET request for the guided tour settings of the current user
+     * @return {Observable<GuidedTourSettings} guided tour settings
      */
     private fetchGuidedTourSettings(): Observable<GuidedTourSettings> {
         return this.http.get<GuidedTourSettings>(this.resourceUrl, { observe: 'response' }).map((res: EntityResponseType) => {
@@ -300,6 +334,7 @@ export class GuidedTourService {
      * Send a PUT request to update the guided tour settings of the current user
      * @param settingName   name of the tour setting that is stored in the guided tour settings json in the DB, e.g. showCourseOverviewTour
      * @param settingValue  boolean value that defines if the tour for [settingName] should be displayed automatically
+     * @return {Observable<EntityResponseType>} updated guided tour settings
      */
     public updateGuidedTourSettings(settingName: string, settingValue: boolean): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
@@ -310,19 +345,9 @@ export class GuidedTourService {
     }
 
     /**
-     * Subscribe to guided tour settings and store value in service class variable
-     */
-    public getGuidedTourSettings() {
-        this.fetchGuidedTourSettings().subscribe(guidedTourSettings => {
-            if (guidedTourSettings) {
-                this.guidedTourSettings = guidedTourSettings;
-            }
-        });
-    }
-
-    /**
      * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
      * that provide tours.
+     * @return true if a guided tour is available
      */
     public checkGuidedTourAvailabilityForCurrentRoute(): boolean {
         if (this.router.url === '/overview') {
