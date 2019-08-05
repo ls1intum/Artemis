@@ -617,7 +617,7 @@ public class ParticipationResource {
 
     /**
      * GET /participations/:id/latest-pending-submission : get the latest pending submission for the participation.
-     * A pending submission is one that does not have a result yet and is not older than 2 minutes.
+     * A pending submission is one that does not have a result yet and is not older than RESULT_WAIT_LIMIT_SECONDS.
      *
      * @param participationId the id of the participation get the latest submission for
      * @return the ResponseEntity with status 200 (OK)

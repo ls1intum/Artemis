@@ -44,7 +44,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
      * Fetch the latest pending submission for a participation, which means:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than 2 minutes (in this case it could be that never a result will come due to an error)
+     * - Submission is not older than EXPECTED_RESULT_CREATION_TIME_MS (in this case it could be that never a result will come due to an error)
      *
      * @param participationId
      */
@@ -141,7 +141,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
      * A latest pending submission is characterized by the following properties:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than 2 minutes (in this case it could be that never a result will come due to an error)
+     * - Submission is not older than EXPECTED_RESULT_CREATION_TIME_MS (in this case it could be that never a result will come due to an error)
      *
      * Will emit:
      * - A submission if a last pending submission exists.
