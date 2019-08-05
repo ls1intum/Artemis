@@ -6,7 +6,7 @@ In this guide you will learn how to setup the development environment for your c
 
 To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArtemisApp. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`. 
 
-```
+```yaml
 artemis:
   repo-clone-path: ./repos/
   encryption-password: <encrypt-password>
@@ -63,7 +63,7 @@ If you use a password, you need to adapt it in Artemis/gradle/liquibase.gradle.
 
 **Please note:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
-    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,automaticText
+    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
 ### Client Setup
 
@@ -105,3 +105,30 @@ The client and the server will run in different containers. As yarn is used with
 
 * Stop the server: `docker-compose stop artemis-server` (restart via `docker-compose start artemis-server`)
 * Stop the client: `docker-compose stop artemis-client` (restart via `docker-compose start artemis-client`)
+
+### Text Assessment Clustering Service
+
+The semi-automatic text assessment relies on the text assessment clustering (TAC) service, which is currently closed-source. (Contact @jpbernius if you require access.)
+
+To enable automatic text assessments, special configuration is required:
+
+**Enable the `automaticText` Spring profile:**
+
+```
+--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,automaticText
+```
+
+**Configure API Endpoints**:
+
+The TAC service is running on a dedicated machine and is adressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+
+```yaml
+artemis:
+  # ...
+  automatic-text:
+    embedding-url: http://localhost:8000/embed
+    embedding-chunk-size: 50
+    clustering-url: http://localhost:8000/cluster
+    secret: null
+```
+

@@ -12,7 +12,7 @@ Artemis supports the following exercises:
 1. **[Programming exercises](/doc/exerciseTypes/programmingExercise/PROGRAMMING_EXERCISE.md)** with version control and automatic assessment with test cases and continuous integration
 2. **Quiz exercises** with multiple choice, drag and drop and short answer quiz questions 
 3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
-4. **Text exercises** with manual assessment
+4. **Text exercises** with manual (and experimental semi-automatic) assessment
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
