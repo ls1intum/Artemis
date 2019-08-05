@@ -46,5 +46,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     boolean existsByParticipationId(long participationId);
 
-    Optional<Submission> findFirstByParticipationIdAndResultIsNullOrderBySubmissionDate(Long participationId);
+    Optional<Submission> findFirstByParticipationIdOrderBySubmissionDate(Long participationId);
 }
