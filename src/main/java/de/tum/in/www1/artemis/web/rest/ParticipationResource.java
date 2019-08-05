@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -38,7 +39,6 @@ import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -84,14 +84,12 @@ public class ParticipationResource {
 
     private final ResultService resultService;
 
-    private final SubmissionRepository submissionRepository;
-
     private final UserService userService;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
-            ResultService resultService, SubmissionRepository submissionRepository, UserService userService) {
+            ResultService resultService, UserService userService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -102,7 +100,6 @@ public class ParticipationResource {
         this.versionControlService = versionControlService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
-        this.submissionRepository = submissionRepository;
         this.userService = userService;
     }
 
@@ -210,7 +207,7 @@ public class ParticipationResource {
 
     /**
      * This makes sure the client can display the latest result immediately after loading this participation
-     *
+     * 
      * @param participation
      */
     private void addLatestResultToParticipation(Participation participation) {
