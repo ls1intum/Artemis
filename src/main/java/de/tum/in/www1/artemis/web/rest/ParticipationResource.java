@@ -635,7 +635,7 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdOrderBySubmissionDate(participationId);
+        Optional<Submission> submissionOpt = submissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
             return ResponseEntity.ok(null);
         }
