@@ -8,20 +8,20 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { UMLModel } from '@ls1intum/apollon';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint } from 'app/entities/complaint';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission';
+import { Complaint, ComplaintService } from 'app/entities/complaint';
+import { Submission } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -97,6 +97,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
+        private fileUploadSubmissionService: FileUploadSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
@@ -202,6 +203,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         }
 
         submissionsObservable
@@ -240,6 +243,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
         } else if (this.exercise.type === ExerciseType.MODELING) {
             submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
         }
 
         submissionObservable.subscribe(
@@ -317,6 +322,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         } else if (this.exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
             queryParams.showBackButton = true;
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            route = `/file-upload-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
         }
         this.router.navigate([route], { queryParams });
     }

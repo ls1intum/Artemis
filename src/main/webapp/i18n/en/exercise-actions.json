@@ -21,7 +21,8 @@
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
-            "copiedUrl": "Copied URL"
+            "copiedUrl": "Copied URL",
+            "uploadFile": "Upload a file"
         }
     }
 }
