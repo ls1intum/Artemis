@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
-import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,62 +104,5 @@ public class ParticipationIntegrationTest {
     public void participateTwiceInTextExercise_badRequest() throws Exception {
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
-    public void getLatestPendingSubmissionIfExists_student() throws Exception {
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, Submission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1")
-    public void getLatestPendingSubmissionIfExists_ta() throws Exception {
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, Submission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1")
-    public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, Submission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
-    public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
-                Submission.class);
-        assertThat(returnedSubmission).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1")
-    public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
-                Submission.class);
-        assertThat(returnedSubmission).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1")
-    public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ModelingSubmission submission = (ModelingSubmission) new ModelingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addModelingSubmission(modelingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
-                Submission.class);
-        assertThat(returnedSubmission).isNull();
     }
 }

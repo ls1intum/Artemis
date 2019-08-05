@@ -71,6 +71,9 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepo;
+
+    @Autowired
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
@@ -345,6 +348,16 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    @Transactional
+    public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        programmingSubmissionRepo.save(submission);
         participationRepo.save(participation);
         return submission;
     }
