@@ -50,7 +50,7 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
-    public void notifyPush(Long participationId, Object requestBody) throws IllegalArgumentException {
+    public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new IllegalArgumentException();
@@ -86,9 +86,6 @@ public class ProgrammingSubmissionService {
 
         participation.addSubmissions(programmingSubmission);
 
-        programmingSubmissionRepository.save(programmingSubmission);
-
-        // notify user via websocket
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
+        return programmingSubmissionRepository.save(programmingSubmission);
     }
 }

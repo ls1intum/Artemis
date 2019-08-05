@@ -7,6 +7,7 @@ import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { Result } from 'app/entities/result';
 
 export interface ISubmissionWebsocketService {
     getLatestPendingSubmission: (participationId: number) => Observable<Submission | null>;
@@ -113,7 +114,16 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
         if (this.resultSubscriptions[participationId]) {
             return;
         }
-        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId).pipe(distinctUntilChanged());
+        const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId).pipe(
+            // Make sure that the incoming result belongs the latest submission!
+            filter((result: Result | null) => {
+                if (!result || !result.submission) {
+                    return false;
+                }
+                return result.submission.id === this.latestValue[participationId]!.id;
+            }),
+            distinctUntilChanged(),
+        );
 
         this.resultSubscriptions[participationId] = merge(this.resultTimerSubjects[participationId], resultObservable)
             .pipe(

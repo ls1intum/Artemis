@@ -5,11 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -35,11 +37,14 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -53,7 +58,13 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
 
         log.info("REST request to inform about new commit+push for participation: {}", participationId);
-        programmingSubmissionService.notifyPush(participationId, requestBody);
+        ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
+
+        // Remove unnecessary information from the new submission.
+        submission.getParticipation().setExercise(null);
+        submission.getParticipation().setSubmissions(null);
+        // notify user via websocket.
+        messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
