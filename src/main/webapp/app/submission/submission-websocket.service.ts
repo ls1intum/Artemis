@@ -48,7 +48,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
      * @param participationId
      */
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
-        return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-submission');
+        return this.http.get<Submission>(SERVER_API_URL + 'api/participations/' + participationId + '/latest-pending-submission');
     };
 
     /**

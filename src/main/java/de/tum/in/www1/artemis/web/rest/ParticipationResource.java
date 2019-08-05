@@ -90,6 +90,8 @@ public class ParticipationResource {
 
     private final UserService userService;
 
+    private final int RESULT_WAIT_LIMIT_SECONDS = 60;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
@@ -614,15 +616,15 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:id/latest-submission : get the latest pending submission for the participation.
+     * GET /participations/:id/latest-pending-submission : get the latest pending submission for the participation.
      * A pending submission is one that does not have a result yet and is not older than 2 minutes.
      *
      * @param participationId the id of the participation get the latest submission for
      * @return the ResponseEntity with status 200 (OK)
      */
-    @GetMapping("/participations/{participationId}/latest-submission")
+    @GetMapping("/participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Submission> getLatestSubmission(@PathVariable Long participationId) {
+    public ResponseEntity<Submission> getLatestPendingSubmission(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             return notFound();
@@ -638,8 +640,8 @@ public class ParticipationResource {
             return ResponseEntity.ok(null);
         }
         Submission submission = submissionOpt.get();
-        boolean submissionIsNotOlderThanTwoMinutes = ChronoUnit.SECONDS.between(ZonedDateTime.now(), submission.getSubmissionDate()) < 120;
-        if (submissionIsNotOlderThanTwoMinutes) {
+        boolean submissionDateIsWithinWaitLimit = ChronoUnit.SECONDS.between(submission.getSubmissionDate(), ZonedDateTime.now()) <= RESULT_WAIT_LIMIT_SECONDS;
+        if (submissionDateIsWithinWaitLimit) {
             return ResponseEntity.ok(submission);
         }
         else {
