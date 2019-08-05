@@ -1,9 +1,18 @@
 <div class="card mb-3">
-    <div class="card-header">
+    <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
         <h4 class="card-title">
-            {{ 'artemisApp.textAssessment.detail.scoreFor' | translate }} "<span class="highlight" [ngClass]="highlightColor" [innerHtml]="assessment.reference"></span>"
+            {{ 'artemisApp.textAssessment.detail.scoreFor' | translate }} "<span
+                class="highlight"
+                [ngClass]="highlightColor"
+                [innerHtml]="block?.text || assessment.reference"
+            ></span
+            >"
         </h4>
+        <span class="badge badge-secondary float-right" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.textAssessment.automaticGenerated' | translate }}">
+            <fa-icon [icon]="'robot'"></fa-icon>
+            <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>
+        </span>
     </div>
     <div class="card-body">
         <div class="form-group row">

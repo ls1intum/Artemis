@@ -17,6 +17,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -25,6 +26,7 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 })
 export class TextExerciseDialogComponent implements OnInit {
     EditorMode = EditorMode;
+    AssessmentType = AssessmentType;
 
     textExercise: TextExercise;
     isSaving: boolean;
