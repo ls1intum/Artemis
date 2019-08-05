@@ -47,8 +47,10 @@ To optimize the Artemis application for production, run:
 This will compile the TypeScript into JavaScript files, concatenate and minify them and the CSS files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:
 
 ```
-java -jar build/libs/*.war
+java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
+
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](/doc/setup/SETUP.md))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 

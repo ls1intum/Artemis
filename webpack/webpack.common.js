@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const rxPaths = require('rxjs/_esm5/path-mapping');
@@ -57,7 +58,7 @@ plugins: [
             NODE_ENV: `'${options.env}'`,
             BUILD_TIMESTAMP: `'${new Date().getTime()}'`,
             // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
-            VERSION: `'${process.env.hasOwnProperty('APP_VERSION') ? process.env.APP_VERSION : 'UNKNOWN'}'`,
+            VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== "unspecified" ? process.env.APP_VERSION : utils.parseVersion()}'`,
             DEBUG_INFO_ENABLED: options.env === 'development',
             // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
             // If this URL is left empty (""), then it will be relative to the current context.
@@ -87,6 +88,7 @@ plugins: [
         chunks: ['polyfills', 'main', 'global'],
         chunksSortMode: 'manual',
         inject: 'body'
-    })
+    }),
+    new BaseHrefWebpackPlugin({ baseHref: '/' })
 ]
 });
