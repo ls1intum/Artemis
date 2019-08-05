@@ -58,7 +58,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
      * @param participationId
      */
     private startResultWaitingTimer = (participationId: number) => {
-        timer(this.EXPECTED_RESULT_CREATION_TIME_MS)
+        this.resultTimerSubscriptions[participationId] = timer(this.EXPECTED_RESULT_CREATION_TIME_MS)
             .pipe(
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
