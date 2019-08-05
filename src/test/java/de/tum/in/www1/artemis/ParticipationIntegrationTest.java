@@ -44,12 +44,6 @@ public class ParticipationIntegrationTest {
     UserRepository userRepo;
 
     @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
     RequestUtilService request;
 
     @Autowired
