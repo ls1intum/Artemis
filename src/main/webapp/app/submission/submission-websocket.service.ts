@@ -8,10 +8,14 @@ import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
+export interface ISubmissionWebsocketService {
+    getLatestPendingSubmission: (participationId: number) => Observable<Submission | null>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class SubmissionWebsocketService implements OnDestroy {
+export class SubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
     // Current value: 1 minute.
-    private EXPECTED_RESULT_CREATION_TIME_MS = 1000;
+    private EXPECTED_RESULT_CREATION_TIME_MS = 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};

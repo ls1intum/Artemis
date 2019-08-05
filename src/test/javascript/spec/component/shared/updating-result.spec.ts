@@ -9,16 +9,16 @@ import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
 import { CodeEditorFileService } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result, ResultComponent, UpdatingResultComponent } from 'app/entities/result';
 import { ArTEMiSSharedModule } from 'app/shared';
-import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { SubmissionWebsocketService } from 'app/submission/submission-websocket.service';
+import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,9 +28,12 @@ describe('UpdatingResultComponent', () => {
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
+    let submissionWebsocketService: SubmissionWebsocketService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
+
+    let getLatestPendingSubmissionStub: SinonStub;
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
@@ -39,9 +42,11 @@ describe('UpdatingResultComponent', () => {
     const ungradedResult1 = { id: 12, rated: false, completionDate: moment('2019-06-06T22:25:29.203+02:00') } as Result;
     const ungradedResult2 = { id: 13, rated: false, completionDate: moment('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
-    const initialParticipation = { id: 1, exercise, results, student } as Participation;
+    const initialParticipation = { id: 1, exercise, results, student } as any;
     const newGradedResult = { id: 14, rated: true } as Result;
     const newUngradedResult = { id: 15, rated: false } as Result;
+
+    const submission = { id: 1 } as any;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -56,6 +61,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: SubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
             ],
         })
             .compileComponents()
@@ -65,17 +71,20 @@ describe('UpdatingResultComponent', () => {
                 debugElement = fixture.debugElement;
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+                submissionWebsocketService = debugElement.injector.get(SubmissionWebsocketService);
 
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
                     subscribeForLatestResultOfParticipationSubject,
                 );
+
+                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(of(null));
             });
     });
 
     afterEach(() => {
         subscribeForLatestResultOfParticipationStub.restore();
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
     });
 
@@ -106,28 +115,28 @@ describe('UpdatingResultComponent', () => {
         fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).to.not.have.been.called;
-        expect(comp.result).to.be.undefined;
+        expect(comp.result).to.equal(undefined);
     });
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
-        expect(comp.result.id).to.equal(gradedResult2.id);
+        expect(comp.result!.id).to.equal(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
-        expect(comp.result.id).to.equal(ungradedResult2.id);
+        expect(comp.result!.id).to.equal(ungradedResult2.id);
     });
 
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {
         cleanInitializeGraded();
         const currentResult = comp.result;
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
-        expect(comp.result.id).to.equal(currentResult.id);
+        expect(comp.result!.id).to.equal(currentResult!.id);
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result.id).to.equal(newGradedResult.id);
+        expect(comp.result!.id).to.equal(newGradedResult.id);
     });
 
     it('should react to both rated and unrated results if showUngradedResults is true', async () => {
@@ -141,15 +150,46 @@ describe('UpdatingResultComponent', () => {
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
         const unsubscribeSpy = spy(comp.resultSubscription, 'unsubscribe');
-        const newParticipation = { id: 80, exercise, student, results: [{ id: 1, rated: true }] } as Participation;
+        const newParticipation = { id: 80, exercise, student, results: [{ id: 1, rated: true }] } as any;
         cleanInitializeGraded(newParticipation);
-        expect(unsubscribeSpy).to.have.been.calledOnce;
-        expect(comp.result.id).to.equal(newParticipation.results[0].id);
+        expect(unsubscribeSpy).to.have.been.calledOnceWithExactly();
+        expect(comp.result!.id).to.equal(newParticipation.results[0].id);
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(initialParticipation.id);
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledWithExactly(newParticipation.id);
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result.id).to.equal(newGradedResult.id);
+        expect(comp.result!.id).to.equal(newGradedResult.id);
+    });
+
+    it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(comp.isBuilding).to.be.false;
+    });
+
+    it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        getLatestPendingSubmissionStub.returns(of(submission));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(comp.isBuilding).to.be.true;
+    });
+
+    it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.isBuilding = true;
+        getLatestPendingSubmissionStub.returns(of(null));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(comp.isBuilding).to.equal(false);
+    });
+
+    it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
+        getLatestPendingSubmissionStub.returns(of(submission));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).not.to.have.been.called;
+        expect(comp.isBuilding).to.equal(undefined);
     });
 });
