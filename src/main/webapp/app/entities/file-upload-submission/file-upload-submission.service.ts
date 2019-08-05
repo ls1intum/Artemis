@@ -51,6 +51,10 @@ export class FileUploadSubmissionService {
         return this.http.get<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submission-without-assessment`);
     }
 
+    getDataForFileUploadEditor(participationId: number): Observable<any> {
+        return this.http.get<any>(`api/file-upload-editor/${participationId}`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: FileUploadSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -55,9 +57,13 @@ public class FileUploadSubmissionResource {
 
     private final UserService userService;
 
+    private final ParticipationService participationService;
+
+    private final ResultRepository resultRepository;
+
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
             FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService) {
+            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -65,6 +71,8 @@ public class FileUploadSubmissionResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -223,6 +231,80 @@ public class FileUploadSubmissionResource {
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
+    /**
+     * Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with answer if existing and the assessments if the submission was already
+     * submitted.
+     *
+     * @param participationId the participationId for which to find the data for the file upload editor
+     * @return the ResponseEntity with the participation as body
+     */
+    @GetMapping("/file-upload-editor/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentParticipation> getDataForFileUpload(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
+        if (participation == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+        }
+        FileUploadExercise fileUploadExercise;
+        if (participation.getExercise() instanceof FileUploadExercise) {
+            fileUploadExercise = (FileUploadExercise) participation.getExercise();
+            if (fileUploadExercise == null) {
+                return ResponseEntity.badRequest()
+                        .headers(
+                                HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                        .body(null);
+            }
+        }
+        else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "wrongExerciseType",
+                    "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
+
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins
+        // can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(fileUploadExercise.getCourse())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // if no results, check if there are really no results or the relation to results was not
+        // updated yet
+        if (participation.getResults().size() <= 0) {
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            participation.setResults(new HashSet<>(results));
+        }
+
+        Optional<FileUploadSubmission> optionalFileUploadSubmission = participation.findLatestFileUploadSubmission();
+        participation.setSubmissions(new HashSet<>());
+
+        participation.getExercise().filterSensitiveInformation();
+
+        if (optionalFileUploadSubmission.isPresent()) {
+            FileUploadSubmission fileUploadSubmission = optionalFileUploadSubmission.get();
+
+            // set reference to participation to null, since we are already inside a participation
+            fileUploadSubmission.setParticipation(null);
+
+            Result result = fileUploadSubmission.getResult();
+            // if (fileUploadSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // List<Feedback> assessments = fileUploadAssessmentService.getAssessmentsForResult(result);
+            // result.setFeedbacks(assessments);
+            // }
+
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+                result.setAssessor(null);
+            }
+
+            participation.addSubmissions(fileUploadSubmission);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+            participation.setStudent(null);
+        }
+
+        return ResponseEntity.ok(participation);
+    }
+
     private ResponseEntity<FileUploadSubmission> checkExerciseValidity(FileUploadExercise fileUploadExercise) {
         if (fileUploadExercise == null) {
             return ResponseEntity.badRequest()
@@ -233,7 +315,8 @@ public class FileUploadSubmissionResource {
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+                    .headers(
+                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
                     .body(null);
         }
         if (!courseService.userHasAtLeastStudentPermissions(course)) {

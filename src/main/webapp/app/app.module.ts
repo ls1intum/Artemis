@@ -69,6 +69,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { ArTEMiSFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
 
 @NgModule({
     imports: [
@@ -106,7 +107,6 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
         ArTEMiSStatisticModule,
-        ArTEMiSModelingSubmissionModule,
         ArTEMiSMarkdownEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
@@ -121,6 +121,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
         ArTEMiSModelingSubmissionModule,
+        ArTEMiSFileUploadSubmissionModule,
         ArTEMiSExampleTextSubmissionModule,
         ArTEMiSExampleModelingSubmissionModule,
         ArTEMiSExampleModelingSolutionModule,

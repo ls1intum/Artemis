@@ -308,7 +308,7 @@
 </div>
 <!-- TEXT EXERCISE ACTIONS END -->
 
-<!-- FILE UPLOAD EXERCISE ACTIONS END -->
+<!-- FILE UPLOAD EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === FILE_UPLOAD">
     <!-- ACTIONS START -->
     <div class="btn-group">
@@ -321,6 +321,16 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="folder-open"
+            [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
+            routerLink="/file-upload-submission/{{ exercise.participations[0].id }}"
         ></button>
     </div>
     <!-- ACTIONS END-->

@@ -1,0 +1,115 @@
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-12 col-lg-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
+                File Upload <span *ngIf="fileUploadExercise">for Exercise: {{ fileUploadExercise.title }}</span>
+            </h2>
+        </div>
+
+        <div class="col-12 col-lg-4 text-right">
+            <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
+            <br />
+            <button class="btn btn-success" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
+        </div>
+    </div>
+</div>
+
+<jhi-alert></jhi-alert>
+
+<div class="p-4">
+    <div class="row" *ngIf="fileUploadExercise">
+        <div class="col-9">
+            <p class="mb-3 markdown-preview">
+                <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
+                <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
+            </p>
+        </div>
+        <div class="col-3 text-right" *ngIf="!submission?.submitted">
+            <p>
+                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ fileUploadExercise!.maxScore }}</strong>
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file">File</label>
+                <div class="input-group background-file">
+                    <div class="custom-file overflow-ellipsis">
+                        <input
+                            #fileInput
+                            id="fileUploadInput{{ submission.id }}"
+                            type="file"
+                            accept="application/pdf"
+                            class="custom-file-input"
+                            (change)="setFileSubmissionForExercise($event)"
+                        />
+                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput{{ submission.id }}">{{ submission.filePath }}</label>
+                    </div>
+                </div>
+                <ng-container *ngIf="erroredFile">
+                    <div id="too-large-file-alert" class="alert alert-danger">
+                        {{ 'artemisApp.lecture.attachments.error' | translate: { fileName: erroredFile.name } }}
+                    </div>
+                </ng-container>
+            </div>
+            <!--<div class="form-group">
+            <jhi-date-time-picker
+                labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | translate }}"
+                [(ngModel)]="fileUploadExercise.releaseDate"
+                name="endDate"
+            ></jhi-date-time-picker>
+        </div> -->
+        </div>
+
+        <ng-template #hasFeedback>
+            <div class="col-md-12 col-lg-10 col-xl-8">
+                <b><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</b>
+                <br />
+            </div>
+
+            <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedback.detailText }}
+            </div>
+        </ng-template>
+    </div>
+
+    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
+        <button
+            class="btn btn-primary"
+            [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
+            (click)="toggleComplaintForm()"
+            [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
+            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+        >
+            {{ 'artemisApp.complaint.moreInfo' | translate }}
+        </button>
+        <button
+            class="btn btn-primary ml-1"
+            [class.not-allowed]="!isTimeOfComplaintValid"
+            (click)="toggleRequestMoreFeedbackForm()"
+            [disabled]="!isTimeOfComplaintValid"
+            title="{{ !isTimeOfComplaintValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
+        >
+            {{ 'artemisApp.moreFeedback.button' | translate }}
+        </button>
+    </div>
+
+    <div class="row" *ngIf="showComplaintForm || hasComplaint">
+        <jhi-complaint-form
+            class="flex-grow-1"
+            [resultId]="result?.id"
+            [allowedComplaints]="numberOfAllowedComplaints"
+            [complaintType]="ComplaintType.COMPLAINT"
+            (submit)="hasComplaint = true"
+        ></jhi-complaint-form>
+    </div>
+    <div class="row" *ngIf="showRequestMoreFeedbackForm || hasRequestMoreFeedback">
+        <jhi-complaint-form class="flex-grow-1" [resultId]="result?.id" [complaintType]="ComplaintType.MORE_FEEDBACK" (submit)="hasRequestMoreFeedback = true"></jhi-complaint-form>
+    </div>
+</div>
