@@ -17,6 +17,7 @@
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
             *ngIf="participation"
+            [exerciseType]="PROGRAMMING"
             [showUngradedResults]="true"
             [showGradedBadge]="true"
             [participation]="participation"

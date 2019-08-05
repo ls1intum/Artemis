@@ -48,7 +48,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
-            this.subscribeForNewSubmissions();
+            // Currently submissions are only used for programming exercises to visualize the build process.
+            if (this.exerciseType === ExerciseType.PROGRAMMING) {
+                this.subscribeForNewSubmissions();
+            }
         }
     }
 
@@ -78,16 +81,17 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .subscribe();
     }
 
+    /**
+     * Subscribe for incoming submissions that indicate that the build process has started in the CI.
+     * Will emit a null value when no build is running / the current build has stopped running.
+     */
     subscribeForNewSubmissions() {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionWebsocketService
             .getLatestPendingSubmission(this.participation.id)
-            .pipe(
-                tap(console.log),
-                tap(pendingSubmission => (this.isBuilding = !!pendingSubmission)),
-            )
+            .pipe(tap(pendingSubmission => (this.isBuilding = !!pendingSubmission)))
             .subscribe();
     }
 }

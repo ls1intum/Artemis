@@ -106,6 +106,7 @@
         <div class="ml-auto d-flex align-items-center">
             <jhi-updating-result
                 *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
+                [exerciseType]="PROGRAMMING"
                 [participation]="selectedParticipation"
                 [showUngradedResults]="true"
                 [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
