@@ -145,6 +145,7 @@ export class SubmissionWebsocketService implements ISubmissionWebsocketService, 
         }
         return this.fetchLatestPendingSubmission(participationId).pipe(
             catchError(() => of(null)),
+            tap((submission: Submission) => (this.latestValue[participationId] = submission)),
             tap(() => this.setupWebsocketSubscription(participationId)),
             switchMap((submission: Submission | null) => {
                 const newSubject = new BehaviorSubject(submission);
