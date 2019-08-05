@@ -84,8 +84,20 @@ describe('SubmissionWebsocketService', () => {
         submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([currentSubmission]);
         // Result comes in for submission.
+        result.submission = currentSubmission;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([currentSubmission, null]);
+    });
+
+    it('should NOT emit a null value when a new result comes that does not belong to the currentSubmission', () => {
+        const returnedSubmissions: Array<Submission | null> = [];
+        httpGetStub.returns(of(currentSubmission));
+        submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
+        expect(returnedSubmissions).to.deep.equal([currentSubmission]);
+        // Result comes in for submission.
+        result.submission = currentSubmission2;
+        wsLatestResultSubject.next(result);
+        expect(returnedSubmissions).to.deep.equal([currentSubmission]);
     });
 
     it('should emit the newest submission when it was received through the websocket connection', () => {
@@ -98,6 +110,7 @@ describe('SubmissionWebsocketService', () => {
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([null, currentSubmission2]);
         // Result comes in for submission.
+        result.submission = currentSubmission2;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([null, currentSubmission2, null]);
     });
