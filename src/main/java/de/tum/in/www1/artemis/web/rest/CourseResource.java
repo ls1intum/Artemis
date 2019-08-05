@@ -87,6 +87,8 @@ public class CourseResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
+    private final FileUploadSubmissionService fileUploadSubmissionService;
+
     private final ResultService resultService;
 
     private final ComplaintService complaintService;
@@ -97,8 +99,9 @@ public class CourseResource {
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
-            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
+            FileUploadSubmissionService fileUploadSubmissionService, ResultService resultService, ComplaintService complaintService,
+            TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -115,6 +118,7 @@ public class CourseResource {
         this.notificationService = notificationService;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
@@ -338,7 +342,8 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
 
-        exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise).collect(Collectors.toList());
+        exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise)
+                .collect(Collectors.toList());
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
@@ -355,10 +360,12 @@ public class CourseResource {
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
-            else {
+            else if (exercise instanceof ModelingExercise) {
                 numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
-
+            else {
+                numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
             Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
@@ -389,7 +396,8 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
+                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -457,8 +465,8 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getExercises().stream()
+                .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise).collect(Collectors.toSet());
 
         course.setExercises(interestingExercises);
 
@@ -467,8 +475,11 @@ public class CourseResource {
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
-            else {
+            else if (exercise instanceof ModelingExercise) {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else {
+                numberOfParticipations += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
             Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
