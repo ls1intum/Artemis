@@ -13,11 +13,17 @@ import { AccountService } from 'app/core';
     encapsulation: ViewEncapsulation.None,
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
-    @Input() public topOfPageAdjustment = 0;
-    @Input() public tourStepWidth = 500;
-    @Input() public minimalTourStepWidth = 400;
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
+
+    // Used to adjust values to determine scroll. This is a blanket value to adjust for elements like nav bars.
+    public topOfPageAdjustment = 0;
+    // Sets the width of all tour step elements.
+    public tourStepWidth = 500;
+    // Sets the minimal width of all tour step elements.
+    public minimalTourStepWidth = 400;
+    // Sets the highlight padding around the selected .
     public highlightPadding = 4;
+
     public currentTourStep: TourStep | null;
     public selectedElementRect: DOMRect | null;
 
@@ -29,7 +35,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
-    /* Enable tour navigation with keyboard arrows */
+    /**
+     * Enable tour navigation with left and right keyboard arrows and escape key
+     * @param event: keyboard keydown event
+     */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
         if (event.code === 'ArrowRight' && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
@@ -44,32 +53,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Subscribe to guidedTourCurrentStepStream and set tour step if the user has the right permission
+     * Initial subscriptions for GuidedTourCurrentStepStream, resize event and scroll event
      */
     public ngAfterViewInit(): void {
-        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
-            this.currentTourStep = step;
-            if (!step) {
-                return;
-            }
-            const hasPermission = !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission);
-            if (step.selector && hasPermission) {
-                const selectedElement = document.querySelector(step.selector);
-                if (selectedElement) {
-                    this.scrollToAndSetElement();
-                    return;
-                }
-            }
-            this.selectedElementRect = null;
-        });
-
-        this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
-            this.updateStepLocation();
-        });
-
-        this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
-            this.updateStepLocation();
-        });
+        this.subscribeToGuidedTourCurrentStepStream();
+        this.subscribeToResizeEvent();
+        this.subscribeToScrollEvent();
     }
 
     /**
@@ -81,58 +70,64 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Calculate max width adjustment for tour step
-     * @return {number} maxWidthAdjustmentForTourStep
+     * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
-    private get maxWidthAdjustmentForTourStep(): number {
-        return this.tourStepWidth - this.minimalTourStepWidth;
+    private subscribeToGuidedTourCurrentStepStream() {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
+            this.currentTourStep = step;
+            if (!this.currentTourStep) {
+                return;
+            }
+            if (this.hasUserPermissionForTourStep(this.currentTourStep)) {
+                this.scrollToAndSetElement(this.currentTourStep, this.tourStep, this.isBottom());
+                return;
+            }
+            this.selectedElementRect = null;
+        });
     }
 
     /**
-     * Calculate width adjustment for screen bound
-     * @return {number} widthAdjustmentForScreenBound
+     * Subscribe to resize event and update step location of the selected element in the tour step
      */
-    private get widthAdjustmentForScreenBound(): number {
-        if (!this.tourStep) {
-            return 0;
-        }
-        let adjustment = 0;
-        if (this.calculatedLeftPosition < 0) {
-            adjustment = -this.calculatedLeftPosition;
-        }
-        if (this.calculatedLeftPosition > window.innerWidth - this.tourStepWidth) {
-            adjustment = this.calculatedLeftPosition - (window.innerWidth - this.tourStepWidth);
-        }
-
-        return Math.min(this.maxWidthAdjustmentForTourStep, adjustment);
+    private subscribeToResizeEvent() {
+        this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(this.currentTourStep));
+        });
     }
 
     /**
-     * Calculate tour step width for tour-step div
-     * @return tour step width for tour-step div
+     * Subscribe to scroll event and update step location of the selected element in the tour step
      */
-    public get calculatedTourStepWidth(): number {
-        return this.tourStepWidth - this.widthAdjustmentForScreenBound;
+    private subscribeToScrollEvent() {
+        this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(this.currentTourStep));
+        });
     }
 
     /**
-     * Scroll to highlighted element and set tour step
+     * Check if the current user has the permission to view the tour step
+     * @param currentTourStep: current tour step of guided tour
+     * @return {boolean} if the current user has the permission to view the tour step
      */
-    public scrollToAndSetElement(): void {
-        this.updateStepLocation();
-        if (this.isTourOnScreen()) {
+    public hasUserPermissionForTourStep(currentTourStep: TourStep): boolean {
+        return !currentTourStep.permission || this.accountService.hasAnyAuthorityDirect(currentTourStep.permission);
+    }
+
+    /**
+     * Scroll to and set highlighted element
+     * @param currentTourStep: current tour step of the guided tour
+     * @param tourStep: current tour step element
+     * @param isBottomElement: boolean if the current tour step has a bottom orientation
+     */
+    public scrollToAndSetElement(currentTourStep: TourStep | null, tourStep: ElementRef, isBottomElement: boolean): void {
+        const selectedElement = this.getSelectedElement(currentTourStep);
+        this.selectedElementRect = this.updateStepLocation(selectedElement);
+        if (!selectedElement || !this.isTourOnScreen(this.currentTourStep, tourStep, isBottomElement)) {
             return;
         }
-        // Allow things to render to scroll to the correct location
+        // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
-            let topPosition = 0;
-            if (this.selectedElementRect && this.currentTourStep) {
-                const scrollAdjustment = this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
-                const positionAdjustment = this.isBottom()
-                    ? -this.topOfPageAdjustment - scrollAdjustment + this.getStepScreenAdjustment()
-                    : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - this.getStepScreenAdjustment();
-                topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
-            }
+            const topPosition = this.getTopScrollingPosition(this.selectedElementRect, this.currentTourStep, this.tourStep, this.isBottom(), this.topOfPageAdjustment);
             try {
                 window.scrollTo({
                     left: 0,
@@ -150,22 +145,31 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
+     * Check if the tour step element would be visible on screen
+     * @param currentTourStep: current tour step of the guided tour
+     * @param tourStep: current tour step element
+     * @param isBottomElement: boolean if the current tour step has a bottom orientation
      * @return {boolean} if tour step is visible on screen
      */
-    private isTourOnScreen(): boolean {
-        if (!this.currentTourStep && !this.currentTourStep!.selector) {
-            return false;
+    public isTourOnScreen(currentTourStep: TourStep | null, tourStep: ElementRef, isBottomElement: boolean): boolean {
+        if (currentTourStep && currentTourStep.selector) {
+            return (
+                tourStep &&
+                this.elementInViewport(document.querySelector(currentTourStep.selector), isBottomElement) &&
+                this.elementInViewport(tourStep.nativeElement, isBottomElement)
+            );
         }
-        return this.tourStep && this.elementInViewport(document.querySelector(this.currentTourStep!.selector!)) && this.elementInViewport(this.tourStep.nativeElement);
+        return false;
     }
 
     /**
      * Define if HTMLElement is visible in current viewport
      * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
-     * @param {element} HTMLElement
+     * @param element: HTMLElement
+     * @param isBottomElement: boolean if the current tour step has a bottom orientation
      * @return {boolean} if element is in viewport
      */
-    private elementInViewport(element: HTMLElement | null): boolean {
+    private elementInViewport(element: HTMLElement | null, isBottomElement: boolean): boolean {
         if (!element) {
             return false;
         }
@@ -178,20 +182,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
 
         const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
+        const stepScreenAdjustment = this.getStepScreenAdjustment(this.selectedElementRect, this.currentTourStep, this.tourStep, this.topOfPageAdjustment);
 
-        if (this.isBottom()) {
-            return (
-                top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + this.getStepScreenAdjustment() && top + height <= window.pageYOffset + window.innerHeight
-            );
+        if (isBottomElement) {
+            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.pageYOffset + window.innerHeight;
         } else {
-            return (
-                top >= window.pageYOffset + this.topOfPageAdjustment - this.getStepScreenAdjustment() && top + height + scrollAdjustment <= window.pageYOffset + window.innerHeight
-            );
+            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.pageYOffset + window.innerHeight;
         }
     }
 
     /**
-     * Handle backdrop clicking event
+     * Handle backdrop clicking event of the user
      * @param {event} event payload
      */
     public backdropClick(event: Event): void {
@@ -203,22 +204,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Update tour step location by calling getBoundingClientRect()
-     */
-    public updateStepLocation(): void {
-        this.selectedElementRect = null;
-        if (this.currentTourStep && this.currentTourStep.selector) {
-            const selectedElement = document.querySelector(this.currentTourStep.selector);
-            if (selectedElement) {
-                this.selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            }
-        }
-    }
-
-    /**
+     * Check if the current tour step has a bottom orientation
      * @return {boolean} if the current tour step orientation is bottom
      */
-    private isBottom(): boolean {
+    public isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
             return (
                 this.currentTourStep.orientation === Orientation.Bottom ||
@@ -229,161 +218,290 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return false;
     }
 
-    /**
-     * @return {number} top position for current tour step
-     */
-    public get topPosition(): number {
-        if (!this.selectedElementRect) {
-            return 0;
-        }
-        if (this.isBottom()) {
-            const paddingAdjustment = this.getHighlightPadding();
-            return this.selectedElementRect.top + this.selectedElementRect.height + paddingAdjustment;
-        }
+    /* ==========     Tour step calculation methods     ========== */
 
-        return this.selectedElementRect.top - this.getHighlightPadding();
+    /**
+     * Calculate tour step width for tour step element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @param tourStepWidth: defined width for tour step
+     * @param minimalTourStepWidth: defined minimal width for tour step
+     * @return tour step width for tour-step div
+     */
+    public getCalculatedTourStepWidth(selectedElementRect: DOMRect | null, currentTourStep: TourStep, tourStepWidth: number, minimalTourStepWidth: number): number {
+        const calculatedLeftPosition = this.getCalculatedLeftPosition(selectedElementRect, currentTourStep, tourStepWidth);
+        const maxWidthAdjustmentForTourStep = this.maxWidthAdjustmentForTourStep(tourStepWidth, minimalTourStepWidth);
+        const widthAdjustmentForScreenBound = this.widthAdjustmentForScreenBound(tourStepWidth, calculatedLeftPosition, maxWidthAdjustmentForTourStep);
+        return tourStepWidth - widthAdjustmentForScreenBound;
     }
 
     /**
-     * @return {number} left position of current tour step / highlighted element
+     * @return {number} top position for current tour step
      */
-    private get calculatedLeftPosition(): number {
-        if (this.selectedElementRect && this.currentTourStep) {
-            const paddingAdjustment = this.getHighlightPadding();
+    public getTopPosition(selectedElementRect: DOMRect | null, currentTourStep: TourStep | null, isBottomElement: boolean): number | null {
+        if (!selectedElementRect || !currentTourStep) {
+            return null;
+        }
+        if (isBottomElement) {
+            const paddingAdjustment = this.getHighlightPadding(currentTourStep);
+            return selectedElementRect.top + selectedElementRect.height + paddingAdjustment;
+        }
+        return selectedElementRect.top - this.getHighlightPadding(this.currentTourStep);
+    }
 
-            if (this.currentTourStep.orientation === Orientation.TopRight || this.currentTourStep.orientation === Orientation.BottomRight) {
-                return this.selectedElementRect.right - this.tourStepWidth;
+    /**
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @param tourStepWidth: defined width for tour step
+     * @param minimalTourStepWidth: defined minimal width for tour step
+     * @return {number} left position for current tour step
+     */
+    public getLeftPosition(selectedElementRect: DOMRect | null, currentTourStep: TourStep | null, tourStepWidth: number, minimalTourStepWidth: number): number | null {
+        if (!selectedElementRect || !currentTourStep) {
+            return null;
+        }
+        const calculatedLeftPosition = this.getCalculatedLeftPosition(selectedElementRect, currentTourStep, tourStepWidth);
+
+        if (calculatedLeftPosition === 0) {
+            return 5;
+        }
+        if (calculatedLeftPosition > 0) {
+            return calculatedLeftPosition;
+        }
+        const adjustment = Math.max(0, -calculatedLeftPosition);
+        const maxAdjustment = Math.min(this.maxWidthAdjustmentForTourStep(tourStepWidth, minimalTourStepWidth), adjustment);
+        return calculatedLeftPosition + maxAdjustment;
+    }
+
+    /**
+     * Get top position for selected element for scrolling
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @param tourStep: current tour step element
+     * @param isBottomElement: boolean if the current tour step has a bottom orientation
+     * @param topOfPageAdjustment: top page adjustment for scrolling
+     */
+    public getTopScrollingPosition(
+        selectedElementRect: DOMRect | null,
+        currentTourStep: TourStep | null,
+        tourStep: ElementRef,
+        isBottomElement: boolean,
+        topOfPageAdjustment: number,
+    ): number {
+        let topPosition = 0;
+        if (selectedElementRect && currentTourStep) {
+            const scrollAdjustment = currentTourStep.scrollAdjustment ? currentTourStep.scrollAdjustment : 0;
+            const stepScreenAdjustment = this.getStepScreenAdjustment(selectedElementRect, currentTourStep, tourStep, topOfPageAdjustment);
+
+            if (selectedElementRect) {
+                const positionAdjustment = isBottomElement
+                    ? -topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
+                    : +selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
+                topPosition = window.scrollY + selectedElementRect.top + positionAdjustment;
             }
+        }
+        return topPosition;
+    }
 
-            if (this.currentTourStep.orientation === Orientation.TopLeft || this.currentTourStep.orientation === Orientation.BottomLeft) {
-                return this.selectedElementRect.left;
+    /**
+     * Gets defined padding around the highlighted rectangle
+     * @param currentTourStep: current tour step of guided tour
+     * @return {number} highlight padding
+     */
+    private getHighlightPadding(currentTourStep: TourStep | null): number {
+        if (currentTourStep) {
+            let paddingAdjustment = currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
+            if (currentTourStep.highlightPadding) {
+                paddingAdjustment = currentTourStep.highlightPadding;
             }
-
-            if (this.currentTourStep.orientation === Orientation.Left) {
-                return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment;
-            }
-
-            if (this.currentTourStep.orientation === Orientation.Right) {
-                return this.selectedElementRect.left + this.selectedElementRect.width + paddingAdjustment;
-            }
-
-            return this.selectedElementRect.right - this.selectedElementRect.width / 2 - this.tourStepWidth / 2;
+            return paddingAdjustment;
         }
         return 0;
     }
 
     /**
-     * @return {number} left position for current tour step
+     * Get overlay top position for the highlighted rectangle of the selected element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @return {number} overlay top position for highlighted element
      */
-    public get leftPosition(): number {
-        if (this.calculatedLeftPosition === 0) {
-            return 5;
+    public getOverlayTop(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
+        if (selectedElementRect) {
+            return selectedElementRect.top - this.getHighlightPadding(currentTourStep);
         }
-        if (this.calculatedLeftPosition > 0) {
-            return this.calculatedLeftPosition;
+        return 0;
+    }
+
+    /**
+     * Get overlay left position for the highlighted rectangle of the selected element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @return {number} overlay left position
+     */
+    public getOverlayLeft(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
+        if (selectedElementRect) {
+            return selectedElementRect.left - this.getHighlightPadding(currentTourStep);
         }
-        const adjustment = Math.max(0, -this.calculatedLeftPosition);
-        const maxAdjustment = Math.min(this.maxWidthAdjustmentForTourStep, adjustment);
-        return this.calculatedLeftPosition + maxAdjustment;
+        return 0;
+    }
+
+    /**
+     * Get overlay height for the highlighted rectangle of the selected element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @return {number} overlay height
+     */
+    public getOverlayHeight(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
+        if (selectedElementRect) {
+            return selectedElementRect.height + this.getHighlightPadding(currentTourStep) * 2;
+        }
+        return 0;
+    }
+
+    /**
+     * Get overlay width for the highlighted rectangle of the selected element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @return {number} overlay width
+     */
+    public getOverlayWidth(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
+        if (selectedElementRect) {
+            return selectedElementRect.width + this.getHighlightPadding(currentTourStep) * 2;
+        }
+        return 0;
     }
 
     /**
      * Transform position of tour steps which are shown on top of the highlighted element
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
      * @return {string} '' or 'translateY(-100%)'
      */
-    public get transform(): string {
-        if (this.currentTourStep) {
-            if (
-                !this.currentTourStep.orientation ||
-                this.currentTourStep.orientation === Orientation.Top ||
-                this.currentTourStep.orientation === Orientation.TopRight ||
-                this.currentTourStep.orientation === Orientation.TopLeft
-            ) {
-                return 'translateY(-100%)';
-            }
+    public getTransform(selectedElementRect: DOMRect | null, currentTourStep: TourStep): string | null {
+        if (!selectedElementRect || !currentTourStep.selector) {
+            return null;
+        }
+        if (
+            currentTourStep &&
+            (!currentTourStep.orientation ||
+                currentTourStep.orientation === Orientation.Top ||
+                currentTourStep.orientation === Orientation.TopRight ||
+                currentTourStep.orientation === Orientation.TopLeft)
+        ) {
+            return 'translateY(-100%)';
         }
         return '';
     }
 
     /**
-     * @return {number} overlay top position for highlighted element
+     * Get Element for the current tour step selector
+     * @param currentTourStep: current tour step of guided tour
+     * @return {Element} current selected element for the tour step or null
      */
-    public get overlayTop(): number {
-        if (this.selectedElementRect) {
-            return this.selectedElementRect.top - this.getHighlightPadding();
+    public getSelectedElement(currentTourStep: TourStep | null): Element | null {
+        if (!currentTourStep || !currentTourStep.selector) {
+            return null;
         }
-        return 0;
+        return document.querySelector(currentTourStep.selector);
     }
 
     /**
-     * Get overlay left position for highlighted element
-     * @return {number} overlay left position
+     * Calculate max width adjustment for tour step
+     * @param tourStepWidth: defined width for tour step
+     * @param minimalTourStepWidth: defined minimal width for tour step
+     * @return {number} maxWidthAdjustmentForTourStep
      */
-    public get overlayLeft(): number {
-        if (this.selectedElementRect) {
-            return this.selectedElementRect.left - this.getHighlightPadding();
-        }
-        return 0;
+    public maxWidthAdjustmentForTourStep(tourStepWidth: number, minimalTourStepWidth: number) {
+        return tourStepWidth - minimalTourStepWidth;
     }
 
     /**
-     * Get overlay height for highlighted element
-     * @return {number} overlay height
+     *
+     * @param selectedElementRect: DOMRect of the selected element: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @param tourStepWidth: defined width for tour step
+     * @return {number} left position of current tour step / highlighted element
      */
-    public get overlayHeight(): number {
-        if (this.selectedElementRect) {
-            return this.selectedElementRect.height + this.getHighlightPadding() * 2;
-        }
-        return 0;
-    }
-
-    /**
-     * Get overlay width for highlighted element
-     * @return {number} overlay width
-     */
-    public get overlayWidth(): number {
-        if (this.selectedElementRect) {
-            return this.selectedElementRect.width + this.getHighlightPadding() * 2;
-        }
-        return 0;
-    }
-
-    /**
-     *  Gets defined padding around tour highlighting in pixels
-     *  @return {number} highlight padding
-     */
-    private getHighlightPadding(): number {
-        if (!this.currentTourStep) {
+    public getCalculatedLeftPosition(selectedElementRect: DOMRect | null, currentTourStep: TourStep | null, tourStepWidth: number) {
+        if (!selectedElementRect || !currentTourStep) {
             return 0;
         }
-        let paddingAdjustment = this.currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
-        if (this.currentTourStep.highlightPadding) {
-            paddingAdjustment = this.currentTourStep.highlightPadding;
+
+        const paddingAdjustment = currentTourStep.highlightPadding ? currentTourStep.highlightPadding : 0;
+
+        if (currentTourStep.orientation === Orientation.TopRight || currentTourStep.orientation === Orientation.BottomRight) {
+            return selectedElementRect.right - tourStepWidth;
         }
-        return paddingAdjustment;
+
+        if (currentTourStep.orientation === Orientation.TopLeft || currentTourStep.orientation === Orientation.BottomLeft) {
+            return selectedElementRect.left;
+        }
+
+        if (currentTourStep.orientation === Orientation.Left) {
+            return selectedElementRect.left - tourStepWidth - paddingAdjustment;
+        }
+
+        if (currentTourStep.orientation === Orientation.Right) {
+            return selectedElementRect.left + selectedElementRect.width + paddingAdjustment;
+        }
+        return selectedElementRect.right - selectedElementRect.width / 2 - tourStepWidth / 2;
+    }
+
+    /**
+     * Calculate width adjustment for screen bound
+     * @param tourStepWidth: defined width for tour step
+     * @param calculatedLeftPosition
+     * @param maxWidthAdjustmentForTourStep
+     * @return {number} widthAdjustmentForScreenBound
+     */
+    public widthAdjustmentForScreenBound(tourStepWidth: number, calculatedLeftPosition: number, maxWidthAdjustmentForTourStep: number) {
+        let adjustment = 0;
+
+        if (calculatedLeftPosition < 0) {
+            adjustment = -calculatedLeftPosition;
+        }
+        if (calculatedLeftPosition > window.innerWidth - tourStepWidth) {
+            adjustment = calculatedLeftPosition - (window.innerWidth - tourStepWidth);
+        }
+        return Math.min(maxWidthAdjustmentForTourStep, adjustment);
     }
 
     /**
      * Calculate a value to add or subtract so the step should not be off screen.
+     * @param selectedElementRect: DOMRect of the selected element
+     * @param currentTourStep: current tour step of guided tour
+     * @param tourStep: current tour step element
+     * @param topOfPageAdjustment: top page adjustment for scrolling
      * @return {number} step screen adjustment
      */
-    private getStepScreenAdjustment(): number {
-        if (!this.currentTourStep) {
+    public getStepScreenAdjustment(selectedElementRect: DOMRect | null, currentTourStep: TourStep | null, tourStep: ElementRef, topOfPageAdjustment: number): number {
+        if (!selectedElementRect || !currentTourStep) {
             return 0;
         }
-        if (this.currentTourStep.orientation === Orientation.Left || this.currentTourStep.orientation === Orientation.Right) {
+        if (currentTourStep.orientation === Orientation.Left || currentTourStep.orientation === Orientation.Right) {
             return 0;
         }
-        if (this.selectedElementRect && this.tourStep) {
-            const elementHeight =
-                this.selectedElementRect.height +
-                (this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0) +
-                this.tourStep.nativeElement.getBoundingClientRect().height;
 
-            if (window.innerHeight - this.topOfPageAdjustment < elementHeight) {
-                return elementHeight - (window.innerHeight - this.topOfPageAdjustment);
-            }
+        const scrollAdjustment = currentTourStep.scrollAdjustment ? currentTourStep.scrollAdjustment : 0;
+        const elementHeight = selectedElementRect.height + scrollAdjustment + tourStep.nativeElement.getBoundingClientRect().height;
+
+        if (window.innerHeight - topOfPageAdjustment < elementHeight) {
+            return elementHeight - (window.innerHeight - topOfPageAdjustment);
         }
         return 0;
+    }
+
+    /**
+     * Update tour step location and return selected element as DOMRect
+     * @param selectedElement: selected element in DOM
+     * @return {selectedElementRect} selected element as DOMRect or null
+     */
+    public updateStepLocation(selectedElement: Element | null): DOMRect | null {
+        let selectedElementRect = null;
+
+        if (selectedElement) {
+            selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
+        }
+        return selectedElementRect;
     }
 }
