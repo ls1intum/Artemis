@@ -1,5 +1,5 @@
 /* angular */
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 /* 3rd party*/
 
@@ -9,8 +9,7 @@ import { WindowRef } from 'app/core';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
-    templateUrl: './text-assessment.component.html',
-    styleUrls: ['./text-assessment.component.scss'],
+    templateUrl: './file-upload-assessment.component.html',
 })
 export class FileUploadAssessmentComponent implements OnInit {
     ngOnInit(): void {}

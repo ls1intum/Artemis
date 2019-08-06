@@ -1,8 +1,11 @@
+/* angular */
 import { Routes } from '@angular/router';
+
+/* application */
 import { UserRouteAccessService } from 'app/core';
 import { FileUploadAssessmentComponent } from 'app/file-upload-assessment/file-upload-assessment.component';
 
-export const modelingAssessmentRoutes: Routes = [
+export const fileUploadAssessmentRoutes: Routes = [
     {
         path: 'file-upload-exercise/:exerciseId/submissions/:submissionId/assessment',
         component: FileUploadAssessmentComponent,

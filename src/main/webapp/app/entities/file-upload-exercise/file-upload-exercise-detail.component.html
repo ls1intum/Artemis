@@ -34,11 +34,11 @@
             </div>
         </dd>
         <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.problemStatement | htmlForMarkdown"></dd>
-        <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Soltution</span></dt>
-        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution | htmlForMarkdown"></dd>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.problemStatement! | htmlForMarkdown"></dd>
+        <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
         <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions | htmlForMarkdown"></dd>
+        <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions! | htmlForMarkdown"></dd>
 
         <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
         <dd>

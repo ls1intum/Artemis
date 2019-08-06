@@ -6,6 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -26,9 +27,12 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     load(exerciseId: number) {
-        this.fileUploadExerciseService.find(exerciseId).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-            this.fileUploadExercise = fileUploadExerciseResponse.body!;
-        });
+        this.fileUploadExerciseService
+            .find(exerciseId)
+            .pipe(filter(res => !!res.body))
+            .subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+                this.fileUploadExercise = fileUploadExerciseResponse.body!;
+            });
     }
     previousState() {
         window.history.back();

@@ -10,8 +10,10 @@
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-success" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && isActive">Submit</button>
-            <button class="btn btn-warning" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
+            <button class="btn btn-success" (click)="submit()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && !isActive">
+                Submit (deadline missed)
+            </button>
         </div>
     </div>
 </div>
