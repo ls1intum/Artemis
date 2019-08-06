@@ -55,10 +55,8 @@ describe('Service Tests', () => {
         });
 
         describe('Guided tour methods', () => {
-            let navbarComponent: NavbarComponent;
-            let navbarComponentComponentFixture: ComponentFixture<NavbarComponent>;
             let guidedTourComponent: GuidedTourComponent;
-            let guidedTourComponentComponentFixture: ComponentFixture<GuidedTourComponent>;
+            let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
 
             let guidedTourService: GuidedTourService;
             let router: Router;
@@ -104,10 +102,8 @@ describe('Service Tests', () => {
                     .overrideTemplate(NavbarComponent, '')
                     .compileComponents()
                     .then(() => {
-                        navbarComponentComponentFixture = TestBed.createComponent(NavbarComponent);
-                        navbarComponent = navbarComponentComponentFixture.componentInstance;
-                        guidedTourComponentComponentFixture = TestBed.createComponent(GuidedTourComponent);
-                        guidedTourComponent = guidedTourComponentComponentFixture.componentInstance;
+                        guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
+                        guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
                         guidedTourService = TestBed.get(GuidedTourService);
                         router = TestBed.get(Router);
@@ -121,16 +117,16 @@ describe('Service Tests', () => {
                     spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
                     guidedTourComponent.ngAfterViewInit();
 
-                    await navbarComponentComponentFixture.ngZone!.run(() => {
+                    await guidedTourComponentFixture.ngZone!.run(() => {
                         router.navigateByUrl('/overview');
                     });
 
                     // Start course overview tour
-                    expect(guidedTourComponentComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                     expect(guidedTourService.checkGuidedTourAvailabilityForCurrentRoute()).to.be.true;
                     guidedTourService.startGuidedTourForCurrentRoute();
-                    guidedTourComponentComponentFixture.detectChanges();
-                    expect(guidedTourComponentComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
+                    guidedTourComponentFixture.detectChanges();
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
                     expect(guidedTourService.isOnFirstStep).to.be.true;
                     expect(guidedTourService.currentTourStepDisplay).to.equal(1);
                     expect(guidedTourService.currentTourStepCount).to.equal(2);
@@ -138,30 +134,30 @@ describe('Service Tests', () => {
 
                 it('should start and finish the course overview guided tour', () => {
                     // Navigate to next tour step
-                    const nextButton = guidedTourComponentComponentFixture.debugElement.query(By.css('.next-button'));
+                    const nextButton = guidedTourComponentFixture.debugElement.query(By.css('.next-button'));
                     expect(nextButton).to.exist;
                     nextButton.nativeElement.click();
                     expect(guidedTourService.isOnLastStep).to.be.true;
 
                     // Finish guided tour
                     nextButton.nativeElement.click();
-                    guidedTourComponentComponentFixture.detectChanges();
-                    expect(guidedTourComponentComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                    guidedTourComponentFixture.detectChanges();
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                 });
 
                 it('should start and skip the tour', () => {
-                    const skipButton = guidedTourComponentComponentFixture.debugElement.query(By.css('.close'));
+                    const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.close'));
                     expect(skipButton).to.exist;
                     skipButton.nativeElement.click();
-                    guidedTourComponentComponentFixture.detectChanges();
-                    expect(guidedTourComponentComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                    guidedTourComponentFixture.detectChanges();
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                 });
 
                 it('should prevent backdrop from advancing', () => {
-                    const backdrop = guidedTourComponentComponentFixture.debugElement.query(By.css('.guided-tour-user-input-mask'));
+                    const backdrop = guidedTourComponentFixture.debugElement.query(By.css('.guided-tour-user-input-mask'));
                     expect(backdrop).to.exist;
                     backdrop.nativeElement.click();
-                    guidedTourComponentComponentFixture.detectChanges();
+                    guidedTourComponentFixture.detectChanges();
                     expect(guidedTourService.isOnFirstStep).to.be.true;
                 });
             });
