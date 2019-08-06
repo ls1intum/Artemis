@@ -1,10 +1,11 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { ContentType, LinkType, Orientation, TourStep } from './guided-tour.constants';
+import { ContentType, LinkType, Orientation } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
+import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -65,21 +66,25 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Remove subscriptions on destroy
      */
     public ngOnDestroy(): void {
-        this.resizeSubscription.unsubscribe();
-        this.scrollSubscription.unsubscribe();
+        if (this.resizeSubscription) {
+            this.resizeSubscription.unsubscribe();
+        }
+        if (this.resizeSubscription) {
+            this.scrollSubscription.unsubscribe();
+        }
     }
 
     /**
      * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
-    private subscribeToGuidedTourCurrentStepStream() {
+    public subscribeToGuidedTourCurrentStepStream() {
         this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
                 return;
             }
             if (this.hasUserPermissionForTourStep(this.currentTourStep)) {
-                this.scrollToAndSetElement(this.currentTourStep, this.tourStep, this.isBottom());
+                this.scrollToAndSetElement(this.currentTourStep, this.tourStep, this.isBottom(this.currentTourStep));
                 return;
             }
             this.selectedElementRect = null;
@@ -89,7 +94,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Subscribe to resize event and update step location of the selected element in the tour step
      */
-    private subscribeToResizeEvent() {
+    public subscribeToResizeEvent() {
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
             this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(this.currentTourStep));
         });
@@ -98,7 +103,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Subscribe to scroll event and update step location of the selected element in the tour step
      */
-    private subscribeToScrollEvent() {
+    public subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
             this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(this.currentTourStep));
         });
@@ -127,7 +132,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
-            const topPosition = this.getTopScrollingPosition(this.selectedElementRect, this.currentTourStep, this.tourStep, this.isBottom(), this.topOfPageAdjustment);
+            const topPosition = this.getTopScrollingPosition(this.selectedElementRect, currentTourStep, tourStep, this.isBottom(currentTourStep), this.topOfPageAdjustment);
             try {
                 window.scrollTo({
                     left: 0,
@@ -169,7 +174,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param isBottomElement: boolean if the current tour step has a bottom orientation
      * @return {boolean} if element is in viewport
      */
-    private elementInViewport(element: HTMLElement | null, isBottomElement: boolean): boolean {
+    public elementInViewport(element: HTMLElement | null, isBottomElement: boolean): boolean {
         if (!element) {
             return false;
         }
@@ -205,14 +210,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Check if the current tour step has a bottom orientation
+     * @param currentTourStep: current tour step of guided tour
      * @return {boolean} if the current tour step orientation is bottom
      */
-    public isBottom(): boolean {
-        if (this.currentTourStep && this.currentTourStep.orientation) {
+    public isBottom(currentTourStep: TourStep | null): boolean {
+        if (currentTourStep && currentTourStep.orientation) {
             return (
-                this.currentTourStep.orientation === Orientation.Bottom ||
-                this.currentTourStep.orientation === Orientation.BottomLeft ||
-                this.currentTourStep.orientation === Orientation.BottomRight
+                currentTourStep.orientation === Orientation.Bottom ||
+                currentTourStep.orientation === Orientation.BottomLeft ||
+                currentTourStep.orientation === Orientation.BottomRight
             );
         }
         return false;
@@ -308,7 +314,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param currentTourStep: current tour step of guided tour
      * @return {number} highlight padding
      */
-    private getHighlightPadding(currentTourStep: TourStep | null): number {
+    public getHighlightPadding(currentTourStep: TourStep | null): number {
         if (currentTourStep) {
             let paddingAdjustment = currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
             if (currentTourStep.highlightPadding) {
@@ -320,55 +326,25 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get overlay top position for the highlighted rectangle of the selected element
+     * Get overlay style for the highlighted rectangle of the selected element
      * @param selectedElementRect: DOMRect of the selected element
      * @param currentTourStep: current tour step of guided tour
-     * @return {number} overlay top position for highlighted element
+     * @return style object for the highlighted element
      */
-    public getOverlayTop(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
-        if (selectedElementRect) {
-            return selectedElementRect.top - this.getHighlightPadding(currentTourStep);
-        }
-        return 0;
-    }
+    public getOverlayStyle(selectedElementRect: DOMRect | null, currentTourStep: TourStep) {
+        let top = 0;
+        let left = 0;
+        let height = 0;
+        let width = 0;
 
-    /**
-     * Get overlay left position for the highlighted rectangle of the selected element
-     * @param selectedElementRect: DOMRect of the selected element
-     * @param currentTourStep: current tour step of guided tour
-     * @return {number} overlay left position
-     */
-    public getOverlayLeft(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
         if (selectedElementRect) {
-            return selectedElementRect.left - this.getHighlightPadding(currentTourStep);
+            top = selectedElementRect.top - this.getHighlightPadding(currentTourStep);
+            left = selectedElementRect.left - this.getHighlightPadding(currentTourStep);
+            height = selectedElementRect.height + this.getHighlightPadding(currentTourStep) * 2;
+            width = selectedElementRect.width + this.getHighlightPadding(currentTourStep) * 2;
         }
-        return 0;
-    }
 
-    /**
-     * Get overlay height for the highlighted rectangle of the selected element
-     * @param selectedElementRect: DOMRect of the selected element
-     * @param currentTourStep: current tour step of guided tour
-     * @return {number} overlay height
-     */
-    public getOverlayHeight(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
-        if (selectedElementRect) {
-            return selectedElementRect.height + this.getHighlightPadding(currentTourStep) * 2;
-        }
-        return 0;
-    }
-
-    /**
-     * Get overlay width for the highlighted rectangle of the selected element
-     * @param selectedElementRect: DOMRect of the selected element
-     * @param currentTourStep: current tour step of guided tour
-     * @return {number} overlay width
-     */
-    public getOverlayWidth(selectedElementRect: DOMRect | null, currentTourStep: TourStep): number {
-        if (selectedElementRect) {
-            return selectedElementRect.width + this.getHighlightPadding(currentTourStep) * 2;
-        }
-        return 0;
+        return { 'top.px': top, 'left.px': left, 'height.px': height, 'width.px': width };
     }
 
     /**

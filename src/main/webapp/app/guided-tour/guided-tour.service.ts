@@ -9,8 +9,10 @@ import { debounceTime } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
-import { ContentType, GuidedTour, Orientation, OrientationConfiguration, TourStep } from './guided-tour.constants';
+import { ContentType, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
+import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
@@ -192,7 +194,7 @@ export class GuidedTourService {
     /**
      *  @return {boolean} if highlighted element is available
      */
-    private checkSelectorValidity(): boolean {
+    public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }

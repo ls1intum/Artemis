@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { NO_ERRORS_SCHEMA, DebugElement, ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -11,32 +11,36 @@ import * as sinonChai from 'sinon-chai';
 import { ArTEMiSTestModule } from '../../test.module';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { NavbarComponent } from 'app/layouts';
+import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Component Tests', () => {
+    const tourStep: TourStep = {
+        contentType: ContentType.TEXT,
+        headlineTranslateKey: '',
+        contentTranslateKey: '',
+        orientation: Orientation.Left,
+    };
+
+    const tourStepWithSelector: TourStep = {
+        contentType: ContentType.TEXT,
+        selector: '#overview-menu',
+        headlineTranslateKey: '',
+        contentTranslateKey: '',
+        highlightPadding: 10,
+        orientation: Orientation.BottomRight,
+    };
+
     const courseOverviewTour: GuidedTour = {
         settingsId: 'showCourseOverviewTour',
         preventBackdropFromAdvancing: true,
-        steps: [
-            {
-                contentType: ContentType.IMAGE,
-                headlineTranslateKey: 'tour.course-overview.welcome.headline',
-                subHeadlineTranslateKey: 'tour.course-overview.welcome.subHeadline',
-                contentTranslateKey: 'tour.course-overview.welcome.content',
-            },
-            {
-                contentType: ContentType.TEXT,
-                selector: '#overview-menu',
-                headlineTranslateKey: 'tour.course-overview.overview-menu.headline',
-                contentTranslateKey: 'tour.course-overview.overview-menu.content',
-                orientation: Orientation.BottomLeft,
-            },
-        ],
+        steps: [{ ...tourStep, ...tourStep }],
     };
 
     describe('Guided Tour Component', () => {
@@ -76,11 +80,28 @@ describe('Component Tests', () => {
                 });
         });
 
-        describe('Invoke course overview guided tour', () => {
+        it('should subscribe to events on after init', () => {
+            const currentStepSpy = spyOn(guidedTourComponent, 'subscribeToGuidedTourCurrentStepStream');
+            const resizeEventSpy = spyOn(guidedTourComponent, 'subscribeToResizeEvent');
+            const scrollEventSpy = spyOn(guidedTourComponent, 'subscribeToScrollEvent');
+
+            guidedTourComponent.ngAfterViewInit();
+
+            expect(currentStepSpy.calls.count()).to.equal(1);
+            expect(resizeEventSpy.calls.count()).to.equal(1);
+            expect(scrollEventSpy.calls.count()).to.equal(1);
+        });
+
+        it('should handle user permissions', () => {
+            const permission = guidedTourComponent.hasUserPermissionForTourStep(tourStep);
+            expect(permission).to.be.true;
+        });
+
+        describe('Keydown Element', () => {
             beforeEach(async () => {
                 // Prepare GuidedTourService and GuidedTourComponent
                 spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
-                spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                spyOn(guidedTourService, 'updateGuidedTourSettings');
                 guidedTourComponent.ngAfterViewInit();
 
                 await guidedTourComponentFixture.ngZone!.run(() => {
@@ -94,16 +115,15 @@ describe('Component Tests', () => {
                 expect(guidedTourComponent.currentTourStep).to.exist;
             });
 
-            it('should start the tour and navigate next with the right arrow key', () => {
+            it('should navigate next with the right arrow key', () => {
                 const nextStep = spyOn(guidedTourService, 'nextStep');
-                const scrollEvent = spyOn(guidedTourComponent, 'scrollToAndSetElement');
                 const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
                 guidedTourComponent.handleKeyboardEvent(eventMock);
                 expect(nextStep.calls.count()).to.equal(1);
                 nextStep.calls.reset();
             });
 
-            it('should start the tour and navigate back with the left arrow key', () => {
+            it('should navigate back with the left arrow key', () => {
                 const backStep = spyOn(guidedTourService, 'backStep');
                 const nextStep = spyOn(guidedTourService, 'nextStep');
                 const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
@@ -122,7 +142,7 @@ describe('Component Tests', () => {
                 backStep.calls.reset();
             });
 
-            it('should start the tour and skip it with the escape key', () => {
+            it('should skip the tour with the escape key', () => {
                 const skipTour = spyOn(guidedTourService, 'skipTour');
                 const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
 
@@ -130,6 +150,58 @@ describe('Component Tests', () => {
                 expect(skipTour.calls.count()).to.equal(1);
 
                 skipTour.calls.reset();
+            });
+        });
+
+        describe('Guided Tour Step', () => {
+            let selectedElement: Element;
+            let selectedElementRect: DOMRect;
+            let elementRef = ElementRef;
+
+            beforeAll(() => {
+                selectedElement = document.createElement('div') as Element;
+                selectedElement.id = 'selector';
+                selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
+                selectedElementRect.height = 50;
+                selectedElementRect.width = 200;
+            });
+
+            it('should determine if the tour step has bottom orientation', () => {
+                expect(guidedTourComponent.isBottom(tourStep)).to.be.false;
+                expect(guidedTourComponent.isBottom(tourStepWithSelector)).to.be.true;
+            });
+
+            it('should determine the highlight padding of the tour step', () => {
+                expect(guidedTourComponent.getHighlightPadding(tourStepWithSelector)).to.equal(10);
+            });
+
+            it('should determine the overlay style', () => {
+                const style = guidedTourComponent.getOverlayStyle(selectedElementRect, tourStepWithSelector);
+                expect(style['top.px']).to.equal(-10);
+                expect(style['left.px']).to.equal(-10);
+                expect(style['height.px']).to.equal(70);
+                expect(style['width.px']).to.equal(220);
+            });
+
+            it('should calculate the top position of the tour step', () => {
+                let topPosition = guidedTourComponent.getTopPosition(selectedElementRect, tourStep);
+                expect(topPosition).to.equal(0);
+
+                topPosition = guidedTourComponent.getTopPosition(selectedElementRect, tourStepWithSelector);
+                expect(topPosition).to.equal(60);
+            });
+
+            it('should calculate the left position of the tour step', () => {
+                let topPosition = guidedTourComponent.getLeftPosition(selectedElementRect, tourStep, 0, 0);
+                expect(topPosition).to.equal(5);
+
+                topPosition = guidedTourComponent.getLeftPosition(selectedElementRect, tourStep, 500, 500);
+                expect(topPosition).to.equal(-500);
+            });
+
+            it('should calculate the width of the tour step', () => {
+                let calculatedWidth = guidedTourComponent.getCalculatedTourStepWidth(null, tourStep, 0, 500);
+                expect(calculatedWidth).to.equal(500);
             });
         });
     });

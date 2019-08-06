@@ -1,12 +1,9 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
-import { GuidedTour } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-overview',

@@ -1,4 +1,5 @@
-import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -37,28 +38,6 @@ export const courseOverviewTour: GuidedTour = {
             useHighlightPadding: true,
             highlightPadding: 10,
             permission: ['ROLE_ADMIN'],
-            action: () => {
-                const currentElement = document.getElementById('admin-menu');
-                if (currentElement) {
-                    currentElement.click();
-                }
-            },
-        },
-        {
-            contentType: ContentType.TEXT,
-            selector: '.navbar-expand-md .navbar-nav .dropdown-menu',
-            headlineTranslateKey: 'tour.course-overview.admin-menu.headline',
-            contentTranslateKey: 'tour.course-overview.admin-menu.content',
-            orientation: Orientation.Left,
-            useHighlightPadding: true,
-            highlightPadding: 10,
-            permission: ['ROLE_ADMIN'],
-            action: () => {
-                const currentElement = document.getElementById('admin-menu');
-                if (currentElement) {
-                    currentElement.click();
-                }
-            },
         },
         {
             contentType: ContentType.TEXT,

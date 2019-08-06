@@ -1,16 +1,15 @@
 @import 'dot-navigation';
 
-$tour-zindex: 1081 !default;
+$tour-zIndex: 1081 !default;
 $tour-step-color: #ffffff !default;
 $tour-text-color: #231f1f !default;
 $tour-next-button-color: #17a2b8 !default;
 $tour-next-button-hover: #117a8b !default;
 $tour-back-button-color: #17a2b8 !default;
 $tour-back-button-hover: #117a8b !default;
-$tour-disabled-button-color: #f2f2f2 !default;
+$tour-button-color-disabled: #f2f2f2 !default;
 $tour-button-text-color: #ffffff !default;
 $tour-button-text-disabled: #a3a3a3 !default;
-$tour-orb-color: #625aff !default;
 $tour-shadow-color: #4c4c4c !default;
 
 body.tour-open {
@@ -64,16 +63,6 @@ body.tour-open {
     &:hover {
         background-color: $tour-next-button-hover;
     }
-
-    fa-icon {
-        color: $tour-step-color;
-        font-size: 20px;
-        vertical-align: middle;
-
-        svg {
-            width: 100%;
-        }
-    }
 }
 
 jhi-guided-tour {
@@ -87,49 +76,19 @@ jhi-guided-tour {
         max-height: 100vh;
         text-align: center;
         opacity: 0;
-        z-index: $tour-zindex;
+        z-index: $tour-zIndex;
     }
 
     .guided-tour-spotlight-overlay {
         position: fixed;
         box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 1.5rem rgba(0, 0, 0, 0.5);
-        z-index: $tour-zindex + 1;
-    }
-
-    .tour-orb {
-        background-color: $tour-orb-color;
-        border-radius: 50%;
-        box-shadow: 0 0 0.3rem 0.1rem $tour-orb-color;
-        position: fixed;
-        width: 20px;
-        height: 20px;
-        z-index: $tour-zindex - 2;
-
-        .tour-orb-ring {
-            width: 35px;
-            height: 35px;
-            position: relative;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 2s linear infinite;
-
-            &:after {
-                border: 1rem solid $tour-orb-color;
-                box-shadow: 0 0 0.1rem 0.1rem $tour-orb-color;
-                content: '';
-                display: inline-block;
-                height: 100%;
-                width: 100%;
-                border-radius: 50%;
-            }
-        }
+        z-index: $tour-zIndex + 1;
     }
 
     .tour-step {
         min-width: 400px;
         position: fixed;
-        z-index: $tour-zindex + 2;
+        z-index: $tour-zIndex + 2;
 
         &.page-tour-step {
             max-width: 800px;
@@ -230,7 +189,7 @@ jhi-guided-tour {
 
                     &:disabled {
                         color: $tour-button-text-disabled !important;
-                        background-color: $tour-disabled-button-color !important;
+                        background-color: $tour-button-color-disabled !important;
                         cursor: default;
 
                         fa-icon {

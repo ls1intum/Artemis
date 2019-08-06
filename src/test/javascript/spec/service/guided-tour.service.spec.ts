@@ -14,8 +14,9 @@ import { ArTEMiSTestModule } from '../test.module';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 
@@ -67,14 +68,14 @@ describe('Service Tests', () => {
                 steps: [
                     {
                         contentType: ContentType.IMAGE,
-                        headlineTranslateKey: 'tour.course-overview.welcome.headline',
-                        subHeadlineTranslateKey: 'tour.course-overview.welcome.subHeadline',
-                        contentTranslateKey: 'tour.course-overview.welcome.content',
+                        headlineTranslateKey: '',
+                        subHeadlineTranslateKey: '',
+                        contentTranslateKey: '',
                     },
                     {
                         contentType: ContentType.TEXT,
-                        headlineTranslateKey: 'tour.course-overview.contact.headline',
-                        contentTranslateKey: 'tour.course-overview.contact.content',
+                        headlineTranslateKey: '',
+                        contentTranslateKey: '',
                         orientation: Orientation.TopLeft,
                     },
                 ],
