@@ -459,6 +459,8 @@ public class BambooService implements ContinuousIntegrationService {
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
+                // In this case we know the submission time, so we use it for determining the rated state.
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission.getSubmissionDate());
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -473,6 +475,8 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
+                // In this case we don't know the submission time, so we use the current time for determining the rated state.
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
@@ -513,7 +517,6 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
-        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
 
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
     }
