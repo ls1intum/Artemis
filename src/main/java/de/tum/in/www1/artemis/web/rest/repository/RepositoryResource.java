@@ -130,6 +130,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param filename of the file to create.
      * @param request to retrieve input stream from.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
         log.debug("REST request to create file {} for domainId : {}", filename, domainId);
@@ -148,6 +149,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param folderName of the folder to create.
      * @param request to retrieve inputStream from.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
         log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
@@ -165,6 +167,7 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param fileMove defines current and new path in git repository.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
@@ -181,6 +184,7 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param filename path of file or folder to delete.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> deleteFile(Long domainId, String filename) {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
@@ -196,6 +200,7 @@ public abstract class RepositoryResource {
      * Pull into the participation repository.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> pullChanges(Long domainId) {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
@@ -211,6 +216,7 @@ public abstract class RepositoryResource {
      * Commit into the participation repository.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> commitChanges(Long domainId) {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
@@ -226,6 +232,7 @@ public abstract class RepositoryResource {
      * Reset a repository to the last commit. This will remove all staged / unstaged changes. Use with care as lost data can't be retrieved!
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
@@ -239,9 +246,10 @@ public abstract class RepositoryResource {
      * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @throws GitAPIException if the repository can't be checked out to retrieve the status.
+     * @throws IOException if the repository can't be checked out to retrieve the status.
      * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      * @throws InterruptedException if the repository can't be checked out to retrieve the status.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
@@ -270,7 +278,7 @@ public abstract class RepositoryResource {
      * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
      * 
      * @param executor lambda function to execute.
-     * @return the appropriate ResponseEntity (OK if the executor was successful or another error status code fitting the Exception).
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     private <T> ResponseEntity<T> executeAndCheckForExceptions(RepositoryExecutor<T> executor) {
         ResponseEntity<T> responseEntitySuccess;

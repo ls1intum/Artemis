@@ -45,19 +45,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *
      * @param participationId of the given participation.
      * @param pullOnGet       perform a pull on retrieval of a git repository (in some cases it might make sense not to pull!)
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws GitAPIException
+     * @return the repository if available.
+     * @throws IOException if the repository folder can't be accessed.
+     * @throws IllegalAccessException if the user is not allowed to access the repository.
+     * @throws InterruptedException if the repository can't be checked out.
+     * @throws GitAPIException if the repository can't be checked out.
      */
     @Override
-    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
+    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new IllegalArgumentException();
         boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
-            throw new IllegalAccessError();
+            throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
         return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
@@ -66,8 +67,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * Get the repository url by providing a participation id. Will not check any permissions!
      *
-     * @param participationId
-     * @return
+     * @param participationId to identify the repository with.
+     * @return the repositoryUrl.
      */
     @Override
     URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
@@ -80,8 +81,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * Check if a user can access the participation's repository.
      *
-     * @param participationId
-     * @return
+     * @param participationId to identify the repository with.
+     * @return true if the user can access the repository.
      */
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
@@ -94,9 +95,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *
-     * @param participationId Participation ID
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @return the map of files with an indicator if the file is a file or a folder.
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) {
@@ -106,10 +106,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * GET /repository/{participationId}/file: Get the content of a file
      *
-     * @param participationId Participation ID
-     * @param filename
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @param filename of the file to retrieve.
+     * @return the file if available.
      */
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
@@ -119,11 +118,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * POST /repository/{participationId}/file: Create new file
      *
-     * @param participationId Participation ID
-     * @param filename
-     * @param request
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @param filename of the file to create.
+     * @param request to retrieve input stream from.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
@@ -133,11 +131,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * POST /repository/{participationId}/folder: Create new folder
      *
-     * @param participationId Participation ID
-     * @param folderName
-     * @param request
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @param folderName of the folder to create.
+     * @param request to retrieve inputStream from.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
@@ -147,11 +144,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * Change the name of a file.
      *
-     * @param participationId id of the participation the git repository belongs to.
+     * @param participationId to identify the repository with.
      * @param fileMove        defines current and new path in git repository.
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
@@ -161,10 +156,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * DELETE /repository/{participationId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
      *
-     * @param participationId Participation ID
-     * @param filename        path of file or folder to delete.
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @param filename path of file or folder to delete.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
@@ -174,9 +168,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * GET /repository/{participationId}/pull: Pull into the participation repository
      *
-     * @param participationId Participation ID
-     * @return
-     * @throws IOException
+     * @param participationId to identify the repository with.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
@@ -186,16 +179,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * POST /repository/{participationId}/commit: Commit into the participation repository
      *
-     * @param participationId Participation ID
-     * @return
-     * @throws IOException
-     * @throws GitAPIException
+     * @param participationId to identify the repository with.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
         return super.commitChanges(participationId);
     }
 
+    /**
+     * Reset a repository to the last commit. This will remove all staged / unstaged changes. Use with care as lost data can't be retrieved!
+     *
+     * @param participationId to identify the repository with.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
+     */
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
         return super.resetToLastCommit(participationId);
@@ -204,10 +201,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
-     * @param participationId Participation ID
-     * @return
-     * @throws IOException
-     * @throws GitAPIException
+     * @param participationId to identify the repository with.
+     * @throws IOException if the repository can't be checked out to retrieve the status.
+     * @throws GitAPIException if the repository can't be checked out to retrieve the status.
+     * @throws InterruptedException if the repository can't be checked out to retrieve the status.
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
@@ -217,7 +215,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     /**
      * GET /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
      *
-     * @param participationId the participationId of the result to retrieve
+     * @param participationId to identify the repository with.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
