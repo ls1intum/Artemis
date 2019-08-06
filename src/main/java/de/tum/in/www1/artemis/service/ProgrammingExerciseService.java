@@ -116,9 +116,10 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise where the test cases got changed
      */
-    public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
+    @Transactional
+    public List<ProgrammingSubmission> notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
+        List<ProgrammingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : programmingExercise.getParticipations()) {
-
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
@@ -134,11 +135,11 @@ public class ProgrammingExerciseService {
                 log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
             }
 
-            submissionRepository.save(submission);
-            studentParticipationRepository.save(participation);
-
+            ProgrammingSubmission storedSubmission = submissionRepository.save(submission);
+            submissions.add(storedSubmission);
             continuousIntegrationUpdateService.get().triggerUpdate(programmingExerciseStudentParticipation.getBuildPlanId(), false);
         }
+        return submissions;
     }
 
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {

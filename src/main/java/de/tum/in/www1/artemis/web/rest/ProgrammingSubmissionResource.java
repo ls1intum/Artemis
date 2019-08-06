@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,7 +92,12 @@ public class ProgrammingSubmissionResource {
         }
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        programmingExerciseService.notifyChangedTestCases(programmingExercise, requestBody);
+        List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(programmingExercise, requestBody);
+
+        // notify users via websocket.
+        for (ProgrammingSubmission submission : submissions) {
+            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
+        }
 
         return ResponseEntity.ok().build();
     }
