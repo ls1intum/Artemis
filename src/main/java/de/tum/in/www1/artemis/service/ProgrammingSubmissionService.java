@@ -98,7 +98,10 @@ public class ProgrammingSubmissionService {
      * A pending submission is one that does not have a result yet and is not older than RESULT_WAIT_LIMIT_SECONDS.
      *
      * @param participationId the id of the participation get the latest submission for
-     * return the latest pending submission if exists or null.
+     * @return the latest pending submission if exists or null.
+     * @throws EntityNotFoundException if the participation for the given id can't be found.
+     * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
+     * @throws IllegalAccessException if the user does not have access to the given participation.
      */
     public ProgrammingSubmission getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
         Participation participation = participationService.findOne(participationId);
