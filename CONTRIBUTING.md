@@ -20,7 +20,7 @@ Possible types are:
 The pull request template will provide additional information on the requirement for the integration of changes into Artemis.  
 Once the changes in your pull request are approved by one of our reviewers, they can be merged into develop.
 
-## PR guidelines:
+## Pull Request guidelines:
 
 - **Merge fast**: PRs should only be open for a couple of days.
 - **Small packages**: PRs should be as small as possible and ideally concentrate on a single topic. Features should be split up into multiple PRs if it makes sense.
