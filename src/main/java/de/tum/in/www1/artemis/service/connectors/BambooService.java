@@ -503,7 +503,6 @@ public class BambooService implements ContinuousIntegrationService {
      */
     private Result createResultFromBuildResult(Map<String, Object> buildMap, ProgrammingExerciseParticipation participation) {
         Result result = new Result();
-        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((Boolean) buildMap.get("successful"));
 
@@ -514,6 +513,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
+        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
 
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
     }

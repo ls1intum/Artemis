@@ -222,7 +222,7 @@ public class Feedback implements Serializable {
 
     @Override
     public String toString() {
-        return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", positive='" + isPositive() + "'" + ", type='"
-                + getType() + "'" + "}";
+        return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
+                + isPositive() + "'" + ", type='" + getType() + "'" + "}";
     }
 }
