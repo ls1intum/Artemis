@@ -43,12 +43,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-
-        this.router.events.subscribe((event: Event) => {
-            if (event instanceof NavigationEnd) {
-                this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
-            }
-        });
+        this.checkRouterOnNavigationEnd();
     }
 
     ngOnInit() {
@@ -76,6 +71,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.authStateSubscription) {
             this.authStateSubscription.unsubscribe();
         }
+    }
+
+    checkRouterOnNavigationEnd(): void {
+        this.router.events.subscribe((event: Event) => {
+            if (event instanceof NavigationEnd) {
+                this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
+            }
+        });
     }
 
     changeLanguage(languageKey: string) {

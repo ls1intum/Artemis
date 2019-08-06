@@ -111,7 +111,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Calculate tour step width for tour-step div
      * @return tour step width for tour-step div
      */
-    public get calculatedTourStepWidth() {
+    public get calculatedTourStepWidth(): number {
         return this.tourStepWidth - this.widthAdjustmentForScreenBound;
     }
 

@@ -1,9 +1,16 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, async, fakeAsync, inject } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { CookieService } from 'ngx-cookie';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
 import { ArTEMiSTestModule } from '../../test.module';
+import { MockCookieService, MockSyncStorage } from '../../mocks';
+import { NavbarComponent } from 'app/layouts';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ContentType, GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
@@ -14,6 +21,7 @@ const expect = chai.expect;
 describe('Component Tests', () => {
     const courseOverviewTour: GuidedTour = {
         settingsId: 'showCourseOverviewTour',
+        preventBackdropFromAdvancing: true,
         steps: [
             {
                 contentType: ContentType.IMAGE,
@@ -23,44 +31,106 @@ describe('Component Tests', () => {
             },
             {
                 contentType: ContentType.TEXT,
-                headlineTranslateKey: 'tour.course-overview.contact.headline',
-                contentTranslateKey: 'tour.course-overview.contact.content',
-                orientation: Orientation.TopLeft,
+                selector: '#overview-menu',
+                headlineTranslateKey: 'tour.course-overview.overview-menu.headline',
+                contentTranslateKey: 'tour.course-overview.overview-menu.content',
+                orientation: Orientation.BottomLeft,
             },
         ],
     };
 
-    describe('GuidedTourComponent', () => {
-        let comp: GuidedTourComponent;
-        let fixture: ComponentFixture<GuidedTourComponent>;
+    describe('Guided Tour Component', () => {
+        let guidedTourComponent: GuidedTourComponent;
+        let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
+        let guidedTourDebugElement: DebugElement;
+        let guidedTourService: GuidedTourService;
+        let router: Router;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [GuidedTourComponent],
+                imports: [
+                    ArTEMiSTestModule,
+                    RouterTestingModule.withRoutes([
+                        {
+                            path: 'overview',
+                            component: NavbarComponent,
+                        },
+                    ]),
+                ],
+                declarations: [GuidedTourComponent, NavbarComponent],
                 schemas: [NO_ERRORS_SCHEMA],
-                providers: [GuidedTourService],
+                providers: [
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: CookieService, useClass: MockCookieService },
+                ],
             })
+                .overrideTemplate(NavbarComponent, '')
                 .compileComponents()
                 .then(() => {
-                    fixture = TestBed.createComponent(GuidedTourComponent);
-                    comp = fixture.componentInstance;
+                    guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
+                    guidedTourComponent = guidedTourComponentFixture.componentInstance;
+                    guidedTourDebugElement = guidedTourComponentFixture.debugElement;
+                    guidedTourService = TestBed.get(GuidedTourService);
+                    router = TestBed.get(Router);
                 });
-        }));
+        });
 
-        it('starts the given guided tour', inject(
-            [GuidedTourService],
-            fakeAsync((service: GuidedTourService) => {
-                expect(comp.currentTourStep).to.not.exist;
+        describe('Invoke course overview guided tour', () => {
+            beforeEach(async () => {
+                // Prepare GuidedTourService and GuidedTourComponent
+                spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
+                spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                guidedTourComponent.ngAfterViewInit();
 
-                comp.ngAfterViewInit();
-                service.startTour(courseOverviewTour);
+                await guidedTourComponentFixture.ngZone!.run(() => {
+                    router.navigateByUrl('/overview');
+                });
 
-                expect(service.currentTourSteps.length).to.eq(2);
-                expect(service.isOnFirstStep).to.be.true;
-                expect(service.isOnLastStep).to.be.false;
-                expect(comp.currentTourStep).to.exist;
-            }),
-        ));
+                // Start course overview tour
+                expect(guidedTourComponent.currentTourStep).to.not.exist;
+                guidedTourService.startGuidedTourForCurrentRoute();
+                guidedTourComponentFixture.detectChanges();
+                expect(guidedTourComponent.currentTourStep).to.exist;
+            });
+
+            it('should start the tour and navigate next with the right arrow key', () => {
+                const nextStep = spyOn(guidedTourService, 'nextStep');
+                const scrollEvent = spyOn(guidedTourComponent, 'scrollToAndSetElement');
+                const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                guidedTourComponent.handleKeyboardEvent(eventMock);
+                expect(nextStep.calls.count()).to.equal(1);
+                nextStep.calls.reset();
+            });
+
+            it('should start the tour and navigate back with the left arrow key', () => {
+                const backStep = spyOn(guidedTourService, 'backStep');
+                const nextStep = spyOn(guidedTourService, 'nextStep');
+                const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                const eventMockLeft = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
+
+                guidedTourComponent.handleKeyboardEvent(eventMockLeft);
+                expect(backStep.calls.count()).to.equal(0);
+
+                guidedTourComponent.handleKeyboardEvent(eventMockRight);
+                expect(nextStep.calls.count()).to.equal(1);
+
+                guidedTourComponent.handleKeyboardEvent(eventMockLeft);
+                expect(nextStep.calls.count()).to.equal(1);
+
+                nextStep.calls.reset();
+                backStep.calls.reset();
+            });
+
+            it('should start the tour and skip it with the escape key', () => {
+                const skipTour = spyOn(guidedTourService, 'skipTour');
+                const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
+
+                guidedTourComponent.handleKeyboardEvent(eventMock);
+                expect(skipTour.calls.count()).to.equal(1);
+
+                skipTour.calls.reset();
+            });
+        });
     });
 });
