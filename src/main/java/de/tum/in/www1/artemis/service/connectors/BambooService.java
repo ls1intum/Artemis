@@ -475,8 +475,8 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
-                // In this case we don't know the submission time, so we use the current time for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
+                // In this case we don't know the submission time, so we use the result completion time for determining the rated state.
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), result.getCompletionDate());
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
