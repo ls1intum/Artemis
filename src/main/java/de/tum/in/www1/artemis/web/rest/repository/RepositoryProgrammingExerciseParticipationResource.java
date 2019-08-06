@@ -99,7 +99,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
     }
 
@@ -112,7 +112,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.getFile(participationId, filename);
     }
 
