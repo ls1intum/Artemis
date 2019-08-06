@@ -22,7 +22,7 @@ Once the changes in your pull request are approved by one of our reviewers, they
 
 ## Development Workflow
 
-Find here [a guide](../setup/SETUP.md) on how to setup your local development environment.
+Find here [a guide](doc/setup/SETUP.md) on how to setup your local development environment.
 
 ## CSS Guidelines
 
