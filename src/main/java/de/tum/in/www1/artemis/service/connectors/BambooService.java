@@ -442,6 +442,8 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             Result result = new Result();
+            //TODO: ZonedDateTime.now() might not the actual submission date --> it would be better, if programmingSubmission.submissionDate is used
+            //TODO: this also means we need to move this down after the programmingSubmission was found and before the result is saved
             result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setSuccessful((Boolean) buildMap.get("successful"));
