@@ -50,8 +50,8 @@ public class RepositoryService {
     /**
      * Get the repository content (files and folders).
      * 
-     * @param repository
-     * @return
+     * @param repository VCS repository to get files for.
+     * @return a map of files with the information if they are a file or a folder.
      */
     public HashMap<String, FileType> getFiles(Repository repository) {
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
