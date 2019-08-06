@@ -37,7 +37,7 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'file-upload-exercise/:id',
+        path: 'file-upload-exercise/:exerciseId',
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -58,7 +58,7 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'file-upload-exercise/:id/edit',
+        path: 'file-upload-exercise/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,

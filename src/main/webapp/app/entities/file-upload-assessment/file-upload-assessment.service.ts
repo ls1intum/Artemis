@@ -16,11 +16,8 @@ export class FileUploadAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
-        let url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
-        if (submit) {
-            url += '?submit=true';
-        }
+    submitAssessment(feedbacks: Feedback[], submissionId: number): Observable<Result> {
+        let url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/assessment`;
         return this.http.put<Result>(url, feedbacks);
     }
 

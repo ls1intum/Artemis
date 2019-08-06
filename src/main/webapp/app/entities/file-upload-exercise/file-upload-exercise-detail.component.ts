@@ -20,13 +20,13 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.load(params['id']);
+            this.load(params['exerciseId']);
         });
         this.registerChangeInFileUploadExercises();
     }
 
-    load(id: number) {
-        this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+    load(exerciseId: number) {
+        this.fileUploadExerciseService.find(exerciseId).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
             this.fileUploadExercise = fileUploadExerciseResponse.body!;
         });
     }

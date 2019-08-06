@@ -83,7 +83,7 @@ public class FileUploadSubmissionResource {
      *         ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("exercises/{exerciseId}/file-upload-submissions")
+    @PostMapping("/exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
@@ -103,7 +103,7 @@ public class FileUploadSubmissionResource {
      *         with status 500 (Internal Server Error) if the fileUploadSubmission couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("exercises/{exerciseId}/file-upload-submissions")
+    @PutMapping("/exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
@@ -116,13 +116,13 @@ public class FileUploadSubmissionResource {
     /**
      * GET /file-upload-submissions/:id : get the "id" fileUploadSubmission.
      *
-     * @param id the id of the fileUploadSubmission to retrieve
+     * @param submissionId the id of the fileUploadSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/file-upload-submissions/{id}")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long id) {
-        log.debug("REST request to get FileUploadSubmission : {}", id);
-        Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(id);
+    @GetMapping("/file-upload-submissions/{submissionId}")
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to get FileUploadSubmission : {}", submissionId);
+        Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(submissionId);
         return ResponseUtil.wrapOrNotFound(fileUploadSubmission);
     }
 
@@ -132,7 +132,7 @@ public class FileUploadSubmissionResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
+    @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
@@ -204,16 +204,16 @@ public class FileUploadSubmissionResource {
     }
 
     /**
-     * DELETE /file-upload-submissions/:id : delete the "id" fileUploadSubmission.
+     * DELETE /file-upload-submissions/:submissionId : delete the "id" fileUploadSubmission.
      *
-     * @param id the id of the fileUploadSubmission to delete
+     * @param submissionId the id of the fileUploadSubmission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/file-upload-submissions/{id}")
-    public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete FileUploadSubmission : {}", id);
-        fileUploadSubmissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    @DeleteMapping("/file-upload-submissions/{submissionId}")
+    public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to delete FileUploadSubmission : {}", submissionId);
+        fileUploadSubmissionRepository.deleteById(submissionId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionId.toString())).build();
     }
 
     @NotNull

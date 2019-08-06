@@ -99,14 +99,11 @@ public class FileUploadExerciseResource {
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/file-upload-exercises")
+    @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
-        if (fileUploadExercise.getId() == null) {
-            return createFileUploadExercise(fileUploadExercise);
-        }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
@@ -123,7 +120,7 @@ public class FileUploadExerciseResource {
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(result);
     }
 
     /**
@@ -150,17 +147,17 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * GET /file-upload-exercises/:id : get the "id" fileUploadExercise.
+     * GET /file-upload-exercises/:exerciseId : get the "id" fileUploadExercise.
      *
-     * @param id the id of the fileUploadExercise to retrieve
+     * @param exerciseId the id of the fileUploadExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/file-upload-exercises/{id}")
+    @GetMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long id) {
-        log.debug("REST request to get FileUploadExercise : {}", id);
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+    public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get FileUploadExercise : {}", exerciseId);
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
         Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
@@ -170,22 +167,22 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:id : delete the "id" fileUploadExercise.
+     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise.
      *
-     * @param id the id of the fileUploadExercise to delete
+     * @param exerciseId the id of the fileUploadExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/file-upload-exercises/{id}")
+    @DeleteMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long id) {
-        log.debug("REST request to delete FileUploadExercise : {}", id);
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+    public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete FileUploadExercise : {}", exerciseId);
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
         Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        fileUploadExerciseRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        fileUploadExerciseRepository.deleteById(exerciseId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 }

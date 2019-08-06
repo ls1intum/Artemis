@@ -71,7 +71,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.fileUploadExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise));
+            this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise, this.fileUploadExercise.id));
         } else {
             this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
         }
