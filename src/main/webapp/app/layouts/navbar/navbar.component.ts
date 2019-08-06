@@ -39,7 +39,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private router: Router,
-        private guidedTourService: GuidedTourService,
+        public guidedTourService: GuidedTourService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
