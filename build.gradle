@@ -320,10 +320,11 @@ if (project.hasProperty('nodeInstall')) {
     }
 }
 
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion = '6.16.1'
     config = rootProject.resources.text.fromFile('checkstyle/rules.xml')
-    maxErrors = 550
+    maxErrors = 460
 }
 
 task executeCheckstyle (type: Exec) {
