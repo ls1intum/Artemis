@@ -11,7 +11,7 @@ export type EntityResponseType = HttpResponse<Result>;
 @Injectable({
     providedIn: 'root',
 })
-export class TextAssessmentsService {
+export class FileUploadAssessmentsService {
     private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}

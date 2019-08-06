@@ -334,5 +334,43 @@
         ></button>
     </div>
     <!-- ACTIONS END-->
+    <!-- INFORMATION START -->
+    <div class="btn-group" *ngIf="!actionsOnly">
+        <button
+            jhi-exercise-action-button
+            buttonIcon="folder-open"
+            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
+            outlined="true"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !showResult)
+            "
+            routerLink="/file-upload-submission/{{ exercise.participations[0].id }}"
+        ></button>
+        <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
+        <button
+            jhi-exercise-action-button
+            buttonIcon="folder-open"
+            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
+            outlined="true"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                exercise.participations[0].results &&
+                exercise.participations[0].results.length > 0 &&
+                showResult
+            "
+            routerLink="/file-upload-submission/{{ exercise.participations[0].id }}"
+        ></button>
+    </div>
+    <!-- INFORMATION END -->
 </div>
 <!-- FILE UPLOAD EXERCISE ACTIONS END -->

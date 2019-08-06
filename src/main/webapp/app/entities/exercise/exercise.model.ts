@@ -31,6 +31,7 @@ export const enum ParticipationStatus {
     QUIZ_FINISHED = 'quiz-finished',
     MODELING_EXERCISE = 'modeling-exercise',
     TEXT_EXERCISE = 'text-exercise',
+    FILE_UPLOAD_EXERCISE = 'file-upload-exercise',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
     INACTIVE = 'inactive',
