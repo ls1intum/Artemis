@@ -853,10 +853,10 @@ public class ParticipationService {
     }
 
     public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipationByBuildPlanId(String planKey) {
-        return templateProgrammingExerciseParticipationRepository.findByBuildPlanId(planKey);
+        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
     }
 
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
-        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanId(planKey);
+        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
     }
 }

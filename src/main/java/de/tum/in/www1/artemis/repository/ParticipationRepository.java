@@ -13,11 +13,8 @@ import de.tum.in.www1.artemis.domain.Participation;
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
-    @Query("select distinct pe from Participation pe left join fetch pe.submissions where pe.id = :#{#participationId}")
+    @Query("select distinct p from Participation p left join fetch p.submissions where p.id = :#{#participationId}")
     Participation getOneWithEagerSubmissions(@Param("participationId") Long participationId);
-
-    @Query("select pe from Participation pe left join fetch pe.submissions")
-    List<Participation> getAllWithEagerSubmissions();
 
     @EntityGraph(attributePaths = { "submissions", "results.submission" })
     @Query("select pe from Participation pe")
