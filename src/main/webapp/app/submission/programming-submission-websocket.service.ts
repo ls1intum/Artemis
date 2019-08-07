@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { BehaviorSubject, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -49,8 +49,23 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      *
      * @param participationId
      */
-    private fetchLatestPendingSubmission = (participationId: number): Observable<Submission> => {
-        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participation/' + participationId + '/latest-pending-submission');
+    private fetchLatestPendingSubmission = (participationId: number): Observable<Submission | null> => {
+        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participation/' + participationId + '/latest-pending-submission').pipe(
+            catchError(() => of(null)),
+            map((submission: Submission | null) => {
+                if (submission) {
+                    const remainingTime = this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
+                    // Edge case: it is possible that the submission is now too old after being transferred from the server to the client.
+                    if (remainingTime > 0) {
+                        this.startResultWaitingTimer(participationId, remainingTime);
+                        return submission;
+                    } else {
+                        return null;
+                    }
+                }
+                return null;
+            }),
+        );
     };
 
     /**
@@ -58,9 +73,11 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * Side effect: Timer will also emit an alert when the time runs out as it means here that no result came for a submission.
      *
      * @param participationId
+     * @param time
      */
-    private startResultWaitingTimer = (participationId: number) => {
-        this.resultTimerSubscriptions[participationId] = timer(this.EXPECTED_RESULT_CREATION_TIME_MS)
+    private startResultWaitingTimer = (participationId: number, time = this.EXPECTED_RESULT_CREATION_TIME_MS) => {
+        this.resetResultWaitingTimer(participationId);
+        this.resultTimerSubscriptions[participationId] = timer(time)
             .pipe(
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
@@ -161,8 +178,9 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
         this.submissionSubjects[participationId] = new BehaviorSubject<Submission | null | undefined>(undefined);
         this.fetchLatestPendingSubmission(participationId)
             .pipe(
-                catchError(() => of(null)),
-                tap((submission: Submission) => (this.latestValue[participationId] = submission)),
+                tap((submission: Submission | null) => {
+                    this.latestValue[participationId] = submission;
+                }),
                 tap(() => {
                     this.setupWebsocketSubscription(participationId);
                     this.subscribeForNewResult(participationId);
