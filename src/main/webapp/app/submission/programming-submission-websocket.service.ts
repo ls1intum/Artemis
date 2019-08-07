@@ -21,7 +21,8 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     private submissionTopicsSubscribed: { [participationId: number]: string } = {};
-    private submissionSubjects: { [participationId: number]: BehaviorSubject<Submission | null> } = {};
+    // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
+    private submissionSubjects: { [participationId: number]: BehaviorSubject<Submission | null | undefined> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
@@ -153,18 +154,25 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     public getLatestPendingSubmission = (participationId: number) => {
         const subject = this.submissionSubjects[participationId];
         if (subject) {
-            return subject.asObservable();
+            return subject.asObservable().pipe(filter(s => s !== undefined)) as Observable<Submission | null>;
         }
-        return this.fetchLatestPendingSubmission(participationId).pipe(
-            catchError(() => of(null)),
-            tap((submission: Submission) => (this.latestValue[participationId] = submission)),
-            tap(() => this.setupWebsocketSubscription(participationId)),
-            switchMap((submission: Submission | null) => {
-                const newSubject = new BehaviorSubject(submission);
-                this.submissionSubjects[participationId] = newSubject;
-                return newSubject.asObservable();
-            }),
-            tap(() => this.subscribeForNewResult(participationId)),
-        );
+        // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
+        // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
+        this.submissionSubjects[participationId] = new BehaviorSubject<Submission | null | undefined>(undefined);
+        this.fetchLatestPendingSubmission(participationId)
+            .pipe(
+                catchError(() => of(null)),
+                tap((submission: Submission) => (this.latestValue[participationId] = submission)),
+                tap(() => {
+                    this.setupWebsocketSubscription(participationId);
+                    this.subscribeForNewResult(participationId);
+                }),
+                tap((submission: Submission | null) => {
+                    this.submissionSubjects[participationId].next(submission);
+                }),
+            )
+            .subscribe();
+        // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
+        return this.submissionSubjects[participationId].asObservable().pipe(filter(s => s !== undefined)) as Observable<Submission | null>;
     };
 }

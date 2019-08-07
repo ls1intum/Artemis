@@ -29,7 +29,6 @@
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
             [(commitState)]="commitState"
-            [(isBuilding)]="isBuilding"
             (onSavedFiles)="onSavedFiles($event)"
             (onError)="onError($event)"
         ></jhi-code-editor-actions>
@@ -66,7 +65,6 @@
     <jhi-code-editor-build-output
         editorBottomArea
         [participation]="participation"
-        [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"

@@ -25,12 +25,12 @@ import { ProgrammingSubmissionWebsocketService } from 'app/submission/programmin
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exerciseType: ExerciseType;
     @Input() participation: Participation;
-    @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
+    isBuilding: boolean;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
