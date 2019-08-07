@@ -1,6 +1,6 @@
 <div *ngIf="currentTourStep">
     <div class="guided-tour-user-input-mask" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-spotlight-overlay" [ngStyle]="getOverlayStyle(this.selectedElementRect, this.currentTourStep)"></div>
+    <div class="guided-tour-spotlight-overlay" [ngStyle]="getOverlayStyle()"></div>
 </div>
 <div *ngIf="currentTourStep">
     <div
@@ -8,10 +8,10 @@
         *ngIf="currentTourStep"
         class="tour-step tour-{{ currentTourStep.orientation }}"
         [ngClass]="{ 'page-tour-step': !currentTourStep.selector }"
-        [style.top.px]="getTopPosition(this.selectedElementRect, this.currentTourStep, this.isBottom(this.currentTourStep))"
-        [style.left.px]="getLeftPosition(this.selectedElementRect, this.currentTourStep, this.tourStepWidth, this.minimalTourStepWidth)"
-        [style.width.px]="getCalculatedTourStepWidth(this.selectedElementRect, this.currentTourStep, this.tourStepWidth, this.minimalTourStepWidth)"
-        [style.transform]="getTransform(this.selectedElementRect, this.currentTourStep)"
+        [style.top.px]="topPosition"
+        [style.left.px]="leftPosition"
+        [style.width.px]="calculatedTourStepWidth"
+        [style.transform]="transform"
     >
         <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
         <div class="tour-block">

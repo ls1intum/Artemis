@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA, DebugElement, ElementRef } from '@angular/core';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -25,22 +25,27 @@ describe('Component Tests', () => {
         contentType: ContentType.TEXT,
         headlineTranslateKey: '',
         contentTranslateKey: '',
-        orientation: Orientation.Left,
     };
 
-    const tourStepWithSelector: TourStep = {
+    const tourStepWithPermission: TourStep = {
         contentType: ContentType.TEXT,
-        selector: '#overview-menu',
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
-        orientation: Orientation.BottomRight,
+        permission: ['ROLE_ADMIN'],
+    };
+
+    const tourStepWithHighlightPadding: TourStep = {
+        contentType: ContentType.TEXT,
+        headlineTranslateKey: '',
+        contentTranslateKey: '',
+        highlightPadding: 10,
     };
 
     const courseOverviewTour: GuidedTour = {
         settingsId: 'showCourseOverviewTour',
         preventBackdropFromAdvancing: true,
-        steps: [{ ...tourStep, ...tourStep }],
+        steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
 
     describe('Guided Tour Component', () => {
@@ -93,15 +98,18 @@ describe('Component Tests', () => {
         });
 
         it('should handle user permissions', () => {
-            const permission = guidedTourComponent.hasUserPermissionForTourStep(tourStep);
+            guidedTourComponent.currentTourStep = tourStep;
+            const permission = guidedTourComponent.hasUserPermissionForCurrentTourStep();
             expect(permission).to.be.true;
         });
 
         describe('Keydown Element', () => {
             beforeEach(async () => {
-                // Prepare GuidedTourService and GuidedTourComponent
+                // Prepare guided tour service
                 spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                 spyOn(guidedTourService, 'updateGuidedTourSettings');
+
+                // Prepare guided tour component
                 guidedTourComponent.ngAfterViewInit();
 
                 await guidedTourComponentFixture.ngZone!.run(() => {
@@ -156,27 +164,43 @@ describe('Component Tests', () => {
         describe('Guided Tour Step', () => {
             let selectedElement: Element;
             let selectedElementRect: DOMRect;
-            let elementRef = ElementRef;
 
             beforeAll(() => {
                 selectedElement = document.createElement('div') as Element;
-                selectedElement.id = 'selector';
+                selectedElement.id = 'overview-menu';
                 selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
                 selectedElementRect.height = 50;
                 selectedElementRect.width = 200;
             });
 
+            beforeEach(() => {
+                guidedTourComponent.currentTourStep = tourStep;
+                guidedTourComponent.selectedElementRect = selectedElementRect;
+                guidedTourComponent.tourStepWidth = 500;
+            });
+
+            afterEach(() => {
+                guidedTourComponent.currentTourStep!.orientation = undefined;
+            });
+
             it('should determine if the tour step has bottom orientation', () => {
-                expect(guidedTourComponent.isBottom(tourStep)).to.be.false;
-                expect(guidedTourComponent.isBottom(tourStepWithSelector)).to.be.true;
+                expect(guidedTourComponent.isBottom()).to.be.false;
+
+                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                expect(guidedTourComponent.isBottom()).to.be.true;
             });
 
             it('should determine the highlight padding of the tour step', () => {
-                expect(guidedTourComponent.getHighlightPadding(tourStepWithSelector)).to.equal(10);
+                expect(guidedTourComponent.getHighlightPadding()).to.equal(0);
+
+                guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
+                expect(guidedTourComponent.getHighlightPadding()).to.equal(10);
             });
 
             it('should determine the overlay style', () => {
-                const style = guidedTourComponent.getOverlayStyle(selectedElementRect, tourStepWithSelector);
+                guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
+
+                const style = guidedTourComponent.getOverlayStyle();
                 expect(style['top.px']).to.equal(-10);
                 expect(style['left.px']).to.equal(-10);
                 expect(style['height.px']).to.equal(70);
@@ -184,24 +208,56 @@ describe('Component Tests', () => {
             });
 
             it('should calculate the top position of the tour step', () => {
-                let topPosition = guidedTourComponent.getTopPosition(selectedElementRect, tourStep);
-                expect(topPosition).to.equal(0);
+                expect(guidedTourComponent.topPosition).to.equal(0);
 
-                topPosition = guidedTourComponent.getTopPosition(selectedElementRect, tourStepWithSelector);
-                expect(topPosition).to.equal(60);
+                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                expect(guidedTourComponent.topPosition).to.equal(50);
             });
 
             it('should calculate the left position of the tour step', () => {
-                let topPosition = guidedTourComponent.getLeftPosition(selectedElementRect, tourStep, 0, 0);
-                expect(topPosition).to.equal(5);
-
-                topPosition = guidedTourComponent.getLeftPosition(selectedElementRect, tourStep, 500, 500);
-                expect(topPosition).to.equal(-500);
+                expect(guidedTourComponent.leftPosition).to.equal(-350);
             });
 
             it('should calculate the width of the tour step', () => {
-                let calculatedWidth = guidedTourComponent.getCalculatedTourStepWidth(null, tourStep, 0, 500);
-                expect(calculatedWidth).to.equal(500);
+                expect(guidedTourComponent.calculatedTourStepWidth).to.equal(500);
+            });
+
+            it('should apply the right transformation', () => {
+                expect(guidedTourComponent.transform).to.equal('translateY(-100%)');
+
+                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                expect(guidedTourComponent.transform).to.equal('');
+            });
+
+            it('should calculate the right max width adjustment', () => {
+                guidedTourComponent.tourStepWidth = 500;
+                guidedTourComponent.minimalTourStepWidth = 400;
+                expect(guidedTourComponent.maxWidthAdjustmentForTourStep).to.equal(100);
+            });
+
+            it('should calculate the left position of the highlighted element', () => {
+                guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
+                expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-350);
+
+                guidedTourComponent.currentTourStep.orientation = Orientation.TopRight;
+                expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-500);
+
+                guidedTourComponent.currentTourStep.orientation = Orientation.TopLeft;
+                expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(0);
+
+                guidedTourComponent.currentTourStep.orientation = Orientation.Left;
+                expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-510);
+
+                guidedTourComponent.currentTourStep.orientation = Orientation.Right;
+                expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(210);
+            });
+
+            it('should adjust the width for screen bound', () => {
+                guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
+                expect(guidedTourComponent.widthAdjustmentForScreenBound).to.equal(0);
+
+                guidedTourComponent.tourStepWidth = 1000;
+                expect(guidedTourComponent.widthAdjustmentForScreenBound).to.equal(500);
             });
         });
     });
