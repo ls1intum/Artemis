@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SelectionRectangle, TextSelectEvent } from './text-select.directive';
 import { Feedback } from 'app/entities/feedback';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
     selector: 'jhi-text-assessment-editor',
@@ -11,6 +12,7 @@ export class TextAssessmentEditorComponent {
     public hostRectangle: SelectionRectangle | null;
     @Input() public submissionText: string;
     @Input() public assessments: Feedback[];
+    @Input() public blocks: (TextBlock | undefined)[];
     @Input() public disabled = false;
     @Output() public assessedText = new EventEmitter<string>();
     private selectedText: string | null;

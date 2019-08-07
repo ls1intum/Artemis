@@ -155,8 +155,9 @@ public class CacheConfiguration {
             createIfNotExists(cm, ModelAssessmentConflict.class.getName() + ".resultsInConflict", jcacheConfiguration);
             createIfNotExists(cm, ConflictingResult.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
-            createIfNotExists(cm, de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
-            // createIfNotExists(cm, );thipster-needle-ehcache-add-entry
+            createIfNotExists(cm, ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
+            // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };
     }

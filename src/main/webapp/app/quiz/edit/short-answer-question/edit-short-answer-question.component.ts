@@ -1,4 +1,17 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ChangeDetectorRef,
+    ViewEncapsulation,
+} from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -15,6 +28,8 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
+    styleUrls: ['./edit-short-answer-question.component.scss', '../edit-quiz-question.scss', '../../../quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })
 export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {

@@ -80,7 +80,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     boolean canAccessRepository(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        return authCheckService.isAtLeastInstructorForCourse(exercise.getCourse(), userService.getUserWithGroupsAndAuthorities());
+        return authCheckService.isAtLeastInstructorInCourse(exercise.getCourse(), userService.getUserWithGroupsAndAuthorities());
     }
 
     /**

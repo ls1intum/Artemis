@@ -5,16 +5,32 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Observable, Subject } from 'rxjs';
+import { of, Observable, BehaviorSubject } from 'rxjs';
+import { distinctUntilChanged, map, catchError } from 'rxjs/operators';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
 
+export interface IAccountService {
+    fetch: () => Observable<HttpResponse<User>>;
+    save: (account: any) => Observable<HttpResponse<any>>;
+    authenticate: (identity: User | null) => void;
+    hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
+    hasAnyAuthorityDirect: (authorities: string[]) => boolean;
+    hasAuthority: (authority: string) => Promise<boolean>;
+    identity: (force?: boolean) => Promise<User | null>;
+    isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastInstructorInCourse: (course: Course) => boolean;
+    isAuthenticated: () => boolean;
+    getAuthenticationState: () => Observable<User | null>;
+    getImageUrl: () => string | null;
+}
+
 @Injectable({ providedIn: 'root' })
-export class AccountService {
-    private userIdentity: User | null;
+export class AccountService implements IAccountService {
+    private userIdentityValue: User | null = null;
     private authenticated = false;
-    private authenticationState = new Subject<any>();
+    private authenticationState = new BehaviorSubject<User | null>(null);
 
     constructor(
         private languageService: JhiLanguageService,
@@ -22,6 +38,17 @@ export class AccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
     ) {}
+
+    get userIdentity() {
+        return this.userIdentityValue;
+    }
+
+    set userIdentity(user: User | null) {
+        this.userIdentityValue = user;
+        this.authenticated = !!user;
+        // Alert subscribers about user updates, that is when the user logs in or logs out (null).
+        this.authenticationState.next(user);
+    }
 
     fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
@@ -33,8 +60,6 @@ export class AccountService {
 
     authenticate(identity: User | null) {
         this.userIdentity = identity;
-        this.authenticated = identity !== null;
-        this.authenticationState.next(this.userIdentity);
     }
 
     syncGroups(identity: User) {
@@ -96,34 +121,31 @@ export class AccountService {
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
         return this.fetch()
-            .toPromise()
-            .then(response => {
-                const user = response.body!;
-                if (user) {
-                    this.userIdentity = user;
-                    this.authenticated = true;
-                    this.websocketService.connect();
+            .pipe(
+                map((response: HttpResponse<User>) => {
+                    const user = response.body!;
+                    if (user) {
+                        this.userIdentity = user;
+                        this.websocketService.connect();
 
-                    // After retrieve the account info, the language will be changed to
-                    // the user's preferred language configured in the account setting
-                    const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
-                    this.languageService.changeLanguage(langKey);
-                } else {
+                        // After retrieve the account info, the language will be changed to
+                        // the user's preferred language configured in the account setting
+                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                        this.languageService.changeLanguage(langKey);
+                    } else {
+                        this.userIdentity = null;
+                    }
+                    return this.userIdentity;
+                }),
+                catchError(() => {
+                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                        this.websocketService.disconnect();
+                    }
                     this.userIdentity = null;
-                    this.authenticated = false;
-                }
-                this.authenticationState.next(this.userIdentity);
-                return this.userIdentity;
-            })
-            .catch(err => {
-                if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
-                    this.websocketService.disconnect();
-                }
-                this.userIdentity = null;
-                this.authenticated = false;
-                this.authenticationState.next(this.userIdentity);
-                return null;
-            });
+                    return of(null);
+                }),
+            )
+            .toPromise();
     }
 
     isAtLeastTutorInCourse(course: Course): boolean {
@@ -138,15 +160,19 @@ export class AccountService {
         return this.authenticated;
     }
 
-    isIdentityResolved(): boolean {
-        return this.userIdentity !== undefined;
+    getAuthenticationState(): Observable<User | null> {
+        return this.authenticationState.asObservable().pipe(
+            // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
+            distinctUntilChanged(),
+        );
     }
 
-    getAuthenticationState(): Observable<User> {
-        return this.authenticationState.asObservable();
-    }
-
+    /**
+     * Returns the image url of the user or null.
+     *
+     * Returns null if the user is not authenticated or the user does not have an image.
+     */
     getImageUrl(): string | null {
-        return this.isIdentityResolved() ? this.userIdentity!.imageUrl : null;
+        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : null;
     }
 }

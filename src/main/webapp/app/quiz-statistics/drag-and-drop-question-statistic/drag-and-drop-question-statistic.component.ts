@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, HostListener } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,6 +26,8 @@ interface BackgroundColorConfig {
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
+    styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     quizExercise: QuizExercise;
@@ -59,7 +61,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
-    resizeImage = resizeImage();
+    resizeImage = resizeImage(true);
 
     constructor(
         private route: ActivatedRoute,
@@ -109,7 +111,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:resize') onResize() {
-        resizeImage();
+        resizeImage(true);
     }
 
     getDataSets() {

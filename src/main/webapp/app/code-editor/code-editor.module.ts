@@ -14,7 +14,6 @@ import { TreeviewModule } from 'ngx-treeview';
 
 import {
     // services
-    CodeEditorService,
     DomainService,
     CodeEditorRepositoryService,
     CodeEditorRepositoryFileService,
@@ -33,7 +32,6 @@ import {
     CodeEditorFileBrowserCreateNodeComponent,
     CodeEditorBuildOutputComponent,
     CodeEditorStatusComponent,
-    EditorInstructionsResultDetailComponent,
     CodeEditorActionsComponent,
     CodeEditorInstructionsComponent,
     CodeEditorResolveConflictModalComponent,
@@ -45,6 +43,8 @@ import {
 
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
+import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -58,6 +58,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
+        ArtemisExerciseHintModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -71,7 +72,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
-        EditorInstructionsResultDetailComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
@@ -81,14 +81,13 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,
-        EditorInstructionsResultDetailComponent,
+        ExerciseHintStudentDialogComponent,
         CodeEditorResolveConflictModalComponent,
     ],
     providers: [
         JhiAlertService,
         ResultService,
         ParticipationService,
-        CodeEditorService,
         DomainService,
         CodeEditorRepositoryService,
         CodeEditorRepositoryFileService,
@@ -104,7 +103,7 @@ const ENTITY_STATES = [...codeEditorRoute];
 export class ArTEMiSCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });
