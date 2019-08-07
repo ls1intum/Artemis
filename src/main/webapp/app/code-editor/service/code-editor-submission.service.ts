@@ -6,6 +6,9 @@ import { ProgrammingSubmissionWebsocketService } from 'app/submission/programmin
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 
+/**
+ * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
+ */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSubmissionService extends DomainDependent implements OnDestroy {
     private participationId: number | null;
@@ -27,6 +30,7 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = domain;
+        // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
         if (domainType === DomainType.PARTICIPATION && domainValue.id !== this.participationId) {
             this.participationId = domainValue.id;
             this.submissionSubscription = this.submissionService
