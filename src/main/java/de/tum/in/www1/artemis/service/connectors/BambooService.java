@@ -369,8 +369,8 @@ public class BambooService implements ContinuousIntegrationService {
         result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResults);
-/*        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
-        resultRepository.save(result);*/
+        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+        resultRepository.save(result);
 
         if (buildResults.containsKey("vcsRevisionKey") || buildResults.containsKey("changesetId")) {
             //we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
