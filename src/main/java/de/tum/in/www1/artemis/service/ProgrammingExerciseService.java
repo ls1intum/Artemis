@@ -117,7 +117,6 @@ public class ProgrammingExerciseService {
      *
      * @param exerciseId of programming exercise the test cases got changed.
      */
-    @Transactional
     public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
         if (!exerciseOpt.isPresent())
