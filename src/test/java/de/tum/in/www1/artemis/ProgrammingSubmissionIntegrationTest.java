@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -164,7 +165,17 @@ class ProgrammingSubmissionIntegrationTest {
                 .map(participationType -> DynamicTest.dynamicTest("shouldHandleNewBuildResultCreatedByCommit" + participationType, () -> {
                     // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
                     reset();
-                    shouldHandleNewBuildResultCreatedByCommit(participationType);
+                    shouldHandleNewBuildResultCreatedByCommit(participationType, false);
+                })).collect(Collectors.toList());
+    }
+
+    @TestFactory
+    Collection<DynamicTest> shouldHandleNewBuildResultCreatedByTwoCommitsTestCollection() {
+        return Arrays.stream(IntegrationTestParticipationType.values())
+                .map(participationType -> DynamicTest.dynamicTest("shouldHandleNewBuildResultCreatedByTwoCommits" + participationType, () -> {
+                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
+                    reset();
+                    shouldHandleNewBuildResultCreatedByCommit(participationType, true);
                 })).collect(Collectors.toList());
     }
 
@@ -175,12 +186,14 @@ class ProgrammingSubmissionIntegrationTest {
      * Here the participation provided does exist so Artemis can create the submission.
      *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
+     *
+     * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
      */
-    void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType) throws Exception {
+    void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         final long submissionId = submission.getId();
-        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 0, HttpStatus.OK, additionalCommit);
 
         // Check that the result was created successfully and is linked to the participation and submission.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
@@ -219,8 +232,8 @@ class ProgrammingSubmissionIntegrationTest {
         // Create 1 submission.
         postSubmission(participationId, HttpStatus.OK);
         // Create 2 results for the same submission.
-        postResult(participationType, 0, HttpStatus.OK);
-        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 0, HttpStatus.OK, false);
+        postResult(participationType, 0, HttpStatus.OK, false);
 
         // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -262,7 +275,7 @@ class ProgrammingSubmissionIntegrationTest {
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         postSubmission(participationId, HttpStatus.BAD_REQUEST);
         // Post the build result once.
-        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 0, HttpStatus.OK, false);
 
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findAll();
@@ -291,7 +304,7 @@ class ProgrammingSubmissionIntegrationTest {
      */
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        postResult(participationType, 0, HttpStatus.OK);
+        postResult(participationType, 0, HttpStatus.OK, false);
 
         SecurityUtils.setAuthorizationObject();
         Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
@@ -338,10 +351,10 @@ class ProgrammingSubmissionIntegrationTest {
         })).isTrue();
 
         // Phase 2: Now the CI informs Artemis about the student participation build results.
-        postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK);
-        postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK);
-        postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK);
-        postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK);
+        postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK, false);
+        postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK, false);
+        postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK, false);
+        postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
@@ -393,7 +406,7 @@ class ProgrammingSubmissionIntegrationTest {
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
-    private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+    private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String id;
         switch (participationType) {
         case TEMPLATE:
@@ -411,6 +424,17 @@ class ProgrammingSubmissionIntegrationTest {
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
         Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
         planMap.put("key", "TEST201904BPROGRAMMINGEXERCISE6-" + id.toUpperCase());
+
+        if (additionalCommit) {
+            Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
+            List<Object> vcsList = (List<Object>) buildMap.get("vcs");
+            JSONObject repo = (JSONObject) vcsList.get(0); // Assignment Repo
+            List<Object> commitList = (List<Object>) repo.get("commits");
+            Map<String, Object> newCommit = new HashMap<>();
+            newCommit.put("comment", "Some commit that occurred before");
+            newCommit.put("id", "90b6af5650c30d35a0836fd58c677f8980e1df27");
+            commitList.add(newCommit);
+        }
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", "<secrettoken>");
