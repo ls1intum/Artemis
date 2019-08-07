@@ -32,7 +32,6 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
             this.submissionSubscription = this.submissionService
                 .getLatestPendingSubmission(this.participationId)
                 .pipe(
-                    tap((submission: ProgrammingSubmission) => console.log({ submission })),
                     map((submission: ProgrammingSubmission) => !!submission),
                     tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                 )

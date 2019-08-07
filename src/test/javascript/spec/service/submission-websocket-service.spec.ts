@@ -1,7 +1,8 @@
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { SinonStub, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { SinonStub, stub, spy } from 'sinon';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
@@ -63,10 +64,18 @@ describe('SubmissionWebsocketService', () => {
     it('should return cached subject as Observable for provided participation if exists', () => {
         const cachedSubject = new BehaviorSubject(null);
         // @ts-ignore
+        const fetchLatestPendingSubmissionSpy = spy(submissionWebsocketService, 'fetchLatestPendingSubmission');
+        // @ts-ignore
+        const setupWebsocketSubscriptionSpy = spy(submissionWebsocketService, 'setupWebsocketSubscription');
+        // @ts-ignore
+        const subscribeForNewResultSpy = spy(submissionWebsocketService, 'subscribeForNewResult');
+        // @ts-ignore
         submissionWebsocketService.submissionSubjects = { [participationId]: cachedSubject };
 
         const returnedObservable = submissionWebsocketService.getLatestPendingSubmission(participationId);
-        expect(returnedObservable).to.deep.equal(cachedSubject.asObservable());
+        expect(fetchLatestPendingSubmissionSpy).to.not.have.been.called;
+        expect(setupWebsocketSubscriptionSpy).to.not.have.been.called;
+        expect(subscribeForNewResultSpy).to.not.have.been.called;
     });
 
     it('should query http endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
