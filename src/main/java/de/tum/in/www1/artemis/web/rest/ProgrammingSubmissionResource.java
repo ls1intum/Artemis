@@ -71,18 +71,19 @@ public class ProgrammingSubmissionResource {
             messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
         }
         catch (IllegalArgumentException ex) {
-            log.error("Exception encountered when trying to extract the commit hash from the request body. Processing submission for participation {} with request object {}: {}",
+            log.error(
+                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
                     participationId, requestBody, ex);
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            log.error("Tried to create another submission for the same commitHash and participation! Processing submission for participation {} with request object {}: {}",
+            log.error("Tried to create another submission for the same commitHash and participation: processing submission for participation {} failed with request object {}: {}",
                     participationId, requestBody, ex);
             return badRequest();
         }
         catch (EntityNotFoundException ex) {
-            log.error("Participation with id {} is not a ProgrammingExerciseParticipation! Processing submission for participation {} with request object {}: {}", participationId,
-                    participationId, requestBody, ex);
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
+                    participationId, participationId, requestBody, ex);
             return notFound();
         }
 
