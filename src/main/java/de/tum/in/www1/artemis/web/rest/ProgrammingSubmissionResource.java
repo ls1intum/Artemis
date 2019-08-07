@@ -63,6 +63,9 @@ public class ProgrammingSubmissionResource {
         log.info("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
             // notify the user via websocket.
             messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
