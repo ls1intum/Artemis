@@ -197,14 +197,14 @@ public class ResultResource {
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
         if (!optionalParticipation.isPresent()) {
-            log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
+            log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             return notFound();
         }
 
         ProgrammingExerciseParticipation participation = optionalParticipation.get();
         Optional<Result> result;
         // Process the new result from the build result.
-        result = resultService.processNewProgrammingExerciseResult(participation.getId(), requestBody);
+        result = resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {

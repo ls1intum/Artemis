@@ -136,7 +136,7 @@ public class ProgrammingExerciseService {
             submission.setParticipation((Participation) participation);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-                log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
+                log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participation.getId());
                 submission.setCommitHash(lastCommitHash);
             }
             catch (Exception ex) {

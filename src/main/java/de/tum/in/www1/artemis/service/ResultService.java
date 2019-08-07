@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,23 +122,22 @@ public class ResultService {
      * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *
-     * @param participation Participation for which the build was finished
+     * @param participation the participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
     @Transactional
-    public Optional<Result> processNewProgrammingExerciseResult(Long participationId, Object requestBody) {
-        log.info("Received new build result (NEW) for participation " + participationId);
+    public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
+        log.info("Received new build result (NEW) for participation " + participation.getId());
 
-        Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation))
-            throw new EntityNotFoundException("Participation with id " + participationId + " is not a programming exercise participation!");
+            throw new EntityNotFoundException("Participation with id " + participation.getId() + " is not a programming exercise participation!");
 
         Result result;
         try {
             result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
         }
         catch (Exception ex) {
-            log.error("Result for participation " + participationId + " could not be created due to the following exception: " + ex);
+            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
             return Optional.empty();
         }
 
@@ -150,6 +151,7 @@ public class ResultService {
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise);
         }
+        // TODO: the result is not explicitly saved here, this might be done by the transactional context, but it might be saver to save it anyway
         return Optional.ofNullable(result);
     }
 
@@ -157,8 +159,8 @@ public class ResultService {
      * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
      * through the websocket!
      *
-     * @param participation of the given result.
-     * @param result        from which to extract the test cases.
+     * @param exercise the programming exercise for which the test cases should be extracted from the new result
+     * @param result   from which to extract the test cases.
      */
     private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
         boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);

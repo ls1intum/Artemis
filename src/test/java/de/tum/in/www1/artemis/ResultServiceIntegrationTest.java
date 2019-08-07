@@ -87,7 +87,7 @@ public class ResultServiceIntegrationTest {
         Object requestDummy = new Object();
 
         when(continuousIntegrationServiceMock.onBuildCompletedNew(participation, requestDummy)).thenReturn(result);
-        resultService.processNewProgrammingExerciseResult(participation.getId(), requestDummy);
+        resultService.processNewProgrammingExerciseResult(participation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);

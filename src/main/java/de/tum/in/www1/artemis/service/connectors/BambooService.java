@@ -433,7 +433,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation The participation for which the build finished.
      * @param requestBody   The request Body received from the CI-Server.
      * @return the created result.
-     * @throws Exception
+     * @throws Exception when the request body cannot be parsed, this method throws an exception
      */
     @Override
     @Transactional
@@ -447,9 +447,9 @@ public class BambooService implements ContinuousIntegrationService {
             if (isFirstBuildForThisPlan(buildMap)) return null;
 
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
-            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(s -> {
-                String matchingCommitHashInBuildMap = getCommitHash(buildMap, s.getType());
-                return matchingCommitHashInBuildMap.equals(s.getCommitHash());
+            Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
+                String matchingCommitHashInBuildMap = getCommitHash(buildMap, submission.getType());
+                return matchingCommitHashInBuildMap.equals(submission.getCommitHash());
             }).findFirst();
 
             Result result = createResultFromBuildResult(buildMap, participation);
@@ -464,7 +464,8 @@ public class BambooService implements ContinuousIntegrationService {
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
-                // 2) An unknown error that caused the submission not to be created on a code submission.
+                // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
+                // we can still get the commit has from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
                 String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
                 log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
@@ -480,6 +481,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
+            //TODO: should we not save the result here as well?
             return result;
         } catch (Exception e) {
             log.error("Error when getting build result");
@@ -534,7 +536,8 @@ public class BambooService implements ContinuousIntegrationService {
         String commitHash = null;
         for (Object changeSet : vcsList) {
             Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-            if (!submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
+            if (!submissionType.equals(SubmissionType.MANUAL) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
+                // We are only interested in the last commit hash of the assignment repo, not the test repo
                 commitHash = (String) changeSetMap.get("id");
             } else if (submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(TEST_REPO_NAME)) {
                 commitHash = (String) changeSetMap.get("id");
@@ -609,9 +612,10 @@ public class BambooService implements ContinuousIntegrationService {
             List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs; // TODO: check if this works correctly
 
             for (Map<String, Object> job : castedJobs) {
+
+                // 1) add feedback for failed test cases
                 List<Map<String, Object>> failedTests = (List<Map<String, Object>>) job.get("failedTests");
                 for (Map<String, Object> failedTest : failedTests) {
-                    String className = (String) failedTest.get("className");
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     List<String> errors = (List<String>) failedTest.get("errors");
@@ -626,9 +630,9 @@ public class BambooService implements ContinuousIntegrationService {
                     createAutomaticFeedback(result, methodName, false, errorMessageString);
                 }
 
+                // 2) add feedback for passed test cases
                 List<Map<String, Object>> succuessfulTests = (List<Map<String, Object>>) job.get("successfulTests");
                 for (Map<String, Object> succuessfulTest : succuessfulTests) {
-                    String className = (String) succuessfulTest.get("className");
                     String methodName = (String) succuessfulTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     createAutomaticFeedback(result, methodName, true, null);

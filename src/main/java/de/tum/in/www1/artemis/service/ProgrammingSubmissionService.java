@@ -53,20 +53,18 @@ public class ProgrammingSubmissionService {
 
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
+        }
 
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        ProgrammingExerciseParticipation peParticipation = (ProgrammingExerciseParticipation) participation;
 
         if (participation instanceof ProgrammingExerciseStudentParticipation
-                && ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getInitializationState() == InitializationState.INACTIVE) {
-            // the build plan was deleted before, e.g. due to cleanup, therefore we need to
-            // reactivate the
-            // build plan by resuming the participation
-            participationService.resumeExercise(programmingExerciseParticipation.getProgrammingExercise(),
-                    (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+                && ((ProgrammingExerciseStudentParticipation) peParticipation).getInitializationState() == InitializationState.INACTIVE) {
+            // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
+            participationService.resumeExercise(peParticipation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) peParticipation);
             // in addition we need to trigger a build so that we receive a result in a few seconds
-            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+            continuousIntegrationService.get().triggerBuild(peParticipation);
         }
 
         String lastCommitHash;
@@ -75,18 +73,18 @@ public class ProgrammingSubmissionService {
         }
         catch (Exception ex) {
             log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
-            throw (new IllegalArgumentException(ex.getMessage()));
+            throw new IllegalArgumentException(ex);
         }
 
         // There can't be two submissions for the same participation and commitHash!
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
         if (programmingSubmission != null) {
-            throw (new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + "already exists!"));
+            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + "already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(lastCommitHash);
-        log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
+        log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -95,6 +93,7 @@ public class ProgrammingSubmissionService {
         participation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
+        // TODO: do we need to save the participation because we added the submission?
         return programmingSubmission;
     }
 }
