@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { Result } from 'app/entities/result';
+import { JavaBridgeService } from 'app/utils/java-bridge.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -56,6 +57,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private httpClient: HttpClient,
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
+        private javaBridge: JavaBridgeService,
         private router: Router,
     ) {}
 
@@ -204,5 +206,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
+    }
+
+    importIntoIntelliJ() {
+        const project = this.exercise.title
+            .split(' ')
+            .join('_')
+            .toLowerCase();
+        const repo = (this.exercise.course!.shortName + this.exercise.shortName).toUpperCase().replace(RegExp('/s/g'), '');
+        this.javaBridge.clone(repo, project);
     }
 }

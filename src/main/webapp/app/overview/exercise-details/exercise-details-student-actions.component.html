@@ -180,6 +180,16 @@
         <button
             jhi-exercise-action-button
             buttonIcon="download"
+            (click)="importIntoIntelliJ()"
+            [buttonLabel]="'Import into IntelliJ'"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="javaBridge.isIntelliJ() && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="download"
             [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"

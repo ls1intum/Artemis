@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { JavaBridgeService } from 'app/utils/java-bridge.service';
 
 @Component({
     selector: 'jhi-home',
@@ -33,6 +34,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private elementRef: ElementRef,
         private renderer: Renderer,
         private eventManager: JhiEventManager,
+        private javaBridge: JavaBridgeService,
     ) {}
 
     ngOnInit() {
@@ -82,6 +84,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 if (redirect) {
                     this.stateStorageService.storeUrl(null);
                     this.router.navigate([redirect]);
+                }
+
+                // Log in to IntelliJ
+                if (this.javaBridge.isIntelliJ()) {
+                    this.javaBridge.login(this.username, this.password);
                 }
             })
             .catch((error: HttpErrorResponse) => {
