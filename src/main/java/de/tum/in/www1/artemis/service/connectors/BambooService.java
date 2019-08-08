@@ -484,7 +484,7 @@ public class BambooService implements ContinuousIntegrationService {
             //TODO: should we not save the result here as well?
             return result;
         } catch (Exception e) {
-            log.error("Error when getting build result");
+            log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
         }
     }
@@ -536,7 +536,7 @@ public class BambooService implements ContinuousIntegrationService {
         String commitHash = null;
         for (Object changeSet : vcsList) {
             Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-            if (!submissionType.equals(SubmissionType.MANUAL) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
+            if (submissionType.equals(SubmissionType.MANUAL) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
                 // We are only interested in the last commit hash of the assignment repo, not the test repo
                 commitHash = (String) changeSetMap.get("id");
             } else if (submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(TEST_REPO_NAME)) {
