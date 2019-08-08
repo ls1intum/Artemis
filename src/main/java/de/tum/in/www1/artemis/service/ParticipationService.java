@@ -120,31 +120,77 @@ public class ParticipationService {
     }
 
     /**
-     * Save a participation.
+     * Save any type of participation without knowing the explicit subtype
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public Participation save(Participation participation) {
+        // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
+        // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            return save((ProgrammingExerciseStudentParticipation) participation);
+        }
+        else if (participation instanceof StudentParticipation) {
+            return save((StudentParticipation) participation);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+            return save((TemplateProgrammingExerciseParticipation) participation);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            return save((SolutionProgrammingExerciseParticipation) participation);
+        }
+        else {
+            throw new RuntimeException("Participation type not known. Cannot save!");
+        }
+    }
+
+    /**
+     * Save a ProgrammingExerciseStudentParticipation.
      *
      * @param participation the entity to save
      * @return the persisted entity
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProgrammingExerciseStudentParticipation save(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Request to save Participation : {}", participation);
+        log.debug("Request to save ProgrammingExerciseStudentParticipation : {}", participation);
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
-    public Participation save(Participation participation) {
-        throw new RuntimeException("This method should not be invoked because it is overridden with concrete subtypes");
-    }
-
     /**
-     * Save a participation.
+     * Save a StudentParticipation.
      *
      * @param participation the entity to save
      * @return the persisted entity
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public StudentParticipation save(StudentParticipation participation) {
-        log.debug("Request to save Participation : {}", participation);
+        log.debug("Request to save StudentParticipation : {}", participation);
         return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a TemplateProgrammingExerciseParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public TemplateProgrammingExerciseParticipation save(TemplateProgrammingExerciseParticipation participation) {
+        log.debug("Request to save TemplateProgrammingExerciseParticipation : {}", participation);
+        return templateProgrammingExerciseParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a SolutionProgrammingExerciseParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public SolutionProgrammingExerciseParticipation save(SolutionProgrammingExerciseParticipation participation) {
+        log.debug("Request to save SolutionProgrammingExerciseParticipation : {}", participation);
+        return solutionProgrammingExerciseParticipationRepository.saveAndFlush(participation);
     }
 
     /**

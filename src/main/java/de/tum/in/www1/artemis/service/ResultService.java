@@ -151,7 +151,7 @@ public class ResultService {
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise);
         }
-        // TODO: the result is not explicitly saved here, this might be done by the transactional context, but it might be saver to save it anyway
+        resultRepository.save(result);
         return Optional.ofNullable(result);
     }
 

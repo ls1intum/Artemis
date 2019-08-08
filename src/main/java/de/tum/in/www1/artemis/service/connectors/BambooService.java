@@ -320,7 +320,7 @@ public class BambooService implements ContinuousIntegrationService {
      * Retrieves the latest build result for the given plan key and saves it as result.
      * It checks if the build result is the current one. If not, it waits for a configurable delay and then tries again.
      *
-     * @param participation
+     * @param participation the ProgrammingExerciseParticipation that received a new build result
      */
     @Override
     @Transactional
@@ -336,7 +336,6 @@ public class BambooService implements ContinuousIntegrationService {
             log.warn("Exception when retrieving a Bamboo build result for build plan " + participation.getBuildPlanId() + ": " + ex.getMessage());
         }
 
-        //TODO: put this request into a timer / queue instead of blocking the request! Because blocking the request actually means that other requests cannot be exectuted
         if (isOldBuildResult) {
             log.warn("It seems we got an old build result from Bamboo for build plan " + participation.getBuildPlanId() + ". Waiting 1s to retrieve build result...");
             try {
@@ -355,8 +354,6 @@ public class BambooService implements ContinuousIntegrationService {
                 return null;
             }
         }
-
-        //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
@@ -405,22 +402,16 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         resultRepository.save(result);
-        //The following was intended to prevent caching problems, but does not work properly due to lazy instantiation exceptions
-//        Hibernate.initialize(participation.getResults());
-//        participation.addResult(result);
-//        participationRepository.save(participation);
         return result;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public String getPlanKey(Object requestBody) throws BambooException {
         try {
             Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
             Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-            String planKey = (String) planMap.get("key");
-
-            return planKey;
-
+            return (String) planMap.get("key");
         } catch (Exception e) {
             log.error("Error when getting plan key");
             throw new BitbucketException("Could not get plan key", e);
@@ -437,6 +428,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     @Transactional
+    @SuppressWarnings("unchecked")
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
         log.debug("Retrieving build result (NEW) ...");
         try {
@@ -481,7 +473,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
-            //TODO: should we not save the result here as well?
+            resultRepository.save(result);
             return result;
         } catch (Exception e) {
             log.error("Error when getting build result: " + e.getMessage());
@@ -609,7 +601,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         try {
-            List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs; // TODO: check if this works correctly
+            List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs;
 
             for (Map<String, Object> job : castedJobs) {
 

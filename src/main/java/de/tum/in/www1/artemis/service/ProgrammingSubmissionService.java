@@ -93,7 +93,7 @@ public class ProgrammingSubmissionService {
         participation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
-        // TODO: do we need to save the participation because we added the submission?
+        participationService.save(participation);
         return programmingSubmission;
     }
 }

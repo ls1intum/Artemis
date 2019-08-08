@@ -22,19 +22,6 @@ public interface VersionControlService {
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
     /**
-     * Add a Bamboo-Service on the VCS-Server
-     *
-     * @param projectKey     The project key
-     * @param repositorySlug The repository slug
-     * @param bambooUrl      The base URL of the Bamboo-Server
-     * @param buildKey       The buildKey (including Project and Build Plan)
-     * @param bambooUsername The Bamboo Username
-     * @param bambooPassword The Bamboo Password
-     */
-    // TODO: we should rename this method, because it's not very clear what it means
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
-
-    /**
      * Deletes the project for the given project key
      *
      * @param projectKey
