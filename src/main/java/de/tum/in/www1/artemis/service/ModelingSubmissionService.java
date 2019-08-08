@@ -194,6 +194,9 @@ public class ModelingSubmissionService extends SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
 
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResult(null);
+
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
         if (!optionalParticipation.isPresent()) {
@@ -251,18 +254,21 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (modelingSubmission.getResult() == null) {
-            setNewResult(modelingSubmission);
+        Result result = modelingSubmission.getResult();
+        if (result == null) {
+            result = setNewResult(modelingSubmission);
         }
 
-        if (modelingSubmission.getResult().getAssessor() == null) {
+        if (result.getAssessor() == null) {
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
                 compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
             }
-            resultService.setAssessor(modelingSubmission.getResult());
+            resultService.setAssessor(result);
         }
 
-        modelingSubmission.getResult().setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
     /**
@@ -285,6 +291,7 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission.setResult(automaticResult);
             modelingSubmission.getParticipation().addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+            resultRepository.save(automaticResult);
 
             compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         }
@@ -297,8 +304,9 @@ public class ModelingSubmissionService extends SubmissionService {
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
      * @param submission the submission for which a new result should be created
+     * @return the newly created result
      */
-    public void setNewResult(ModelingSubmission submission) {
+    public Result setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
@@ -307,6 +315,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
+        return result;
     }
 
     /**

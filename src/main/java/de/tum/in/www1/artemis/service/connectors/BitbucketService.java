@@ -104,11 +104,6 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
-        // NOT NEEDED
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey;
         log.info("Delete bitbucket project " + projectKey);

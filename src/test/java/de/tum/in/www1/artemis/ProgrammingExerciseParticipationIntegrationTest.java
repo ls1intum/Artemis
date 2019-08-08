@@ -46,7 +46,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
     }
 
     @Test

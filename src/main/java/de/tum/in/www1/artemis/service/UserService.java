@@ -303,24 +303,18 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(user -> {
-            user.getGroups().size();
-            user.getAuthorities().size();
-            return user;
-        });
+        return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
     @Transactional(readOnly = true)
     public User getUserWithAuthorities(Long id) {
-        User user = userRepository.findById(id).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        return userRepository.findOneWithAuthoritiesById(id).get();
     }
 
     @Transactional(readOnly = true)
     public User getUser() {
-        return userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        return userRepository.findOneByLogin(currentUserLogin).get();
     }
 
     @Transactional(readOnly = true)
@@ -330,36 +324,25 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
-        User user = userRepository.findOneByLogin(login).orElse(null);
-        if (user != null) {
-            user.getGroups().size(); // eagerly load the association
-            user.getAuthorities().size(); // eagerly load the association
-        }
-        return user;
+        return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
     }
 
     @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
         return user;
     }
 
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
     }
 
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities(Principal principal) {
-        User user = userRepository.findOneByLogin(principal.getName()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
     }
 
     /**
