@@ -96,8 +96,9 @@ public class ProgrammingSubmissionService {
 
         participation.addSubmissions(programmingSubmission);
 
+        programmingSubmissionRepository.save(programmingSubmission);
         participationService.save(participation);
-        return programmingSubmissionRepository.save(programmingSubmission);
+        return programmingSubmission;
     }
 
     /**
