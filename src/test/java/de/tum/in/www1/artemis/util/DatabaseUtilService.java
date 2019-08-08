@@ -17,6 +17,7 @@ import com.google.gson.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -56,7 +57,10 @@ public class DatabaseUtilService {
     ResultRepository resultRepo;
 
     @Autowired
-    StudentParticipationRepository participationRepo;
+    StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    ParticipationRepository participationRepo;
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
@@ -72,6 +76,12 @@ public class DatabaseUtilService {
 
     @Autowired
     TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
+
+    @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepo;
 
     @Autowired
     ModelAssessmentConflictRepository conflictRepo;
@@ -108,20 +118,16 @@ public class DatabaseUtilService {
         resultRepo.deleteAll();
         feedbackRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
-        modelingSubmissionRepo.deleteAll();
-        textSubmissionRepo.deleteAll();
-        participationRepo.deleteAll();
-        programmingExerciseStudentParticipationRepo.deleteAll();
-        templateProgrammingExerciseParticipationRepo.deleteAll();
-        solutionProgrammingExerciseParticipationRepo.deleteAll();
+        submissionRepository.deleteAll();
         exerciseRepo.deleteAll();
-        programmingExerciseRepository.deleteAll();
-        testCaseRepository.deleteAll();
+        participationRepo.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
+        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
+        assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         assertThat(programmingExerciseRepository.findAll()).as("programming exercise data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
@@ -155,7 +161,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation addParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isPresent()) {
             return storedParticipation.get();
         }
@@ -163,10 +169,10 @@ public class DatabaseUtilService {
         StudentParticipation participation = new StudentParticipation();
         participation.setStudent(user);
         participation.setExercise(exercise);
-        participationRepo.save(participation);
-        storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        studentParticipationRepo.save(participation);
+        storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isPresent();
-        return participationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+        return studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
@@ -179,14 +185,20 @@ public class DatabaseUtilService {
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setStudent(user);
         participation.setExercise(exercise);
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-" + login.toUpperCase());
+        participation.setInitializationState(InitializationState.INITIALIZED);
         programmingExerciseStudentParticipationRepo.save(participation);
         storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isPresent();
+        exercise.addParticipation((StudentParticipation) storedParticipation.get());
+        programmingExerciseRepository.save(exercise);
         return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
     }
 
     public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
+        participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setTemplateParticipation(participation);
         templateProgrammingExerciseParticipationRepo.save(participation);
         programmingExerciseRepository.save(exercise);
@@ -195,6 +207,8 @@ public class DatabaseUtilService {
 
     public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
+        participation.setInitializationState(InitializationState.INITIALIZED);
         exercise.setSolutionParticipation(participation);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         programmingExerciseRepository.save(exercise);
@@ -334,7 +348,7 @@ public class DatabaseUtilService {
         submission.setResult(result);
         participation.addResult(result);
         resultRepo.save(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         return submission;
     }
@@ -345,7 +359,7 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -361,7 +375,7 @@ public class DatabaseUtilService {
         submission.getParticipation().addResult(result);
         modelingSubmissionRepo.save(submission);
         resultRepo.save(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -378,7 +392,7 @@ public class DatabaseUtilService {
         submission.getParticipation().addResult(result);
         modelingSubmissionRepo.save(submission);
         resultRepo.save(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -388,7 +402,7 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         textSubmissionRepo.save(submission);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
@@ -406,7 +420,7 @@ public class DatabaseUtilService {
         submission.getParticipation().addResult(result);
         textSubmissionRepo.save(submission);
         resultRepo.save(result);
-        participationRepo.save(participation);
+        studentParticipationRepo.save(participation);
         return submission;
     }
 
