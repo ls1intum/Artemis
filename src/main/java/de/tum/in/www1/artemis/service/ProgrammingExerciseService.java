@@ -112,23 +112,33 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Notifies all particpations of the given programmingExercise about changes of the test cases.
+     * Notifies all participations of the given programmingExercise (including the template & solution participation!) about changes of the test cases.
+     * This method creates submissions for the participations so that the result when it comes in can be mapped to them.
      *
-     * @param programmingExercise The programmingExercise where the test cases got changed
+     * @param exerciseId of programming exercise the test cases got changed.
      */
-    @Transactional
-    public List<ProgrammingSubmission> notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
+    public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
+        if (!exerciseOpt.isPresent())
+            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
+        ProgrammingExercise programmingExercise = exerciseOpt.get();
+        // All student repository builds and the builds of the template & solution repository must be triggered now!
+        Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
+        participations.add(programmingExercise.getSolutionParticipation());
+        participations.add(programmingExercise.getTemplateParticipation());
+        participations.addAll(programmingExercise.getParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
+
         List<ProgrammingSubmission> submissions = new ArrayList<>();
-        for (StudentParticipation participation : programmingExercise.getParticipations()) {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+
+        for (ProgrammingExerciseParticipation participation : participations) {
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
             submission.setSubmissionDate(ZonedDateTime.now());
             submission.setSubmitted(true);
-            submission.setParticipation(participation);
+            submission.setParticipation((Participation) participation);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-                log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
+                log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participation.getId());
                 submission.setCommitHash(lastCommitHash);
             }
             catch (Exception ex) {
@@ -137,7 +147,9 @@ public class ProgrammingExerciseService {
 
             ProgrammingSubmission storedSubmission = submissionRepository.save(submission);
             submissions.add(storedSubmission);
-            continuousIntegrationUpdateService.get().triggerUpdate(programmingExerciseStudentParticipation.getBuildPlanId(), false);
+            // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
+            // It could be that Artemis is not available and the results come in before the submission is ready.
+            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
         return submissions;
     }

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -58,21 +62,41 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-
         log.info("REST request to inform about new commit+push for participation: {}", participationId);
-        ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
 
-        // Remove unnecessary information from the new submission.
-        submission.getParticipation().setExercise(null);
-        submission.getParticipation().setSubmissions(null);
-        // notify user via websocket.
-        messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
+        try {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
+            // Remove unnecessary information from the new submission.
+            submission.getParticipation().setExercise(null);
+            submission.getParticipation().setSubmissions(null);
+            // notify the user via websocket.
+            messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
+        }
+        catch (IllegalArgumentException ex) {
+            log.error(
+                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
+                    participationId, requestBody, ex);
+            return badRequest();
+        }
+        catch (IllegalStateException ex) {
+            log.error("Tried to create another submission for the same commitHash and participation: processing submission for participation {} failed with request object {}: {}",
+                    participationId, requestBody, ex);
+            return badRequest();
+        }
+        catch (EntityNotFoundException ex) {
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
+                    participationId, participationId, requestBody, ex);
+            return notFound();
+        }
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise. e
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)
@@ -84,15 +108,13 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-
+        Exercise exercise = exerciseService.findOne(exerciseId);
         if (!(exercise instanceof ProgrammingExercise)) {
             log.warn("REST request to inform about changed test cases of non existing ProgrammingExercise : {}", exerciseId);
             return ResponseEntity.notFound().build();
         }
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(programmingExercise, requestBody);
+        List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
 
         // notify users via websocket.
         for (ProgrammingSubmission submission : submissions) {

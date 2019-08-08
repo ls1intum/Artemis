@@ -127,9 +127,11 @@ public class ProgrammingExerciseTestCaseService {
      * bamboo build (not all test cases are executed in an exercise with sequential test runs) - Recalculating the score based based on the successful test cases weight vs the
      * total weight of all test cases.
      *
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     *
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
-     * @return
+     * @return the updated result
      */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
