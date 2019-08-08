@@ -91,7 +91,7 @@ public class ProgrammingExerciseParticipationResource {
      * A pending submission is one that does not have a result yet and is not older than RESULT_WAIT_LIMIT_SECONDS.
      *
      * @param participationId the id of the participation get the latest submission for
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok. Will return notFound if there is no participation for the given id and forbidden if the user is not allowed to access the participation.
      */
     @GetMapping("/programming-exercise-participation/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
