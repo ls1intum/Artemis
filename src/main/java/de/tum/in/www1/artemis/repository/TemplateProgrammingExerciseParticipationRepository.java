@@ -20,4 +20,6 @@ public interface TemplateProgrammingExerciseParticipationRepository extends JpaR
     @EntityGraph(attributePaths = { "results" })
     @Query("select p from TemplateProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
     Optional<TemplateProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
+
+    TemplateProgrammingExerciseParticipation findByProgrammingExerciseId(Long exerciseId);
 }

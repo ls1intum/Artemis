@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -121,6 +125,63 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         addSolutionParticipation();
         SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
         request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getLatestPendingSubmissionIfExists_student() throws Exception {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getLatestPendingSubmissionIfExists_ta() throws Exception {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
+        // Submission is older than 1 minute, therefore not considered pending.
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
+                HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(returnedSubmission).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
+        // Submission is older than 1 minute, therefore not considered pending.
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
+                HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(returnedSubmission).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
+        // Submission is older than 1 minute, therefore not considered pending.
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
+                HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(returnedSubmission).isNull();
     }
 
     private void addStudentParticipation() {

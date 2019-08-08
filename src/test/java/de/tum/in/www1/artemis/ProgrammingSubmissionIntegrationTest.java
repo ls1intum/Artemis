@@ -4,24 +4,24 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -112,70 +112,9 @@ class ProgrammingSubmissionIntegrationTest {
         exerciseId = exercise.getId();
         templateParticipationId = exercise.getTemplateParticipation().getId();
         solutionParticipationId = exercise.getSolutionParticipation().getId();
+
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestPendingSubmissionIfExists_student() throws Exception {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestPendingSubmissionIfExists_ta() throws Exception {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
-        // Submission is older than 1 minute, therefore not considered pending.
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
-        submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
     }
 
     /**
@@ -195,21 +134,13 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(submissionRepository.findAll()).hasSize(0);
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldCreateSubmissionOnNotifyPushForSubmissionTestCollection() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldCreateSubmissionOnNotifyPushFromVCS_for_" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldCreateSubmissionOnNotifyPushForSubmission(participationType);
-                })).collect(Collectors.toList());
-    }
-
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
      * However the participation id provided by the VCS on the request is invalid.
      */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -228,26 +159,6 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.isSubmitted()).isTrue();
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldHandleNewBuildResultCreatedByCommitTestCollection() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldHandleNewBuildResultCreatedByCommit" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldHandleNewBuildResultCreatedByCommit(participationType, false);
-                })).collect(Collectors.toList());
-    }
-
-    @TestFactory
-    Collection<DynamicTest> shouldHandleNewBuildResultCreatedByTwoCommitsTestCollection() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldHandleNewBuildResultCreatedByTwoCommits" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldHandleNewBuildResultCreatedByCommit(participationType, true);
-                })).collect(Collectors.toList());
-    }
-
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
@@ -258,6 +169,8 @@ class ProgrammingSubmissionIntegrationTest {
      *
      * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
      */
+    @ParameterizedTest
+    @MethodSource("participationTypeAndAdditionalCommitProvider")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -278,14 +191,10 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldNotLinkTwoResultsToTheSameSubmissionTestCollection() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldNotLinkTwoResultsToTheSameSubmission" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldNotLinkTwoResultsToTheSameSubmission(participationType);
-                })).collect(Collectors.toList());
+    private static Stream<Arguments> participationTypeAndAdditionalCommitProvider() {
+        return Stream.of(Arguments.of(IntegrationTestParticipationType.STUDENT, true), Arguments.of(IntegrationTestParticipationType.STUDENT, false),
+                Arguments.of(IntegrationTestParticipationType.TEMPLATE, true), Arguments.of(IntegrationTestParticipationType.TEMPLATE, false),
+                Arguments.of(IntegrationTestParticipationType.SOLUTION, true), Arguments.of(IntegrationTestParticipationType.SOLUTION, false));
     }
 
     /**
@@ -296,6 +205,8 @@ class ProgrammingSubmissionIntegrationTest {
      *
      * Only the last result should be linked to the created submission.
      */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
@@ -322,22 +233,14 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(submission2.getResult().getId()).isEqualTo(result2.getId());
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldNotCreateTwoSubmissionsForTwoIdenticalCommitsTestCollection() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldNotCreateTwoSubmissionsForTwoIdenticalCommits" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(participationType);
-                })).collect(Collectors.toList());
-    }
-
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
      *
      * This should not create two identical submissions.
      */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -357,20 +260,12 @@ class ProgrammingSubmissionIntegrationTest {
         assertThat(submission.getResult().getId()).isEqualTo(result.getId());
     }
 
-    @TestFactory
-    Collection<DynamicTest> shouldCreateSubmissionForManualBuildRunTestFactory() {
-        return Arrays.stream(IntegrationTestParticipationType.values())
-                .map(participationType -> DynamicTest.dynamicTest("shouldCreateSubmissionForManualBuildRun" + participationType, () -> {
-                    // In dynamic tests, the BeforeEach annotation does not work, so reset is called manually here.
-                    reset();
-                    shouldCreateSubmissionForManualBuildRun(participationType);
-                })).collect(Collectors.toList());
-    }
-
     /**
      * This is the case where an instructor manually triggers the build from the CI.
      * Here no submission exists yet and now needs to be created on the result notification.
      */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
@@ -399,7 +294,6 @@ class ProgrammingSubmissionIntegrationTest {
      */
     @Test
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
-        reset();
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
@@ -411,10 +305,9 @@ class ProgrammingSubmissionIntegrationTest {
         participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(1)));
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(4); // There should be a 1-1 relationship from submissions to participations.
-        assertThat(submissions.get(0).getParticipation().getId().equals(participations.get(0).getId())).isTrue();
-        assertThat(submissions.get(1).getParticipation().getId().equals(participations.get(1).getId())).isTrue();
-        assertThat(submissions.get(2).getParticipation().getId().equals(participations.get(2).getId())).isTrue();
-        assertThat(submissions.get(3).getParticipation().getId().equals(participations.get(3).getId())).isTrue();
+        for (Participation participation : participations) {
+            assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).collect(Collectors.toList())).hasSize(1);
+        }
         assertThat(submissions.stream().map(s -> (ProgrammingSubmission) s).allMatch(s -> {
             return s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST);
         })).isTrue();
