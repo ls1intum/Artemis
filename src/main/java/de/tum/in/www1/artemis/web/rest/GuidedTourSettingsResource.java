@@ -46,7 +46,7 @@ public class GuidedTourSettingsResource {
     }
 
     /**
-     * UPDATE /guided-tour-settings: update all guided tour settings of the current user
+     * PUT /guided-tour-settings: update all guided tour settings of the current user
      * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
      */

@@ -42,14 +42,23 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.code === 'ArrowRight' && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
-            this.guidedTourService.nextStep();
-        }
-        if (event.code === 'ArrowLeft' && this.guidedTourService.currentTourStepDisplay > 1) {
-            this.guidedTourService.backStep();
-        }
-        if (event.code === 'Escape') {
-            this.guidedTourService.skipTour();
+        switch (event.code) {
+            case 'ArrowRight': {
+                if (this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                    this.guidedTourService.nextStep();
+                }
+                break;
+            }
+            case 'ArrowLeft': {
+                if (this.guidedTourService.currentTourStepDisplay > 1) {
+                    this.guidedTourService.backStep();
+                }
+                break;
+            }
+            case 'Escape': {
+                this.guidedTourService.skipTour();
+                break;
+            }
         }
     }
 

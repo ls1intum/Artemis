@@ -223,6 +223,7 @@ describe('Component Tests', () => {
             });
 
             it('should apply the right transformation', () => {
+                guidedTourComponent.currentTourStep!.orientation = Orientation.Top;
                 expect(guidedTourComponent.transform).to.equal('translateY(-100%)');
 
                 guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
