@@ -97,22 +97,12 @@ class ProgrammingSubmissionIntegrationTest {
 
     private List<Long> participationIds;
 
-    private ProgrammingExercise programmingExercise;
-
-    @BeforeEach
-    public void initTestCase() {
-        database.resetDatabase();
-        database.addUsers(2, 2, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-    }
-
     @BeforeEach
     void reset() {
         database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
@@ -123,39 +113,41 @@ class ProgrammingSubmissionIntegrationTest {
         templateParticipationId = exercise.getTemplateParticipation().getId();
         solutionParticipationId = exercise.getSolutionParticipation().getId();
         participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
-
-        programmingExercise = exerciseRepo.findAll().get(0);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getLatestPendingSubmissionIfExists_student() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestPendingSubmissionIfExists_ta() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(10L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = "student1", roles = "USER")
     public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
         // Submission is older than 1 minute, therefore not considered pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
@@ -163,10 +155,11 @@ class ProgrammingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // Submission is older than 1 minute, therefore not considered pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
@@ -174,10 +167,11 @@ class ProgrammingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "instructor1")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // Submission is older than 1 minute, therefore not considered pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getOne(exerciseId);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
