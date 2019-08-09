@@ -118,9 +118,13 @@ public class DatabaseUtilService {
         resultRepo.deleteAll();
         feedbackRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
+        modelingSubmissionRepo.deleteAll();
+        textSubmissionRepo.deleteAll();
+        programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
-        exerciseRepo.deleteAll();
+        programmingExerciseRepository.deleteAll();
         participationRepo.deleteAll();
+        exerciseRepo.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
         assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
@@ -128,7 +132,6 @@ public class DatabaseUtilService {
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
-        assertThat(programmingExerciseRepository.findAll()).as("programming exercise data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
 
@@ -360,6 +363,16 @@ public class DatabaseUtilService {
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    @Transactional
+    public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        programmingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
         return submission;
     }
 

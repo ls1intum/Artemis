@@ -5,6 +5,7 @@ import { Observable, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor-submission.service';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -29,10 +30,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     get commitState() {
         return this.commitStateValue;
     }
-    @Input()
-    get isBuilding() {
-        return this.isBuildingValue;
-    }
 
     @Output()
     commitStateChange = new EventEmitter<CommitState>();
@@ -45,12 +42,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     @Output()
     onError = new EventEmitter<string>();
 
+    isBuilding: boolean;
     editorStateValue: EditorState;
     commitStateValue: CommitState;
-    isBuildingValue: boolean;
     isResolvingConflict = false;
 
     conflictStateSubscription: Subscription;
+    submissionSubscription: Subscription;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
@@ -62,16 +60,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.editorStateChange.emit(editorState);
     }
 
-    set isBuilding(isBuilding: boolean) {
-        this.isBuildingValue = isBuilding;
-        this.isBuildingChange.emit(isBuilding);
-    }
-
     constructor(
         private repositoryService: CodeEditorRepositoryService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private conflictService: CodeEditorConflictStateService,
         private modalService: NgbModal,
+        private submissionService: CodeEditorSubmissionService,
     ) {}
 
     ngOnInit(): void {
@@ -86,6 +80,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
             }
         });
+        this.submissionSubscription = this.submissionService
+            .getBuildingState()
+            .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
+            .subscribe();
     }
 
     ngOnDestroy(): void {
@@ -133,6 +131,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 switchMap(() => this.repositoryService.commit()),
                 tap(() => {
                     this.commitState = CommitState.CLEAN;
+                    // Note: this is not 100% clean, but not setting it here would complicate the state model. We just assume that after the commit a build happens if the repo is buildable.
                     if (this.buildable) {
                         this.isBuilding = true;
                     }

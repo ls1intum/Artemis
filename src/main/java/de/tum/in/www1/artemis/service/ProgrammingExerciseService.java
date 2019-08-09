@@ -117,7 +117,7 @@ public class ProgrammingExerciseService {
      *
      * @param exerciseId of programming exercise the test cases got changed.
      */
-    public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
+    public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
         if (!exerciseOpt.isPresent())
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
@@ -127,6 +127,8 @@ public class ProgrammingExerciseService {
         participations.add(programmingExercise.getSolutionParticipation());
         participations.add(programmingExercise.getTemplateParticipation());
         participations.addAll(programmingExercise.getParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
+
+        List<ProgrammingSubmission> submissions = new ArrayList<>();
 
         for (ProgrammingExerciseParticipation participation : participations) {
             ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -143,11 +145,13 @@ public class ProgrammingExerciseService {
                 log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
             }
 
-            submissionRepository.save(submission);
+            ProgrammingSubmission storedSubmission = submissionRepository.save(submission);
+            submissions.add(storedSubmission);
             // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
             // It could be that Artemis is not available and the results come in before the submission is ready.
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
+        return submissions;
     }
 
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {

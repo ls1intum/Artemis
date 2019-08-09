@@ -5,4 +5,5 @@ export * from '../../entities/programming-exercise/instructions/programming-exer
 export * from './code-editor-file.service';
 export * from './code-editor-grid.service';
 export * from './code-editor-conflict-state.service';
+export * from './code-editor-submission.service';
 export { ICodeEditorSessionService } from './icode-editor-session.service';

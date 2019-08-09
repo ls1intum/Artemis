@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,6 +69,9 @@ public class ProgrammingSubmissionResource {
             // Therefore a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
+            // Remove unnecessary information from the new submission.
+            submission.getParticipation().setExercise(null);
+            submission.getParticipation().setSubmissions(null);
             // notify the user via websocket.
             messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
         }
@@ -109,7 +114,12 @@ public class ProgrammingSubmissionResource {
             return ResponseEntity.notFound().build();
         }
 
-        programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
+        List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
+
+        // notify users via websocket.
+        for (ProgrammingSubmission submission : submissions) {
+            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
+        }
 
         return ResponseEntity.ok().build();
     }
