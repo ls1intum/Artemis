@@ -38,7 +38,7 @@
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
-                    <ul>
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps">
                         <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
