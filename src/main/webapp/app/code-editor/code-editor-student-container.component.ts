@@ -17,6 +17,7 @@ import { CodeEditorActionsComponent } from 'app/code-editor/actions';
 import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
 import { CodeEditorAceComponent } from 'app/code-editor/ace';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -28,6 +29,8 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+
+    PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
     participation: StudentParticipation;

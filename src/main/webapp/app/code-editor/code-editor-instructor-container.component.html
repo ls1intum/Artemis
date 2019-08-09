@@ -105,7 +105,8 @@
         </div>
         <div class="ml-auto d-flex align-items-center">
             <jhi-updating-result
-                *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
+                *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
+                [exerciseType]="PROGRAMMING"
                 [participation]="selectedParticipation"
                 [showUngradedResults]="true"
                 [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
@@ -118,7 +119,6 @@
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"
-                [(isBuilding)]="isBuilding"
                 (onSavedFiles)="onSavedFiles($event)"
                 (onError)="onError($event)"
             ></jhi-code-editor-actions>
@@ -159,7 +159,6 @@
         editorBottomArea
         *ngIf="selectedRepository !== 'TEST'"
         [participation]="selectedParticipation"
-        [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"
