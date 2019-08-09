@@ -19,6 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -40,6 +41,9 @@ public class ProgrammingExerciseParticipationIntegrationTest {
 
     @Autowired
     ParticipationRepository participationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     ProgrammingExercise programmingExercise;
 
@@ -155,39 +159,39 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestPendingSubmissionIfNotExists_student() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = new Result();
+        Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
+        assertThat(returnedSubmission).isEqualTo(submission);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = new Result();
+        Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
+        assertThat(returnedSubmission).isEqualTo(submission);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = new Result();
+        Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isNull();
+        assertThat(returnedSubmission).isEqualTo(submission);
     }
 
     private void addStudentParticipation() {

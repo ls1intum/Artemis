@@ -15,8 +15,8 @@ export interface ISubmissionWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
-    // Current value: 1 minute.
-    private EXPECTED_RESULT_CREATION_TIME_MS = 60 * 1000;
+    // Current value: 2 minute.
+    private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
