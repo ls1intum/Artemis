@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -23,8 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 @Transactional
 public class ProgrammingSubmissionService {
-
-    private static final long RESULT_WAIT_LIMIT_SECONDS = 60;
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
@@ -102,7 +99,7 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * A pending submission is one that does not have a result yet and is not older than RESULT_WAIT_LIMIT_SECONDS.
+     * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
      * @return the latest pending submission if exists or null.
@@ -127,13 +124,6 @@ public class ProgrammingSubmissionService {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return null;
         }
-        ProgrammingSubmission submission = submissionOpt.get();
-        boolean submissionDateIsWithinWaitLimit = ChronoUnit.SECONDS.between(submission.getSubmissionDate(), ZonedDateTime.now()) <= RESULT_WAIT_LIMIT_SECONDS;
-        if (submissionDateIsWithinWaitLimit) {
-            return submission;
-        }
-        else {
-            return null;
-        }
+        return submissionOpt.get();
     }
 }
