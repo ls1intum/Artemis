@@ -43,7 +43,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-        this.checkRouterOnNavigationEnd();
     }
 
     ngOnInit() {
@@ -60,6 +59,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             reason => {},
         );
 
+        this.subscribeForGuidedTourAvailability();
+
         // The current user is needed to hide menu items for not logged in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
@@ -73,12 +74,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    checkRouterOnNavigationEnd(): void {
+    /**
+     * Check if a guided tour is available for the current route to display the start tour button in the account menu
+     */
+    subscribeForGuidedTourAvailability(): void {
         this.router.events.subscribe((event: Event) => {
             if (event instanceof NavigationEnd) {
                 this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
             }
         });
+        // Check availability after first subscribe call since the router event been triggered already
+        this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
     }
 
     changeLanguage(languageKey: string) {

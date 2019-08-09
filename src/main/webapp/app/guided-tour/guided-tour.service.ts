@@ -20,11 +20,10 @@ export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    public currentTourSteps: TourStep[];
     private guidedTourSettings: GuidedTourSettings;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private currentTourStepIndex = 0;
-    private currentTour: GuidedTour | null;
+    public currentTour: GuidedTour | null;
     private onResizeMessage = false;
 
     constructor(
@@ -71,6 +70,17 @@ export class GuidedTourService {
      */
     public getOverviewTour(): Observable<GuidedTour> {
         return of(courseOverviewTour);
+    }
+
+    /**
+     * Check if the provided tour step is the currently active one
+     * @param tourStep: current tour step of the guided tour
+     */
+    public isCurrentStep(tourStep: TourStep): boolean {
+        if (this.currentTour && this.currentTour.steps) {
+            return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
+        }
+        return false;
     }
 
     /**
@@ -162,33 +172,38 @@ export class GuidedTourService {
 
     /**
      * Start guided tour for given guided tour
-     * @param {tour} guided tour
+     * @param tour: guided tour
      */
     private startTour(tour: GuidedTour): void {
-        this.currentTourSteps = tour.steps;
-
-        // adjust tour steps according to permissions
-        tour.steps.forEach((step, index) => {
-            if (step.permission && !this.accountService.hasAnyAuthorityDirect(step.permission)) {
-                this.currentTourSteps.splice(index, 1);
-            }
-        });
-
         this.currentTour = cloneDeep(tour);
-        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep);
+
+        // Filter tour steps according to permissions
+        this.currentTour.steps = tour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
         this.currentTourStepIndex = 0;
-        if (this.currentTour.steps.length > 0 && (!this.currentTour.minimumScreenSize || window.innerWidth >= this.currentTour.minimumScreenSize)) {
+
+        // Proceed with tour if it has tour steps and the tour display is allowed for current window size
+        if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
             }
-
             if (this.checkSelectorValidity()) {
                 this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
             } else {
                 this.nextStep();
             }
         }
+    }
+
+    /**
+     * Checks if the current window size is supposed display the guided tour
+     * @return {boolean} returns true if the minimum screen size is not defined or greater than the current window.innerWidth
+     */
+    public tourAllowedForWindowSize(): boolean {
+        if (this.currentTour) {
+            return !this.currentTour.minimumScreenSize || window.innerWidth >= this.currentTour!.minimumScreenSize;
+        }
+        return false;
     }
 
     /**
@@ -296,7 +311,7 @@ export class GuidedTourService {
                 return b.maximumSize - a.maximumSize;
             });
 
-            let currentOrientation: Orientation = Orientation.Top;
+            let currentOrientation: Orientation = Orientation.TOP;
             (convertedStep.orientation as OrientationConfiguration[]).forEach((orientationConfig: OrientationConfiguration) => {
                 if (!orientationConfig.maximumSize || window.innerWidth <= orientationConfig.maximumSize) {
                     currentOrientation = orientationConfig.orientationDirection;

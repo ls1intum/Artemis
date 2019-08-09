@@ -37,13 +37,10 @@
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
-                <div class="dotstyle dotstyle-scaleup">
+                <div class="dotstyle dotstyle--scaleup">
                     <ul>
-                        <li
-                            *ngFor="let i of guidedTourService.currentTourSteps"
-                            [ngClass]="guidedTourService.currentTourStepDisplay === guidedTourService.currentTourSteps.indexOf(i) + 1 ? 'current' : ''"
-                        >
-                            <span>{{ guidedTourService.currentTourSteps.indexOf(i) }}</span>
+                        <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
+                            <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
                     </ul>
                 </div>

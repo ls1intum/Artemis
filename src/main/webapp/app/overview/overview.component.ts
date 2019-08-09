@@ -8,7 +8,7 @@ import { AccountService } from 'app/core';
 @Component({
     selector: 'jhi-overview',
     templateUrl: './overview.component.html',
-    styleUrls: [],
+    styles: [],
 })
 export class OverviewComponent {
     public courses: Course[];

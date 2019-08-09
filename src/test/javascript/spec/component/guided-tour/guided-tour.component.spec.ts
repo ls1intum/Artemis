@@ -186,7 +186,7 @@ describe('Component Tests', () => {
             it('should determine if the tour step has bottom orientation', () => {
                 expect(guidedTourComponent.isBottom()).to.be.false;
 
-                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
                 expect(guidedTourComponent.isBottom()).to.be.true;
             });
 
@@ -210,7 +210,7 @@ describe('Component Tests', () => {
             it('should calculate the top position of the tour step', () => {
                 expect(guidedTourComponent.topPosition).to.equal(0);
 
-                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
                 expect(guidedTourComponent.topPosition).to.equal(50);
             });
 
@@ -223,10 +223,10 @@ describe('Component Tests', () => {
             });
 
             it('should apply the right transformation', () => {
-                guidedTourComponent.currentTourStep!.orientation = Orientation.Top;
+                guidedTourComponent.currentTourStep!.orientation = Orientation.TOP;
                 expect(guidedTourComponent.transform).to.equal('translateY(-100%)');
 
-                guidedTourComponent.currentTourStep!.orientation = Orientation.Bottom;
+                guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
                 expect(guidedTourComponent.transform).to.equal('');
             });
 
@@ -240,16 +240,16 @@ describe('Component Tests', () => {
                 guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
                 expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-350);
 
-                guidedTourComponent.currentTourStep.orientation = Orientation.TopRight;
+                guidedTourComponent.currentTourStep.orientation = Orientation.TOPRIGHT;
                 expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-500);
 
-                guidedTourComponent.currentTourStep.orientation = Orientation.TopLeft;
+                guidedTourComponent.currentTourStep.orientation = Orientation.TOPLEFT;
                 expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(0);
 
-                guidedTourComponent.currentTourStep.orientation = Orientation.Left;
+                guidedTourComponent.currentTourStep.orientation = Orientation.LEFT;
                 expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(-510);
 
-                guidedTourComponent.currentTourStep.orientation = Orientation.Right;
+                guidedTourComponent.currentTourStep.orientation = Orientation.RIGHT;
                 expect(guidedTourComponent.calculatedHighlightLeftPosition).to.equal(210);
             });
 

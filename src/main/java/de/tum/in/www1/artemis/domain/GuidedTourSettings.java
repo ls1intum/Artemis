@@ -11,8 +11,6 @@ public class GuidedTourSettings implements Serializable {
 
     private boolean showCourseOverviewTour;
 
-    private boolean showNavigationTour;
-
     private boolean showProgrammingExerciseTour;
 
     private boolean showQuizExerciseTour;
@@ -23,21 +21,10 @@ public class GuidedTourSettings implements Serializable {
 
     public GuidedTourSettings() {
         this.showCourseOverviewTour = false;
-        this.showNavigationTour = false;
         this.showProgrammingExerciseTour = false;
         this.showQuizExerciseTour = false;
         this.showModelingExerciseTour = false;
         this.showTextExerciseTour = false;
-    }
-
-    public GuidedTourSettings(boolean showCourseOverviewTour, boolean showNavigationTour, boolean showProgrammingExerciseTour, boolean showQuizExerciseTour,
-            boolean showModelingExerciseTour, boolean showTextExerciseTour) {
-        this.showCourseOverviewTour = showCourseOverviewTour;
-        this.showNavigationTour = showNavigationTour;
-        this.showProgrammingExerciseTour = showProgrammingExerciseTour;
-        this.showQuizExerciseTour = showQuizExerciseTour;
-        this.showModelingExerciseTour = showModelingExerciseTour;
-        this.showTextExerciseTour = showTextExerciseTour;
     }
 
     public boolean isShowCourseOverviewTour() {
@@ -46,14 +33,6 @@ public class GuidedTourSettings implements Serializable {
 
     public void setShowCourseOverviewTour(boolean showCourseOverviewTour) {
         this.showCourseOverviewTour = showCourseOverviewTour;
-    }
-
-    public boolean isShowNavigationTour() {
-        return showNavigationTour;
-    }
-
-    public void setShowNavigationTour(boolean showNavigationTour) {
-        this.showNavigationTour = showNavigationTour;
     }
 
     public boolean isShowProgrammingExerciseTour() {

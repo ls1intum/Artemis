@@ -76,7 +76,7 @@ describe('Service Tests', () => {
                         contentType: ContentType.TEXT,
                         headlineTranslateKey: '',
                         contentTranslateKey: '',
-                        orientation: Orientation.TopLeft,
+                        orientation: Orientation.TOPLEFT,
                     },
                 ],
             };

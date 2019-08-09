@@ -135,12 +135,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public scrollToAndSetElement(): void {
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
 
-        if (!this.selectedElementRect || !this.isTourOnScreen()) {
-            return;
-        }
-
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
+            if (this.isTourOnScreen()) {
+                return;
+            }
             const topPosition = this.getTopScrollingPosition();
             try {
                 window.scrollTo({
@@ -163,10 +162,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return {boolean} if tour step is visible on screen
      */
     public isTourOnScreen(): boolean {
-        if (this.currentTourStep && this.currentTourStep.selector) {
-            return this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement);
+        if (!this.currentTourStep) {
+            return false;
         }
-        return false;
+        return !this.currentTourStep.selector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
     }
 
     /**
@@ -216,9 +215,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
             return (
-                this.currentTourStep.orientation === Orientation.Bottom ||
-                this.currentTourStep.orientation === Orientation.BottomLeft ||
-                this.currentTourStep.orientation === Orientation.BottomRight
+                this.currentTourStep.orientation === Orientation.BOTTOM ||
+                this.currentTourStep.orientation === Orientation.BOTTOMLEFT ||
+                this.currentTourStep.orientation === Orientation.BOTTOMRIGHT
             );
         }
         return false;
@@ -277,13 +276,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.selectedElementRect && this.currentTourStep) {
             const scrollAdjustment = this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
             const stepScreenAdjustment = this.getStepScreenAdjustment();
-
-            if (this.selectedElementRect) {
-                const positionAdjustment = this.isBottom()
-                    ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
-                    : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-                topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
-            }
+            const positionAdjustment = this.isBottom()
+                ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
+                : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
+            topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
         }
         return topPosition;
     }
@@ -331,9 +327,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (
             this.currentTourStep &&
             ((!this.currentTourStep.orientation && this.currentTourStep.selector) ||
-                this.currentTourStep.orientation === Orientation.Top ||
-                this.currentTourStep.orientation === Orientation.TopRight ||
-                this.currentTourStep.orientation === Orientation.TopLeft)
+                this.currentTourStep.orientation === Orientation.TOP ||
+                this.currentTourStep.orientation === Orientation.TOPRIGHT ||
+                this.currentTourStep.orientation === Orientation.TOPLEFT)
         ) {
             return 'translateY(-100%)';
         }
@@ -370,19 +366,19 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
         const paddingAdjustment = this.currentTourStep.highlightPadding ? this.currentTourStep.highlightPadding : 0;
 
-        if (this.currentTourStep.orientation === Orientation.TopRight || this.currentTourStep.orientation === Orientation.BottomRight) {
+        if (this.currentTourStep.orientation === Orientation.TOPRIGHT || this.currentTourStep.orientation === Orientation.BOTTOMRIGHT) {
             return this.selectedElementRect.right - this.tourStepWidth;
         }
 
-        if (this.currentTourStep.orientation === Orientation.TopLeft || this.currentTourStep.orientation === Orientation.BottomLeft) {
+        if (this.currentTourStep.orientation === Orientation.TOPLEFT || this.currentTourStep.orientation === Orientation.BOTTOMLEFT) {
             return this.selectedElementRect.left;
         }
 
-        if (this.currentTourStep.orientation === Orientation.Left) {
+        if (this.currentTourStep.orientation === Orientation.LEFT) {
             return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment;
         }
 
-        if (this.currentTourStep.orientation === Orientation.Right) {
+        if (this.currentTourStep.orientation === Orientation.RIGHT) {
             return this.selectedElementRect.left + this.selectedElementRect.width + paddingAdjustment;
         }
         return this.selectedElementRect.right - this.selectedElementRect.width / 2 - this.tourStepWidth / 2;
@@ -412,7 +408,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.selectedElementRect || !this.currentTourStep) {
             return 0;
         }
-        if (this.currentTourStep.orientation === Orientation.Left || this.currentTourStep.orientation === Orientation.Right) {
+        if (this.currentTourStep.orientation === Orientation.LEFT || this.currentTourStep.orientation === Orientation.RIGHT) {
             return 0;
         }
 

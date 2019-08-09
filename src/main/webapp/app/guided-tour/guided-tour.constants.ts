@@ -7,15 +7,15 @@ export interface OrientationConfiguration {
 
 /* Orientation of the tour step position next to the highlighted element */
 export enum Orientation {
-    Bottom = 'bottom',
-    BottomLeft = 'bottom-left',
-    BottomRight = 'bottom-right',
-    Center = 'center',
-    Left = 'left',
-    Right = 'right',
-    Top = 'top',
-    TopLeft = 'top-left',
-    TopRight = 'top-right',
+    BOTTOM = 'bottom',
+    BOTTOMLEFT = 'bottom-left',
+    BOTTOMRIGHT = 'bottom-right',
+    CENTER = 'center',
+    LEFT = 'left',
+    RIGHT = 'right',
+    TOP = 'top',
+    TOPLEFT = 'top-left',
+    TOPRIGHT = 'top-right',
 }
 
 /* Content type of tour step content */
