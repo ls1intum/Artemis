@@ -15,7 +15,7 @@ export interface ISubmissionWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
-    // Current value: 2 minute.
+    // Current value: 2 minutes.
     private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
@@ -55,11 +55,12 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             map((submission: Submission | null) => {
                 if (submission) {
                     const remainingTime = this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
-                    // Edge case: it is possible that the submission is now too old after being transferred from the server to the client.
                     if (remainingTime > 0) {
                         this.startResultWaitingTimer(participationId, remainingTime);
                         return submission;
                     } else {
+                        // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
+                        this.onError();
                         return null;
                     }
                 }
@@ -81,13 +82,14 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             .pipe(
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
-                    const currentSubmission = this.latestValue[participationId] || { id: undefined, submissionDate: undefined };
-                    this.alertService.error('artemisApp.submission.resultTimeout', {
-                        id: currentSubmission.id,
-                    });
+                    this.onError();
                 }),
             )
             .subscribe();
+    };
+
+    private onError = () => {
+        this.alertService.error('artemisApp.submission.resultTimeout');
     };
 
     private resetResultWaitingTimer = (participationId: number) => {
