@@ -574,10 +574,10 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:id : delete the "id" participation.
+     * DELETE /participations/:id : delete the "id" participation. This only works for student participations - other participations should not be deleted here!
      *
      * @param id the id of the participation to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN) if the user lacks permissions.
      */
     @DeleteMapping("/participations/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -600,7 +600,7 @@ public class ParticipationResource {
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long id, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(id);
         checkAccessPermissionAtInstructor(participation);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());

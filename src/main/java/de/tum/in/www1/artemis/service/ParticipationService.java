@@ -779,7 +779,7 @@ public class ParticipationService {
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
@@ -816,13 +816,13 @@ public class ParticipationService {
         }
 
         deleteResultsAndSubmissionsOfParticipation(participation);
-
         // The following case is necessary, because we might have submissions without result
         if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());
             }
         }
+        participation = studentParticipationRepository.findById(participationId).get();
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
