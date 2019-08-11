@@ -164,10 +164,11 @@ public class ProgrammingExerciseTestCaseService {
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
             // Recalculate the achieved score by including the test cases individual weight.
-            updateScore(result, successfulTestCases, testCasesForCurrentDate);
+            // The score is always calculated from ALL test cases, regardless of the current date!
+            updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, calculateScoresForAfterDueDateTestCases && testCases.size() > testCasesForCurrentDate.size());
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
@@ -242,9 +243,12 @@ public class ProgrammingExerciseTestCaseService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
+            boolean hasAdditionalTestsAfterDueDate) {
         // Create a new result string that reflects passed, failed & not executed test cases.
-        result.setResultString(successfulTestCases.size() + " of " + allTests.size() + " passed");
+        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+        newResultString = hasAdditionalTestsAfterDueDate ? newResultString : newResultString + " (preliminary)";
+        result.setResultString(newResultString);
     }
 
     /**

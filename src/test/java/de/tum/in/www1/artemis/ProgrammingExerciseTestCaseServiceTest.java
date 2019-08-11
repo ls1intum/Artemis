@@ -177,11 +177,12 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
         testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
-        // All available test cases are fulfilled.
-        Long expectedScore = 100L;
+        // All available test cases are fulfilled, however there are more test cases that will be run after due date.
+        Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.getResultString()).isEqualTo("1 of 1 passed (preliminary)");
         // The feedback of the after due date test case must be removed.
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
     }
