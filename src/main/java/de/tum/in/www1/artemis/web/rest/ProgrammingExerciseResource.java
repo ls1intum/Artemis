@@ -282,8 +282,9 @@ public class ProgrammingExerciseResource {
      * PUT /programming-exercises : Updates an existing programmingExercise.
      *
      * @param programmingExercise the programmingExercise to update
+     * @param notificationText to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated programmingExercise, or with status 400 (Bad Request) if the programmingExercise is not valid, or
-     *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated
+     *      *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/programming-exercises")
@@ -334,6 +335,7 @@ public class ProgrammingExerciseResource {
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
      * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
+     * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -372,6 +374,7 @@ public class ProgrammingExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/programming-exercises")
@@ -452,7 +455,9 @@ public class ProgrammingExerciseResource {
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param id the id of the programmingExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
+     * @param deleteBaseReposBuildPlans the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -479,7 +484,7 @@ public class ProgrammingExerciseResource {
      * Squash all commits into one in the template repository of a given exercise.
      * 
      * @param id of the exercise
-     * @return
+     * @return the ResponseEntity with status 200 (OK) if squash has been successfully executed, with status 403 (Forbidden) if the user is not admin and course instructor or with status 500 (Internal Server Error)
      */
     @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
