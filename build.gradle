@@ -166,13 +166,6 @@ repositories {
 
 dependencies {
 
-    // JAX-B dependencies for JDK 9+
-    implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
-    implementation "com.sun.xml.bind:jaxb-core:2.3.0"
-    implementation "com.sun.xml.bind:jaxb-impl:2.4.0-b180830.0438"
-    implementation "javax.activation:activation:1.1.1"
-    implementation "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438"
-
     implementation fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.4.0.201906121030-r'
@@ -246,6 +239,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
