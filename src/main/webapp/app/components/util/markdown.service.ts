@@ -132,11 +132,7 @@ export class ArtemisMarkdown {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
-<<<<<<< HEAD
-     * @param {showdown.ShowdownExtension[]} extensions extensions to be used for parsing/rendering the markdown.
-=======
      * @param {ShowdownExtension[]} extensions to use for markdown parsing
->>>>>>> 1e0dc8fc02b41702d0a9c029e885967ee191fe2e
      * @returns {string} the resulting html as a string
      */
     htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
