@@ -4,11 +4,12 @@ import { HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
 import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
+import { IntellijDirective } from './intellij/intellij.directive';
 
 @NgModule({
     imports: [HttpClientModule, ArTEMiSNotificationModule],
-    exports: [],
-    declarations: [],
+    exports: [IntellijDirective],
+    declarations: [IntellijDirective],
     providers: [
         Title,
         {

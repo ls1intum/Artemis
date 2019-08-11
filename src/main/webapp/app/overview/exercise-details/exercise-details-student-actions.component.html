@@ -179,13 +179,14 @@
         ></button>
         <button
             jhi-exercise-action-button
+            jhiIntellij
             buttonIcon="download"
             (click)="importIntoIntelliJ()"
             [buttonLabel]="'Import into IntelliJ'"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="javaBridge.isIntelliJ() && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
         ></button>
         <button
             jhi-exercise-action-button
