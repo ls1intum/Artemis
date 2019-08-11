@@ -284,6 +284,7 @@ public class ProgrammingExerciseService {
      * </ul>
      *
      * @param programmingExercise The programmingExercise that should be setup
+     * @return The newly setup exercise
      * @throws Exception If anything goes wrong
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
@@ -636,6 +637,7 @@ public class ProgrammingExerciseService {
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
      * @throws InterruptedException If the checkout fails
+     * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
             throws IOException, GitAPIException, InterruptedException {
