@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -508,7 +507,7 @@ public class ProgrammingExerciseResource {
             programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
-        catch (IOException | IllegalStateException | InterruptedException | GitAPIException ex) {
+        catch (IllegalStateException | InterruptedException | GitAPIException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
