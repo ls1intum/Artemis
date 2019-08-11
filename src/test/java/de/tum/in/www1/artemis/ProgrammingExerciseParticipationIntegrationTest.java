@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @ActiveProfiles("artemis")
 public class ProgrammingExerciseParticipationIntegrationTest {
 
+    private final String baseUrl = "/api/programming-exercise-participations/";
+
     @Autowired
     DatabaseUtilService database;
 
@@ -62,8 +64,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getParticipationWithLatestResultAsAStudent() throws Exception {
         addStudentParticipation();
         StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
-                ProgrammingExerciseStudentParticipation.class);
+        request.get(baseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test
@@ -71,8 +72,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getParticipationWithLatestResultAsAnInstructor() throws Exception {
         addStudentParticipation();
         StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
-                ProgrammingExerciseStudentParticipation.class);
+        request.get(baseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksAsStudent() throws Exception {
         addStudentParticipation();
         StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
         addTemplateParticipation();
         TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
@@ -96,7 +96,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         addTemplateParticipation();
         TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -104,7 +104,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         addTemplateParticipation();
         TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
         addSolutionParticipation();
         SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         addSolutionParticipation();
         SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         addSolutionParticipation();
         SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
-        request.get("/api/programming-exercises-participation/" + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestPendingSubmissionIfExists_student() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        request.get(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
@@ -144,7 +144,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestPendingSubmissionIfExists_ta() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        request.get(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
@@ -152,7 +152,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     public void getLatestPendingSubmissionIfExists_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        request.get("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        request.get(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
     @Test
@@ -163,8 +163,8 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
+        Submission returnedSubmission = request.getNullable(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
     }
 
@@ -176,8 +176,8 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
+        Submission returnedSubmission = request.getNullable(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
     }
 
@@ -189,8 +189,8 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission.setResult(result);
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        Submission returnedSubmission = request.getNullable("/api/programming-exercise-participation/" + submission.getParticipation().getId() + "/latest-pending-submission",
-                HttpStatus.OK, ProgrammingSubmission.class);
+        Submission returnedSubmission = request.getNullable(baseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
     }
 
