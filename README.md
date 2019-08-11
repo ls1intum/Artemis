@@ -22,7 +22,7 @@ Find here a guide on [how to set up your local development environment](/doc/set
 
 ## Contributing 
 
-Find here a guide on [how to contribute](/doc/contribute/CONTRIBUTE.md) to Artemis.
+Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 ## Top-Level Design
 
