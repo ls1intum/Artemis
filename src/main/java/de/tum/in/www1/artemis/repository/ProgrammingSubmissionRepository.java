@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,8 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
 
     @EntityGraph(attributePaths = { "result.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
+
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(attributePaths = { "result.feedbacks" })
     List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(Long participationId);

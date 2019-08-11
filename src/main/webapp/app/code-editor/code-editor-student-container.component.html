@@ -16,7 +16,8 @@
 <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
-            *ngIf="participation && !isBuilding"
+            *ngIf="participation"
+            [exerciseType]="PROGRAMMING"
             [showUngradedResults]="true"
             [showGradedBadge]="true"
             [participation]="participation"
@@ -28,7 +29,6 @@
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
             [(commitState)]="commitState"
-            [(isBuilding)]="isBuilding"
             (onSavedFiles)="onSavedFiles($event)"
             (onError)="onError($event)"
         ></jhi-code-editor-actions>
@@ -65,7 +65,6 @@
     <jhi-code-editor-build-output
         editorBottomArea
         [participation]="participation"
-        [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"

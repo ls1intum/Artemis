@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -95,5 +96,34 @@ public class ProgrammingSubmissionService {
         programmingSubmissionRepository.save(programmingSubmission);
         participationService.save(participation);
         return programmingSubmission;
+    }
+
+    /**
+     * A pending submission is one that does not have a result yet.
+     *
+     * @param participationId the id of the participation get the latest submission for
+     * @return the latest pending submission if exists or null.
+     * @throws EntityNotFoundException if the participation for the given id can't be found.
+     * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
+     * @throws IllegalAccessException if the user does not have access to the given participation.
+     */
+    public ProgrammingSubmission getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
+        Participation participation = participationService.findOne(participationId);
+        if (participation == null) {
+            throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
+        }
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
+        }
+        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+            throw new IllegalAccessException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
+        }
+
+        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
+            // This is not an error case, it is very likely that there is no pending submission for a participation.
+            return null;
+        }
+        return submissionOpt.get();
     }
 }
