@@ -72,7 +72,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise?.templateParticipation?.results" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             [exerciseType]="PROGRAMMING"
                             [participation]="programmingExercise.templateParticipation"
@@ -86,11 +86,14 @@
                             [participation]="programmingExercise.templateParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
+                        <jhi-programming-exercise-trigger-build-button
+                            [participationId]="programmingExercise.templateParticipation.id"
+                        ></jhi-programming-exercise-trigger-build-button>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise?.solutionParticipation?.results" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             [exerciseType]="PROGRAMMING"
                             [participation]="programmingExercise.solutionParticipation"
@@ -104,6 +107,9 @@
                             [participation]="programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
+                        <jhi-programming-exercise-trigger-build-button
+                            [participationId]="programmingExercise.solutionParticipation.id"
+                        ></jhi-programming-exercise-trigger-build-button>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.problemStatement.title">Problem Statement</span></dt>
