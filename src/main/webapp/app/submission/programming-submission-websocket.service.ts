@@ -50,7 +50,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * @param participationId
      */
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission | null> => {
-        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participation/' + participationId + '/latest-pending-submission').pipe(
+        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission').pipe(
             catchError(() => of(null)),
             map((submission: Submission | null) => {
                 if (submission) {

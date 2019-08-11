@@ -10,16 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
@@ -36,12 +34,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private ProgrammingSubmissionService submissionService;
 
+    private Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService) {
+            ResultService resultService, ProgrammingSubmissionService submissionService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -49,7 +50,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping(value = "/programming-exercises-participation/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
@@ -68,7 +69,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body.
      */
-    @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId) {
         Participation participation;
@@ -93,7 +94,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId the id of the participation get the latest submission for
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
      */
-    @GetMapping("/programming-exercise-participation/{participationId}/latest-pending-submission")
+    @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
         ProgrammingSubmission submission;
@@ -107,6 +108,27 @@ public class ProgrammingExerciseParticipationResource {
             return forbidden();
         }
         return ResponseEntity.ok(submission);
+    }
+
+    /**
+     * Trigger the CI build of the given participation.
+     *
+     * @param participationId of the participation.
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404).
+     */
+    @PostMapping("/programming-exercise-participations/{participationId}/trigger-build")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId) {
+        Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return notFound();
+        }
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
+            return forbidden();
+        }
+        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+        return ResponseEntity.ok().build();
     }
 
     /**

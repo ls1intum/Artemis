@@ -12,7 +12,7 @@ export interface IProgrammingExerciseParticipationService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises-participation/';
+    public resourceUrl = SERVER_API_URL + 'api/programming-exercise-participations/';
 
     constructor(private http: HttpClient) {}
 
@@ -25,6 +25,6 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     triggerBuild(participationId: number) {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/trigger-build');
+        return this.http.post<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/trigger-build', {});
     }
 }
