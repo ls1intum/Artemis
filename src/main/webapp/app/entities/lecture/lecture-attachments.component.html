@@ -108,7 +108,9 @@
                                         class="custom-file-input"
                                         (change)="setLectureAttachment($event)"
                                     />
-                                    <label class="custom-file-label ellipsis" for="lectureAttachmentInput{{ attachmentToBeCreated.name }}">{{ attachmentToBeCreated.link }}</label>
+                                    <label class="custom-file-label overflow-ellipsis" for="lectureAttachmentInput{{ attachmentToBeCreated.name }}">{{
+                                        attachmentToBeCreated.link
+                                    }}</label>
                                 </div>
                             </div>
                             <ng-container *ngIf="erroredFile">

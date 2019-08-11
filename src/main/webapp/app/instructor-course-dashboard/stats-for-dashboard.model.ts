@@ -6,6 +6,8 @@ export class StatsForDashboard {
     public numberOfAssessments = 0;
     public numberOfComplaints = 0;
     public numberOfOpenComplaints = 0;
+    public numberOfMoreFeedbackRequests = 0;
+    public numberOfOpenMoreFeedbackRequests = 0;
 
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 

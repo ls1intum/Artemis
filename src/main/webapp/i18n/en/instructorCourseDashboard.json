@@ -11,11 +11,13 @@
             "assessments": "Assessments",
             "open": "submissions not assessed",
             "openComplaint": "complaints not reviewed",
+            "openRequest": "requests not answered",
             "noExercise": "There is no exercise for this course",
             "exercise": "Exercise",
             "dueDate": "Due date",
             "assessmentDueDate": "Assessment due date",
             "complaints": "Complaints",
+            "moreFeedbackRequests": "More Feedback Requests",
             "completedAssessments": "Completed assessments",
             "action": "Action",
             "exerciseDashboard": "Exercise dashboard",
@@ -25,7 +27,9 @@
                 "name": "Name",
                 "numberOfAssessments": "Assessments",
                 "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Open requests",
                 "numberOfComplaintResponses": "Complaint responses",
+                "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
                 "points": "Points"
             }
         }

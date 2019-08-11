@@ -1,6 +1,6 @@
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { Result, ResultService } from '../../entities/result';
@@ -13,6 +13,7 @@ import interact from 'interactjs';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
 import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorSubmissionService } from 'app/code-editor/service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -22,13 +23,9 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
     styleUrls: ['./code-editor-build-output.scss'],
     providers: [JhiAlertService, WindowRef],
 })
-export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()
     participation: Participation;
-    @Input()
-    get isBuilding() {
-        return this.isBuildingValue;
-    }
     @Input()
     get buildLogErrors() {
         return this.buildLogErrorsValue;
@@ -38,13 +35,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     @Output()
     buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
-    isBuildingChange = new EventEmitter<boolean>();
-    @Output()
     onError = new EventEmitter<string>();
 
+    isBuilding: boolean;
     rawBuildLogs = new BuildLogEntryArray();
     buildLogErrorsValue: BuildLogErrors;
-    isBuildingValue: boolean;
 
     /** Resizable constants **/
     resizableMinHeight = 150;
@@ -56,12 +51,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         this.buildLogErrorsChange.emit(buildLogErrors);
     }
 
-    set isBuilding(isBuilding: boolean) {
-        this.isBuildingValue = isBuilding;
-        this.isBuildingChange.emit(isBuilding);
-    }
-
     private resultSubscription: Subscription;
+    private submissionSubscription: Subscription;
 
     constructor(
         private $window: WindowRef,
@@ -69,7 +60,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         private resultService: ResultService,
         private sessionService: CodeEditorSessionService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: CodeEditorSubmissionService,
     ) {}
+
+    ngOnInit(): void {
+        this.setupSubmissionWebsocket();
+    }
 
     /**
      * @function ngAfterViewInit
@@ -120,7 +116,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
             of(latestResult)
                 .pipe(
-                    switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
+                    switchMap(result => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
                     map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
@@ -149,6 +145,16 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     /**
+     * Subscribe to incoming submissions, translating to the state isBuilding = true (a pending submission without result exists) vs = false (no pending submission).
+     */
+    private setupSubmissionWebsocket() {
+        this.submissionSubscription = this.submissionService
+            .getBuildingState()
+            .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
+            .subscribe();
+    }
+
+    /**
      * Set up the websocket for retrieving build results.
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
@@ -163,13 +169,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 filter(result => !!result),
                 switchMap(result => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
-                    this.isBuilding = false;
                     this.rawBuildLogs = new BuildLogEntryArray(...buildLogsFromServer);
                     this.buildLogErrors = this.rawBuildLogs.extractErrors();
                 }),
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
-                    this.isBuilding = false;
                     this.rawBuildLogs = new BuildLogEntryArray();
                     this.buildLogErrors = this.rawBuildLogs.extractErrors();
                     return Observable.of(null);
@@ -244,6 +248,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     ngOnDestroy() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
+        }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
         }
     }
 }

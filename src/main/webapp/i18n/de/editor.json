@@ -22,13 +22,15 @@
             "changesSubmittedTooltip": "Alle Änderungen abgesendet.",
             "unsubmittedChanges": "Nicht abgesendet.",
             "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.",
+            "changesConflict": "Konflikt",
+            "changesConflictTooltip": "Dein Repository befindet sich ein einem Konfliktzustand. Bereinige den Konflikt um weiterzuarbeiten.",
             "submittingChanges": "Sendet...",
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
             "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
-            "building": "Building...",
+            "building": "Build und Tests werden ausgeführt...",
             "buildFailed": "Build gescheitert",
             "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
@@ -39,6 +41,9 @@
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
+            "conflict": {
+                "resolveConflict": "Konflikt bereinigen"
+            },
             "fileBrowser": {
                 "fileBrowser": "Datei Browser",
                 "deleteFileTitle": "Datei löschen",
@@ -70,7 +75,8 @@
                 "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
                 "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
                 "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
-                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
+                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden.",
+                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",

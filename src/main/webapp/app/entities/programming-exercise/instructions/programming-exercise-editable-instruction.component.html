@@ -16,7 +16,7 @@
         ></jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
     <button
-        *ngIf="enableSave"
+        *ngIf="editMode"
         id="save-instructions-button"
         [disabled]="savingInstructions || !unsavedChanges"
         (click)="saveInstructions($event)"

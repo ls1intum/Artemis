@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.StreamSupport;
@@ -9,22 +11,22 @@ import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -40,14 +42,14 @@ public class GitServiceTest {
     @Autowired
     GitService gitService;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         gitUtilService.initRepo();
     }
 
-    @After
+    @AfterEach
     public void afterEach() {
-        gitUtilService.deleteRepo();
+        gitUtilService.deleteRepos();
     }
 
     @Test
@@ -63,6 +65,26 @@ public class GitServiceTest {
 
         reflog = gitUtilService.getReflog(GitUtilService.REPOS.LOCAL);
         assertThat(reflog.size()).isEqualTo(3);
+    }
+
+    @Test
+    public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException, IOException {
+        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        String newFileContent = "const a = arr.reduce(sum)";
+        gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
+        gitService.getOrCheckoutRepository(localPath, true);
+
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1)).isEqualTo(newFileContent);
+    }
+
+    @Test
+    public void checkoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
+        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
+        gitService.getOrCheckoutRepository(localPath, true);
+        gitUtilService.reinitializeRepo(GitUtilService.REPOS.LOCAL);
+
+        assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
     }
 
     @Test

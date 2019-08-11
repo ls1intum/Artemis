@@ -36,6 +36,12 @@
                                 </a>
                                 ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
+                            <li>
+                                <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id }">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
+                                </a>
+                                ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -77,6 +83,9 @@
                         <th jhiSortBy="complaints">
                             <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
+                        <th jhiSortBy="requests">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
                         <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
                         <th>{{ 'artemisApp.instructorCourseDashboard.action' | translate }}</th>
                     </tr>
@@ -92,6 +101,7 @@
                         <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
                         <td>{{ exercise.numberOfParticipations }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
+                        <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
                         <td class="text-center">
                             <div class="progress position-relative">
                                 <div

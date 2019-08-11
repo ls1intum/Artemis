@@ -4,6 +4,7 @@ import { TextSubmission } from 'app/entities/text-submission';
 import { Result } from 'app/entities/result';
 import { TextResultBlock } from './text-result-block';
 import { TranslateService } from '@ngx-translate/core';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
     selector: 'jhi-text-result',
@@ -14,6 +15,9 @@ export class TextResultComponent {
     public submissionText: string;
 
     public textResults: TextResultBlock[];
+    private submission: TextSubmission;
+
+    private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
     @Input()
     public set result(result: Result) {
@@ -21,17 +25,25 @@ export class TextResultComponent {
             return;
         }
 
-        this.submissionText = (result.submission as TextSubmission).text;
+        this.submission = result.submission as TextSubmission;
+        this.submissionText = this.submission.text;
         this.convertTextToResultBlocks(result.feedbacks);
     }
 
     constructor(private translateService: TranslateService) {}
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
-        const resultBlocks = feedbacks
-            .filter(f => f.reference != null)
-            .map(this.feedbackToTextResultBlock, this)
-            .sort((a, b) => b.startIndex - a.startIndex);
+        const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
+            ([refBased, blockBased], elem) => (this.sha1Regex.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
+            [[], []],
+        );
+
+        const referenceBasedResultBlocks = referenceBasedFeedback.map(this.feedbackToTextResultBlock, this);
+        const blockBasedResultBlocks = blockBasedFeedback.map(this.textBlockToTextResultBlock, this);
+
+        const resultBlocks = ([...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter(elem => elem !== undefined) as TextResultBlock[]).sort(
+            (a, b) => b.startIndex - a.startIndex,
+        );
 
         let nextBlock = resultBlocks.pop();
         let startIndex = 0;
@@ -45,17 +57,40 @@ export class TextResultComponent {
             } else {
                 const endOfSlice = nextBlock ? nextBlock.startIndex : endIndex;
                 const slice = this.submissionText.slice(startIndex, endOfSlice);
-                const textResultBlock = new TextResultBlock(slice, startIndex);
+                const textBlock = new TextBlock();
+                textBlock.startIndex = startIndex;
+                textBlock.endIndex = endOfSlice;
+                textBlock.text = slice;
+                const textResultBlock = new TextResultBlock(textBlock);
                 this.textResults.push(textResultBlock);
                 startIndex = endOfSlice;
             }
         }
     }
 
-    private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock {
-        const reference = feedback.reference!;
+    private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
+        const reference = feedback.reference;
+        if (!reference) {
+            return undefined;
+        }
+
         const indexOfReference = this.submissionText.indexOf(reference);
-        return new TextResultBlock(reference, indexOfReference, feedback);
+
+        const textBlock = new TextBlock();
+        textBlock.text = reference;
+        textBlock.startIndex = indexOfReference;
+        textBlock.endIndex = indexOfReference + reference.length;
+
+        return new TextResultBlock(textBlock, feedback);
+    }
+
+    private textBlockToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
+        if (this.submission.blocks) {
+            const result = this.submission.blocks.find(block => block.id === feedback.reference);
+            if (result) {
+                return new TextResultBlock(result, feedback);
+            }
+        }
     }
 
     public repeatForEachCredit(textResultBlock: TextResultBlock): number[] {

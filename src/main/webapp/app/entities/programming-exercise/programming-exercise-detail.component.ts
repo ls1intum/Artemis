@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import { ResultService } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -15,6 +18,7 @@ import { ParticipationType } from './programming-exercise-participation.model';
 export class ProgrammingExerciseDetailComponent implements OnInit {
     ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
 
@@ -23,23 +27,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
 
-            this.programmingExercise.solutionParticipation.exercise = this.programmingExercise;
-            this.programmingExercise.templateParticipation.exercise = this.programmingExercise;
+            this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
+            this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
-            const course = this.programmingExercise.course!;
-            this.resultService.findResultsForParticipation(course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id).subscribe(results => {
-                this.programmingExercise.solutionParticipation.results = results.body!;
-            });
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
+                .pipe(filter((result: Result) => !!result))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.solutionParticipation.results = [result];
+                });
 
-            this.resultService.findResultsForParticipation(course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id).subscribe(results => {
-                this.programmingExercise.templateParticipation.results = results.body!;
-            });
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
+                .pipe(filter((result: Result) => !!result))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.templateParticipation.results = [result];
+                });
         });
     }
 

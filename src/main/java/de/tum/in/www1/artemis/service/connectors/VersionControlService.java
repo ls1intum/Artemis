@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 
 public interface VersionControlService {
 
@@ -20,19 +20,6 @@ public interface VersionControlService {
      * @param webHookName     The name of the WebHook that should be added as additional information (if applicable)
      */
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
-
-    /**
-     * Add a Bamboo-Service on the VCS-Server
-     *
-     * @param projectKey     The project key
-     * @param repositorySlug The repository slug
-     * @param bambooUrl      The base URL of the Bamboo-Server
-     * @param buildKey       The buildKey (including Project and Build Plan)
-     * @param bambooUsername The Bamboo Username
-     * @param bambooPassword The Bamboo Password
-     */
-    // TODO: we should rename this method, because it's not very clear what it means
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
 
     /**
      * Deletes the project for the given project key
@@ -54,7 +41,7 @@ public interface VersionControlService {
      * @param participation a participation of a programming exercise
      * @return the URL of the repository of the participation
      */
-    public URL getRepositoryWebUrl(Participation participation);
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the clone URL used for cloning

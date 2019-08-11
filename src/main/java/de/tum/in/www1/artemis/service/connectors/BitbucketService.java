@@ -17,8 +17,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
@@ -104,11 +104,6 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
-        // NOT NEEDED
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey;
         log.info("Delete bitbucket project " + projectKey);
@@ -129,7 +124,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public URL getRepositoryWebUrl(Participation participation) {
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
         try {
             return new URL(BITBUCKET_SERVER_URL + "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) + "/repos/"
                     + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");

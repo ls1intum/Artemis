@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
@@ -7,12 +7,14 @@ import * as DOMPurify from 'dompurify';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { ApollonExtension } from 'app/markdown-editor/extensions/apollon.extension';
+import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 const Range = ace.acequire('ace/range').Range;
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdown {
+    static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
+
     /**
      * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
      * moving the cursor to the end of the line, and finally inserting the given text.
@@ -59,8 +61,11 @@ export class ArtemisMarkdown {
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
     parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
+        if (!markdownText || !targetObject) {
+            return;
+        }
         // split markdownText into main text, hint and explanation
-        const markdownTextParts = markdownText.split(`/\\${ExplanationCommand.identifier}|\\${HintCommand.identifier}/g`);
+        const markdownTextParts = markdownText.split(ArtemisMarkdown.hintOrExpRegex);
         targetObject.text = markdownTextParts[0].trim();
         if (markdownText.indexOf(HintCommand.identifier) !== -1 && markdownText.indexOf(ExplanationCommand.identifier) !== -1) {
             if (markdownText.indexOf(HintCommand.identifier) < markdownText.indexOf(ExplanationCommand.identifier)) {
@@ -127,7 +132,11 @@ export class ArtemisMarkdown {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
+<<<<<<< HEAD
      * @param {showdown.ShowdownExtension[]} extensions extensions to be used for parsing/rendering the markdown.
+=======
+     * @param {ShowdownExtension[]} extensions to use for markdown parsing
+>>>>>>> 1e0dc8fc02b41702d0a9c029e885967ee191fe2e
      * @returns {string} the resulting html as a string
      */
     htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
@@ -143,7 +152,6 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            // TODO: Katex should be set by the callee if needed.
             extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);

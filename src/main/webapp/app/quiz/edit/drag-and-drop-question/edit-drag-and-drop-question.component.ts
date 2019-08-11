@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
@@ -20,6 +20,8 @@ import { resizeImage } from 'app/utils/drag-and-drop.utils';
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./edit-drag-and-drop-question.component.scss', '../edit-quiz-question.scss', '../../../quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer', { static: false })
@@ -779,6 +781,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
+        resizeImage();
         this.prepareForSave();
     }
 
