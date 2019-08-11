@@ -224,6 +224,12 @@ public class DatabaseUtilService {
         return result;
     }
 
+    public Result addResultToSubmission(Submission submission) {
+        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
+        resultRepo.save(result);
+        return result;
+    }
+
     public void addCourseWithOneModelingExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -372,6 +378,15 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    public Submission addSubmission(Exercise exercise, Submission submission, String login) {
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
         participationRepo.save(participation);
         return submission;
     }

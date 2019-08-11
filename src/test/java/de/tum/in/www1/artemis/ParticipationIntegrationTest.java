@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -44,6 +41,12 @@ public class ParticipationIntegrationTest {
     StudentParticipationRepository participationRepo;
 
     @Autowired
+    SubmissionRepository submissionRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
     UserRepository userRepo;
 
     @Autowired
@@ -61,7 +64,7 @@ public class ParticipationIntegrationTest {
     @BeforeEach
     public void initTestCase() {
         database.resetDatabase();
-        database.addUsers(2, 0, 0);
+        database.addUsers(2, 2, 2);
         database.addCourseWithModelingAndTextExercise();
         course = courseRepo.findAll().get(0);
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
@@ -108,5 +111,45 @@ public class ParticipationIntegrationTest {
     public void participateTwiceInTextExercise_badRequest() throws Exception {
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteParticipation() throws Exception {
+        Submission submission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        Long participationId = submission.getParticipation().getId();
+        database.addResultToSubmission(submission);
+
+        // Participation should now exist.
+        assertThat(participationRepo.existsById(participationId)).isTrue();
+        // There should be a submission and result assigned to the participation.
+        assertThat(submissionRepository.existsByParticipationId(participationId)).isTrue();
+        assertThat(resultRepository.existsByParticipationId(participationId)).isTrue();
+
+        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        Optional<StudentParticipation> participation = participationRepo.findById(participationId);
+        // Participation should now be gone.
+        assertThat(participation.isPresent()).isFalse();
+        // Make sure that also the submission and result were deleted.
+        assertThat(submissionRepository.existsByParticipationId(participationId)).isFalse();
+        assertThat(resultRepository.existsByParticipationId(participationId)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void deleteParticipation_forbidden_student() throws Exception {
+        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void deleteParticipation_forbidden_tutor() throws Exception {
+        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteParticipation_notFound() throws Exception {
+        request.delete("/api/participations/" + 1, HttpStatus.NOT_FOUND);
     }
 }
