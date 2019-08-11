@@ -4,17 +4,17 @@ import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { HighlightColors } from '../text-shared/highlight-colors';
+import { HighlightColors } from './highlight-colors';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
-import { Participation, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService, WindowRef } from 'app/core';
@@ -25,6 +25,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
+import { TextBlock } from 'app/entities/text-block/text-block.model';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -39,6 +41,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     result: Result;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
+    referencedTextBlocks: (TextBlock | undefined)[];
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -69,6 +72,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     private cancelConfirmationText: string;
 
     public getColorForIndex = HighlightColors.forIndex;
+
+    private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
@@ -209,11 +214,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.referencedFeedback.push(assessment);
+        this.referencedTextBlocks.push(undefined);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.referencedFeedback = this.referencedFeedback.filter(elem => elem !== assessmentToDelete);
+        const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
+        this.referencedFeedback.splice(indexToDelete, 1);
+        this.referencedTextBlocks.splice(indexToDelete, 1);
         this.validateAssessment();
     }
 
@@ -295,7 +303,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
+                const submission = <TextSubmission>response.body!.submission;
+                this.submission.blocks = submission.blocks;
                 this.loadFeedbacks(response.body!.feedbacks || []);
+                this.validateAssessment();
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
@@ -310,6 +321,22 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+
+        /**
+         * List of Text Blocks, where the order is IN SYNC with `referencedFeedback`.
+         * referencedFeedback[i].reference == referencedTextBlocks[i].id
+         * OR referencedTextBlocks[i] == undefined
+         *
+         * For all feedbacks, feedbacks[i].reference is defined.
+         */
+        this.referencedTextBlocks = feedbacks.map(feedback => {
+            const feedbackReferencesTextBlock = feedback.reference ? this.sha1Regex.test(feedback.reference) : false;
+            if (!feedbackReferencesTextBlock) {
+                return undefined;
+            }
+
+            return this.submission.blocks!.find(block => block.id === feedback.reference);
+        });
     }
 
     private updateParticipationWithResult(): void {
@@ -338,6 +365,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.busy = false;
         this.validateAssessment();
         this.checkPermissions();
+
+        // Automatically fetch suggested Feedback for Automatic Assessment Enabled exercises.
+        const needsAutomaticAssmentSuggestions = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!this.result.feedbacks || this.result.feedbacks.length === 0);
+        if (needsAutomaticAssmentSuggestions) {
+            this.predefineTextBlocks();
+        }
     }
 
     getComplaint(): void {

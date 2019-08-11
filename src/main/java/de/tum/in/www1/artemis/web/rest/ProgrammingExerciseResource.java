@@ -437,7 +437,7 @@ public class ProgrammingExerciseResource {
             assignmentParticipation.ifPresent(participations::add);
             programmingExercise.setParticipations(participations);
 
-            if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
 

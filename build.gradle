@@ -14,7 +14,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via './gradlew dependencyUpdates'
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.22.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -33,7 +33,7 @@ plugins {
     id "net.ltgt.apt" version "0.21"
     id "com.moowork.node" version "1.3.1"
 //    id 'org.liquibase.gradle' version "2.0.1"
-    id "com.github.ben-manes.versions" version "0.21.0"
+    id "com.github.ben-manes.versions" version "0.22.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
     id "com.diffplug.gradle.spotless" version "3.24.0"
 }
@@ -175,10 +175,8 @@ dependencies {
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
-    //TODO: instead of com.google.code.gson, we might want to use Jackson to reduce the number of json parsing frameworks
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
     implementation group: 'com.thoughtworks.qdox', name: 'qdox', version: '2.0-M10'
-    implementation 'io.sentry:sentry-spring:1.7.25'
+    implementation 'io.sentry:sentry-spring:1.7.26'
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -250,8 +248,9 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "org.assertj:assertj-core:3.13.1"
+    testImplementation "org.assertj:assertj-core:3.13.2"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.1.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.1'
     testImplementation "org.mockito:mockito-core:3.0.0"
     testImplementation "org.hamcrest:hamcrest-library"
@@ -320,10 +319,11 @@ if (project.hasProperty('nodeInstall')) {
     }
 }
 
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion = '6.16.1'
     config = rootProject.resources.text.fromFile('checkstyle/rules.xml')
-    maxErrors = 550
+    maxErrors = 500
 }
 
 task executeCheckstyle (type: Exec) {

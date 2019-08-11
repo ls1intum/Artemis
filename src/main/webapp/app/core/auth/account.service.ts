@@ -5,7 +5,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Observable, Subject } from 'rxjs';
+import { of, Observable, BehaviorSubject } from 'rxjs';
+import { distinctUntilChanged, map, catchError } from 'rxjs/operators';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { User } from '../../core';
 import { Course } from '../../entities/course';
@@ -21,15 +22,15 @@ export interface IAccountService {
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
-    getAuthenticationState: () => Observable<User>;
+    getAuthenticationState: () => Observable<User | null>;
     getImageUrl: () => string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private userIdentity: User | null;
+    private userIdentityValue: User | null = null;
     private authenticated = false;
-    private authenticationState = new Subject<any>();
+    private authenticationState = new BehaviorSubject<User | null>(null);
 
     constructor(
         private languageService: JhiLanguageService,
@@ -37,6 +38,17 @@ export class AccountService implements IAccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
     ) {}
+
+    get userIdentity() {
+        return this.userIdentityValue;
+    }
+
+    set userIdentity(user: User | null) {
+        this.userIdentityValue = user;
+        this.authenticated = !!user;
+        // Alert subscribers about user updates, that is when the user logs in or logs out (null).
+        this.authenticationState.next(user);
+    }
 
     fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
@@ -48,8 +60,6 @@ export class AccountService implements IAccountService {
 
     authenticate(identity: User | null) {
         this.userIdentity = identity;
-        this.authenticated = identity !== null;
-        this.authenticationState.next(this.userIdentity);
     }
 
     syncGroups(identity: User) {
@@ -111,34 +121,31 @@ export class AccountService implements IAccountService {
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
         return this.fetch()
-            .toPromise()
-            .then(response => {
-                const user = response.body!;
-                if (user) {
-                    this.userIdentity = user;
-                    this.authenticated = true;
-                    this.websocketService.connect();
+            .pipe(
+                map((response: HttpResponse<User>) => {
+                    const user = response.body!;
+                    if (user) {
+                        this.userIdentity = user;
+                        this.websocketService.connect();
 
-                    // After retrieve the account info, the language will be changed to
-                    // the user's preferred language configured in the account setting
-                    const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
-                    this.languageService.changeLanguage(langKey);
-                } else {
+                        // After retrieve the account info, the language will be changed to
+                        // the user's preferred language configured in the account setting
+                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                        this.languageService.changeLanguage(langKey);
+                    } else {
+                        this.userIdentity = null;
+                    }
+                    return this.userIdentity;
+                }),
+                catchError(() => {
+                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                        this.websocketService.disconnect();
+                    }
                     this.userIdentity = null;
-                    this.authenticated = false;
-                }
-                this.authenticationState.next(this.userIdentity);
-                return this.userIdentity;
-            })
-            .catch(err => {
-                if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
-                    this.websocketService.disconnect();
-                }
-                this.userIdentity = null;
-                this.authenticated = false;
-                this.authenticationState.next(this.userIdentity);
-                return null;
-            });
+                    return of(null);
+                }),
+            )
+            .toPromise();
     }
 
     isAtLeastTutorInCourse(course: Course): boolean {
@@ -153,8 +160,11 @@ export class AccountService implements IAccountService {
         return this.authenticated;
     }
 
-    getAuthenticationState(): Observable<User> {
-        return this.authenticationState.asObservable();
+    getAuthenticationState(): Observable<User | null> {
+        return this.authenticationState.asObservable().pipe(
+            // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
+            distinctUntilChanged(),
+        );
     }
 
     /**

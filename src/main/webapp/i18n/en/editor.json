@@ -30,7 +30,7 @@
             "preparingForSubmitTooltip": "Preparing for submit.",
             "submit": "Submit",
             "buildOutput": "&nbsp; Build Output",
-            "building": "Building...",
+            "building": "Building and testing...",
             "buildFailed": "Build Failed",
             "noBuildOutput": "No build results available",
             "selectFile": "Select a file to get started!",
