@@ -334,11 +334,11 @@ public class GitService {
     /**
      * Get last commit hash from master
      *
-     * @param repoUrl
-     * @return
-     * @throws GitAPIException
+     * @param repoUrl of git repository on server.
+     * @return the latestHash of the git repository.
+     * @throws GitAPIException if the repository can't be accessed.
      */
-    private ObjectId getLatestHash(URL repoUrl) throws GitAPIException {
+    public ObjectId getLastCommitHash(URL repoUrl) throws GitAPIException {
         // Get refs of repo without cloning it locally
         Collection<Ref> refs = Git.lsRemoteRepository().setRemote(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                 .call();
@@ -393,7 +393,7 @@ public class GitService {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLatestHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen

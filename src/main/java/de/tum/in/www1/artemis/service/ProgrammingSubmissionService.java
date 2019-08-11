@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,12 +41,14 @@ public class ProgrammingSubmissionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final GitService gitService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
@@ -50,6 +56,7 @@ public class ProgrammingSubmissionService {
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.gitService = gitService;
     }
 
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
@@ -125,5 +132,24 @@ public class ProgrammingSubmissionService {
             return null;
         }
         return submissionOpt.get();
+    }
+
+    @Transactional
+    public ProgrammingSubmission createManualSubmission(ProgrammingExerciseParticipation participation) {
+        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        ObjectId lastCommitHash;
+        try {
+            lastCommitHash = gitService.getLastCommitHash(repoUrl);
+        }
+        catch (GitAPIException ex) {
+            lastCommitHash = null;
+        }
+
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().type(SubmissionType.MANUAL);
+        newSubmission.setParticipation((Participation) participation);
+        if (lastCommitHash != null) {
+            newSubmission.setCommitHash(lastCommitHash.getName());
+        }
+        return programmingSubmissionRepository.save(newSubmission);
     }
 }

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,13 +37,17 @@ public class ProgrammingExerciseParticipationResource {
 
     private Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private SimpMessageSendingOperations messagingTemplate;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            ResultService resultService, ProgrammingSubmissionService submissionService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            SimpMessageSendingOperations messagingTemplate) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -127,6 +132,9 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
+        ProgrammingSubmission submission = submissionService.createManualSubmission(programmingExerciseParticipation);
+        // notify the user via websocket.
+        messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
         continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
         return ResponseEntity.ok().build();
     }
