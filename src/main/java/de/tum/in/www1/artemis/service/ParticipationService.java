@@ -779,7 +779,7 @@ public class ParticipationService {
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
