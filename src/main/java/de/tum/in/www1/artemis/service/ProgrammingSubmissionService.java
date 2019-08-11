@@ -134,22 +134,26 @@ public class ProgrammingSubmissionService {
         return submissionOpt.get();
     }
 
+    /**
+     * Create a submission with type INSTRUCTOR for the last commit hash of the given participation.
+     *
+     * @param participation to create submission for.
+     * @return created submission.
+     * @throws IllegalStateException if the last commit hash can't be retrieved.
+     */
     @Transactional
-    public ProgrammingSubmission createManualSubmission(ProgrammingExerciseParticipation participation) {
+    public ProgrammingSubmission createInstructorSubmissionForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         ObjectId lastCommitHash;
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
         }
         catch (GitAPIException ex) {
-            lastCommitHash = null;
+            throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
         }
 
-        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().type(SubmissionType.MANUAL);
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(lastCommitHash.getName()).type(SubmissionType.INSTRUCTOR);
         newSubmission.setParticipation((Participation) participation);
-        if (lastCommitHash != null) {
-            newSubmission.setCommitHash(lastCommitHash.getName());
-        }
         return programmingSubmissionRepository.save(newSubmission);
     }
 }

@@ -24,6 +24,10 @@ export class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges
         }
     }
 
+    /**
+     * Set up a websocket subscription to pending submissions to set the isBuilding flag.
+     * If there is a pending submission, isBuilding is set to true, otherwise to false.
+     */
     setupSubmissionSubscription() {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();

@@ -119,7 +119,7 @@ public class ProgrammingExerciseParticipationResource {
      * Trigger the CI build of the given participation.
      *
      * @param participationId of the participation.
-     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404).
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      */
     @PostMapping("/programming-exercise-participations/{participationId}/trigger-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -132,7 +132,13 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
-        ProgrammingSubmission submission = submissionService.createManualSubmission(programmingExerciseParticipation);
+        ProgrammingSubmission submission;
+        try {
+            submission = submissionService.createInstructorSubmissionForParticipation(programmingExerciseParticipation);
+        }
+        catch (IllegalStateException ex) {
+            return notFound();
+        }
         // notify the user via websocket.
         messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
         continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);

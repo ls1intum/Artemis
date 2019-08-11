@@ -25,6 +25,7 @@ import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -293,6 +294,14 @@ public class Result implements Serializable {
 
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
+    }
+
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate, SubmissionType submissionType) {
+        if (submissionType == SubmissionType.INSTRUCTOR || submissionType == SubmissionType.TEST) {
+            this.rated = true;
+        }
+        else
+            this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
     public Submission getSubmission() {
