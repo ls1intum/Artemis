@@ -36,6 +36,9 @@
             <column name="position_in_cluster" type="int">
                 <constraints nullable="true" />
             </column>
+            <column name="added_distance" type="float">
+                <constraints nullable="true" />
+            </column>
 
         </createTable>
         <addForeignKeyConstraint baseColumnNames="submission_id"

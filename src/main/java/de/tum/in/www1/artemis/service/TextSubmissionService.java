@@ -35,16 +35,19 @@ public class TextSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final TextAssessmentQueueService textAssessmentQueueService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            SimpMessageSendingOperations messagingTemplate) {
+            TextAssessmentQueueService textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.textAssessmentQueueService = textAssessmentQueueService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -143,6 +146,9 @@ public class TextSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
+        if (textExercise.isAutomaticAssessmentEnabled()) {
+            return textAssessmentQueueService.getProposedTextSubmission(textExercise);
+        }
         Random r = new Random();
         List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
                 .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());

@@ -201,5 +201,10 @@ public class TextCluster implements Serializable {
         }
         return baos.toByteArray();
     }
+
+    public int sizeUnassessed() {
+        // TODO: Gregor
+        return size();
+    }
     // endregion
 }

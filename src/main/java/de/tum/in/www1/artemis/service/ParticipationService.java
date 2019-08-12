@@ -635,6 +635,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionWithoutResult(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
     public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
         List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
                 : studentParticipationRepository.findByCourseIdWithEagerResults(courseId);

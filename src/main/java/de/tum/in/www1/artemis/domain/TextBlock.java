@@ -40,6 +40,9 @@ public class TextBlock implements Serializable {
     @Column(name = "position_in_cluster")
     private Integer positionInCluster = null;
 
+    @Column(name = "added_distance")
+    private double addedDistance;
+
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
@@ -152,5 +155,17 @@ public class TextBlock implements Serializable {
     @Override
     public String toString() {
         return "TextBlock{" + "id=" + getId() + ", text='" + getText() + "'" + "}";
+    }
+
+    public boolean isAssessable() {
+        return submission.getResult() == null;
+    }
+
+    public void setAddedDistance(double addedDistance) {
+        this.addedDistance = addedDistance;
+    }
+
+    public double getAddedDistance() {
+        return addedDistance;
     }
 }
