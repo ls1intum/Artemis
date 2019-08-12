@@ -107,7 +107,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @BeforeEach
     void reset() {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -123,6 +122,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
+    }
+
+    @AfterEach
+    void tearDown() {
+        database.resetDatabase();
     }
 
     /**

@@ -6,8 +6,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@Disabled
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -62,12 +61,16 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @BeforeEach
     public void init() throws Exception {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+    }
+
+    @AfterEach
+    void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
