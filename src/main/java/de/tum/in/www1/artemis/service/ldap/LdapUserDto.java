@@ -51,6 +51,4 @@ final public class LdapUserDto {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-
-    // standard getters/setters
 }
