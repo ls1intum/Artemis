@@ -23,8 +23,4 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     getStudentParticipationWithLatestResult(participationId: number) {
         return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
-
-    triggerBuild(participationId: number) {
-        return this.http.post<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/trigger-build', {});
-    }
 }

@@ -75,7 +75,8 @@
                 "weightsUpdated": "Die Gewichtung wurde erfolgreich gespeichert.",
                 "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}."
             },
-            "resubmit": "Erneute Abgabe deiner Lösung. Diese Aktion führt einen neuen Build aus, der deine Submission testet."
+            "resubmit": "Erneute Abgabe deiner Lösung. Diese Aktion führt einen neuen Build aus, der deine Submission testet.",
+            "triggerInstructorBuild": "Führe einen neuen Build für diese Teilnahme aus. Das Ergebnis wird unabhängig vom Abgabedatum als 'bewertet' gelten."
         }
     }
 }

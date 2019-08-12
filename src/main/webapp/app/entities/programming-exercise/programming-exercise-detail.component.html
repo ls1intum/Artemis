@@ -87,10 +87,10 @@
                             [participation]="programmingExercise.templateParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
-                        <jhi-programming-exercise-trigger-build-button
+                        <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.templateParticipation.results"
                             [participation]="programmingExercise.templateParticipation"
-                        ></jhi-programming-exercise-trigger-build-button>
+                        ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
@@ -110,10 +110,10 @@
                             [participation]="programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
-                        <jhi-programming-exercise-trigger-build-button
+                        <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.solutionParticipation.results"
                             [participation]="programmingExercise.solutionParticipation"
-                        ></jhi-programming-exercise-trigger-build-button>
+                        ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.problemStatement.title">Problem Statement</span></dt>

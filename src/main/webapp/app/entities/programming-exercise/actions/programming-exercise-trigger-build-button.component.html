@@ -1,8 +1,3 @@
-<button
-    [ngClass]="['btn', 'btn-primary', btnSize]"
-    [disabled]="!participationHasResult || isBuilding"
-    (click)="triggerBuild($event)"
-    ngbTooltip="{{ 'artemisApp.programmingExercise.resubmit' | translate }}"
->
+<button [ngClass]="['btn', 'btn-primary', btnSize]" [disabled]="!participationHasResult || isBuilding" (click)="triggerBuild($event)" ngbTooltip="{{ getTooltip() | translate }}">
     <fa-icon icon="redo"></fa-icon>
 </button>

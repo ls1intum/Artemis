@@ -16,11 +16,10 @@ export enum ButtonSize {
  * The participation given as input needs to have the results attached as this component checks if there is at least one result.
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
-@Component({
-    selector: 'jhi-programming-exercise-trigger-build-button',
-    templateUrl: './programming-exercise-trigger-build-button.component.html',
-})
-export class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+    abstract triggerBuild: (event: any) => void;
+    abstract getTooltip: () => string;
+
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
@@ -30,11 +29,7 @@ export class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    constructor(
-        private participationService: ProgrammingExerciseParticipationService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: ProgrammingSubmissionWebsocketService,
-    ) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, protected submissionService: ProgrammingSubmissionWebsocketService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -91,9 +86,9 @@ export class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges
             .subscribe();
     }
 
-    triggerBuild(event: any) {
+    /*    triggerBuild(event: any) {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
         this.participationService.triggerBuild(this.participation.id).subscribe();
-    }
+    }*/
 }

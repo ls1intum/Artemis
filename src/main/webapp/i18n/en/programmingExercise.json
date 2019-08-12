@@ -75,7 +75,8 @@
                 "weightsUpdated": "The weights were updated successfully.",
                 "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
             },
-            "resubmit": "Submit your solution again. This will trigger a new build run that tests your submission."
+            "resubmit": "Submit your solution again. This will trigger a new build run that tests your submission.",
+            "triggerInstructorBuild": "Trigger the build for this participation again. The result will become rated regardless of the due date."
         }
     }
 }

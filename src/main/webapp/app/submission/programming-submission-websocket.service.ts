@@ -15,6 +15,7 @@ export interface ISubmissionWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
+    public RESOURCE_URL = SERVER_API_URL + 'api/programming-submissions/';
     // Current value: 2 minutes.
     private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
@@ -195,4 +196,12 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter(s => s !== undefined)) as Observable<Submission | null>;
     };
+
+    public triggerBuild(participationId: number) {
+        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-build', {});
+    }
+
+    public triggerInstructorBuild(participationId: number) {
+        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-instructor-build', {});
+    }
 }

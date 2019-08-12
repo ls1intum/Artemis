@@ -48,6 +48,8 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
+
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]*";
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
