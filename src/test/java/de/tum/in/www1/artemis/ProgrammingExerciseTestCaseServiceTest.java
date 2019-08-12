@@ -160,6 +160,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
     }
 
     @Test
@@ -183,6 +184,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.getResultString()).isEqualTo("1 of 1 passed (preliminary)");
+        assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be removed.
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
     }
@@ -206,7 +208,9 @@ public class ProgrammingExerciseTestCaseServiceTest {
         Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getFeedbacks()).hasSize(2);
     }
 
@@ -229,7 +233,9 @@ public class ProgrammingExerciseTestCaseServiceTest {
         Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
     }
@@ -256,11 +262,13 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
         testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
-        // All available test cases are fulfilled.
+        // No test case was executed.
         Long expectedScore = 0L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("0 of 0 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
         // The feedback must be empty as not test should be executed yet.
         assertThat(result.getFeedbacks()).hasSize(0);
     }
