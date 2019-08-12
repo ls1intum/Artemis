@@ -178,14 +178,11 @@
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
-            jhi-exercise-action-button
-            jhiIntellij
-            buttonIcon="download"
+            jhi-intellij-button
             (click)="importIntoIntelliJ()"
-            [buttonLabel]="'Import into IntelliJ'"
+            [buttonLabel]="'Open in IntelliJ'"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
             *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
         ></button>
         <button

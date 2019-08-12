@@ -1,0 +1,8 @@
+<ng-container *ngIf="javaBridge.isIntelliJ()">
+    <div [hidden]="buttonLoading">
+        <img class="ide-icon" src="../../../../content/images/intellij_logo.png" />
+        <span>{{ buttonLabel }}</span>
+    </div>
+
+    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+</ng-container>
