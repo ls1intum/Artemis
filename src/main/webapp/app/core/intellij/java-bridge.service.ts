@@ -11,9 +11,17 @@ export class JavaBridgeService {
         window.intellij.login(username, password);
     }
 
-    clone(repository: String, exercise: String) {
+    clone(repository: String, exerciseName: String) {
+        console.log(repository);
+        console.log(exerciseName);
         // @ts-ignore
-        window.intellij.clone(repository, exercise);
+        if (window.intellij.clone) {
+            console.log('clone exists');
+        } else {
+            console.log('clone does not exist');
+        }
+        // @ts-ignore
+        window.intellij.clone(repository, exerciseName);
     }
 
     isIntelliJ(): boolean {
