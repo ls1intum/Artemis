@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,8 +137,8 @@ public class TextAssessmentQueueService {
                 if (textBlock.getCluster() == null) {
                     return;
                 }
-                int smallerClusterCount = clusters.parallelStream().mapToInt(TextCluster::sizeUnassessed).reduce(0, (sum, elem) -> {
-                    if (elem <= textBlock.getCluster().sizeUnassessed()) {
+                int smallerClusterCount = clusters.parallelStream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
+                    if (elem <= textBlock.getCluster().openTextBlockCount()) {
                         return sum + 1;
                     }
                     return sum;
@@ -148,16 +147,5 @@ public class TextAssessmentQueueService {
             });
         });
         return result;
-    }
-
-    private void logTime(String s) {
-        // Todo: has to be removed before PR
-        if (running) {
-            System.out.println("Time elapsed " + s + ": " + Duration.between(start, Instant.now()).toMillis() + " ms");
-            running = false;
-            return;
-        }
-        start = Instant.now();
-        running = true;
     }
 }
