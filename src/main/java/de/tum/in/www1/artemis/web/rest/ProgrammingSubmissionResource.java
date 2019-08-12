@@ -143,7 +143,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-instructor-build")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> triggerInstructorBuild(@PathVariable Long participationId) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
