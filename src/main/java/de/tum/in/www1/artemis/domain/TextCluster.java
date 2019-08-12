@@ -202,9 +202,8 @@ public class TextCluster implements Serializable {
         return baos.toByteArray();
     }
 
-    public int sizeUnassessed() {
-        // TODO: Gregor
-        return size();
+    public int openTextBlockCount() {
+        return (int) blocks.stream().filter(TextBlock::isAssessable).count();
     }
     // endregion
 }
