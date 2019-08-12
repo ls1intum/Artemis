@@ -1,6 +1,16 @@
 ## Setup Guide for Artemis
 
-In this guide you will learn how to setup the development environment for your contribution on Artemis.
+In this guide you learn how to setup the development environment of Artemis.
+Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 12, and TypeScript development on the application client in the browser using [Angular 8](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+
+You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
+Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
+
+1. [Java 12 JDK](https://www.oracle.com/technetwork/java/javase/downloads/jdk12-downloads-5295953.html): Java is the main development language for the server application of Artemis.
+2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. (Please note that MySQL 8 is not yet supported)
+3. [Node.js](https://nodejs.org): We use Node (>=12.3.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. 
+4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.15.2) to manage Node dependencies.
+Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
 
