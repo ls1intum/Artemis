@@ -8,6 +8,7 @@ import { Result, ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -17,6 +18,7 @@ import { ProgrammingExerciseParticipationService } from 'app/entities/programmin
 export class ProgrammingExerciseDetailComponent implements OnInit {
     ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
 
