@@ -14,6 +14,7 @@ import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { CachingStrategy } from 'app/shared';
 
 @Component({
     selector: 'jhi-course-update',
@@ -21,6 +22,8 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
     styleUrls: ['./course-update.component.scss'],
 })
 export class CourseUpdateComponent implements OnInit {
+    CachingStrategy = CachingStrategy;
+
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;

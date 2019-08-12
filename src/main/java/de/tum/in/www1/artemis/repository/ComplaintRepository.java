@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -32,34 +33,38 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(Long courseId, Long tutorId);
 
     /**
-     * This magic method counts the number of complaints associated to a course id
+     * This magic method counts the number of complaints by complaint type associated to a course id
      *
-     * @param courseId - the id of the course we want to filter by
-     * @return number of complaints associated to course courseId
+     * @param courseId      - the id of the course we want to filter by
+     * @param complaintType - type of complaint we want to filter by
+     * @return number of more feedback requests associated to course courseId
      */
-    long countByResult_Participation_Exercise_Course_Id(Long courseId);
+    long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
-    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId}")
-    Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId} AND c.complaintType = :#{#complaintType}")
+    Optional<List<Complaint>> findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId,
+            @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Count the number of unaccepted complaints of a student in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
-     * of complaints for a student in a course.
+     * of complaints for a student in a course. Requests for more feedback are not counted here.
      *
      * @param studentId the id of the student
      * @param courseId  the id of the course
      * @return the number of unaccepted
      */
-    @Query("SELECT count(c) FROM Complaint c  WHERE c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
-    long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
+    @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
-     * This magic method counts the number of complaints associated to an exercise id
+     * This magic method counts the number of complaints by complaint type associated to an exercise id
      *
-     * @param exerciseId - the id of the course we want to filter by
+     * @param exerciseId    - the id of the course we want to filter by
+     * @param complaintType - complaint type we want to filter by
      * @return number of complaints associated to exercise exerciseId
      */
-    long countByResult_Participation_Exercise_Id(Long exerciseId);
+
+    long countByResult_Participation_Exercise_IdAndComplaintType(Long exerciseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id

@@ -37,7 +37,8 @@ public class AutomaticAssessmentController {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
             if (element == null) {
-                throw new IOException("Score for element was not fount");
+                log.warn("Element with id " + jsonElementID + " could not be found in model.");
+                continue;
             }
 
             Context context = element.getContext();

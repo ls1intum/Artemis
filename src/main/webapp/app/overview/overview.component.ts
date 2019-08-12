@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
-import { TUM_REGEX } from 'app/app.constants';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',
@@ -36,7 +36,7 @@ export class OverviewComponent {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
     }
 
     get nextRelevantExercise(): Exercise | null {

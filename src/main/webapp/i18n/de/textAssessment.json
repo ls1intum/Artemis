@@ -21,6 +21,8 @@
             },
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
+            "automatic": "Automatisch",
+            "automaticGenerated": "Automatisch erstelles Feedback",
             "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest.",
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",

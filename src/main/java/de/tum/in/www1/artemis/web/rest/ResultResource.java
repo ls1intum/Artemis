@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +24,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -66,19 +70,25 @@ public class ResultResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
+    private final SimpMessageSendingOperations messagingTemplate;
 
-        this.userService = userService;
+    private final LtiService ltiService;
+
+    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
+            SimpMessageSendingOperations messagingTemplate, LtiService ltiService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.feedbackService = feedbackService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
+        this.messagingTemplate = messagingTemplate;
+        this.ltiService = ltiService;
     }
 
     /**
@@ -137,7 +147,7 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        Optional<Participation> participation = getParticipation(planKey);
+        Optional<ProgrammingExerciseParticipation> participation = getParticipationWithResults(planKey);
         if (participation.isPresent()) {
             resultService.onResultNotifiedOld(participation.get());
             return ResponseEntity.ok().build();
@@ -147,53 +157,102 @@ public class ResultResource {
         }
     }
 
+    /**
+     * This method is used by the CI system to inform Artemis about a new programming exercise build result.
+     * It will make sure to:
+     * - Create a result from the build result including its feedbacks
+     * - Assign the result to an existing submission OR create a new submission if needed
+     * - Update the result's score based on the exercise's test cases (weights, etc.)
+     * - Update the exercise's test cases if the build is from a solution participation
+     *
+     * @param token CI auth token
+     * @param requestBody build result of CI system
+     * @return a ResponseEntity to the CI system
+     * @throws Exception
+     */
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
-    @Transactional
-    public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) throws Exception {
         log.info("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
 
-        try {
-            String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
-            log.info("PlanKey for received notifyResultNew is {}", planKey);
-            Optional<Participation> optionalParticipation = getParticipation(planKey);
-            if (optionalParticipation.isPresent()) {
-                Participation participation = optionalParticipation.get();
-                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
-                    participation.setExercise(programmingExerciseService.getExerciseForTemplateParticipation(participation));
-                }
-                else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
-                    participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
-                }
-                resultService.onResultNotifiedNew(participation, requestBody);
-                log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
-                return ResponseEntity.ok().build();
-            }
-            else {
-                log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
-                // return ok so that Bamboo does not think it was an error
-                return ResponseEntity.ok().build();
-            }
+        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // Therefore a mock auth object has to be created.
+        SecurityUtils.setAuthorizationObject();
 
+        // Retrieving the plan key can fail if e.g. the requestBody is malformated. In this case nothing else can be done.
+        String planKey;
+        try {
+            planKey = continuousIntegrationService.get().getPlanKey(requestBody);
         }
-        catch (Exception e) {
-            log.error("An exception occurred during handling of notifyResultNew", e);
+        // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
+        catch (Exception ex) {
+            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
+        log.info("PlanKey for received notifyResultNew is {}", planKey);
 
+        // Try to retrieve the participation with the build plan key.
+        Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
+        if (!optionalParticipation.isPresent()) {
+            log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
+            return notFound();
+        }
+
+        ProgrammingExerciseParticipation participation = optionalParticipation.get();
+        Optional<Result> result;
+        // Process the new result from the build result.
+        result = resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
+
+        // Only notify the user about the new result if the result was created successfully.
+        if (result.isPresent()) {
+            // notify user via websocket
+            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
+
+            // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
+            // if (participation.isLti()) {
+            // }
+            // handles new results and sends them to LTI consumers
+            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+            }
+        }
+        log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
+        return ResponseEntity.ok().build();
     }
 
-    private Optional<Participation> getParticipation(String planKey) {
-        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
-        Optional<Participation> participation = Optional.empty();
+    private Optional<ProgrammingExerciseParticipation> getParticipationWithResults(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey.contains(RepositoryType.TEMPLATE.getName())) {
+            Optional<TemplateProgrammingExerciseParticipation> templateParticipation = participationService.findTemplateParticipationByBuildPlanId(planKey);
+            // we have to convert the optional type here to make Java happy
+            if (templateParticipation.isPresent()) {
+                return Optional.of(templateParticipation.get());
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        else if (planKey.contains(RepositoryType.SOLUTION.getName())) {
+            Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = participationService.findSolutionParticipationByBuildPlanId(planKey);
+            // we have to convert the optional type here to make Java happy
+            if (solutionParticipation.isPresent()) {
+                return Optional.of(solutionParticipation.get());
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey,
+                InitializationState.INITIALIZED);
+        Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
-                for (Participation otherParticipation : participations) {
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
                     if (otherParticipation.getInitializationDate().isAfter(participation.get().getInitializationDate())) {
                         participation = Optional.of(otherParticipation);
                     }
@@ -201,7 +260,13 @@ public class ResultResource {
             }
         }
 
-        return participation;
+        // we have to convert the optional type here to make Java happy
+        if (participation.isPresent()) {
+            return Optional.of(participation.get());
+        }
+        else {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -244,7 +309,7 @@ public class ResultResource {
         log.debug("REST request to get Results for Participation : {}", participationId);
 
         List<Result> results = new ArrayList<>();
-        Participation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
         // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
         if (participation.getExercise() == null) {
@@ -330,9 +395,9 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
 
-        for (Participation participation : participations) {
+        for (StudentParticipation participation : participations) {
             // Filter out participations without Students
             // These participations are used e.g. to store template and solution build plans in programming exercises
             if (participation.getStudent() == null) {
@@ -409,7 +474,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
@@ -435,7 +500,7 @@ public class ResultResource {
         if (!result.isPresent()) {
             return notFound();
         }
-        Participation participation = result.get().getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.get().getParticipation();
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();

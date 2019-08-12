@@ -21,6 +21,10 @@
         <dd>
             <span>{{ textExercise.maxScore }}</span>
         </dd>
+        <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
+        <dd>
+            <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
+        </dd>
         <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
         <dd>
             <div *ngIf="textExercise.course">

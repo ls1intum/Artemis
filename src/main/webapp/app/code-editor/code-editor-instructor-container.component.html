@@ -1,5 +1,4 @@
 <jhi-alert></jhi-alert>
-<jhi-alert-error></jhi-alert-error>
 <nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
@@ -51,7 +50,7 @@
                             !exercise ||
                             !exercise.participations ||
                             !exercise.participations.length ||
-                            (exercise.participations.length && !exercise.participations[0].repositoryUrl)
+                            (exercise.participations.length && !repositoryUrl(exercise.participations[0]))
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
@@ -106,19 +105,20 @@
         </div>
         <div class="ml-auto d-flex align-items-center">
             <jhi-updating-result
-                *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
+                *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
+                [exerciseType]="PROGRAMMING"
                 [participation]="selectedParticipation"
                 [showUngradedResults]="true"
                 [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
                 [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
+            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
             <jhi-code-editor-actions
                 [buildable]="selectedRepository !== REPOSITORY.TEST"
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"
-                [(isBuilding)]="isBuilding"
                 (onSavedFiles)="onSavedFiles($event)"
                 (onError)="onError($event)"
             ></jhi-code-editor-actions>
@@ -159,7 +159,6 @@
         editorBottomArea
         *ngIf="selectedRepository !== 'TEST'"
         [participation]="selectedParticipation"
-        [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"

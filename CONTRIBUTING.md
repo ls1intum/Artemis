@@ -1,0 +1,98 @@
+# Contributing Guide for Artemis
+
+Please read this guide before creating a pull request, otherwise your contribution might not be approved.
+
+## Branch Organization
+
+All pull request branches are created from develop.
+
+We use the following structure for branch names:
+
+\<type\>/\<area\>/\<short-description\>
+
+Possible types are:
+
+- feature
+- enhancement
+- bugfix
+- hotfix
+
+The pull request template will provide additional information on the requirement for the integration of changes into Artemis.  
+Once the changes in your pull request are approved by one of our reviewers, they can be merged into develop.
+
+## Pull request guidelines:
+
+- **Merge fast**: PRs should only be open for a couple of days.
+- **Small packages**: PRs should be as small as possible and ideally concentrate on a single topic. Features should be split up into multiple PRs if it makes sense.
+- **Definition of done**: When requesting a code review, the PR template must be filled out completely, containing as much description as needed to understand the feature.
+Also all tasks from the template checklist must be completed and checked off before the review is requested (writing tests, adding screenshots, etc.).
+
+## Code review guidelines
+
+- **Check out the code and test it**: Testing the feature/enhancement/bugfix helps to understand the code.
+- **Respect the PR scope**: Bugfixes, enhancements or implementations that are unrelated to the PRs topic should not be enforced in a code review. 
+In this case the reviewer or PR maintainer needs to make sure to create an issue for this topic on Github or the internal task tracking tool so it is not lost.
+- **Code style is not part of a code review**: Code style and linting issues are not part of the review process. If issues in code style or linting arise, the linters and auto formatters used in our CI tools need to be updated.
+- **Enforce guidelines**: Enforcing technical & design guidelines is an integral part of the code review (e.g. consistent REST urls).
+- **Mark optional items**: Review items that are optional from the reviewers perspective should be marked as such (e.g. "Optional: You could also do this with...")
+- **Explain your rational**: If the reviewer requests a change, the reasoning behind the change should be explained (e.g. not "Please change X to Y", but "Please change X to Y, because this would improve Z")
+
+## Development Workflow
+
+Find here [a guide](doc/setup/SETUP.md) on how to setup your local development environment.
+
+## CSS Guidelines
+
+We are using [Scss](https://sass-lang.com) to write modular, reusable css.
+
+We have a couple of global scss files in `webapp/content` but encourage [component dependent css with angular's styleUrls](https://angular.io/guide/component-styles).
+
+From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/).
+```
+.my-container {
+    // container styles
+    &__content {
+        // content styles
+        &--modifier {
+            // modifier styles
+        }
+    }
+}
+```
+
+Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/).
+
+Encouraged html styling:
+`<div class="d-flex ml-2">some content</div>`
+
+
+## Testing
+
+We create unit & integration tests for the Artemis server and client.
+Adding tests is an integral part of any pull request - please be aware that your pull request will not be approved until you provide automated tests for your implementation!
+
+### Server Testing
+
+We use the [Spring Boot testing utilities](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html) for server side testing.
+
+Location of test files: `src/test/java`
+
+Execution command:      `./gradlew executeTests`
+
+### Client Testing
+
+We use [Jest](https://jestjs.io/) for client side testing.
+
+For convenience purposes we have [Sinon](https://sinonjs.org/) and [Chai](https://www.chaijs.com/) as dependencies, so that easy stubbing/mocking is possible ([sinon-chai](https://github.com/domenic/sinon-chai)).
+
+Location of test files: `src/test/javascript`
+
+Execution command:      `yarn test`
+
+The folder structure is further divided into:
+
+- component
+- integration
+- service
+
+The tests located in the folder `/app` are not working at them moment and are not included in the test runs.

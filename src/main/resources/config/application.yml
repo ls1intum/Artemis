@@ -61,6 +61,8 @@ management:
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
+        ldap:
+            enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
     metrics:
         export:
             # Prometheus is the default metrics backend

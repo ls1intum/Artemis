@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -51,11 +52,12 @@ public class ComplaintService {
     public Complaint createComplaint(Complaint complaint, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
-        User originalSubmissor = originalResult.getParticipation().getStudent();
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        User originalSubmissor = studentParticipation.getStudent();
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
+        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
@@ -96,17 +98,27 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countUnacceptedComplaintsByStudentIdAndCourseId(long studentId, long courseId) {
-        return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(studentId, courseId);
+        return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(studentId, courseId);
     }
 
     @Transactional(readOnly = true)
     public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+    }
+
+    @Transactional(readOnly = true)
+    public long countMoreFeedbackRequestsByCourseId(long courseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
     public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+    }
+
+    @Transactional(readOnly = true)
+    public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
+        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -118,29 +130,25 @@ public class ComplaintService {
      */
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId, Principal principal) {
-        List<Complaint> responseComplaints = new ArrayList<>();
+        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId,
+                ComplaintType.COMPLAINT);
 
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
+        return buildComplaintsListForAssessor(databaseComplaints, principal, false);
+    }
 
-        if (!databaseComplaints.isPresent()) {
-            return responseComplaints;
-        }
+    /**
+     * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
+     *
+     * @param exerciseId - the id of the exercise we are interested in
+     * @param principal  - the callee
+     * @return a list of complaints
+     */
+    @Transactional(readOnly = true)
+    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId, Principal principal) {
+        Optional<List<Complaint>> databaseMoreFeedbackRequests = complaintRepository
+                .findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
 
-        databaseComplaints.get().forEach(complaint -> {
-            String submissorName = principal.getName();
-            User assessor = complaint.getResult().getAssessor();
-
-            if (!assessor.getLogin().equals(submissorName)) {
-                // Remove data about the student
-                complaint.getResult().getParticipation().setStudent(null);
-                complaint.setStudent(null);
-                complaint.setResultBeforeComplaint(null);
-
-                responseComplaints.add(complaint);
-            }
-        });
-
-        return responseComplaints;
+        return buildComplaintsListForAssessor(databaseMoreFeedbackRequests, principal, true);
     }
 
     @Transactional(readOnly = true)
@@ -183,7 +191,8 @@ public class ComplaintService {
         complaint.setResultBeforeComplaint(null);
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
-            complaint.getResult().getParticipation().setStudent(null);
+            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+            studentParticipation.setStudent(null);
         }
     }
 
@@ -192,7 +201,7 @@ public class ComplaintService {
             return;
         }
 
-        Participation originalParticipation = complaint.getResult().getParticipation();
+        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
         if (originalParticipation != null && originalParticipation.getExercise() != null) {
             Exercise exerciseWithOnlyTitle;
             exerciseWithOnlyTitle = originalParticipation.getExercise() instanceof TextExercise ? new TextExercise() : new ModelingExercise();
@@ -218,6 +227,31 @@ public class ComplaintService {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
 
         return complaints;
+    }
+
+    private List<Complaint> buildComplaintsListForAssessor(Optional<List<Complaint>> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
+        List<Complaint> responseComplaints = new ArrayList<>();
+
+        if (!databaseComplaints.isPresent()) {
+            return responseComplaints;
+        }
+
+        databaseComplaints.get().forEach(complaint -> {
+            String submissorName = principal.getName();
+            User assessor = complaint.getResult().getAssessor();
+
+            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
+                // Remove data about the student
+                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+                studentParticipation.setStudent(null);
+                complaint.setStudent(null);
+                complaint.setResultBeforeComplaint(null);
+
+                responseComplaints.add(complaint);
+            }
+        });
+
+        return responseComplaints;
     }
 
     /**

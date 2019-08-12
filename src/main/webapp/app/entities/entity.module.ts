@@ -10,6 +10,7 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 import { ArTEMiSTextExerciseModule } from './text-exercise/text-exercise.module';
 import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upload-exercise.module';
 import { ArtemisLectureModule } from 'app/entities/lecture/lecture.module';
+import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
@@ -20,6 +21,7 @@ import { ArtemisLectureModule } from 'app/entities/lecture/lecture.module';
         ArTEMiSQuizExerciseModule,
         ArTEMiSParticipationModule,
         ArTEMiSProgrammingExerciseModule,
+        ArtemisExerciseHintModule,
         ArTEMiSModelingExerciseModule,
         ArTEMiSResultModule,
         ArTEMiSTextExerciseModule,

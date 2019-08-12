@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -50,7 +50,7 @@ public class TextAssessmentIntegrationTest {
 
     private TextExercise textExercise;
 
-    @Before
+    @BeforeEach
     public void initTestCase() throws Exception {
         database.resetDatabase();
         database.addUsers(1, 2, 0);
@@ -65,8 +65,8 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
-                Participation.class);
+        StudentParticipation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
+                StudentParticipation.class);
 
         assertThat(participationWithoutAssessment).as("participation without assessment was found").isNotNull();
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
@@ -80,8 +80,8 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        Participation participationWithoutAssessment = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId(),
-                HttpStatus.OK, Participation.class);
+        StudentParticipation participationWithoutAssessment = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId(),
+                HttpStatus.OK, StudentParticipation.class);
 
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
@@ -107,7 +107,7 @@ public class TextAssessmentIntegrationTest {
                 assessmentUpdate, Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(updatedResult.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -124,7 +124,7 @@ public class TextAssessmentIntegrationTest {
                 new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -141,7 +141,7 @@ public class TextAssessmentIntegrationTest {
                 new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -157,7 +157,7 @@ public class TextAssessmentIntegrationTest {
                 Result.class);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.getParticipation().getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -179,7 +179,7 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
 
-        Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        StudentParticipation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
