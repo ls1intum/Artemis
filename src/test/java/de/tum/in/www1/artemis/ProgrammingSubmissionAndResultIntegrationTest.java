@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.*;
@@ -20,8 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -31,6 +35,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
@@ -46,6 +51,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
     }
+
+    @MockBean
+    GitService gitServiceMock;
 
     @Autowired
     ProgrammingExerciseRepository exerciseRepo;
@@ -289,6 +297,78 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     }
 
     /**
+     * This is the case where an instructor manually triggers the build from the CI.
+     * Here no submission exists yet and now needs to be created on the result notification.
+     */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        when(gitServiceMock.getLastCommitHash(null)).thenReturn(objectId);
+        triggerBuild(participationType, 0, HttpStatus.OK);
+
+        // Now a submission for the manual build should exist.
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        ProgrammingSubmission submission = submissions.get(0);
+        assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(submission.isSubmitted()).isTrue();
+
+        Long participationId = getParticipationIdByType(participationType, 0);
+        SecurityUtils.setAuthorizationObject();
+        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
+
+        postResult(participationType, 0, HttpStatus.OK, false);
+
+        // The new result should be attached to the created submission, no new submission should have been created.
+        submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        List<Result> results = resultRepository.findAll();
+        assertThat(results).hasSize(1);
+        Result result = results.get(0);
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(participation.getSubmissions().size()).isEqualTo(1);
+    }
+
+    /**
+     * This is the case where an instructor manually triggers the build from the CI.
+     * Here no submission exists yet and now needs to be created on the result notification.
+     */
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        when(gitServiceMock.getLastCommitHash(null)).thenReturn(objectId);
+        triggerInstructorBuild(participationType, 0, HttpStatus.OK);
+
+        // Now a submission for the manual build should exist.
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        ProgrammingSubmission submission = submissions.get(0);
+        assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
+        assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
+        assertThat(submission.isSubmitted()).isTrue();
+
+        Long participationId = getParticipationIdByType(participationType, 0);
+        SecurityUtils.setAuthorizationObject();
+        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
+
+        postResult(participationType, 0, HttpStatus.OK, false);
+
+        // The new result should be attached to the created submission, no new submission should have been created.
+        submissions = submissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        List<Result> results = resultRepository.findAll();
+        assertThat(results).hasSize(1);
+        Result result = results.get(0);
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        assertThat(participation.getSubmissions().size()).isEqualTo(1);
+    }
+
+    /**
      * After a commit into the test repository, the VCS triggers Artemis to create submissions for all participations of the given exercise.
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
@@ -365,21 +445,32 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
+    private String getPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
+        switch (participationType) {
+        case TEMPLATE:
+            return "BASE";
+        case SOLUTION:
+            return "SOLUTION";
+        default:
+            return getStudentLoginFromParticipation(participationNumber);
+        }
+    }
+
+    private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationNumber);
+        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+    }
+
+    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationNumber);
+        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-instructor-build", null, HttpStatus.OK, new HttpHeaders());
+    }
+
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        String id;
-        switch (participationType) {
-        case TEMPLATE:
-            id = "BASE";
-            break;
-        case SOLUTION:
-            id = "SOLUTION";
-            break;
-        default:
-            id = getStudentLoginFromParticipation(participationNumber);
-        }
+        String id = getPlanIdByParticipationType(participationType, participationNumber);
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BAMBOO_REQUEST);
 
