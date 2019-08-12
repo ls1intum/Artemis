@@ -74,7 +74,8 @@
                 "saveWeights": "Gewichtung speichern",
                 "weightsUpdated": "Die Gewichtung wurde erfolgreich gespeichert.",
                 "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}."
-            }
+            },
+            "resubmit": "Erneute Abgabe deiner Lösung. Diese Aktion führt einen neuen Build aus, der deine Submission testet."
         }
     }
 }

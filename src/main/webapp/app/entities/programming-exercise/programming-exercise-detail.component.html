@@ -82,13 +82,14 @@
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.templateParticipation.results?.length"
-                            class="repository-status-icon"
+                            class="repository-status-icon mr-2"
                             [participationType]="ParticipationType.TEMPLATE"
                             [participation]="programmingExercise.templateParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-trigger-build-button
-                            [participationId]="programmingExercise.templateParticipation.id"
+                            *ngIf="programmingExercise.templateParticipation.results"
+                            [participation]="programmingExercise.templateParticipation"
                         ></jhi-programming-exercise-trigger-build-button>
                     </div>
                 </dd>
@@ -104,13 +105,14 @@
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.solutionParticipation.results?.length"
-                            class="repository-status-icon"
+                            class="repository-status-icon mr-2"
                             [participationType]="ParticipationType.SOLUTION"
                             [participation]="programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-trigger-build-button
-                            [participationId]="programmingExercise.solutionParticipation.id"
+                            *ngIf="programmingExercise.solutionParticipation.results"
+                            [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-trigger-build-button>
                     </div>
                 </dd>

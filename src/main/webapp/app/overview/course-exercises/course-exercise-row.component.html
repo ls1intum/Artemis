@@ -52,6 +52,9 @@
                         short="true"
                     ></jhi-updating-result>
                 </span>
+                <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
+                    <jhi-programming-exercise-trigger-build-button class="ml-1" [participation]="exercise.participations[0]"></jhi-programming-exercise-trigger-build-button>
+                </ng-container>
             </div>
         </div>
         <div class="row">
