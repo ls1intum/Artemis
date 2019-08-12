@@ -209,14 +209,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     importIntoIntelliJ() {
-        console.log('enter import');
-        const project = this.exercise.title
-            .split(' ')
-            .join('_')
-            .toLowerCase();
-        console.log(project);
-        const repo = (this.exercise.course!.shortName + this.exercise.shortName).toUpperCase().replace(RegExp('/s/g'), '');
-        console.log(repo);
-        this.javaBridge.clone(repo, project);
+        // const project = this.exercise.title
+        //     .split(' ')
+        //     .join('_')
+        //     .toLowerCase();
+        // console.log(project);
+        // const repo = (this.exercise.course!.shortName + this.exercise.shortName).toUpperCase().replace(RegExp('/s/g'), '');
+        // console.log(repo);
+        // this.javaBridge.clone(repo, project);
+        this.javaBridge.clone('test', 'test');
     }
 }
