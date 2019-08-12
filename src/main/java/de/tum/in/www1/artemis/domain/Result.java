@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import static java.math.BigDecimal.ROUND_HALF_UP;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -535,6 +534,6 @@ public class Result implements Serializable {
         }
         // limit total score to be between 0 and maxScore
         totalScore = Math.max(Math.min(totalScore, maxScore), 0);
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_UP).doubleValue();
+        return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }
