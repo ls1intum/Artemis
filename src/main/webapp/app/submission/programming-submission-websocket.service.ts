@@ -11,6 +11,8 @@ import { Result } from 'app/entities/result';
 
 export interface ISubmissionWebsocketService {
     getLatestPendingSubmission: (participationId: number) => Observable<Submission | null>;
+    triggerBuild: (participationId: number) => Observable<Object>;
+    triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
 
 @Injectable({ providedIn: 'root' })

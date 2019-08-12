@@ -4,4 +4,6 @@ import { Submission } from 'app/entities/submission';
 
 export class MockSubmissionWebsocketService implements ISubmissionWebsocketService {
     getLatestPendingSubmission = (participationId: number) => of(null);
+    triggerBuild = (participationId: number) => of({});
+    triggerInstructorBuild = (participationId: number) => of({});
 }

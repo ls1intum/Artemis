@@ -85,10 +85,4 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             )
             .subscribe();
     }
-
-    /*    triggerBuild(event: any) {
-        // The button might be placed in other elements that have a click listener, so catch the click here.
-        event.stopPropagation();
-        this.participationService.triggerBuild(this.participation.id).subscribe();
-    }*/
 }
