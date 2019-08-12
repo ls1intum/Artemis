@@ -209,14 +209,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     importIntoIntelliJ() {
-        // const project = this.exercise.title
-        //     .split(' ')
-        //     .join('_')
-        //     .toLowerCase();
-        // console.log(project);
-        // const repo = (this.exercise.course!.shortName + this.exercise.shortName).toUpperCase().replace(RegExp('/s/g'), '');
-        // console.log(repo);
-        // this.javaBridge.clone(repo, project);
-        this.javaBridge.clone('test', 'test');
+        const title = this.exercise.title;
+        const repo = this.repositoryUrl(this.exercise.participations[0]);
+        this.javaBridge.clone(repo, title);
     }
 }

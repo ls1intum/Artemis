@@ -179,15 +179,19 @@
         ></button>
         <button
             jhi-intellij-button
+            jhi-ide-filter
             (click)="importIntoIntelliJ()"
-            [buttonLabel]="'Open in IntelliJ'"
+            [showInIDE]="true"
+            [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
         ></button>
         <button
             jhi-exercise-action-button
+            jhi-ide-filter
             buttonIcon="download"
+            [showInIDE]="false"
             [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"

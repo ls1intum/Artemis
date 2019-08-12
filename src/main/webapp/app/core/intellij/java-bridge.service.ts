@@ -6,12 +6,12 @@ import { Injectable } from '@angular/core';
 export class JavaBridgeService {
     constructor() {}
 
-    login(username: String, password: String) {
+    login(username: string, password: string) {
         // @ts-ignore
         window.intellij.login(username, password);
     }
 
-    clone(repository: String, exerciseName: String) {
+    clone(repository: string, exerciseName: string) {
         // @ts-ignore
         window.intellij.clone(repository, exerciseName);
     }
