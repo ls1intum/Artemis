@@ -208,7 +208,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         if (this.exportReady && this.students.length > 0) {
             const rows: string[] = [];
             // first row with headers
-            let firstRowString = 'data:text/csv;charset=utf-8,Name,Username,Email,';
+            let firstRowString = 'data:text/csv;charset=utf-8,Name,Username,Email,Registration Number';
             for (const exerciseType of this.exerciseTypes) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
 
@@ -224,10 +224,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 if (student.user.lastName && student.user.lastName !== '') {
                     name += ' ' + student.user.lastName;
                 }
-                const studentId = student.user.login!.trim();
+                const login = student.user.login!.trim();
+                const registrationNumber = student.user.registrationNumber ? student.user.registrationNumber!.trim() : '';
                 const email = student.user.email!.trim();
-
-                let rowString = name + ',' + studentId + ',' + email + ',';
+                let rowString = name + ',' + login + ',' + email + ',' + registrationNumber + ',';
 
                 for (const exerciseType of this.exerciseTypes) {
                     // only add it if there are actually exercises in this type
