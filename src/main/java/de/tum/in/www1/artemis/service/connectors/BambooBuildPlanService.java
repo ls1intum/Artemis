@@ -69,7 +69,7 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getSequentialTestRuns()));
 
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);

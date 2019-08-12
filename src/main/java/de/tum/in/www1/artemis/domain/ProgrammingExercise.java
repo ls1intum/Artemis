@@ -301,7 +301,7 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
-    public Boolean hasSequentialTestRuns() {
+    public Boolean getSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
         }

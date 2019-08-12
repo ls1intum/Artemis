@@ -409,7 +409,7 @@ public class ProgrammingExerciseService {
 
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
-            if (!programmingExercise.hasSequentialTestRuns()) {
+            if (!programmingExercise.getSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
 
