@@ -5,6 +5,10 @@
 artemis:
     repo-clone-path: ./repos/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+    ldap:
+        url: <url>
+        user-dn: <user-dn>
+        password: <password>
     jira:
         url: https://jirabruegge.in.tum.de
         user: <username>    # e.g. ga12abc
