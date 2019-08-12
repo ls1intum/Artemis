@@ -12,14 +12,6 @@ export class JavaBridgeService {
     }
 
     clone(repository: String, exerciseName: String) {
-        console.log(repository);
-        console.log(exerciseName);
-        // @ts-ignore
-        if (window.intellij.clone) {
-            console.log('clone exists');
-        } else {
-            console.log('clone does not exist');
-        }
         // @ts-ignore
         window.intellij.clone(repository, exerciseName);
     }
