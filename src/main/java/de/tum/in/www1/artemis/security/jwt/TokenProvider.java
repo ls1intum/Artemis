@@ -59,6 +59,12 @@ public class TokenProvider implements InitializingBean {
         this.tokenValidityInMillisecondsForRememberMe = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
     }
 
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * @param authentication Authentication Object
+     * @param rememberMe Set validity for
+     * @return
+     */
     public String createToken(Authentication authentication, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -74,6 +80,11 @@ public class TokenProvider implements InitializingBean {
         return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
+    /**
+     * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
+     * @param token JWT Authorization Token
+     * @return UsernamePasswordAuthenticationToken
+     */
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody();
 
@@ -85,6 +96,11 @@ public class TokenProvider implements InitializingBean {
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
+    /**
+     * Validate an JWT Authorization Token
+     * @param authToken JWT Authorization Token
+     * @return boolean indicating if token is valid
+     */
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser().setSigningKey(key).parseClaimsJws(authToken);
