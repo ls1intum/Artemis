@@ -38,8 +38,8 @@ plugins {
     id "com.diffplug.gradle.spotless" version "3.24.0"
 }
 
-sourceCompatibility=1.8
-targetCompatibility=1.8
+sourceCompatibility=12
+targetCompatibility=12
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
@@ -239,6 +239,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
