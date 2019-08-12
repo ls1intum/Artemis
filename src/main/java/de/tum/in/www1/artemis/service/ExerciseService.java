@@ -123,6 +123,15 @@ public class ExerciseService {
         return exercises;
     }
 
+    /**
+     * Finds all Exercises for a given Course
+     *
+     * @param course corresponding course
+     * @param withLtiOutcomeUrlExisting check if only exercises with an exisitng LTI Outcome URL should be returned
+     * @param user the user entity
+     * @param principal  corresponding principal
+     * @return a List of all Exercises for the given course
+     */
     @Transactional(readOnly = true)
     public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
         List<Exercise> exercises = null;
@@ -210,7 +219,7 @@ public class ExerciseService {
     /**
      * Resets an Exercise by deleting all its Participations
      *
-     * @param exercise
+     * @param exercise which shold be resetted
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void reset(Exercise exercise) {
@@ -271,6 +280,7 @@ public class ExerciseService {
      * Delete build plans (except BASE) and optionally git repositories of all exercise participations.
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
+     * @param deleteRepositories if true, the repositories gets deleted
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void cleanup(Long id, boolean deleteRepositories) {
@@ -372,6 +382,13 @@ public class ExerciseService {
         return new java.io.File(zipFilePath.toString());
     }
 
+    /**
+     * Archives all all participations repositories for a given exerciseID,
+     * if the exercise is a ProgrammingExercise
+     *
+     * @param id the exerciseID of the exercise which will be archived
+     * @return the archive File
+     */
     // does not delete anything
     @Transactional(readOnly = true)
     public java.io.File archive(Long id) {
