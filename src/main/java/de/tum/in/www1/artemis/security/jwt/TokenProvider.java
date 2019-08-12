@@ -62,8 +62,8 @@ public class TokenProvider implements InitializingBean {
     /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
      * @param authentication Authentication Object
-     * @param rememberMe Set validity for
-     * @return
+     * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
+     * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
