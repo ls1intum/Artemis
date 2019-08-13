@@ -29,7 +29,7 @@ public class AutomaticSubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticSubmissionService.class);
 
-    // TODO Rework this service to manipulate unsubmitted submission objects for text and modeling exercises in the database directly without the use of hash maps
+    // This service manipulates unsubmitted submission objects for text and modeling exercises in the database directly without the use of hash maps
     // 1) using a cron job, we get all text submissions and modeling submissions from the database with submitted = false
     // 2) we check for each submission whether the corresponding exercise has finished (i.e. due date < now)
     // 3a) if yes, we set the submission to submitted = true (without changing the submission date). We also set submissionType to TIMEOUT

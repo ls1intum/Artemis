@@ -40,6 +40,12 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
+    public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, HttpHeaders httpHeaders) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).headers(httpHeaders).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
@@ -87,10 +93,19 @@ public class RequestUtilService {
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
-        return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
+        MvcResult res = get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
+        return res != null ? mapper.readValue(res.getResponse().getContentAsString(), responseType) : null;
     }
 
-    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
+    public <T> T getNullable(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
+        MvcResult res = get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
+        if (res.getResponse().getContentAsString().equals("")) {
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public <T> MvcResult get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
@@ -98,7 +113,7 @@ public class RequestUtilService {
             }
             return null;
         }
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return res;
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {

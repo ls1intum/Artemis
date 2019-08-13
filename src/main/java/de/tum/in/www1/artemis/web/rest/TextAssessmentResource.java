@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -35,6 +37,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
     private static final String ENTITY_NAME = "textAssessment";
+
+    private final TextBlockRepository textBlockRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -57,23 +61,35 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
-            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
+            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService,
             TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingTemplate = messagingTemplate;
+        this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
+    /**
+     * Saves a given manual textAssessment
+     *
+     * @param exerciseId the exerciseId of the exercise which will be saved
+     * @param resultId the resultId the assessment belongs to
+     * @param textAssessments the assessments
+     * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
@@ -90,6 +106,14 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
+     *
+     * @param exerciseId the exerciseId of the exercise which will be saved
+     * @param resultId the resultId the assessment belongs to
+     * @param textAssessments the assessments which should be submitted
+     * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
@@ -110,6 +134,14 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Updates a Assessment to a TextExercise if the student complaints
+     *
+     * @param exerciseId the exerciseId of the exercise which will be corrected
+     * @param resultId the resultId the assessment belongs to
+     * @param assessmentUpdate the update of the Assessment
+     * @return 200 Ok if successful with the updated result as a body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
@@ -130,6 +162,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param exerciseId the exerciseId of the exercise for which the assessment gets canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
@@ -151,6 +184,15 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Splits the TextSubmission corresponding to a resultId into TextBlocks.
+     * The TextBlocks get a suggested feedback if automatic assessment is enabled and feedback available
+     *
+     * @param resultId the resultId the which needs TextBlocks
+     * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
+     * @throws EntityNotFoundException if the corresponding Exercise isn't a TextExercise
+     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
+     */
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
@@ -158,7 +200,22 @@ public class TextAssessmentResource extends AssessmentResource {
         final Exercise exercise = result.getParticipation().getExercise();
         checkAuthorization(exercise);
 
-        textBlockService.prepopulateFeedbackBlocks(result);
+        if (!(exercise instanceof TextExercise)) {
+            throw new BadRequestAlertException("No text exercise found for the given ID.", "textExercise", "exerciseNotFound");
+        }
+
+        final TextExercise textExercise = (TextExercise) exercise;
+
+        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
+            automaticTextFeedbackService.get().suggestFeedback(result);
+        }
+        else {
+            textBlockService.prepopulateFeedbackBlocks(result);
+        }
+
+        Comparator<TextBlock> byStartIndexReversed = (TextBlock first, TextBlock second) -> Integer.compare(second.getStartIndex(), first.getStartIndex());
+        TextSubmission textSubmission = (TextSubmission) result.getSubmission();
+        textSubmission.getBlocks().sort(byStartIndexReversed);
 
         if (!authCheckService.isAtLeastInstructorForExercise(exercise) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
@@ -192,6 +249,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Participation participation = textSubmission.get().getParticipation();
         participation = participationService.findOneWithEagerResultsAndSubmissionsAndAssessor(participation.getId());
+        List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId);
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
@@ -223,6 +281,7 @@ public class TextAssessmentResource extends AssessmentResource {
         for (Result result : participation.getResults()) {
             List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
+            ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise) && participation instanceof StudentParticipation) {
@@ -283,6 +342,13 @@ public class TextAssessmentResource extends AssessmentResource {
         return ENTITY_NAME;
     }
 
+    /**
+     * Checks if the given textExercise is valid and if the requester have the
+     * required permissions
+     * @param textExercise which needs to be checked
+     * @throws BadRequestAlertException if no request was found
+     *
+     */
     @Nullable
     private void checkTextExerciseForRequest(TextExercise textExercise) {
         if (textExercise == null) {

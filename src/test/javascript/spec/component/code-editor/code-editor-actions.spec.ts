@@ -106,7 +106,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(saveButtonFeedbackAfterSave).not.to.be.equal(saveButtonFeedbackBeforeSave);
     });
 
-    it('should update ui when building', () => {
+    it('should NOT update ui when building', () => {
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.commitState = CommitState.COMMITTING;
         fixture.detectChanges();
@@ -115,7 +115,7 @@ describe('CodeEditorActionsComponent', () => {
         comp.isBuilding = true;
         fixture.detectChanges();
         const commitButtonFeedbackAfterStartBuild = commitButton.nativeElement.innerHTML;
-        expect(commitButtonFeedbackAfterStartBuild).not.to.be.equal(commitButtonFeedbackBeforeStartBuild);
+        expect(commitButtonFeedbackAfterStartBuild).to.be.equal(commitButtonFeedbackBeforeStartBuild);
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit result on success', () => {

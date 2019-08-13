@@ -111,6 +111,7 @@ import {
     faGripLines,
     faCompress,
     faEquals,
+    faRobot,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -230,6 +231,7 @@ library.add(faCopy);
 library.add(faListUl);
 library.add(faListOl);
 library.add(faImage);
+library.add(faRobot);
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
 library.add(farDotCircle);
