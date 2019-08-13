@@ -226,6 +226,11 @@ public class ProgrammingExercise extends Exercise {
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
+    /**
+     * Gets a URL of the  templateRepositoryUrl if there is one
+     *
+     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
+     */
     @JsonIgnore
     public URL getTemplateRepositoryUrlAsUrl() {
         String templateRepositoryUrl = getTemplateRepositoryUrl();
@@ -241,6 +246,11 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
+    /**
+     * Gets a URL of the solutionRepositoryUrl if there is one
+     *
+     * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
+     */
     @JsonIgnore
     public URL getSolutionRepositoryUrlAsUrl() {
         String solutionRepositoryUrl = getSolutionRepositoryUrl();
@@ -256,6 +266,11 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
+    /**
+     * Gets a URL of the testRepositoryURL if there is one
+     *
+     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
+     */
     @JsonIgnore
     public URL getTestRepositoryUrlAsUrl() {
         if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {

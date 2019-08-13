@@ -168,10 +168,9 @@ public class ResultResource {
      * @param token CI auth token
      * @param requestBody build result of CI system
      * @return a ResponseEntity to the CI system
-     * @throws Exception
      */
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
-    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) throws Exception {
+    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.info("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
             log.info("Cancelling request with invalid token {}", token);
@@ -299,6 +298,8 @@ public class ResultResource {
      * @param courseId        only included for API consistency, not actually used
      * @param exerciseId      only included for API consistency, not actually used
      * @param participationId the id of the participation for which to retrieve the results
+     * @param showAllResults defines if all results should be shown
+     * @param ratedOnly defines if only rated results should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
@@ -376,6 +377,9 @@ public class ResultResource {
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
+     * @param ratedOnly defines if only rated results should be returned
+     * @param withAssessors defines if assessors are loaded from the database for the results
+     * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")

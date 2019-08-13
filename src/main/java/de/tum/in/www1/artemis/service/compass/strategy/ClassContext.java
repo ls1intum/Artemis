@@ -17,6 +17,10 @@ public class ClassContext {
     }
 
     /**
+     * Finds all associations for a UML class inside a class diagram including all similarity IDs
+     *
+     * @param model The class diagram in which to search for associations
+     * @param umlClass The class which should be searched for inside the diagram
      * @return Context including the relations connected to the UML class and all children of the class (attributes + methods)
      */
     public static Context getStrictContext(UMLClass umlClass, UMLClassDiagram model) {
@@ -44,6 +48,10 @@ public class ClassContext {
     }
 
     /**
+     * Finds all associations for a UML class inside a class diagram
+     *
+     * @param umlClass The class which should be searched for inside the diagram
+     * @param model The class diagram in which to search for associations
      * @return Context including the relations connected to the UML class
      */
     public static Context getWeakContext(UMLClass umlClass, UMLClassDiagram model) {

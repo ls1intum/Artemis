@@ -385,6 +385,7 @@ public class ParticipationService {
      * Service method to resume inactive participation (with previously deleted build plan)
      *
      * @param exercise exercise to which the inactive participation belongs
+     * @param participation inactive participation
      * @return resumed participation
      */
     public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
@@ -472,6 +473,7 @@ public class ParticipationService {
      *
      * @param participationId the id of the entity
      * @return the entity
+     * @throws EntityNotFoundException throws if participation was not found
      **/
     @Transactional(readOnly = true)
     public Participation findOne(Long participationId) throws EntityNotFoundException {
@@ -647,22 +649,48 @@ public class ParticipationService {
         return studentParticipationRepository.findByStudentUsernameWithEagerResults(username);
     }
 
+    /**
+     * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
+     *
+     * @param buildPlanId the id of build plan
+     * @param state initialization state
+     * @return the list of programming exercise participations belonging to build plan
+     */
     @Transactional(readOnly = true)
     public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByExerciseId(Long exerciseId) {
         return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise with eager results.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByExerciseIdWithEagerResults(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithEagerResults(exerciseId);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise and student with eager results.
+     *
+     * @param exerciseId the id of exercise
+     * @param studentId the id of student
+     * @return the list of programming exercise participations belonging to exercise and student
+     */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
         return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
@@ -680,6 +708,14 @@ public class ParticipationService {
         return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
     }
 
+    /**
+     * Get all participations belonging to course with relevant results.
+     *
+     * @param courseId the id of the exercise
+     * @param includeNotRatedResults specify is not rated results are included
+     * @param includeAssessors specify id assessors are included
+     * @return list of participations belonging to course
+     */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
         List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
@@ -742,7 +778,7 @@ public class ParticipationService {
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive This means the participation can be resumed in
      * the future
      *
-     * @param participation
+     * @param participation that will be set to inactive
      */
     @Transactional
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
@@ -758,7 +794,7 @@ public class ParticipationService {
      * NOTICE: be careful with this method because it deletes the students code on the version control server Deletes the repository on the version control server and sets the
      * initialization state of the participation to finished This means the participation cannot be resumed in the future and would need to be restarted
      *
-     * @param participation
+     * @param participation to be stopped
      */
     @Transactional
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
@@ -857,6 +893,8 @@ public class ParticipationService {
      * Delete all participations belonging to the given exercise
      *
      * @param exerciseId the id of the exercise
+     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param deleteRepository specify if repository should be deleted
      */
     @Transactional
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
@@ -867,6 +905,12 @@ public class ParticipationService {
         }
     }
 
+    /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
     public StudentParticipation findOneWithEagerCourse(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
     }
@@ -874,8 +918,8 @@ public class ParticipationService {
     /**
      * Check if a participation can be accessed with the current user.
      *
-     * @param participation
-     * @return
+     * @param participation to access
+     * @return can user access participation
      */
     @Nullable
     public boolean canAccessParticipation(StudentParticipation participation) {
@@ -883,10 +927,10 @@ public class ParticipationService {
     }
 
     /**
-     * Check if a user has permissions to to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
+     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
      *
-     * @param participation
-     * @return
+     * @param participation to access
+     * @return does user has permissions to access participation
      */
     private boolean userHasPermissions(StudentParticipation participation) {
         if (authCheckService.isOwnerOfParticipation(participation))
@@ -898,10 +942,22 @@ public class ParticipationService {
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 
+    /**
+     * Get template exercise participation belonging to build plan.
+     *
+     * @param planKey the id of build plan
+     * @return template exercise participation belonging to build plan
+     */
     public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipationByBuildPlanId(String planKey) {
         return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
     }
 
+    /**
+     * Get solution exercise participation belonging to build plan.
+     *
+     * @param planKey the id of build plan
+     * @return solution exercise participation belonging to build plan
+     */
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
         return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
     }

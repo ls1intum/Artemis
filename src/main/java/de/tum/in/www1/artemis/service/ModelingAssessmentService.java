@@ -52,6 +52,7 @@ public class ModelingAssessmentService extends AssessmentService {
      *
      * @param result   the result the assessment belongs to
      * @param exercise the exercise the assessment belongs to
+     * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
@@ -71,6 +72,8 @@ public class ModelingAssessmentService extends AssessmentService {
      *
      * @param modelingSubmission the modeling submission to which the feedback belongs to
      * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param modelingExercise the modeling exercise for which assessment due date is checked
+     * @return result that was saved in the database
      */
     @Transactional
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
