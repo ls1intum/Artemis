@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,10 +100,8 @@ public class ResultService {
      * @param result
      */
     public void setAssessor(Result result) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        User currentUser = userService.getUser();
         result.setAssessor(currentUser);
-        resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
     /**
@@ -122,40 +122,52 @@ public class ResultService {
      * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *
-     * @param participation Participation for which the build was finished
+     * @param participation the participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
-    public void onResultNotifiedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
+    @Transactional
+    public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
-        Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new EntityNotFoundException("Participation with id " + participation.getId() + " is not a programming exercise participation!");
 
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-        if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
-            extractTestCasesFromResult(participation, result);
+        Result result;
+        try {
+            result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
         }
-        // Find out which test cases were executed and calculate the score according to their status and weight.
-        // This needs to be done as some test cases might not have been executed.
-        result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+        catch (Exception ex) {
+            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
+            return Optional.empty();
+        }
 
-        notifyUser(participation, result);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+        // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+        if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
+            extractTestCasesFromResult(programmingExercise, result);
+        }
+        if (result != null) {
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+        }
+        resultRepository.save(result);
+        return Optional.ofNullable(result);
     }
 
     /**
      * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
      * through the websocket!
      *
-     * @param participation of the given result.
-     * @param result        from which to extract the test cases.
+     * @param exercise the programming exercise for which the test cases should be extracted from the new result
+     * @param result   from which to extract the test cases.
      */
-    private void extractTestCasesFromResult(ProgrammingExerciseParticipation participation, Result result) {
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
+    private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
+        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getProgrammingExercise().getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getProgrammingExercise().getId() + "/test-cases", testCases);
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 
