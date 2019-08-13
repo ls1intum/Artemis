@@ -69,6 +69,8 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 @NgModule({
     imports: [
@@ -77,6 +79,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
+        GuidedTourModule.forRoot(),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
@@ -145,6 +148,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
             provide: ErrorHandler,
             useClass: SentryErrorHandler,
         },
+        GuidedTourService,
         ProfileService,
         RepositoryService,
         PaginationConfig,

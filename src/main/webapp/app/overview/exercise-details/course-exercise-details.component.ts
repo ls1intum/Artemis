@@ -8,9 +8,14 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTour } from 'app/guided-tour/guided-tour.constants';
+import {
+    InitializationState,
+    Participation,
+    ParticipationService,
+    ParticipationWebsocketService,
+    ProgrammingExerciseStudentParticipation,
+    StudentParticipation,
+} from 'app/entities/participation';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -35,9 +40,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
-    private exerciseTour: GuidedTour;
-
-    combinedParticipation: Participation;
+    combinedParticipation: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
 
     constructor(
@@ -51,7 +54,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -65,18 +67,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
-            }
-        });
-
-        setTimeout(() => {
-            if (this.guidedTourService.guidedTourSettings && this.guidedTourService.guidedTourSettings.showTextExerciseTour) {
-                this.startTour();
-            }
-        }, 500);
-
-        this.subscription = this.guidedTourService.getGuidedTourNotification().subscribe(component => {
-            if (component && component.name === 'exercise') {
-                this.startTour();
             }
         });
     }
@@ -109,11 +99,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
      * removed from the participations. We also sort the participations so that FINISHED participations come first.
      */
-    private filterParticipations(participations: Participation[]): Participation[] | null {
+    private filterParticipations(participations: StudentParticipation[]): StudentParticipation[] | null {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: Participation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: StudentParticipation) => participation.student && participation.student.id === this.currentUser.id);
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);
@@ -128,7 +118,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      *
      * Note, that this function directly operates on the array passed as argument and does not return anything.
      */
-    private sortParticipationsFinishedFirst(participations: Participation[]) {
+    private sortParticipationsFinishedFirst(participations: StudentParticipation[]) {
         if (participations && participations.length > 1) {
             participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
         }
@@ -155,7 +145,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     mergeResultsAndSubmissionsForParticipations() {
         if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
-            this.combinedParticipation = this.participationService.mergeResultsAndSubmissionsForParticipations(this.exercise.participations);
+            if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                this.combinedParticipation = this.participationService.mergeProgrammingParticipations(this.exercise.participations as ProgrammingExerciseStudentParticipation[]);
+            } else {
+                this.combinedParticipation = this.participationService.mergeStudentParticipations(this.exercise.participations);
+            }
             this.sortResults();
         }
     }
@@ -168,7 +162,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.participations =
                     this.exercise.participations && this.exercise.participations.length > 0
@@ -240,15 +234,5 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             latestResult.participation = this.combinedParticipation;
         }
         return latestResult;
-    }
-
-    /* Start guided tour for text exercise detail page */
-    public startTour(): void {
-        if (this.exercise && this.exercise.type === this.TEXT) {
-            this.guidedTourService.getTextExerciseTour().subscribe(tour => {
-                this.exerciseTour = tour;
-                this.guidedTourService.startTour(this.exerciseTour);
-            });
-        }
     }
 }

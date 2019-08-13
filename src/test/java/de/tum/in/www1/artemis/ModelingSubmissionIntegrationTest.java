@@ -6,8 +6,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -24,7 +25,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -71,7 +72,7 @@ public class ModelingSubmissionIntegrationTest {
 
     private String validModel;
 
-    @Before
+    @BeforeEach
     public void initTestCase() throws Exception {
         database.resetDatabase();
         database.addUsers(3, 1, 0);
@@ -374,6 +375,21 @@ public class ModelingSubmissionIntegrationTest {
         database.addModelingSubmission(useCaseExercise, submission, "student2");
 
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getModelSubmissionForModelingEditor() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
+
+        // set date to UTC for comparison as dates coming from the database are in UTC
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

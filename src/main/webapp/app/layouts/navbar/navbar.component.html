@@ -42,7 +42,14 @@
                     </span>
                 </a>
             </li>
-            <li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <li
+                *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                ngbDropdown
+                class="nav-item dropdown pointer"
+                display="dynamic"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+            >
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
                     <span>
                         <fa-icon [icon]="'user-plus'"></fa-icon>
@@ -104,7 +111,7 @@
                 </ul>
             </li>
 
-            <li ngbDropdown class="nav-item dropdown pointer" *ngIf="!currAccount && languages && languages.length > 1">
+            <li ngbDropdown class="nav-item dropdown pointer" display="dynamic" *ngIf="!currAccount && languages && languages.length > 1">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown">
                     <span>
                         <fa-icon [icon]="'flag'"></fa-icon>
@@ -124,6 +131,7 @@
                 *ngSwitchCase="true"
                 ngbDropdown
                 class="nav-item dropdown pointer"
+                display="dynamic"
                 placement="bottom-right"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
@@ -155,13 +163,15 @@
                             <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTour">Guided Tour</h6>
                         </li>
                         <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
-                            <a class="dropdown-item" jhiTranslate="global.menu.startTour" (click)="startGuidedTour()">Start tour</a>
+                            <a class="dropdown-item guided-tour" jhiTranslate="global.menu.startTour" (click)="this.guidedTourService.startGuidedTourForCurrentRoute()"
+                                >Start tour</a
+                            >
                         </li>
                     </ng-template>
                     <!-- only display guided tour to ADMIN for now -->
                     <div class="dropdown-divider"></div>
                     <li>
-                        <a class="dropdown-item guided-tour" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                        <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>
@@ -171,3 +181,4 @@
         </ul>
     </div>
 </nav>
+<jhi-guided-tour></jhi-guided-tour>

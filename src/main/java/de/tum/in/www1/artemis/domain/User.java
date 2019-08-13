@@ -91,7 +91,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @JsonIgnore
     @Column(name = "guided_tour_settings")
-    private String guidedTourSettings = new String();
+    private String guidedTourSettings = null;
 
     @JsonIgnore
     @ManyToMany
@@ -245,7 +245,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public GuidedTourSettings getGuidedTourSettings() {
-        if (this.guidedTourSettings == null || this.guidedTourSettings.isEmpty()) {
+        if (this.guidedTourSettings == null) {
             return GuidedTourSettings.defaultSettings();
         }
         return GuidedTourSettings.createFromJson(this.guidedTourSettings);

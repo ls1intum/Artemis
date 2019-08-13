@@ -1,27 +1,17 @@
-<div
-    *ngIf="currentTourStep && selectedElementRect && isOrbShowing"
-    (mouseenter)="handleOrb()"
-    class="tour-orb tour-{{ currentTourStep.orientation }}"
-    [style.top.px]="orbTopPosition"
-    [style.left.px]="orbLeftPosition"
-    [style.transform]="orbTransform"
->
-    <div class="tour-orb-ring"></div>
-</div>
-<div *ngIf="currentTourStep && !isOrbShowing">
+<div *ngIf="currentTourStep">
     <div class="guided-tour-user-input-mask" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-spotlight-overlay" [style.top.px]="overlayTop" [style.left.px]="overlayLeft" [style.height.px]="overlayHeight" [style.width.px]="overlayWidth"></div>
+    <div class="guided-tour-spotlight-overlay" [ngStyle]="getOverlayStyle()"></div>
 </div>
-<div *ngIf="currentTourStep && !isOrbShowing">
+<div *ngIf="currentTourStep">
     <div
         #tourStep
         *ngIf="currentTourStep"
         class="tour-step tour-{{ currentTourStep.orientation }}"
         [ngClass]="{ 'page-tour-step': !currentTourStep.selector }"
-        [style.top.px]="currentTourStep.selector && selectedElementRect ? topPosition : null"
-        [style.left.px]="currentTourStep.selector && selectedElementRect ? leftPosition : null"
-        [style.width.px]="currentTourStep.selector && selectedElementRect ? calculatedTourStepWidth : null"
-        [style.transform]="currentTourStep.selector && selectedElementRect ? transform : null"
+        [style.top.px]="topPosition"
+        [style.left.px]="leftPosition"
+        [style.width.px]="calculatedTourStepWidth"
+        [style.transform]="transform"
     >
         <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
         <div class="tour-block">
@@ -35,34 +25,31 @@
                 <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}" [href]="currentTourStep.externalUrl" target="_blank"></a>
                 </div>
-                <div *ngIf="currentTourStep.contentType === IMAGE && currentTourStep.imageUrl">
+                <div *ngIf="currentTourStep.contentType === ContentType.IMAGE && currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
-                <div *ngIf="currentTourStep.contentType === VIDEO && currentTourStep.videoUrl">
+                <div *ngIf="currentTourStep.contentType === ContentType.VIDEO && currentTourStep.videoUrl">
                     <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="tour-block__buttons">
-                <button [disabled]="guidedTourService.onFirstStep || guidedTourService.onResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
+                <button [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
-                <div class="dotstyle dotstyle-scaleup">
-                    <ul>
-                        <li
-                            *ngFor="let i of guidedTourService.currentTourSteps"
-                            [ngClass]="guidedTourService.currentTourStepDisplay === guidedTourService.currentTourSteps.indexOf(i) + 1 ? 'current' : ''"
-                        >
-                            <span>{{ guidedTourService.currentTourSteps.indexOf(i) }}</span>
+                <div class="dotstyle dotstyle--scaleup">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps">
+                        <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
+                            <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
                     </ul>
                 </div>
-                <button *ngIf="!guidedTourService.onLastStep && !guidedTourService.onResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
+                <button *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
                     <span jhiTranslate="tour.navigation.next"></span>
                     <fa-icon icon="chevron-right"></fa-icon>
                 </button>
-                <button *ngIf="guidedTourService.onLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
-                <button *ngIf="guidedTourService.onResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
+                <button *ngIf="guidedTourService.isOnLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
+                <button *ngIf="guidedTourService.isOnResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
             </div>
         </div>
     </div>

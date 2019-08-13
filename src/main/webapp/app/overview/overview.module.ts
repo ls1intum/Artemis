@@ -14,7 +14,6 @@ import {
     CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
-    CourseGradeBookComponent,
     CourseLectureDetailsComponent,
     CourseLecturesComponent,
     CourseOverviewComponent,
@@ -48,7 +47,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSCourseRegistrationSelector,
-        GuidedTourModule.forRoot(),
     ],
     declarations: [
         OverviewComponent,
@@ -62,18 +60,17 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         CourseLectureRowComponent,
         CourseLectureDetailsComponent,
         ExerciseActionButtonComponent,
-        CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
     ],
     entryComponents: [],
-    providers: [GuidedTourService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     exports: [],
 })
 export class ArTEMiSOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

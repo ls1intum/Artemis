@@ -9,29 +9,22 @@ import com.google.gson.Gson;
  */
 public class GuidedTourSettings implements Serializable {
 
-    private boolean showCourseOverviewTour = false;
+    private boolean showCourseOverviewTour;
 
-    private boolean showNavigationTour = false;
+    private boolean showProgrammingExerciseTour;
 
-    private boolean showProgrammingExerciseTour = false;
+    private boolean showQuizExerciseTour;
 
-    private boolean showQuizExerciseTour = false;
+    private boolean showModelingExerciseTour;
 
-    private boolean showModelingExerciseTour = false;
-
-    private boolean showTextExerciseTour = false;
+    private boolean showTextExerciseTour;
 
     public GuidedTourSettings() {
-    }
-
-    public GuidedTourSettings(boolean showCourseOverviewTour, boolean showNavigationTour, boolean showProgrammingExerciseTour, boolean showQuizExerciseTour,
-            boolean showModelingExerciseTour, boolean showTextExerciseTour) {
-        this.showCourseOverviewTour = showCourseOverviewTour;
-        this.showNavigationTour = showNavigationTour;
-        this.showProgrammingExerciseTour = showProgrammingExerciseTour;
-        this.showQuizExerciseTour = showQuizExerciseTour;
-        this.showModelingExerciseTour = showModelingExerciseTour;
-        this.showTextExerciseTour = showTextExerciseTour;
+        this.showCourseOverviewTour = false;
+        this.showProgrammingExerciseTour = false;
+        this.showQuizExerciseTour = false;
+        this.showModelingExerciseTour = false;
+        this.showTextExerciseTour = false;
     }
 
     public boolean isShowCourseOverviewTour() {
@@ -40,14 +33,6 @@ public class GuidedTourSettings implements Serializable {
 
     public void setShowCourseOverviewTour(boolean showCourseOverviewTour) {
         this.showCourseOverviewTour = showCourseOverviewTour;
-    }
-
-    public boolean isShowNavigationTour() {
-        return showNavigationTour;
-    }
-
-    public void setShowNavigationTour(boolean showNavigationTour) {
-        this.showNavigationTour = showNavigationTour;
     }
 
     public boolean isShowProgrammingExerciseTour() {

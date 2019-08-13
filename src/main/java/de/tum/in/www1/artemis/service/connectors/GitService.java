@@ -79,7 +79,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws IOException, InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl, true);
         repository.setParticipation(participation);
@@ -579,7 +579,7 @@ public class GitService {
      * @param participation Participation Object.
      * @throws IOException
      */
-    public void deleteLocalRepository(Participation participation) throws IOException {
+    public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
         Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
@@ -604,7 +604,7 @@ public class GitService {
 
     public Path zipRepository(Repository repo) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
-        Exercise exercise = repo.getParticipation().getExercise();
+        ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
         // take the last component
         String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";

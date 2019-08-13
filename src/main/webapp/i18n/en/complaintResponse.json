@@ -7,6 +7,12 @@
             "updateAssessmentTooltip": "Send complaint response and update assessment",
             "rejectComplaint": "Reject complaint",
             "rejectComplaintTooltip": "Send complaint response and reject complaint"
+        },
+        "moreFeedbackResponse": {
+            "title": "More Feedback Request's response",
+            "created": "Response to More Feedback Request has been submitted",
+            "sendResponseTooltip": "Send response to More Feedback Request",
+            "provideFeedback": "Provide more feedback"
         }
     }
 }

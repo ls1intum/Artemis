@@ -473,7 +473,8 @@ public class Result implements Serializable {
         if (submission instanceof QuizSubmission) {
             QuizSubmission quizSubmission = (QuizSubmission) submission;
             // get the exercise this result belongs to
-            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
+            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
@@ -486,6 +487,14 @@ public class Result implements Serializable {
         double totalScore = calculateTotalScore(maxScore);
         setScore(totalScore, maxScore);
         setResultString(totalScore, maxScore);
+    }
+
+    /**
+     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
+     * their assessor.
+     */
+    public void filterSensitiveInformation() {
+        setAssessor(null);
     }
 
     @Override

@@ -5,13 +5,13 @@ $draggable-width: 15px;
     display: flex;
     flex-flow: column nowrap;
     height: 100%;
+    max-height: 100vh;
 
     .card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        z-index: 2;
         font-size: 1rem;
         font-weight: 500;
     }

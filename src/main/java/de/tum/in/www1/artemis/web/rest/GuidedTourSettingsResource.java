@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSettings;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 
 /**
@@ -24,15 +23,12 @@ public class GuidedTourSettingsResource {
 
     private static final String ENTITY_NAME = "guidedTourSettings";
 
-    private final UserRepository userRepository;
-
     private final UserService userService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public GuidedTourSettingsResource(UserRepository userRepository, UserService userService) {
-        this.userRepository = userRepository;
+    public GuidedTourSettingsResource(UserService userService) {
         this.userService = userService;
     }
 
@@ -50,18 +46,15 @@ public class GuidedTourSettingsResource {
     }
 
     /**
-     * UPDATE /guided-tour-settings: update all guided tour settings of the current user
-     *
+     * PUT /guided-tour-settings: update all guided tour settings of the current user
+     * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
      */
     @PutMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GuidedTourSettings> updateGuidedTourSettings(@RequestBody GuidedTourSettings guidedTourSettings) {
         log.debug("REST request to update GuidedTourSettings : {}", guidedTourSettings);
-        User currentUser = userService.getUser();
-        currentUser.setGuidedTourSettings(guidedTourSettings);
-        userRepository.save(currentUser);
+        User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
         return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
     }
-
 }

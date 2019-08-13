@@ -3,7 +3,7 @@
 .dotstyle {
     display: inline-block;
 
-    &.dotstyle-scaleup {
+    &.dotstyle--scaleup {
         li {
             span {
                 -webkit-transition: -webkit-transform 0.3s ease, background-color 0.3s ease;
