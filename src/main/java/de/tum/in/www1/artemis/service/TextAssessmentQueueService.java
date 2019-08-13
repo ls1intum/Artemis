@@ -97,7 +97,8 @@ public class TextAssessmentQueueService {
         }
         double[][] distanceMatrix = cluster.getDistanceMatrix();
         int blockID = cluster.getBlocks().indexOf(textBlock);
-        return Arrays.stream(distanceMatrix[blockID]).map(distance -> 1.0 - distance).sum();
+        // subtract 1 because the statement also included the distance to itself, but it should't be included
+        return Arrays.stream(distanceMatrix[blockID]).map(distance -> 1.0 - distance).sum() - 1;
     }
 
     /**
