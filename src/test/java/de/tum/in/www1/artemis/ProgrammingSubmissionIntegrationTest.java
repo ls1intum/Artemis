@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis, bamboo")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class ProgrammingSubmissionIntegrationTest {
 
     @MockBean
