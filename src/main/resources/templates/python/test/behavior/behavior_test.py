@@ -32,7 +32,7 @@ class TestSortingBehavior(unittest.TestCase):
 
         self.assertTrue(isinstance(chosen_strategy, BubbleSort))
 
-    def configure_policy_and_context(self, array):
+    def _configure_policy_and_context(self, array):
         context = Context()
         context.numbers = array
 

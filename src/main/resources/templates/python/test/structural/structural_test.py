@@ -21,7 +21,7 @@ class TestSortingStructural(unittest.TestCase):
         structural_helpers.check_attributes(context.Context, 'numbers', 'sorting_algorithm')
 
     def test_context_methods(self):
-        structural_helpers.check_method_names(context.Context, 'sort')
+        structural_helpers.check_method_names(context.Context(), 'sort')
 
     def test_policy_class(self):
         structural_helpers.check_class_names(policy, 'Policy')
@@ -33,7 +33,8 @@ class TestSortingStructural(unittest.TestCase):
         structural_helpers.check_attributes(policy.Policy, 'context')
 
     def test_policy_methods(self):
-        structural_helpers.check_method_names(policy.Policy, 'configure')
+        ctx = context.Context()
+        structural_helpers.check_method_names(policy.Policy(ctx), 'configure')
 
     def test_bubble_sort_class(self):
         bubble_sort = sorting_algorithms.BubbleSort()
