@@ -22,6 +22,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     * @param courseId the id of the course
+     * @param principal corresponding principal
+     * @return list of exercises
      */
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#principal.name})")
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal);
