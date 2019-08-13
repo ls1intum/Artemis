@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +69,11 @@ public class ResultServiceIntegrationTest {
         programmingExercise.setSolutionParticipation(participation);
         solutionProgrammingExerciseRepository.save(participation);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
