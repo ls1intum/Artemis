@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.ResultResource;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test,  bamboo, bitbucket")
+@ActiveProfiles("artemis, bamboo, bitbucket")
 class ProgrammingSubmissionAndResultIntegrationTest {
 
     private enum IntegrationTestParticipationType {

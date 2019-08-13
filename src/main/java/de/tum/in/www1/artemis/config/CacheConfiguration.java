@@ -14,7 +14,6 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomi
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.*;
@@ -24,7 +23,6 @@ import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
 @EnableCaching
-@Profile("!test")
 public class CacheConfiguration {
 
     private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;

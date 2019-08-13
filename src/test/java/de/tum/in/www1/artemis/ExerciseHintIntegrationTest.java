@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test")
+@ActiveProfiles("artemis")
 public class ExerciseHintIntegrationTest {
 
     @Autowired

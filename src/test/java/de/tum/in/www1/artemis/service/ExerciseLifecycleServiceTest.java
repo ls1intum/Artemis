@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test")
+@ActiveProfiles("artemis")
 public class ExerciseLifecycleServiceTest {
 
     @Autowired

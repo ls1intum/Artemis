@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test")
+@ActiveProfiles("artemis")
 public class CourseIntegrationTest {
 
     @Autowired

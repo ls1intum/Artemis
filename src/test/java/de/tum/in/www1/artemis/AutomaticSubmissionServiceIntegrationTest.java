@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test")
+@ActiveProfiles("artemis")
 public class AutomaticSubmissionServiceIntegrationTest {
 
     @Autowired

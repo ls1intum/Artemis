@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, test")
+@ActiveProfiles("artemis")
 public class ProgrammingExerciseParticipationIntegrationTest {
 
     private final String baseUrl = "/api/programming-exercise-participations/";
