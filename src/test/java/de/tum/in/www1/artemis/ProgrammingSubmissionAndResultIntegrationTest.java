@@ -26,6 +26,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -46,6 +47,7 @@ import de.tum.in.www1.artemis.web.rest.ResultResource;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis, bamboo, bitbucket")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class ProgrammingSubmissionAndResultIntegrationTest {
 
     private enum IntegrationTestParticipationType {
@@ -107,6 +109,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @BeforeEach
     void reset() {
+        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -122,11 +125,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     /**
