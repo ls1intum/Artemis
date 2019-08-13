@@ -107,26 +107,22 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @BeforeEach
     void reset() {
+        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
         exerciseId = exercise.getId();
-        templateParticipationId = exercise.getTemplateParticipation().getId();
-        solutionParticipationId = exercise.getSolutionParticipation().getId();
-
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
-        participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
-    }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
+        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
+        participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
     /**

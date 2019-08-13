@@ -200,12 +200,12 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     }
 
     private void addTemplateParticipation() {
-        programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         database.addResultToParticipation(programmingExerciseParticipation);
     }
 
     private void addSolutionParticipation() {
-        programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         database.addResultToParticipation(programmingExerciseParticipation);
     }
 }

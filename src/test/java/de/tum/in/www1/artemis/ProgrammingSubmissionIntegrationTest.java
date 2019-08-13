@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +21,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -61,6 +60,7 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @BeforeEach
     public void init() throws Exception {
+        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -68,15 +68,11 @@ public class ProgrammingSubmissionIntegrationTest {
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -91,7 +87,8 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-instructor-build", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
