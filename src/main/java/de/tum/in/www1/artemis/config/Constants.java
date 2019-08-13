@@ -54,6 +54,10 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
+
+    public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
+
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
 
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
