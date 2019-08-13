@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
@@ -301,6 +302,7 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
+    @JsonProperty("sequentialTestRuns")
     public Boolean hasSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
