@@ -620,13 +620,13 @@ public class ParticipationResource {
     /**
      * DELETE /participations/:id : delete the "id" participation.
      *
-     * @param participationId the id of the participation to delete
+     * @param id the id of the participation to delete
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
+    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long id, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
