@@ -99,9 +99,7 @@ public class AutomaticBuildPlanCleanupService {
         List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
-        // TODO: in the future we could increase the limit even further to e.g. 1000 per day
-
-        for (ProgrammingExerciseStudentParticipation participation : participationsWithBuildPlanToDelete.stream().limit(300).collect(Collectors.toList())) {
+        for (ProgrammingExerciseStudentParticipation participation : participationsWithBuildPlanToDelete.stream().limit(500).collect(Collectors.toList())) {
             try {
                 participationService.cleanupBuildPlan(participation);
             }

@@ -8,6 +8,8 @@ import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
+import { ExerciseType } from 'app/entities/exercise';
+import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -21,16 +23,18 @@ import * as moment from 'moment';
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    @Input() exerciseType: ExerciseType;
     @Input() participation: Participation;
-    @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
-    public resultUpdateListener: Subscription;
+    isBuilding: boolean;
+    public resultSubscription: Subscription;
+    public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: ProgrammingSubmissionWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
@@ -44,20 +48,27 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
 
             this.subscribeForNewResults();
+            // Currently submissions are only used for programming exercises to visualize the build process.
+            if (this.exerciseType === ExerciseType.PROGRAMMING) {
+                this.subscribeForNewSubmissions();
+            }
         }
     }
 
     ngOnDestroy() {
-        if (this.resultUpdateListener) {
-            this.resultUpdateListener.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
         }
     }
 
     subscribeForNewResults() {
-        if (this.resultUpdateListener) {
-            this.resultUpdateListener.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
-        this.resultUpdateListener = this.participationWebsocketService
+        this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
                 // Ignore initial null result of subscription
@@ -67,6 +78,20 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
             )
+            .subscribe();
+    }
+
+    /**
+     * Subscribe for incoming submissions that indicate that the build process has started in the CI.
+     * Will emit a null value when no build is running / the current build has stopped running.
+     */
+    subscribeForNewSubmissions() {
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+        this.submissionSubscription = this.submissionWebsocketService
+            .getLatestPendingSubmission(this.participation.id)
+            .pipe(tap(pendingSubmission => (this.isBuilding = !!pendingSubmission)))
             .subscribe();
     }
 }

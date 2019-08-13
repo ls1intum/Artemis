@@ -231,7 +231,7 @@ public class ComplaintResource {
         }
 
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, null);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForCourse(course, null);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, null);
 
         if (!isAtLeastTutor) {
             throw new AccessForbiddenException("Insufficient permission for these complaints");

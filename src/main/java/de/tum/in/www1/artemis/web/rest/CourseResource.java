@@ -230,6 +230,9 @@ public class CourseResource {
      * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
+     * @param courseId to find the course
+     * @return response entity for user who has been registered to the course
+     * @throws URISyntaxException exception thrown to indicate that a string could not be parsed as a URI reference.
      */
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -328,6 +331,7 @@ public class CourseResource {
     /**
      * GET /courses/:id/for-tutor-dashboard
      *
+     * @param principal abstract notion of the user to find the course exercises
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
@@ -453,6 +457,7 @@ public class CourseResource {
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */
     @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -504,6 +509,7 @@ public class CourseResource {
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */
     @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")

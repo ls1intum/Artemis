@@ -6,6 +6,7 @@ import { TutorParticipation } from 'app/entities/tutor-participation';
 import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -53,6 +54,7 @@ export abstract class Exercise implements BaseEntity {
     public dueDate: Moment | null;
     public assessmentDueDate: Moment | null;
     public maxScore: number;
+    public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
     public categories: string[];
     public type: ExerciseType;
