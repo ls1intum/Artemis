@@ -227,7 +227,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
+     * @param hasFeedback explicit flag used only by Programming Exercise
      */
     public void setHasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -238,7 +238,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @return
+     * @return true if the result has feedback, otherwise false
      */
     public Boolean getHasFeedback() {
         return hasFeedback;
@@ -249,8 +249,8 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
-     * @return
+     * @param hasFeedback explicit flag used only by Programming Exercise
+     * @return result with newly set hasFeedback property
      */
     public Result hasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -445,6 +445,7 @@ public class Result implements Serializable {
 
     /**
      * `hasComplaint` could be null in the database
+     * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
         return Optional.ofNullable(hasComplaint);

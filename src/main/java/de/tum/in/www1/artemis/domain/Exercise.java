@@ -214,6 +214,7 @@ public abstract class Exercise implements Serializable {
 
     /**
      * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
+     * @return true if the assessment due date is in the past, otherwise false
      */
     @JsonIgnore
     public boolean isAssessmentDueDateOver() {
@@ -476,6 +477,7 @@ public abstract class Exercise implements Serializable {
      * if necessary)
      *
      * @param participation the participation whose results we are considering
+     * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
@@ -542,7 +544,8 @@ public abstract class Exercise implements Serializable {
      * result. Filter everything else that is not relevant
      *
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username
+     * @param username used to get quiz submission for the user
+     * @param isStudent defines if the current user is a student
      */
     public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
 
