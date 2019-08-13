@@ -17,9 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -45,6 +43,15 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     ParticipationRepository participationRepository;
 
     @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
     ResultRepository resultRepository;
 
     ProgrammingExercise programmingExercise;
@@ -63,7 +70,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResultAsAStudent() throws Exception {
         addStudentParticipation();
-        StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
+        StudentParticipation participation = (StudentParticipation) studentParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
@@ -71,7 +78,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithLatestResultAsAnInstructor() throws Exception {
         addStudentParticipation();
-        StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
+        StudentParticipation participation = (StudentParticipation) studentParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
     }
 
@@ -79,7 +86,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksAsStudent() throws Exception {
         addStudentParticipation();
-        StudentParticipation participation = (StudentParticipation) participationRepository.findAll().get(0);
+        StudentParticipation participation = (StudentParticipation) studentParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -87,7 +94,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
         addTemplateParticipation();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -95,7 +102,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         addTemplateParticipation();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -103,7 +110,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         addTemplateParticipation();
-        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        TemplateProgrammingExerciseParticipation participation = (TemplateProgrammingExerciseParticipation) templateProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -111,7 +118,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
         addSolutionParticipation();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -119,7 +126,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         addSolutionParticipation();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 
@@ -127,7 +134,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         addSolutionParticipation();
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) participationRepository.findAll().get(0);
+        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) solutionProgrammingExerciseParticipationRepository.findAll().get(0);
         request.get(baseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
     }
 

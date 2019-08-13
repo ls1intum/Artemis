@@ -112,8 +112,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        /*
+         * exercise = database.addTemplateParticipationForProgrammingExercise(exercise); exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+         */
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
@@ -123,6 +124,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
         solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
         participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     /**
