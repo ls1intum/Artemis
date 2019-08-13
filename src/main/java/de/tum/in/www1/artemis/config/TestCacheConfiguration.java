@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @EnableCaching
 @Profile("test")
-public class TestConfiguration {
+public class TestCacheConfiguration {
 
     @Bean
     public CacheManager getCache() {
