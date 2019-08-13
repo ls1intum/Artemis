@@ -107,7 +107,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @BeforeEach
     void reset() {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 

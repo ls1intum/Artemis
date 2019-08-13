@@ -60,7 +60,6 @@ public class ResultServiceIntegrationTest {
 
     @BeforeEach
     public void reset() {
-        database.resetDatabase();
         ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
         participation = new SolutionProgrammingExerciseParticipation();

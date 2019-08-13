@@ -52,7 +52,6 @@ public class ExerciseHintIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.resetDatabase();
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(2, 2, 2);
 

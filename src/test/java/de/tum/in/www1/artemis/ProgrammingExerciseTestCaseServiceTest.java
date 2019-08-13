@@ -51,7 +51,6 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @BeforeEach
     public void reset() {
-        database.resetDatabase();
         database.addUsers(0, 1, 0);
 
         database.addCourseWithOneProgrammingExerciseAndTestCases();

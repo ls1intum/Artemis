@@ -62,7 +62,6 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @BeforeEach
     public void init() throws Exception {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
