@@ -9,20 +9,20 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 **You have the following tasks:**
 
 1. [task][Implement Bubble Sort](test_bubble_sort)
-Implement the method `performSort(List<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
+Implement the method `perform_sort(List<int>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
 2. [task][Implement Merge Sort](test_merge_sort)
-Implement the method `performSort(List<Date>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+Implement the method `perform_sort(List<int>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
 
-We want the application to apply different algorithms for sorting a `List` of `Date` objects. 
+We want the application to apply different algorithms for sorting a `List` of `Int` objects.
 Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
 
 1. [task][SortStrategy Interface](test_sort_strategy_class,test_sort_strategy_methods)
-Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
+Create a `SortStrategy` abstract class with an abstract method and adjust the sorting algorithms so that they inherit from this class.
 
 2. [task][Context Class](test_context_class,test_context_attributes,test_context_methods)
 Create and implement a `Context` class following the below class diagram
@@ -30,10 +30,10 @@ Create and implement a `Context` class following the below class diagram
 3. [task][Context Policy](test_policy_class,test_policy_constructor,test_policy_attributes,test_policy_methods)
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
-    1. [task][Select MergeSort](test_merge_sort_class,test_merge_sort_for_big_list)
+    1. [task][Select MergeSort](test_merge_sort_struct,test_merge_sort_for_big_list)
     Select `MergeSort` when the List has more than 10 dates.
 
-    2. [task][Select BubbleSort](test_bubble_sort_class,test_bubble_sort_for_small_list)
+    2. [task][Select BubbleSort](test_bubble_sort_struct,test_bubble_sort_for_small_list)
     Select `BubbleSort` when the List has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
@@ -44,24 +44,24 @@ class Client {
 }
 
 class Policy {
-  <color:testsColor(testMethods[Policy])>+configure()</color>
+  <color:testsColor(test_policy_methods)>+configure()</color>
 }
 
 class Context {
-  <color:testsColor(testAttributes[Context])>-dates: List<Date></color>
-  <color:testsColor(testMethods[Context])>+sort()</color>
+  <color:testsColor(test_context_attributes)>numbers: List<int></color>
+  <color:testsColor(test_context_methods)>+sort()</color>
 }
 
 interface SortStrategy {
-  <color:testsColor(testMethods[SortStrategy])>+performSort(List<Date>)</color>
+  <color:testsColor(testMethods[SortStrategy])>+perform_sort(List<int>)</color>
 }
 
 class BubbleSort {
-  <color:testsColor(testMethods[BubbleSort])>+performSort(List<Date>)</color>
+  <color:testsColor(test_bubble_sort_struct)>+performSort(List<int>)</color>
 }
 
 class MergeSort {
-  <color:testsColor(testMethods[MergeSort])>+performSort(List<Date>)</color>
+  <color:testsColor(test_merge_sort_struct)>+perform_sort(List<int>)</color>
 }
 
 MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])

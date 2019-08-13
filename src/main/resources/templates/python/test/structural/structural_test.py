@@ -36,13 +36,13 @@ class TestSortingStructural(unittest.TestCase):
         ctx = context.Context()
         structural_helpers.check_method_names(policy.Policy(ctx), 'configure')
 
-    def test_bubble_sort_class(self):
+    def test_bubble_sort_struct(self):
         bubble_sort = sorting_algorithms.BubbleSort()
 
         self.assertTrue(issubclass(sorting_algorithms.BubbleSort, sort_strategy.SortStrategy))
         self.assertTrue(callable(bubble_sort.perform_sort))
 
-    def test_merge_sort_class(self):
+    def test_merge_sort_struct(self):
         merge_sort = sorting_algorithms.MergeSort()
 
         self.assertTrue(issubclass(sorting_algorithms.MergeSort, sort_strategy.SortStrategy))
