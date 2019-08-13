@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
+@ActiveProfiles("artemis, test,  bamboo")
 public class ProgrammingExerciseTestCaseServiceTest {
 
     @Autowired

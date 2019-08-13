@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.util.GitUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
+@ActiveProfiles("artemis, test")
 public class GitServiceTest {
 
     @Autowired

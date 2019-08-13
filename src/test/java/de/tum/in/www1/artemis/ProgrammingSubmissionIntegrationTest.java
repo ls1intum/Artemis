@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
+@ActiveProfiles("artemis, test,  bamboo")
 public class ProgrammingSubmissionIntegrationTest {
 
     @MockBean
