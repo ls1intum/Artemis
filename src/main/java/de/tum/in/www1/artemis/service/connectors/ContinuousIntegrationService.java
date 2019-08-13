@@ -9,8 +9,6 @@ import de.tum.in.www1.artemis.domain.*;
 
 /**
  * Abstract service for managing entities related to continuous integration.
- * 
- * @param <P> generic parameter for the build plan object of a continuous integration system.
  */
 public interface ContinuousIntegrationService {
 
@@ -70,8 +68,8 @@ public interface ContinuousIntegrationService {
      * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
      * <p>
      * Important: The implementation is responsible for retrieving and saving the result from the CI system.
-     *
-     * @param participation participation for which build has completed
+     * @param participation for which build has completed
+     * @return build result
      */
     @Deprecated
     public Result onBuildCompletedOld(ProgrammingExerciseParticipation participation);
@@ -109,7 +107,7 @@ public interface ContinuousIntegrationService {
      * Check if the given build plan ID is valid and accessible.
      *
      * @param buildPlanId unique identifier for build plan on CI system
-     * @return
+     * @return true if build plan is valid otherwise false
      */
     public Boolean buildPlanIdIsValid(String buildPlanId);
 
@@ -125,7 +123,7 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
-     * @param participation participation for which to get the build logs
+     * @param buildPlanId to get the latest build logs
      * @return list of build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
@@ -134,7 +132,7 @@ public interface ContinuousIntegrationService {
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
      *
      * @param participation participation for which to get the build plan URL
-     * @return
+     * @return build plan url
      */
     public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation);
 
@@ -149,8 +147,8 @@ public interface ContinuousIntegrationService {
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey
-     * @param projectName
+     * @param projectKey to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
     public String checkIfProjectExists(String projectKey, String projectName);

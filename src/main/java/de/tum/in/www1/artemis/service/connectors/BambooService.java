@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
+import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -84,13 +85,27 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
     }
 
+    /**
+     * Creates the base build plan for the given programming exercise in Bamboo.
+     *
+     * @param programmingExercise   a programming exercise with the required information to create the base build plan
+     * @param planKey               the key of the plan
+     * @param repositoryName        the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testRepositoryName    the slug of the test repository, i.e. the unique identifier
+     */
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
     }
 
+    /**
+     * Create a BambooClient for communication with the Bamboo server.
+     *
+     * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
+     */
     private BambooClient getBambooClient() {
-        final BambooClient bambooClient = new BambooClient();
+        //TODO: we might prevent console log message by passing a Settings object into Base
+        final BambooClient bambooClient = new BambooClient(new Base());
         //setup the Bamboo Client to use the correct username and password
 
         String[] args = new String[]{
@@ -103,6 +118,13 @@ public class BambooService implements ContinuousIntegrationService {
         return bambooClient;
     }
 
+    /**
+     * Copy the base build plan for the given user on the CI system.
+     *
+     * @param templateBuildPlanId unique identifier for build plan on CI system to copy the plan from.
+     * @param wantedPlanKey       specified key for the new plan.
+     * @return unique identifier of the copied build plan
+     */
     @Override
     public String copyBuildPlan(String templateBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = getCleanPlanKey(wantedPlanKey);
@@ -117,12 +139,24 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Parse the project key from the repoUrl of the given repositoryUrl.
+     *
+     * @param repositoryUrl of the repo on the VCS server.
+     * @return the project key that was parsed.
+     */
     //TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
     private String getProjectKeyFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
+    /**
+     * Configure the build plan with the given participation on the Bamboo.
+     * For Bamboo to be set up correctly an empty commit needs to be made.
+     *
+     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy.
+     */
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         String buildPlanId = participation.getBuildPlanId();
@@ -172,6 +206,11 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Triggers a build for the build plan in the given participation.
+     *
+     * @param participation the participation with the id of the build plan that should be triggered.
+     */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
@@ -188,11 +227,21 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Delete the build plan with given identifier from Bamboo.
+     *
+     * @param buildPlanId unique identifier for the build plan on Bamboo.
+     */
     @Override
     public void deleteBuildPlan(String buildPlanId) {
         deletePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
     }
 
+    /**
+     * Delete project with given identifier from CI system.
+     *
+     * @param projectKey unique identifier for the project on CI system
+     */
     @Override
     public void deleteProject(String projectKey) {
         try {
@@ -204,6 +253,12 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
+     *
+     * @param participation participation for which to get status
+     * @return build status
+     */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         Map<String, Boolean> status = retrieveBuildStatus(participation.getBuildPlanId());
@@ -219,6 +274,12 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Fetch the latest build result from Bamboo and attach it to the given result.
+     *
+     * @param result the result for which to get details.
+     * @return List of automatic feedback by the continuous integration server. contains the test methods and their results:
+     */
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) result.getParticipation();
@@ -231,11 +292,23 @@ public class BambooService implements ContinuousIntegrationService {
         return feedbackItems;
     }
 
+    /**
+     * Get the build logs of the latest Bamboo build for the given build plan.
+     *
+     * @param buildPlanId to get the latest build logs.
+     * @return list of build log entries.
+     */
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
         return retrieveLatestBuildLogs(buildPlanId);
     }
 
+    /**
+     * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
+     *
+     * @param participation participation for which to get the build plan URL.
+     * @return build plan url.
+     */
     @Override
     public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation) {
         try {
@@ -254,6 +327,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param toProject       The Bamboo project in which the new plan should be contained.
      * @param name            The name to give the cloned plan.
      * @return The name of the new build plan
+     * @throws BambooException if a communication issue occurs or the plan already exists.
      */
     public String clonePlan(String templateProject, String templatePlan, String toProject, String name) throws BambooException {
 
@@ -278,12 +352,12 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Enables the given build plan.
      *
-     * @param projectKey
-     * @param planKey
-     * @return
+     * @param projectKey to identify the Bamboo project.
+     * @param planKey to identify the Bamboo plan.
+     * @return the message indicating the result of the enabling operation.
+     * @throws BambooException if a communication issue occurs.
      */
     public String enablePlan(String projectKey, String planKey) throws BambooException {
-
         try {
             log.info("Enable build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
@@ -295,6 +369,17 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Updates the configured repository for a given plan to the given Bamboo Server repository.
+     *
+     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
+     * @param bambooPlan            The key of the plan, which is usually the name, e.g. 'ga56hur'.
+     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
+     * @param repoProjectName       The key of the project that contains the repository.
+     * @param repoName              The lower level identifier of the repository.
+     * @return                      a message that indiates the result of the plan repository update.
+     * @throws BambooException      if a communication issue occurs.
+     */
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
         return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
     }
@@ -302,9 +387,8 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Deletes the given plan.
      *
-     * @param projectKey
-     * @param planKey
-     * @return
+     * @param projectKey to identify the Bamboo project.
+     * @param planKey to identify the Bamboo plan to delete
      */
     private void deletePlan(String projectKey, String planKey) {
         try {
@@ -321,6 +405,7 @@ public class BambooService implements ContinuousIntegrationService {
      * It checks if the build result is the current one. If not, it waits for a configurable delay and then tries again.
      *
      * @param participation the ProgrammingExerciseParticipation that received a new build result
+     * @return the created result.
      */
     @Override
     @Transactional
@@ -405,6 +490,13 @@ public class BambooService implements ContinuousIntegrationService {
         return result;
     }
 
+    /**
+     * Extract the plan key from the Bamboo requestBody.
+     *
+     * @param requestBody The request Body received from the CI-Server.
+     * @return the plan key or null if it can't be found.
+     * @throws BambooException is thrown on casting errors.
+     */
     @Override
     @SuppressWarnings("unchecked")
     public String getPlanKey(Object requestBody) throws BambooException {
@@ -413,6 +505,7 @@ public class BambooService implements ContinuousIntegrationService {
             Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
             return (String) planMap.get("key");
         } catch (Exception e) {
+            // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.
             log.error("Error when getting plan key");
             throw new BitbucketException("Could not get plan key", e);
         }
@@ -541,7 +634,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param
+     * @param result to which to add the feedback.
      * @param buildResultDetails returned build result details from the rest API of bamboo
      * @return a list of feedbacks itemsstored in a result
      */
@@ -578,6 +671,13 @@ public class BambooService implements ContinuousIntegrationService {
         return result.getFeedbacks();
     }
 
+    /**
+     * Create an automatic feedback object from the given parameter.
+     * @param result to which the feedback belongs.
+     * @param methodName test case method name.
+     * @param positive if the test case was successful.
+     * @param errorMessageString if there was an error what the error is.
+     */
     private void createAutomaticFeedback(Result result, String methodName, boolean positive, String errorMessageString) {
         Feedback feedback = new Feedback();
         feedback.setText(methodName);
@@ -645,8 +745,8 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
      *
-     * @param result
-     * @return
+     * @param result to calculate score for.
+     * @return the score calculated.
      */
     private Long calculateScoreForResult(Result result) {
 
@@ -751,8 +851,8 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Performs a request to the Bamboo REST API to retrieve the build log of the latest build.
      *
-     * @param planKey
-     * @return
+     * @param planKey to identify the build logs with.
+     * @return the list of retrieved build logs.
      */
     //TODO: save this on the Artemis server, e.g. in the result class so that Artemis does not need to retrieve it every time
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
@@ -811,12 +911,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Gets the latest available artifact for the given plan key
+     * Gets the latest available artifact for the given participation.
      *
-     * @param participation
-     * @return
+     * @param participation to use its buildPlanId to find the artifact.
+     * @return the html representation of the artifact page.
      */
     public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
+        // TODO: It would be better to directly pass the buildPlanId.
         String planKey = participation.getBuildPlanId();
         Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
         // If the build has an artifact, the response contains an artifact key.
@@ -830,6 +931,13 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * Queries Bamboo to find out if the project already exists.
+     *
+     * @param projectKey to check if a project with this unique key already exists.
+     * @param projectName to check if a project with the same name already exists.
+     * @return true if the project is already existing on Bamboo.
+     */
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
@@ -873,8 +981,8 @@ public class BambooService implements ContinuousIntegrationService {
      * Gets the content from a Bamboo artifact link
      * Follows links on HTML directory pages, if necessary
      *
-     * @param url
-     * @return
+     * @param url of the artifact page.
+     * @return the build artifact as html.
      */
     private ResponseEntity retrieveArtifactPage(String url) throws BambooException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
@@ -912,7 +1020,7 @@ public class BambooService implements ContinuousIntegrationService {
      * Retrieves the current build status of the given plan.
      *
      * @param planKey the key of the plan for which to retrieve the status
-     * @returna map containing the following data:
+     * @return a map containing the following data:
      * - isActive: true if the plan is queued or building
      * - isBuilding: true if the plan is building
      */
@@ -945,7 +1053,7 @@ public class BambooService implements ContinuousIntegrationService {
      * Check if the given build plan is valid and accessible on Bamboo.
      *
      * @param buildPlanId unique identifier for build plan on CI system
-     * @return
+     * @return true if the build plan id is valid.
      */
     @Override
     public Boolean buildPlanIdIsValid(String buildPlanId) {

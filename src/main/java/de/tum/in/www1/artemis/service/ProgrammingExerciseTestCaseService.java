@@ -61,6 +61,8 @@ public class ProgrammingExerciseTestCaseService {
      * @param exerciseId            of exercise the test cases belong to.
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
      * @return the updated test cases.
+     * @throws EntityNotFoundException if the programming exercise could not be found.
+     * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
      */
     @Transactional
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
@@ -87,8 +89,8 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Reset the weights of all test cases to 1.
      *
-     * @param exerciseId
-     * @return
+     * @param exerciseId to find exercise test cases
+     * @return test cases that have been reset
      */
     @Transactional
     public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {

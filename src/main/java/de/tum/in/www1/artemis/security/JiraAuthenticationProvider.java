@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
+
 import java.net.URL;
 import java.security.Principal;
 import java.util.*;
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -63,16 +66,27 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final CourseRepository courseRepository;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository) {
+    private final Optional<LdapUserService> ldapUserService;
+
+    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository, Optional<LdapUserService> ldapUserService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.ldapUserService = ldapUserService;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
         User user = getOrCreateUser(authentication, false);
+
+        // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
+        if (ldapUserService.isPresent() && user.getRegistrationNumber() == null && TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
+            long start = System.currentTimeMillis();
+            userService.loadUserDetailsFromLdap(user);
+            long end = System.currentTimeMillis();
+            log.info("LDAP search took " + (end - start) + "ms");
+        }
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
     }
