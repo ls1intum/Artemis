@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis, bamboo")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class ProgrammingSubmissionIntegrationTest {
 
     @MockBean
@@ -62,12 +61,16 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @BeforeEach
     public void init() throws Exception {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+    }
+
+    @AfterEach
+    void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
