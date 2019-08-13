@@ -620,7 +620,7 @@ public class ParticipationResource {
     /**
      * DELETE /participations/:id : delete the "id" participation.
      *
-     * @param id the id of the participation to delete
+     * @param participationId the id of the participation to delete
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
