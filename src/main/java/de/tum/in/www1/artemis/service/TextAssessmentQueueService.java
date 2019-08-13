@@ -122,7 +122,7 @@ public class TextAssessmentQueueService {
      * @return return a HashMap where the textBlock is the key and smaller cluster percentage is the value
      * If a textBlock has no cluster or is already assessable, it isn't in the HashMap
      */
-    private HashMap<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
+    public HashMap<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
         HashMap<TextBlock, Double> result = new HashMap<>();
         if (textSubmissionList.isEmpty()) {
             return result;
@@ -138,8 +138,21 @@ public class TextAssessmentQueueService {
                 if (textBlock.getCluster() == null) {
                     return;
                 }
-                int smallerClusterCount = clusters.parallelStream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
-                    if (elem <= textBlock.getCluster().openTextBlockCount()) {
+                OptionalInt optionalLargestClusterSize = clusters.stream().mapToInt(TextCluster::openTextBlockCount).max();
+
+                // if cluster is empty
+                if (optionalLargestClusterSize.isEmpty()) {
+                    result.put(textBlock, 0.0);
+                    return;
+                }
+                // if cluster is the largest set to smaller percentage to 1
+                if (optionalLargestClusterSize.getAsInt() == textBlock.getCluster().openTextBlockCount()) {
+                    result.put(textBlock, 1.0);
+                    return;
+                }
+
+                int smallerClusterCount = clusters.stream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
+                    if (elem < textBlock.getCluster().openTextBlockCount()) {
                         return sum + 1;
                     }
                     return sum;
