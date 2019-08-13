@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.ResultResource;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis, bamboo, bitbucket")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class ProgrammingSubmissionAndResultIntegrationTest {
 
     private enum IntegrationTestParticipationType {

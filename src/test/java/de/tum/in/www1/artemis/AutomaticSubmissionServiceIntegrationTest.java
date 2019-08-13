@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -38,7 +37,6 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class AutomaticSubmissionServiceIntegrationTest {
 
     @Autowired
