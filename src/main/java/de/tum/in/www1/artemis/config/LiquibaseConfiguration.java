@@ -25,6 +25,13 @@ public class LiquibaseConfiguration {
         this.env = env;
     }
 
+    /**
+     * Creates a Spring-ified wrapper for Liquibase.
+     *
+     * @param dataSource liquibaseDataSource
+     * @param liquibaseProperties liquibaseProperties
+     * @return  A Spring-ified wrapper for Liquibase.
+     */
     @Bean
     public SpringLiquibase liquibase(DataSource dataSource, LiquibaseProperties liquibaseProperties) {
         SpringLiquibase liquibase = new SpringLiquibase();
