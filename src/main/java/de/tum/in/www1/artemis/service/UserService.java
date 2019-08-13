@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
+
 import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -9,11 +11,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,6 +36,8 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
@@ -50,10 +58,58 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager) {
+    private final Optional<LdapUserService> ldapUserService;
+
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
+        this.ldapUserService = ldapUserService;
+    }
+
+    /**
+     * find all users who do not have registration numbers: in case they are TUM users, try to retrieve their registration number and set a proper first name and last name
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void retrieveAllRegistrationNumbersForTUMUsers() {
+        if (ldapUserService.isPresent()) {
+            long start = System.currentTimeMillis();
+            List<User> users = userRepository.findAllByRegistrationNumberIsNull();
+            for (User user : users) {
+                if (TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
+                    loadUserDetailsFromLdap(user);
+                }
+            }
+            long end = System.currentTimeMillis();
+            log.info("LDAP search took " + (end - start) + "ms");
+        }
+    }
+
+    /**
+     * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
+     * @param user the existing user for which the details should be retrieved
+     */
+    public void loadUserDetailsFromLdap(@NotNull User user) {
+        if (user == null || user.getLogin() == null) {
+            return;
+        }
+        try {
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findOne(user.getLogin());
+            if (ldapUserOptional.isPresent()) {
+                LdapUserDto ldapUser = ldapUserOptional.get();
+                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                user.setFirstName(ldapUser.getFirstName());
+                user.setLastName(ldapUser.getLastName());
+                user.setRegistrationNumber(ldapUser.getRegistrationNumber());
+                userRepository.save(user);
+            }
+            else {
+                log.warn("Ldap User " + user.getLogin() + " not found");
+            }
+        }
+        catch (Exception ex) {
+            log.error("Error in LDAP Search " + ex.getMessage());
+        }
     }
 
     private PBEPasswordEncoder passwordEncoder;

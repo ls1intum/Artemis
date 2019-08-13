@@ -38,8 +38,8 @@ plugins {
     id "com.diffplug.gradle.spotless" version "3.24.0"
 }
 
-sourceCompatibility=1.8
-targetCompatibility=1.8
+sourceCompatibility=12
+targetCompatibility=12
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
@@ -222,7 +222,10 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-undertow"
     implementation "org.springframework.boot:spring-boot-starter-websocket"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
-    implementation "org.zalando:problem-spring-web:0.24.0-RC.0"
+
+    implementation "org.springframework.ldap:spring-ldap-core"
+    implementation "org.springframework.data:spring-data-ldap"
+
     implementation "org.springframework.security:spring-security-config"
     implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-web"
@@ -237,8 +240,12 @@ dependencies {
     implementation "mysql:mysql-connector-java"
 //    liquibaseRuntime "mysql:mysql-connector-java"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
+
+    implementation "org.zalando:problem-spring-web:0.24.0-RC.0"
+
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { TUM_REGEX } from 'app/app.constants';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core';
 import { Course, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
@@ -25,7 +25,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            this.isTumStudent = !!user!.login!.match(TUM_REGEX);
+            this.isTumStudent = !!user!.login!.match(TUM_USERNAME_REGEX);
         });
     }
 

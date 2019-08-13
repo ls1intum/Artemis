@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
+import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -103,7 +104,8 @@ public class BambooService implements ContinuousIntegrationService {
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
     private BambooClient getBambooClient() {
-        final BambooClient bambooClient = new BambooClient();
+        //TODO: we might prevent console log message by passing a Settings object into Base
+        final BambooClient bambooClient = new BambooClient(new Base());
         //setup the Bamboo Client to use the correct username and password
 
         String[] args = new String[]{
