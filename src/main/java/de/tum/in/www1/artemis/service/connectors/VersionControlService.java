@@ -24,14 +24,14 @@ public interface VersionControlService {
     /**
      * Deletes the project for the given project key
      *
-     * @param projectKey
+     * @param projectKey of the project that should be deleted
      */
     public void deleteProject(String projectKey);
 
     /**
      * Deletes the repository at the given url
      *
-     * @param repositoryUrl
+     * @param repositoryUrl of the repository that should be deleted
      */
     public void deleteRepository(URL repositoryUrl);
 
@@ -72,7 +72,7 @@ public interface VersionControlService {
     /**
      * Creates a project on the VCS.
      *
-     * @param programmingExercise
+     * @param programmingExercise for which a project should be created
      * @throws Exception if the project could not be created
      */
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws Exception;
@@ -106,8 +106,8 @@ public interface VersionControlService {
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey
-     * @param projectName
+     * @param projectKey to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
     public String checkIfProjectExists(String projectKey, String projectName);

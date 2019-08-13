@@ -173,6 +173,9 @@ public class TextSubmissionResource {
      * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call
      *
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param submittedOnly mark if only submitted Submissions should be returned
+     * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
@@ -210,6 +213,7 @@ public class TextSubmissionResource {
     /**
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
+     * @param exerciseId exerciseID  for which a submission should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")

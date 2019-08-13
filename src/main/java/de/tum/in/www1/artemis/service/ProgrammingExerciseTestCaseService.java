@@ -51,9 +51,11 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Update the weights of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
-     * @param exerciseId            of exercise the test cases belong to.
+     * @param exerciseId of exercise the test cases belong to.
      * @param testCaseWeightUpdates of the test cases to update the weights of.
      * @return the updated test cases.
+     * @throws EntityNotFoundException if the programming exercise could not be found.
+     * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
      */
     @Transactional
     public Set<ProgrammingExerciseTestCase> updateWeights(Long exerciseId, Set<WeightUpdate> testCaseWeightUpdates) throws EntityNotFoundException, IllegalAccessException {
@@ -77,8 +79,8 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Reset the weights of all test cases to 1.
      *
-     * @param exerciseId
-     * @return
+     * @param exerciseId to find exercise test cases
+     * @return test cases that have been reset
      */
     @Transactional
     public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {

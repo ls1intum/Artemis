@@ -75,9 +75,10 @@ public class GitService {
      * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
      *
      * @param participation Participation the remote repository belongs to.
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @return the repository if it could be checked out
+     * @throws IOException if the repository could not be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws IOException, InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
@@ -91,11 +92,11 @@ public class GitService {
      *
      * @param repoUrl   The remote repository.
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -188,7 +189,7 @@ public class GitService {
      *
      * @param repo    Local Repository Object.
      * @param message Commit Message
-     * @throws GitAPIException
+     * @throws GitAPIException if the commit failed.
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         Git git = new Git(repo);
@@ -201,7 +202,7 @@ public class GitService {
      *
      * @param repo    Local Repository Object.
      * @param message Commit Message
-     * @throws GitAPIException
+     * @throws GitAPIException if the commit failed.
      */
     public void commitAndPush(Repository repo, String message) throws GitAPIException {
         Git git = new Git(repo);
@@ -213,8 +214,8 @@ public class GitService {
     /**
      * Stage all files in the repo including new files.
      *
-     * @param repo
-     * @throws GitAPIException
+     * @param repo Local Repository Object.
+     * @throws GitAPIException if the staging failed.
      */
     public void stageAllChanges(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
@@ -226,11 +227,11 @@ public class GitService {
     }
 
     /**
-     * Resets local repository to ref
+     * Resets local repository to ref.
      *
-     * @param repo
+     * @param repo Local Repository Object.
      * @param ref  the ref to reset to, e.g. "origin/master"
-     * @throws GitAPIException
+     * @throws GitAPIException if the reset failed.
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
         Git git = new Git(repo);
@@ -241,8 +242,8 @@ public class GitService {
     /**
      * git fetch
      *
-     * @param repo
-     * @throws GitAPIException
+     * @param repo Local Repository Object.
+     * @throws GitAPIException if the fetch failed.
      */
     public void fetchAll(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
@@ -275,7 +276,7 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @return The PullResult which contains FetchResult and MergeResult.
-     * @throws GitAPIException
+     * @throws GitAPIException if the pull failed.
      */
     public PullResult pull(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
@@ -304,7 +305,7 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      */
-    public void checkoutBranch(Repository repo, String branch) {
+    public void checkoutBranch(Repository repo) {
         try {
             Git git = new Git(repo);
             git.checkout().setForceRefUpdate(true).setName("master").call();
@@ -319,6 +320,7 @@ public class GitService {
      * Remove branch from local repository.
      *
      * @param repo Local Repository Object.
+     * @param branch to delete from the repo.
      */
     public void deleteLocalBranch(Repository repo, String branch) {
         try {
@@ -334,9 +336,9 @@ public class GitService {
     /**
      * Get last commit hash from master
      *
-     * @param repoUrl
-     * @return
-     * @throws GitAPIException
+     * @param repoUrl to get the latest hash from.
+     * @return the latestHash of the given repo.
+     * @throws GitAPIException if retrieving the latestHash from the git repo failed.
      */
     private ObjectId getLatestHash(URL repoUrl) throws GitAPIException {
         // Get refs of repo without cloning it locally
@@ -514,7 +516,7 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @return True if the status is clean
-     * @throws GitAPIException
+     * @throws GitAPIException if the state of the repository could not be retrieved.
      */
     public Boolean isClean(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
@@ -526,7 +528,7 @@ public class GitService {
      * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
      * 
      * @param repo to squash commits for
-     * @throws IOException           on io errors or git exceptions.
+     * @throws GitAPIException       on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.
      */
     public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
@@ -562,7 +564,7 @@ public class GitService {
      * Deletes a local repository folder.
      *
      * @param repo Local Repository Object.
-     * @throws IOException
+     * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(Repository repo) throws IOException {
         Path repoPath = repo.getLocalPath();
@@ -577,7 +579,7 @@ public class GitService {
      * Deletes a local repository folder for a Participation.
      *
      * @param participation Participation Object.
-     * @throws IOException
+     * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
         Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
@@ -588,6 +590,12 @@ public class GitService {
         }
     }
 
+    /**
+     * Deletes a local repository folder for a repoUrl.
+     *
+     * @param repoUrl url of the repository.
+     * @throws IOException if the deletion of the repository failed.
+     */
     public void deleteLocalRepository(URL repoUrl) {
         Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
         cachedRepositories.remove(repoPath);
@@ -602,6 +610,13 @@ public class GitService {
         }
     }
 
+    /**
+     * Zip the content of a git repository.
+     *
+     * @param repo Local Repository Object.
+     * @throws IOException if the zipping process failed.
+     * @return path to zip file.
+     */
     public Path zipRepository(Repository repo) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
@@ -632,7 +647,7 @@ public class GitService {
      * Generates the unique local folder name for a given remote repository URL.
      *
      * @param repoUrl URL of the remote repository.
-     * @return
+     * @return the folderName as a string.
      */
     public String folderNameForRepositoryUrl(URL repoUrl) {
         String path = repoUrl.getPath();

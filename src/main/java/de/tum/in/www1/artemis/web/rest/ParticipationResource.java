@@ -130,6 +130,7 @@ public class ParticipationResource {
      * @param exerciseId the id of the exercise for which to init a participation
      * @param principal  the current user principal
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
+     * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -208,7 +209,7 @@ public class ParticipationResource {
     /**
      * This makes sure the client can display the latest result immediately after loading this participation
      * 
-     * @param participation
+     * @param participation The participation to which the latest result should get added
      */
     private void addLatestResultToParticipation(Participation participation) {
         // Load results of participation as they are not contained in the current object
@@ -258,8 +259,9 @@ public class ParticipationResource {
     /**
      * GET /exercise/:exerciseId/participations : get all the participations for an exercise
      *
-     * @param exerciseId
-     * @return
+     * @param exerciseId The id of the exercise
+     * @param withEagerResults Whether the {@link Result results} for the participations should also be fetched
+     * @return A list of all participations for the exercise
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -331,8 +333,8 @@ public class ParticipationResource {
     /**
      * GET /courses/:courseId/participations : get all the participations for a course
      *
-     * @param courseId
-     * @return
+     * @param courseId The id of the course
+     * @return A list of all participations for the given course
      */
     @GetMapping(value = "/courses/{courseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -427,6 +429,13 @@ public class ParticipationResource {
         return Optional.ofNullable(participation).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(ResponseUtil.notFound());
     }
 
+    /**
+     * Finds the repository web URL for a given programming exercise participation
+     *
+     * @param participationId The id of the participation
+     * @param authentication The authentication for this resource
+     * @return The URL of the participation repository as a String
+     */
     @GetMapping(value = "/participations/{participationId}/repositoryWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long participationId, Authentication authentication) {
@@ -437,6 +446,12 @@ public class ParticipationResource {
         return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
     }
 
+    /**
+     * Looks up the web URL for the build plan in Bamboo of a given participation
+     *
+     * @param id The id of the participation
+     * @return The URL of the participation build plan as a String
+     */
     @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
@@ -462,6 +477,12 @@ public class ParticipationResource {
         return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
     }
 
+    /**
+     * Retrieves the lates build artifact of a given programming exercise participation
+     *
+     * @param participationId The id of the participation
+     * @return The latest build artifact (JAR/WAR) for the participation
+     */
     @GetMapping(value = "/participations/{participationId}/buildArtifact")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long participationId) {
@@ -477,6 +498,7 @@ public class ParticipationResource {
      * API consistency, it is not actually used //TODO remove courseId from the URL
      *
      * @param exerciseId the id of the exercise for which to retrieve the participation
+     * @param principal The principal in form of the user's identity
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
@@ -577,7 +599,10 @@ public class ParticipationResource {
      * DELETE /participations/:id : delete the "id" participation. This only works for student participations - other participations should not be deleted here!
      *
      * @param id the id of the participation to delete
-     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN) if the user lacks permissions.
+     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param deleteRepository True, if the repository should also get deleted
+     * @param principal The identity of the user accessing this resource
+     * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -596,6 +621,7 @@ public class ParticipationResource {
      * DELETE /participations/:id : delete the "id" participation.
      *
      * @param id the id of the participation to delete
+     * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
