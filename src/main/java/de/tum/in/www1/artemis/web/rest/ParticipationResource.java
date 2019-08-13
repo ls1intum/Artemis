@@ -596,7 +596,7 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:id : delete the "id" participation.
+     * DELETE /participations/:id : delete the "id" participation. This only works for student participations - other participations should not be deleted here!
      *
      * @param id the id of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
@@ -626,8 +626,8 @@ public class ParticipationResource {
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(id);
+    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
