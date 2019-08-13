@@ -391,6 +391,14 @@ public class DatabaseUtilService {
         return submission;
     }
 
+    public Submission addSubmission(StudentParticipation participation, Submission submission, String login) {
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
     @Transactional
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);

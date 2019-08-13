@@ -116,23 +116,24 @@ public class ParticipationIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation() throws Exception {
-        Submission submission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
-        Long participationId = submission.getParticipation().getId();
-        database.addResultToSubmission(submission);
+        Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission(), "student1");
+        Long participationId = submissionWithResult.getParticipation().getId();
+        database.addResultToSubmission(submissionWithResult);
 
         // Participation should now exist.
         assertThat(participationRepo.existsById(participationId)).isTrue();
         // There should be a submission and result assigned to the participation.
-        assertThat(submissionRepository.existsByParticipationId(participationId)).isTrue();
-        assertThat(resultRepository.existsByParticipationId(participationId)).isTrue();
+        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(2);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
         assertThat(participation.isPresent()).isFalse();
         // Make sure that also the submission and result were deleted.
-        assertThat(submissionRepository.existsByParticipationId(participationId)).isFalse();
-        assertThat(resultRepository.existsByParticipationId(participationId)).isFalse();
+        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
     }
 
     @Test
