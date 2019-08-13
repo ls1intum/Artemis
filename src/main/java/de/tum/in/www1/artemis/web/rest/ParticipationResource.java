@@ -627,7 +627,7 @@ public class ParticipationResource {
     @PutMapping("/participations/{id}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long id, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(id);
         checkAccessPermissionAtInstructor(participation);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
