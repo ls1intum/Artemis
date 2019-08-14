@@ -158,7 +158,7 @@ public class TextBlock implements Serializable {
     }
 
     public boolean isAssessable() {
-        return submission.getResult() == null;
+        return submission.getResult() != null;
     }
 
     public void setAddedDistance(double addedDistance) {
