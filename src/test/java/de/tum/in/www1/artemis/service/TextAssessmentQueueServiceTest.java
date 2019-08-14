@@ -70,7 +70,6 @@ public class TextAssessmentQueueServiceTest {
         int clusterSizes[] = new int[] { 4, 5, 10, 1 };
         ArrayList<TextBlock> textBlocks = generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = createSampleTextExercise(textBlocks, submissionCount, submissionSize);
-        List<StudentParticipation> participations = participationServiceMock.findByExerciseId(textExercise.getId());
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
         List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes);
         Mockito.when(textClusterRepositoryMock.findAllByExercise(textExercise)).thenReturn(clusters);
@@ -89,7 +88,7 @@ public class TextAssessmentQueueServiceTest {
                 assertThat(smallerClusterPercentages.get(textBlock)).isCloseTo(1.0, errorRate);
             }
             else if (textBlock.getCluster() == clusters.get(3)) {
-                // cluster has size 4 Therefore 0% are smaller
+                // cluster has size 1 Therefore 0% are smaller
                 assertThat(smallerClusterPercentages.get(textBlock)).isCloseTo(0.0, errorRate);
             }
             else {

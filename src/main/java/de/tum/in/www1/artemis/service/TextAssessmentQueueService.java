@@ -37,24 +37,17 @@ public class TextAssessmentQueueService {
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise) {
 
         if (!textExercise.isAutomaticAssessmentEnabled()) {
-            throw new IllegalArgumentException("The TextExercise has to be  automatic assessable");
+            throw new IllegalArgumentException("The TextExercise is not   automatic assessable");
         }
 
         List<TextSubmission> textSubmissionList = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).parallelStream()
                 .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-        if (textSubmissionList.isEmpty())
+        if (textSubmissionList.isEmpty()) {
             return Optional.empty();
-        TextSubmission best = textSubmissionList.get(0);
-
-        HashMap<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
-        double bestInformationGain = calculateInformationGain(best, smallerClusterMap);
-        for (TextSubmission textSubmission : textSubmissionList) {
-            if (bestInformationGain < calculateInformationGain(textSubmission, smallerClusterMap)) {
-                bestInformationGain = calculateInformationGain(textSubmission, smallerClusterMap);
-                best = textSubmission;
-            }
         }
-        return Optional.of(best);
+        HashMap<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
+        Optional<TextSubmission> best = textSubmissionList.stream().max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
+        return best;
     }
 
     /**
