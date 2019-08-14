@@ -21,9 +21,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
-    startedEditing: boolean = false;
-    templateChangedSubject: Subject<void> = new Subject<void>();
-
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
@@ -130,20 +127,17 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onNewProgrammingLanguage() {
-        if (!this.startedEditing) {
-            this.problemStatementLoaded = false;
-            this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
-                file => {
-                    this.programmingExercise.problemStatement = file;
-                    this.problemStatementLoaded = true;
-                    this.templateChangedSubject.next();
-                },
-                err => {
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                    console.log('Error while getting template instruction file!', err);
-                },
-            );
-        }
+        this.problemStatementLoaded = false;
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+            file => {
+                this.programmingExercise.problemStatement = file;
+                this.problemStatementLoaded = true;
+            },
+            err => {
+                this.programmingExercise.problemStatement = '';
+                this.problemStatementLoaded = true;
+                console.log('Error while getting template instruction file!', err);
+            },
+        );
     }
 }

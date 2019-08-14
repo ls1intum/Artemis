@@ -159,8 +159,6 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
-                        [templateChanged]="templateChangedSubject.asObservable()"
-                        (editingStarted)="startedEditing = true"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

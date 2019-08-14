@@ -15,7 +15,7 @@ import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { Result, ResultService } from 'app/entities/result';
-import { hasExerciseChanged } from 'app/entities/exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
@@ -50,7 +50,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
-    @Input() templateChanged: Observable<void>;
     @Input()
     get exercise() {
         return this.exerciseValue;
@@ -85,6 +84,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (problemStatementHasChanged(changes)) {
+            this.generateHtml();
+        }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
         }
@@ -117,8 +119,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     target.style.height = event.rect.height + 'px';
                 }
             });
-
-        this.templateChanged.subscribe(() => this.generateHtml());
     }
 
     /* Save the problem statement on the server.
@@ -145,7 +145,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
-        this.editingStarted.emit();
         if (this.exercise.problemStatement !== problemStatement) {
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
