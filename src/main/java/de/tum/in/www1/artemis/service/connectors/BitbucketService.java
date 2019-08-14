@@ -269,7 +269,7 @@ public class BitbucketService implements VersionControlService {
      * @param password     The wanted passowrd in clear text
      * @param emailAddress The eMail address for the user
      * @param displayName  The display name (full name)
-     * @throws BitbucketException
+     * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -297,7 +297,7 @@ public class BitbucketService implements VersionControlService {
      *
      * @param username The Bitbucket username
      * @param groups   Names of Bitbucket groups
-     * @throws BitbucketException
+     * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
     public void addUserToGroups(String username, List<String> groups) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -448,7 +448,7 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-    public void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
+    private void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
