@@ -113,6 +113,16 @@ public class ResultService {
     }
 
     /**
+     * Check if there is a result for the given participation.
+     *
+     * @param participationId the id of the participation for which to check if there is a result.
+     * @return true if there is a result for the given participation, otherwise not.
+     */
+    public Boolean existsByParticipationId(Long participationId) {
+        return resultRepository.existsByParticipationId(participationId);
+    }
+
+    /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
      * 

@@ -45,13 +45,13 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationHasResult = !!this.participation.results;
+            this.participationHasResult = !!this.participation.results && !!this.participation.results.length;
             this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
             of(this.participationHasResult)
                 .pipe(
                     // Ideally this component is provided a participation with an attached result. If this is not the cased, try retrieve it from the server.
                     switchMap((participationHashResult: boolean) => {
-                        return participationHashResult ? of(!!this.participation.results.length) : this.checkIfHasResult(this.participation.id);
+                        return participationHashResult ? of(true) : this.checkIfHasResult(this.participation.id);
                     }),
                     // If there is no result yet for a participation, create a websocket subscription to get the first incoming result.
                     tap((participationHasResult: boolean) => {
@@ -75,10 +75,16 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         }
     }
 
+    /**
+     * Check by executing a REST call if there is a result for the given participation.
+     *
+     * @param participationId of the participation for which to check if there is a result.
+     * @return Observable with true if there is a result.
+     */
     private checkIfHasResult(participationId: number): Observable<boolean> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
+        return this.programmingExerciseParticipationService.checkIfParticipationHasResult(participationId).pipe(
             catchError(() => of(null)),
-            map((result: Result | null) => !!result),
+            map((hasResult: boolean | null) => !!hasResult),
         );
     }
 

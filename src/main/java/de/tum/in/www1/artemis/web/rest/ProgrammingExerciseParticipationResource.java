@@ -81,6 +81,18 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * Check if the participation has a result yet.
+     *
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     */
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        boolean hasResult = resultService.existsByParticipationId(participationId);
+        return ResponseEntity.ok(hasResult);
+    }
+
+    /**
      * GET /programming-exercise-participation/:id/latest-pending-submission : get the latest pending submission for the participation.
      * A pending submission is one that does not have a result yet.
      *
@@ -122,4 +134,5 @@ public class ProgrammingExerciseParticipationResource {
         }
         return ResponseEntity.ok(result);
     }
+
 }
