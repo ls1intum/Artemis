@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -144,11 +145,12 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/templates/{filename:.+}")
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable String filename) {
+    @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
+    public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         try {
-            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + File.separator + filename);
+            String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
+            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
             byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);

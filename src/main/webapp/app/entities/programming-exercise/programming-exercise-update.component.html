@@ -74,6 +74,7 @@
                         required
                         class="form-control"
                         [(ngModel)]="programmingExercise.programmingLanguage"
+                        (change)="onNewProgrammingLanguage()"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
                         [disabled]="programmingExercise.id"
@@ -158,6 +159,7 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
+                        [templateChanged]="templateChangedSubject.asObservable()"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

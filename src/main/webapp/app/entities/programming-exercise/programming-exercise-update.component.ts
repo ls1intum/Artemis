@@ -2,8 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
 
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
@@ -11,7 +10,6 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/entities/result';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
@@ -22,6 +20,8 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
+
+    templateChangedSubject: Subject<void> = new Subject<void>();
 
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
@@ -76,17 +76,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.fileService.getTemplateFile('readme').subscribe(
-                file => {
-                    this.programmingExercise.problemStatement = file;
-                    this.problemStatementLoaded = true;
-                },
-                err => {
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                    console.log('Error while getting template instruction file!', err);
-                },
-            );
+            this.onNewProgrammingLanguage();
         } else {
             this.problemStatementLoaded = true;
         }
@@ -136,5 +126,21 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     trackCourseById(index: number, item: Course) {
         return item.id;
+    }
+
+    onNewProgrammingLanguage() {
+        this.problemStatementLoaded = false;
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+            file => {
+                this.programmingExercise.problemStatement = file;
+                this.problemStatementLoaded = true;
+                this.templateChangedSubject.next();
+            },
+            err => {
+                this.programmingExercise.problemStatement = '';
+                this.problemStatementLoaded = true;
+                console.log('Error while getting template instruction file!', err);
+            },
+        );
     }
 }

@@ -50,6 +50,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
+    @Input() templateChanged: Observable<void>;
     @Input()
     get exercise() {
         return this.exerciseValue;
@@ -115,6 +116,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     target.style.height = event.rect.height + 'px';
                 }
             });
+
+        this.templateChanged.subscribe(() => this.generateHtml());
     }
 
     /* Save the problem statement on the server.

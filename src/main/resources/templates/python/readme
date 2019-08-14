@@ -52,7 +52,7 @@ class Context {
   <color:testsColor(test_context_methods)>+sort()</color>
 }
 
-interface SortStrategy {
+abstract class SortStrategy {
   <color:testsColor(testMethods[SortStrategy])>+perform_sort(List<int>)</color>
 }
 
@@ -64,10 +64,10 @@ class MergeSort {
   <color:testsColor(test_merge_sort_struct)>+perform_sort(List<int>)</color>
 }
 
-MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])
-BubbleSort -up-|> SortStrategy #testsColor(testClass[BubbleSort])
-Policy -right-> Context #testsColor(testAttributes[Policy]): context
-Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorithm
+MergeSort -up-|> SortStrategy #testsColor(test_merge_sort_class)
+BubbleSort -up-|> SortStrategy #testsColor(test_bubble_sort_class)
+Policy -right-> Context #testsColor(test_policy_attributes): context
+Context -right-> SortStrategy #testsColor(test_context_attributes): sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
@@ -78,9 +78,6 @@ Client .down.> Context
 
 (These are not tested)
 
-1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
+1. Create a new class `QuickSort` that inherits from `SortStrategy` and implement the Quick Sort algorithm.
 
-2. Make the method `performSort(List<Dates>)` generic, so that other objects can also be sorted by the same method.
-**Hint:** Have a look at Java Generics and the interface `Comparable`.  
-
-3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.
+2. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.
