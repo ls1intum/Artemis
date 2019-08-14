@@ -1,8 +1,10 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { filter, take, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { catchError, filter, map, switchMap, take, tap } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
 import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { Result } from 'app/entities/result';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -20,6 +22,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     abstract getTooltip: () => string;
 
     @Input() participation: Participation;
+    @Input() showProgress: boolean;
     @Input() btnSize = ButtonSize.SMALL;
 
     participationHasResult: boolean;
@@ -29,7 +32,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, protected submissionService: ProgrammingSubmissionWebsocketService) {}
+    protected constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        protected submissionService: ProgrammingSubmissionWebsocketService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+    ) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -38,12 +45,24 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationHasResult = !!(this.participation.results && this.participation.results.length);
+            this.participationHasResult = !!this.participation.results;
             this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            if (!this.participationHasResult) {
-                this.setupResultSubscription();
-            }
-            this.setupSubmissionSubscription();
+            of(this.participationHasResult)
+                .pipe(
+                    // Ideally this component is provided a participation with an attached result. If this is not the cased, try retrieve it from the server.
+                    switchMap((participationHashResult: boolean) => {
+                        return participationHashResult ? of(!!this.participation.results.length) : this.checkIfHasResult(this.participation.id);
+                    }),
+                    // If there is no result yet for a participation, create a websocket subscription to get the first incoming result.
+                    tap((participationHasResult: boolean) => {
+                        if (!participationHasResult) {
+                            this.setupResultSubscription();
+                        }
+                    }),
+                )
+                .subscribe(() => {
+                    this.setupSubmissionSubscription();
+                });
         }
     }
 
@@ -54,6 +73,13 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
+    }
+
+    private checkIfHasResult(participationId: number): Observable<boolean> {
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
+            catchError(() => of(null)),
+            map((result: Result | null) => !!result),
+        );
     }
 
     /**

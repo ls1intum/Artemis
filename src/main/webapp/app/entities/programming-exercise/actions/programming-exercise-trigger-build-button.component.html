@@ -4,5 +4,5 @@
     (click)="triggerBuild($event)"
     ngbTooltip="{{ getTooltip() | translate }}"
 >
-    <fa-icon icon="redo"></fa-icon>
+    <fa-icon icon="redo" [spin]="showProgress && isBuilding"></fa-icon>
 </button>
