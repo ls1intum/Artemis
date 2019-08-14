@@ -3,6 +3,8 @@
         "title": "Artemis",
         "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "generic": {
+            "yes": "Ja",
+            "no": "Nein",
             "emptyList": "Keine Elemente verfügbar"
         },
         "menu": {

@@ -26,6 +26,7 @@ import {
     CodeEditorSessionService,
 } from 'app/code-editor';
 import { ResultService, UpdatingResultComponent } from 'app/entities/result';
+import { ExerciseType } from 'app/entities/exercise';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -56,6 +57,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
 
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
+    PROGRAMMING = ExerciseType.PROGRAMMING;
 
     // This component responds to multiple route schemas:
     // :exerciseId -> Load exercise and select template repository

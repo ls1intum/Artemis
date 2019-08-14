@@ -2,29 +2,31 @@
   -- When using the result component make sure that the reference to the participation input is changed if the result changes
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
-<span *ngIf="!result || (!result.score && result.score !== 0)">
-    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.result.noResult">No results</span></span>
-    <span class="text-primary" *ngIf="isBuilding"
-        ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="artemisApp.editor.building">&nbsp;Building...</span></span
-    >
-</span>
-<ng-container *ngIf="result && (result.score || result.score === 0)">
-    <span [ngClass]="textColorClass">
-        <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-        <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
-        <span *ngIf="hasFeedback">
-            <span class="result" (click)="showDetails(result)">{{ resultString }}</span>
-        </span>
-        <span *ngIf="!hasFeedback"> {{ result.resultString }}</span>
-        <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }})</span>
-        <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
-    </span>
-    <span *ngIf="result.buildArtifact">
-        <a (click)="downloadBuildResult(participation.id)">
-            &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span></a
-        >
-    </span>
-    <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
-        {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | translate | uppercase }}
-    </span>
+<ng-container *ngIf="isBuilding; else resultContainer">
+    <span class="text-primary"><fa-icon icon="circle-notch" size="lg" [spin]="true" class="mr-2"></fa-icon><span jhiTranslate="artemisApp.editor.building">Building...</span></span>
 </ng-container>
+<ng-template #resultContainer>
+    <ng-container *ngIf="result && (result.score || result.score === 0); else noResultContainer">
+        <span [ngClass]="textColorClass">
+            <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
+            <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
+            <span *ngIf="hasFeedback">
+                <span class="result" (click)="showDetails(result)">{{ resultString }}</span>
+            </span>
+            <span *ngIf="!hasFeedback"> {{ result.resultString }}</span>
+            <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }})</span>
+            <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
+        </span>
+        <span *ngIf="result.buildArtifact">
+            <a (click)="downloadBuildResult(participation.id)">
+                &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span></a
+            >
+        </span>
+        <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+            {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | translate | uppercase }}
+        </span>
+    </ng-container>
+</ng-template>
+<ng-template #noResultContainer>
+    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.result.noResult">No results</span></span>
+</ng-template>

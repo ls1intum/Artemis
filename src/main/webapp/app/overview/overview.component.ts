@@ -4,6 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',

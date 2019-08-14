@@ -30,19 +30,27 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
+                    <jhi-updating-result
+                        [exerciseType]="exercise.type"
+                        [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null"
+                        short="true"
+                    ></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
+                    <jhi-updating-result
+                        [exerciseType]="exercise.type"
+                        [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null"
+                        short="true"
+                    ></jhi-updating-result>
                 </span>
             </div>
         </div>

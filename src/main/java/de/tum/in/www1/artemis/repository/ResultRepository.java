@@ -92,4 +92,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
+
+    /**
+     * Checks if a result for the given participation exists.
+     *
+     * @param participationId the id of the participation to check.
+     * @return true if a result for the given participation exists, false otherwise.
+     */
+    boolean existsByParticipationId(long participationId);
 }

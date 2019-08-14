@@ -11,42 +11,42 @@ jobs:
       - stage: Build
         name: "Java"
         language: java
-        jdk: openjdk8
+        jdk: openjdk12
         install: skip
         script: ./gradlew -Pprod compileJava
       - stage: Build
         name: "TypeScript"
         language: node_js
-        node_js: 12.3.1
+        node_js: 12.8.0
         install: yarn install
         script: yarn build
       - stage: Test
         name: "Java"
         language: java
-        jdk: openjdk8
+        jdk: openjdk12
         install: skip
         script: ./gradlew executeTests
       - stage: Test
         name: "TypeScript"
         language: node_js
-        node_js: 12.3.1
+        node_js: 12.8.0
         install: yarn install
         script: yarn test
       - stage: Lint
         name: "Java"
         language: java
-        jdk: openjdk8
+        jdk: openjdk12
         install: skip
         script: ./gradlew spotlessCheck
       - stage: Lint
         name: "Checkstyle"
         language: java
-        jdk: openjdk8
+        jdk: openjdk12
         install: skip
         script: ./gradlew checkstyleMain -x yarn_install -x webpackBuildDev -x webpack
       - stage: Lint
         name: "TypeScript"
         language: node_js
-        node_js: 12.3.1
+        node_js: 12.8.0
         install: yarn install
         script: yarn prettier:check

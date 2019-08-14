@@ -14,7 +14,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Result } from 'app/entities/result';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { TextExercise, TextExercisePopupService } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
