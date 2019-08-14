@@ -203,7 +203,7 @@ public class TextCluster implements Serializable {
     }
 
     public int openTextBlockCount() {
-        return (int) blocks.stream().filter(TextBlock::isAssessable).count();
+        return (int) blocks.stream().filter(textBlock -> !textBlock.isAssessable()).count();
     }
     // endregion
 }
