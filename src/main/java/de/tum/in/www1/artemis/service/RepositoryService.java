@@ -50,8 +50,8 @@ public class RepositoryService {
     /**
      * Get the repository content (files and folders).
      * 
-     * @param repository
-     * @return
+     * @param repository VCS repository to get files for.
+     * @return a map of files with the information if they are a file or a folder.
      */
     public HashMap<String, FileType> getFiles(Repository repository) {
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
@@ -69,10 +69,10 @@ public class RepositoryService {
     /**
      * Get a single file/folder from repository.
      * 
-     * @param repository
-     * @param filename
-     * @return
-     * @throws IOException
+     * @param repository in which the requested file is located.
+     * @param filename of the file to be retrieved.
+     * @return The file if found or throw an exception.
+     * @throws IOException if the file can't be found, is corrupt, etc.
      */
     public byte[] getFile(Repository repository, String filename) throws IOException {
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -87,10 +87,10 @@ public class RepositoryService {
     /**
      * Create a file in a repository.
      * 
-     * @param repository
-     * @param filename
-     * @param inputStream
-     * @throws IOException
+     * @param repository in which the file should be created.
+     * @param filename of the file to be created.
+     * @param inputStream byte representation of the file to be created.
+     * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
         if (gitService.get().getFileByName(repository, filename).isPresent()) {
@@ -108,11 +108,11 @@ public class RepositoryService {
 
     /**
      * Create a folder in a repository.
-     * 
-     * @param repository
-     * @param folderName
-     * @param inputStream
-     * @throws IOException
+     *
+     * @param repository in which the folder should be created.
+     * @param folderName of the folder to be created.
+     * @param inputStream byte representation of the folder to be created.
+     * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
         if (gitService.get().getFileByName(repository, folderName).isPresent()) {
@@ -132,11 +132,11 @@ public class RepositoryService {
     /**
      * Rename a file in a repository.
      * 
-     * @param repository
-     * @param fileMove
-     * @throws FileNotFoundException
-     * @throws FileAlreadyExistsException
-     * @throws IllegalArgumentException
+     * @param repository in which the file is located.
+     * @param fileMove dto for describing the old and the new filename.
+     * @throws FileNotFoundException if the file to rename is not available.
+     * @throws FileAlreadyExistsException if the new filename is already taken.
+     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../)
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
@@ -161,11 +161,13 @@ public class RepositoryService {
     /**
      * Delete a file in a repository.
      * 
-     * @param repository
-     * @param filename
-     * @throws IOException
+     * @param repository in which the file to delete is located.
+     * @param filename to delete.
+     * @throws IOException if the file can't be deleted.
+     * @throws FileNotFoundException if the file can't be found.
+     * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
-    public void deleteFile(Repository repository, String filename) throws IOException {
+    public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
 
@@ -187,7 +189,7 @@ public class RepositoryService {
     /**
      * Pull from a git repository.
      * 
-     * @param repository
+     * @param repository for which to pull the current state of the remote.
      */
     public void pullChanges(Repository repository) {
         gitService.get().pullIgnoreConflicts(repository);
@@ -196,8 +198,8 @@ public class RepositoryService {
     /**
      * Commit all staged and unstaged changes in the given repository.
      * 
-     * @param repository
-     * @throws GitAPIException
+     * @param repository for which to execute the commit.
+     * @throws GitAPIException if the staging/commiting process fails.
      */
     public void commitChanges(Repository repository) throws GitAPIException {
         gitService.get().stageAllChanges(repository);
@@ -207,9 +209,11 @@ public class RepositoryService {
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      * 
-     * @param repositoryUrl
-     * @return
-     * @throws GitAPIException
+     * @param repositoryUrl of the repository to check the status for.
+     * @return a dto to determine the status of the repository.
+     * @throws InterruptedException if the repository can't be checked out on the server.
+     * @throws IOException if the repository status can't be retrieved.
+     * @throws GitAPIException if the repository status can't be retrieved.
      */
     public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
         Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl, true);
@@ -219,12 +223,14 @@ public class RepositoryService {
     /**
      * Retrieve a repository by its name.
      * 
-     * @param exercise
-     * @param repoUrl
-     * @return
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws InterruptedException
+     * @param exercise to which the repository belongs.
+     * @param repoUrl of the repository on the server.
+     * @param pullOnCheckout if true pulls after checking out the git repository.
+     * @return the repository if available.
+     * @throws IOException if the repository can't be checked out.
+     * @throws GitAPIException if the repository can't be checked out.
+     * @throws IllegalAccessException if the user does not have access to the repository.
+     * @throws InterruptedException if the repository can't be checked out.
      */
     public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout)
             throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
@@ -239,13 +245,15 @@ public class RepositoryService {
 
     /**
      * Retrieve a repository by its name.
-     * 
-     * @param exercise
-     * @param repoUrl
-     * @return
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws InterruptedException
+     *
+     * @param principal entity used for permission checking.
+     * @param exercise to which the repository belongs.
+     * @param repoUrl of the repository on the server.
+     * @return the repository if available.
+     * @throws IOException if the repository can't be checked out.
+     * @throws GitAPIException if the repository can't be checked out.
+     * @throws IllegalAccessException if the user does not have access to the repository.
+     * @throws InterruptedException if the repository can't be checked out.
      */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl)
             throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
@@ -259,13 +267,14 @@ public class RepositoryService {
     }
 
     /**
-     * Retrieve a repository by a participation connected to it.
+     * Retrieve a repository by the participation connected to it.
      *
-     * @param participation
-     * @return
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws InterruptedException
+     * @param participation to which the repository belongs.
+     * @return the repository if available.
+     * @throws IOException if the repository can't be checked out.
+     * @throws GitAPIException if the repository can't be checked out.
+     * @throws IllegalAccessException if the user does not have access to the repository.
+     * @throws InterruptedException if the repository can't be checked out.
      */
     public Repository checkoutRepositoryByParticipation(ProgrammingExerciseParticipation participation)
             throws IOException, IllegalAccessException, GitAPIException, InterruptedException {
