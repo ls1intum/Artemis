@@ -61,6 +61,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+    @Output() editingStarted = new EventEmitter<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
@@ -144,6 +145,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
+        this.editingStarted.emit();
         if (this.exercise.problemStatement !== problemStatement) {
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
