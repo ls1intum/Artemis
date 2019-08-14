@@ -143,6 +143,7 @@ public class FileResource {
      * GET /files/templates/:filename : Get the template file with the given filename
      *
      * @param filename The filename of the file to get
+     * @param language The programming languag for which the template file should be returned
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
