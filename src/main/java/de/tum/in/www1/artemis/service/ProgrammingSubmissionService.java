@@ -138,6 +138,7 @@ public class ProgrammingSubmissionService {
      * Create a submission with type INSTRUCTOR for the last commit hash of the given participation.
      *
      * @param participation to create submission for.
+     * @param submissionType of the submission to create.
      * @return created submission.
      * @throws IllegalStateException if the last commit hash can't be retrieved.
      */
