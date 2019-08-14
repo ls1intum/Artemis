@@ -26,6 +26,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false and not submission.participation is null")
     List<Submission> findAllUnsubmittedModelingAndTextSubmissions();
 
+    /* Get all submissions from a participation_id */
+    @Query("SELECT submission FROM  Submission submission WHERE submission.participation.id = :#{#participationId} ")
+    List<Submission> getAllSubmissionsByParticipation(@Param("participationId") Long participationId);
+
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
      * assessment.
