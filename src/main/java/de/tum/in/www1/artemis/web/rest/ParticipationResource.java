@@ -596,7 +596,7 @@ public class ParticipationResource {
     /**
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
      *
-     * @param id the participationId of the participation to delete
+     * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
      * @param principal The identity of the user accessing this resource
