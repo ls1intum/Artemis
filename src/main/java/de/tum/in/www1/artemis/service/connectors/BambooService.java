@@ -545,7 +545,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
                 // In this case we know the submission time, so we use it for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission.getSubmissionDate(), programmingSubmission.getType());
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission);
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.

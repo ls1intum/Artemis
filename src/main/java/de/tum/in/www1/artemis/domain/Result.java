@@ -295,12 +295,19 @@ public class Result implements Serializable {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate, SubmissionType submissionType) {
-        if (submissionType == SubmissionType.INSTRUCTOR || submissionType == SubmissionType.TEST) {
+    /**
+     * Sets the result to rated if:
+     * - It was created by an instructor (SubmissionType)
+     * - OR if the submissionDate is <= the exerciseDueDate.
+     * @param exerciseDueDate date after which no normal submission is considered rated.
+     * @param submission to which the result belongs.
+     */
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
+        if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
         else
-            this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
+            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
     }
 
     public Submission getSubmission() {
