@@ -3,7 +3,7 @@ import sorting_algorithms
 import sort_strategy
 import context
 import policy
-import structural_helpers
+from tests.structural import structural_helpers
 
 
 class TestSortingStructural(unittest.TestCase):
