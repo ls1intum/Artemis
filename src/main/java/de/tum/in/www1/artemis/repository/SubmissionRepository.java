@@ -48,4 +48,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return true if a submission for the given participation exists, false otherwise
      */
     boolean existsByParticipationId(long participationId);
+
+    List<Submission> findByParticipationId(long participationId);
 }

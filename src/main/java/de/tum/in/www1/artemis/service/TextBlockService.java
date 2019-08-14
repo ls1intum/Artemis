@@ -17,6 +17,11 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 @Service
 public class TextBlockService {
 
+    /**
+     * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission
+     * @param result the result, which correspond to the TextSubmission, that gets split
+     * @throws ClassCastException if Result doesn't correspond to a TextSubmission
+     */
     public void prepopulateFeedbackBlocks(Result result) throws ClassCastException {
         if (result.getFeedbacks().size() != 0 || !(result.getSubmission() instanceof TextSubmission)) {
             return;

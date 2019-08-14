@@ -1,7 +1,7 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
-![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)
+![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/Artemis/develop.svg?style=flat-square)
+![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat-square)
 
 This application was generated using JHipster 6.2.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.2.0](http://www.jhipster.tech/documentation-archive/v6.2.0).
 
