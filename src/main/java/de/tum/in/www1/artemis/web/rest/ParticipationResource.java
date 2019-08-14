@@ -596,7 +596,7 @@ public class ParticipationResource {
     /**
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
      *
-     * @param id the participationId of the participation to delete
+     * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
      * @param principal The identity of the user accessing this resource
@@ -604,14 +604,14 @@ public class ParticipationResource {
      */
     @DeleteMapping("/participations/{participationId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteParticipation(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(id);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
-                deleteBuildPlan, deleteRepository, principal.getName());
-        participationService.delete(id, deleteBuildPlan, deleteRepository);
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
+                username, deleteBuildPlan, deleteRepository, principal.getName());
+        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
 
