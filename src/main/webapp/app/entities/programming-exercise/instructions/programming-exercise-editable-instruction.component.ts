@@ -60,7 +60,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
-    @Output() editingStarted = new EventEmitter<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
