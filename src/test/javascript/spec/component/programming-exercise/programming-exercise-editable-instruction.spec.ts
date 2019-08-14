@@ -215,6 +215,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.generateHtmlSubject).to.have.been.calledOnce;
+        expect(generateHtmlSubjectStub).to.have.been.calledOnce;
     }));
 });
