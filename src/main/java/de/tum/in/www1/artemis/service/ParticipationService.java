@@ -815,7 +815,7 @@ public class ParticipationService {
      */
     @Transactional(noRollbackFor = { Throwable.class })
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
@@ -851,14 +851,7 @@ public class ParticipationService {
             complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
-        deleteResultsAndSubmissionsOfParticipation(participation);
-
-        // The following case is necessary, because we might have submissions without result
-        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
-            for (Submission submission : participation.getSubmissions()) {
-                submissionRepository.deleteById(submission.getId());
-            }
-        }
+        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation);
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -870,10 +863,12 @@ public class ParticipationService {
      * Remove all results and submissions of the given participation.
      * Will do nothing if invoked with a participation without results/submissions.
      * @param participation to delete results/submissions from.
+     * @return participation without submissions and results.
      */
     @Transactional
-    public void deleteResultsAndSubmissionsOfParticipation(Participation participation) {
-        if (participation.getResults() != null && participation.getResults().size() > 0) {
+    public Participation deleteResultsAndSubmissionsOfParticipation(Participation participation) {
+        // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
+        if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
@@ -882,11 +877,18 @@ public class ParticipationService {
                     Submission submissionToDelete = result.getSubmission();
                     submissionRepository.deleteById(submissionToDelete.getId());
                     result.setSubmission(null);
-                    // make sure submissions don't get deleted twice (see below)
                     participation.removeSubmissions(submissionToDelete);
                 }
             }
         }
+        // The following case is necessary, because we might have submissions without a result. At this point only submissions without a result will still be connected to the
+        // participation.
+        if (participation.getSubmissions() != null) {
+            for (Submission submission : participation.getSubmissions()) {
+                submissionRepository.deleteById(submission.getId());
+            }
+        }
+        return participation;
     }
 
     /**
