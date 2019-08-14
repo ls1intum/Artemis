@@ -1,9 +1,8 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { filter, take, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -24,6 +23,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() btnSize = ButtonSize.SMALL;
 
     participationHasResult: boolean;
+    participationIsActive: boolean;
     isBuilding: boolean;
 
     private submissionSubscription: Subscription;
@@ -39,6 +39,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
             this.participationHasResult = !!(this.participation.results && this.participation.results.length);
+            this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
             if (!this.participationHasResult) {
                 this.setupResultSubscription();
             }

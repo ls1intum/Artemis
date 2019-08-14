@@ -1,3 +1,8 @@
-<button [ngClass]="['btn', 'btn-primary', btnSize]" [disabled]="!participationHasResult || isBuilding" (click)="triggerBuild($event)" ngbTooltip="{{ getTooltip() | translate }}">
+<button
+    [ngClass]="['btn', 'btn-primary', btnSize]"
+    [disabled]="!participationHasResult || !participationIsActive || isBuilding"
+    (click)="triggerBuild($event)"
+    ngbTooltip="{{ getTooltip() | translate }}"
+>
     <fa-icon icon="redo"></fa-icon>
 </button>
