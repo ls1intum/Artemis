@@ -604,14 +604,14 @@ public class ParticipationResource {
      */
     @DeleteMapping("/participations/{participationId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteParticipation(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(id);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
                 deleteBuildPlan, deleteRepository, principal.getName());
-        participationService.delete(id, deleteBuildPlan, deleteRepository);
+        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
 
