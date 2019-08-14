@@ -609,8 +609,8 @@ public class ParticipationResource {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
-                deleteBuildPlan, deleteRepository, principal.getName());
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
+                username, deleteBuildPlan, deleteRepository, principal.getName());
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
