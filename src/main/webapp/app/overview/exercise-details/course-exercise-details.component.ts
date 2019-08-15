@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';
@@ -16,6 +16,8 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { courseExerciseTour } from 'app/guided-tour/tours/course-exercise-tour';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -24,7 +26,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -54,6 +56,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -69,6 +72,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.loadExercise();
             }
         });
+    }
+
+    ngAfterViewInit() {
+        this.guidedTourService.enableGuidedTourForExercise(this.exercise, courseExerciseTour);
     }
 
     loadExercise() {

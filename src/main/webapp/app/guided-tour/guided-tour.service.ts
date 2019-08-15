@@ -13,6 +13,7 @@ import { ContentType, Orientation, OrientationConfiguration } from './guided-tou
 import { AccountService } from 'app/core';
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<GuidedTourSettings>;
 
@@ -216,14 +217,6 @@ export class GuidedTourService {
         if (this.currentTour.steps[this.currentTourStepIndex].selector) {
             const selectedElement = document.querySelector(this.currentTour.steps[this.currentTourStepIndex].selector!);
             if (!selectedElement) {
-                this.errorHandler.handleError(
-                    // If error handler is configured this should not block the browser.
-                    new Error(
-                        `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                            this.currentTour.settingsId
-                        }`,
-                    ),
-                );
                 return false;
             }
         }
@@ -382,5 +375,11 @@ export class GuidedTourService {
                 this.startTour(tour);
             });
         }
+    }
+
+    public enableGuidedTourForExercise(exercise: Exercise | null, tour: GuidedTour) {
+        setTimeout(() => {
+            this.startTour(tour);
+        }, 1000);
     }
 }

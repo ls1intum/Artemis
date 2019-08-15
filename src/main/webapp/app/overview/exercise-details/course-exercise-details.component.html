@@ -32,7 +32,7 @@
             </div>
             <ng-template #exerciseTemplate>
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
-                    <div class="col-12 col-md-12 markdown-preview">
+                    <div class="col-12 col-md-12 markdown-preview problem-statement">
                         <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
                         <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
                     </div>
@@ -122,7 +122,7 @@
                             </div>
                         </div>
                     </div>
-                    <div *ngIf="!combinedParticipation || !combinedParticipation.results">
+                    <div class="no-results" *ngIf="!combinedParticipation || !combinedParticipation.results">
                         {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                     }}</a>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!showResults">
+            <div class="row mb-2 mt-2 align-items-baseline no-results" *ngIf="!showResults">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
                 </div>
