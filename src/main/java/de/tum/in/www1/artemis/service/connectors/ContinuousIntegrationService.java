@@ -9,8 +9,6 @@ import de.tum.in.www1.artemis.domain.*;
 
 /**
  * Abstract service for managing entities related to continuous integration.
- * 
- * @param <P> generic parameter for the build plan object of a continuous integration system.
  */
 public interface ContinuousIntegrationService {
 
@@ -43,14 +41,14 @@ public interface ContinuousIntegrationService {
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
-    public void configureBuildPlan(Participation participation);
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation);
 
     /**
      * triggers a build for the build plan in the given participation
      * 
      * @param participation the participation with the id of the build plan that should be triggered
      */
-    public void triggerBuild(Participation participation);
+    public void triggerBuild(ProgrammingExerciseParticipation participation);
 
     /**
      * Delete project with given identifier from CI system.
@@ -70,11 +68,11 @@ public interface ContinuousIntegrationService {
      * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
      * <p>
      * Important: The implementation is responsible for retrieving and saving the result from the CI system.
-     *
-     * @param participation participation for which build has completed
+     * @param participation for which build has completed
+     * @return build result
      */
     @Deprecated
-    public Result onBuildCompletedOld(Participation participation);
+    public Result onBuildCompletedOld(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -95,7 +93,7 @@ public interface ContinuousIntegrationService {
      * @return the result of the build
      * @throws Exception if the Body could not be parsed
      */
-    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception;
+    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -103,13 +101,13 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get status
      * @return build status
      */
-    public BuildStatus getBuildStatus(Participation participation);
+    public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation);
 
     /**
      * Check if the given build plan ID is valid and accessible.
      *
      * @param buildPlanId unique identifier for build plan on CI system
-     * @return
+     * @return true if build plan is valid otherwise false
      */
     public Boolean buildPlanIdIsValid(String buildPlanId);
 
@@ -125,18 +123,18 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
-     * @param participation participation for which to get the build logs
+     * @param buildPlanId to get the latest build logs
      * @return list of build log entries
      */
-    public List<BuildLogEntry> getLatestBuildLogs(Participation participation);
+    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
 
     /**
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
      *
      * @param participation participation for which to get the build plan URL
-     * @return
+     * @return build plan url
      */
-    public URL getBuildPlanWebUrl(Participation participation);
+    public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -144,13 +142,13 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build artifact
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
-    public ResponseEntity retrieveLatestArtifact(Participation participation);
+    public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey
-     * @param projectName
+     * @param projectKey to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
     public String checkIfProjectExists(String projectKey, String projectName);

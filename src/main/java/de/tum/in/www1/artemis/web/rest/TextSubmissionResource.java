@@ -173,6 +173,9 @@ public class TextSubmissionResource {
      * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call
      *
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param submittedOnly mark if only submitted Submissions should be returned
+     * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
@@ -198,8 +201,8 @@ public class TextSubmissionResource {
         // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null) {
-                    textSubmission.getParticipation().filterSensitiveInformation();
+                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
+                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
                 }
             });
         }
@@ -210,6 +213,7 @@ public class TextSubmissionResource {
     /**
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
+     * @param exerciseId exerciseID  for which a submission should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
@@ -237,8 +241,9 @@ public class TextSubmissionResource {
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
 
         // tutors should not see information about the student of a submission
-        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null) {
-            textSubmissionWithoutAssessment.get().getParticipation().filterSensitiveInformation();
+        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
+                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);

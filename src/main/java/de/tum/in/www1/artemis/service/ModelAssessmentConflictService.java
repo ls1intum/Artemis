@@ -55,6 +55,12 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
+    /**
+     * Retrieves all model assessment conflicts for a given submission, for which the current user is responsible
+     *
+     * @param submissionId The id of the submission
+     * @return A list of all assessment conflicts for the given submission id
+     */
     @Transactional(readOnly = true)
     public List<ModelAssessmentConflict> getConflictsForCurrentUserForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> conflictsForSubmission = getConflictsForSubmission(submissionId);
@@ -62,7 +68,8 @@ public class ModelAssessmentConflictService {
             return Collections.EMPTY_LIST;
         }
         else {
-            Exercise exercise = conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
             return conflictsForSubmission.stream().filter(conflict -> currentUserIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
         }
     }
@@ -90,6 +97,8 @@ public class ModelAssessmentConflictService {
 
     /**
      * Deletes all conflicts related to the given Participation. Needs to be called before a Participation gets deleted to prevent foreign key constraint violations.
+     *
+     * @param participation The participation for which all conflicts should get deleted
      */
     public void deleteAllConflictsForParticipation(Participation participation) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
@@ -100,7 +109,7 @@ public class ModelAssessmentConflictService {
     /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
      * 
-     * @param conflicts
+     * @param conflicts The conflicts for which properties should be loaded
      */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(conflict -> {
@@ -114,7 +123,8 @@ public class ModelAssessmentConflictService {
     @Transactional
     public Exercise getExerciseOfConflict(Long conflictId) {
         ModelAssessmentConflict conflict = findOne(conflictId);
-        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) conflict.getCausingConflictingResult().getResult().getParticipation();
+        return studentParticipation.getExercise();
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
@@ -193,6 +203,13 @@ public class ModelAssessmentConflictService {
         });
     }
 
+    /**
+     * Checks if the current user is responsible for handling a model assessment conflict
+     *
+     * @param conflict The conflict for which the responsibility should be checked
+     * @param exercise The exercise related to the given conflict
+     * @return True, if the the user is the assessor of the unhandled conflict, or any conflicting results inside the conflict
+     */
     public boolean currentUserIsResponsibleForHandling(ModelAssessmentConflict conflict, Exercise exercise) {
         User currentUser = userService.getUser();
         if (authCheckService.isAtLeastInstructorForExercise(exercise)) {

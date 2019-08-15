@@ -114,10 +114,8 @@ public class LtiService {
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @param exercise      Exercise to launch
-     * @throws ArtemisAuthenticationException
-     * @throws AuthenticationException
      */
-    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws ArtemisAuthenticationException, AuthenticationException {
+    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
 
         // Authenticate the the LTI user
         Optional<Authentication> auth = authenticateLtiUser(launchRequest);
@@ -395,14 +393,12 @@ public class LtiService {
     /**
      * This method is pinged on new build results. It sends an message to the LTI consumer with the new score.
      *
-     * @param participation
+     * @param participation The programming exercise participation for which a new build result is available
      */
-    public void onNewBuildResult(Participation participation) {
-
-        // Get the LTI outcome URL
+    public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
 
         // TODO investigate this call for manual results. Could it be the case that the exercise is not initialized (Hibernate) here?
-
+        // Get the LTI outcome URL
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
             String score = "0.00";
@@ -437,7 +433,7 @@ public class LtiService {
     /**
      * Handle launch request which was initiated earlier by a LTI consumer
      *
-     * @param sessionId
+     * @param sessionId The ID of the current user's session (JSESSIONID)
      */
     public void handleLaunchRequestForSession(String sessionId) {
         if (launchRequestForSession.containsKey(sessionId)) {

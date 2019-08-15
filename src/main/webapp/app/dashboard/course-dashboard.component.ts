@@ -8,6 +8,7 @@ import { User } from 'app/core';
 import { Participation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { DecimalPipe } from '@angular/common';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -19,7 +20,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT];
 
     course: Course;
-    participations: Participation[] = [];
+    participations: StudentParticipation[] = [];
     exercises: Exercise[] = [];
     students: Student[] = [];
 
@@ -118,6 +119,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 studentsMap.set(participation.student.id!, student);
             }
             student.participations.push(participation);
+            if (participation.presentationScore) {
+                student.presentationScore += participation.presentationScore;
+            }
         }
 
         // prepare exercises
@@ -154,8 +158,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
                     student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type)! + roundedPoints + ',');
                 } else {
+                    // there is no result, the student has not participated or submitted too late
                     student.pointsPerExercise.set(exercise.id, 0);
-                    student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type) + '0,');
+                    student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type) + '-,');
                 }
             }
             for (const exerciseType of this.exerciseTypes) {
@@ -169,6 +174,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         });
 
         for (const exerciseType of this.exerciseTypes) {
+            // TODO: can we calculate this average only with students who participated in the exercise?
             this.averageNumberOfPointsPerExerciseTypes.set(
                 exerciseType,
                 this.students.reduce((total, student) => total + student.pointsPerExerciseType.get(exerciseType)!, 0) / this.students.length,
@@ -202,7 +208,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         if (this.exportReady && this.students.length > 0) {
             const rows: string[] = [];
             // first row with headers
-            let firstRowString = 'data:text/csv;charset=utf-8,Name,Username,Email,';
+            let firstRowString = 'data:text/csv;charset=utf-8,Name,Username,Email,Registration Number,';
             for (const exerciseType of this.exerciseTypes) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
 
@@ -211,17 +217,17 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     firstRowString += this.exerciseTitlesPerType.get(exerciseType) + ',' + exerciseTypeName + ' Points,' + exerciseTypeName + ' Score,';
                 }
             }
-            rows.push(firstRowString + 'Overall Points,Overall Score');
+            rows.push(firstRowString + 'Overall Points,Overall Score,Presentation Score');
 
             for (const student of this.students.values()) {
                 let name = student.user.firstName!.trim();
                 if (student.user.lastName && student.user.lastName !== '') {
                     name += ' ' + student.user.lastName;
                 }
-                const studentId = student.user.login!.trim();
+                const login = student.user.login!.trim();
+                const registrationNumber = student.user.registrationNumber ? student.user.registrationNumber!.trim() : '';
                 const email = student.user.email!.trim();
-
-                let rowString = name + ',' + studentId + ',' + email + ',';
+                let rowString = name + ',' + login + ',' + email + ',' + registrationNumber + ',';
 
                 for (const exerciseType of this.exerciseTypes) {
                     // only add it if there are actually exercises in this type
@@ -239,11 +245,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 const overallPoints = this.round(student.overallPoints);
                 const overallScore = this.round((student.overallPoints / this.maxNumberOfOverallPoints) * 100) + '%';
 
-                rows.push(rowString + overallPoints + ',' + overallScore);
+                rows.push(rowString + overallPoints + ',' + overallScore + ',' + student.presentationScore);
             }
 
             // max values
-            let rowStringMax = 'Max' + ',,,';
+            let rowStringMax = 'Max' + ',,,,';
             for (const exerciseType of this.exerciseTypes) {
                 // only add it if there are actually exercises in this type
                 if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
@@ -253,10 +259,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             }
             const maxOverallPoints = this.round(this.maxNumberOfOverallPoints);
             const maxOverallScore = '100%';
-            rows.push(rowStringMax + maxOverallPoints + ',' + maxOverallScore);
+            rows.push(rowStringMax + maxOverallPoints + ',' + maxOverallScore + ',');
 
             // average values
-            let rowStringAverage = 'Average' + ',,,';
+            let rowStringAverage = 'Average' + ',,,,';
             for (const exerciseType of this.exerciseTypes) {
                 // only add it if there are actually exercises in this type
                 if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
@@ -268,27 +274,27 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             }
             const averageOverallPoints = this.round(this.averageNumberOfOverallPoints);
             const averageOverallScore = this.round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100) + '%';
-            rows.push(rowStringAverage + averageOverallPoints + ',' + averageOverallScore);
+            rows.push(rowStringAverage + averageOverallPoints + ',' + averageOverallScore + ',');
 
             // participation
-            let rowStringParticipation = 'Number of participations' + ',,,';
+            let rowStringParticipation = 'Number of participations' + ',,,,';
             for (const exerciseType of this.exerciseTypes) {
                 // only add it if there are actually exercises in this type
                 if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
                     rowStringParticipation += this.exerciseParticipationsPerType.get(exerciseType) + ',,';
                 }
             }
-            rows.push(rowStringParticipation + ',');
+            rows.push(rowStringParticipation + ',,');
 
             // successful
-            let rowStringSuccuessful = 'Number of successful participations' + ',,,';
+            let rowStringSuccuessful = 'Number of successful participations' + ',,,,';
             for (const exerciseType of this.exerciseTypes) {
                 // only add it if there are actually exercises in this type
                 if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
                     rowStringSuccuessful += this.exerciseSuccessfulPerType.get(exerciseType) + ',,';
                 }
             }
-            rows.push(rowStringSuccuessful + ',');
+            rows.push(rowStringSuccuessful + ',,');
 
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -313,7 +319,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
 class Student {
     user: User;
-    participations: Participation[] = [];
+    participations: StudentParticipation[] = [];
+    presentationScore = 0;
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;

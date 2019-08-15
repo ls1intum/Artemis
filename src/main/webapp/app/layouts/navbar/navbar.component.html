@@ -29,7 +29,7 @@
                 </a>
             </li>
             <!--            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">-->
-            <!--                <a class="nav-link" routerLink="courses" (click)="collapseNavbar()" id="courses-menu">-->
+            <!--                <a class="nav-link" routerLink="courses" (click)="item dropdown pointercollapseNavbar()" id="courses-menu">-->
             <!--                    <span>-->
             <!--                        <fa-icon [icon]="'home'"></fa-icon>-->
             <!--                        <span jhiTranslate="global.menu.courses">Courses</span>-->
@@ -50,7 +50,14 @@
                     </span>
                 </a>
             </li>
-            <li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <li
+                *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                ngbDropdown
+                class="nav-item dropdown pointer"
+                display="dynamic"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+            >
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
                     <span>
                         <fa-icon [icon]="'user-plus'"></fa-icon>
@@ -112,7 +119,7 @@
                 </ul>
             </li>
 
-            <li ngbDropdown class="nav-item dropdown pointer" *ngIf="!currAccount && languages && languages.length > 1">
+            <li ngbDropdown class="nav-item dropdown pointer" display="dynamic" *ngIf="!currAccount && languages && languages.length > 1">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown">
                     <span>
                         <fa-icon [icon]="'flag'"></fa-icon>
@@ -132,6 +139,7 @@
                 *ngSwitchCase="true"
                 ngbDropdown
                 class="nav-item dropdown pointer"
+                display="dynamic"
                 placement="bottom-right"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
@@ -158,7 +166,7 @@
                     </li>
                     <div class="dropdown-divider"></div>
                     <li>
-                        <a class="dropdown-item" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                        <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>

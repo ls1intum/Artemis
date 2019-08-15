@@ -14,6 +14,7 @@ import { CourseService } from './course.service';
 export class CourseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
+    showOnlyActive = true;
 
     courses: Course[];
     eventSubscriber: Subscription;
@@ -32,6 +33,7 @@ export class CourseComponent implements OnInit, OnDestroy {
             (res: HttpErrorResponse) => this.onError(res),
         );
     }
+
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();
@@ -54,4 +56,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     }
 
     callback() {}
+
+    get today(): Date {
+        return new Date();
+    }
 }

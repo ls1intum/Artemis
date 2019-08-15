@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -69,6 +70,10 @@ public abstract class Exercise implements Serializable {
     @Column(name = "max_score")
     private Double maxScore;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assessment_type")
+    private AssessmentType assessmentType;
+
     @Column(name = "problem_statement")
     @Lob
     private String problemStatement;
@@ -91,7 +96,7 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<Participation> participations = new HashSet<>();
+    private Set<StudentParticipation> participations = new HashSet<>();
 
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -113,6 +118,10 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
+
     // Helpers
     // variable names must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
@@ -125,6 +134,9 @@ public abstract class Exercise implements Serializable {
 
     @Transient
     private Long numberOfComplaintsTransient;
+
+    @Transient
+    private Long numberOfMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -202,6 +214,7 @@ public abstract class Exercise implements Serializable {
 
     /**
      * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
+     * @return true if the assessment due date is in the past, otherwise false
      */
     @JsonIgnore
     public boolean isAssessmentDueDateOver() {
@@ -219,6 +232,19 @@ public abstract class Exercise implements Serializable {
 
     public void setMaxScore(Double maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public AssessmentType getAssessmentType() {
+        return assessmentType;
+    }
+
+    public Exercise assessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
+        return this;
+    }
+
+    public void setAssessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
     }
 
     public String getProblemStatement() {
@@ -268,28 +294,28 @@ public abstract class Exercise implements Serializable {
         this.categories = categories;
     }
 
-    public Set<Participation> getParticipations() {
+    public Set<StudentParticipation> getParticipations() {
         return participations;
     }
 
-    public Exercise participations(Set<Participation> participations) {
+    public Exercise participations(Set<StudentParticipation> participations) {
         this.participations = participations;
         return this;
     }
 
-    public Exercise addParticipation(Participation participation) {
+    public Exercise addParticipation(StudentParticipation participation) {
         this.participations.add(participation);
         participation.setExercise(this);
         return this;
     }
 
-    public Exercise removeParticipation(Participation participation) {
+    public Exercise removeParticipation(StudentParticipation participation) {
         this.participations.remove(participation);
         participation.setExercise(null);
         return this;
     }
 
-    public void setParticipations(Set<Participation> participations) {
+    public void setParticipations(Set<StudentParticipation> participations) {
         this.participations = participations;
     }
 
@@ -381,6 +407,14 @@ public abstract class Exercise implements Serializable {
         this.studentQuestions = studentQuestions;
     }
 
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
+    }
+
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean isEnded() {
@@ -416,9 +450,9 @@ public abstract class Exercise implements Serializable {
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
      */
-    public Participation findRelevantParticipation(List<Participation> participations) {
-        Participation relevantParticipation = null;
-        for (Participation participation : participations) {
+    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+        StudentParticipation relevantParticipation = null;
+        for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
@@ -443,6 +477,7 @@ public abstract class Exercise implements Serializable {
      * if necessary)
      *
      * @param participation the participation whose results we are considering
+     * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
@@ -509,22 +544,24 @@ public abstract class Exercise implements Serializable {
      * result. Filter everything else that is not relevant
      *
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username
+     * @param username used to get quiz submission for the user
+     * @param isStudent defines if the current user is a student
      */
-    public void filterForCourseDashboard(List<Participation> participations, String username, boolean isStudent) {
+    public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
 
         // remove the unnecessary inner course attribute
         setCourse(null);
 
         // get user's participation for the exercise
-        Participation participation = findRelevantParticipation(participations);
+        StudentParticipation participation = findRelevantParticipation(participations);
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
         if (participation == null && this instanceof QuizExercise) {
             QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
             if (submission.getSubmissionDate() != null) {
-                participation = new Participation().exercise(this).initializationState(InitializationState.INITIALIZED);
+                participation = new StudentParticipation().exercise(this);
+                participation.initializationState(InitializationState.INITIALIZED);
             }
         }
 
@@ -613,5 +650,13 @@ public abstract class Exercise implements Serializable {
 
     public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
+    }
+
+    public Long getNumberOfMoreFeedbackRequests() {
+        return numberOfMoreFeedbackRequestsTransient;
+    }
+
+    public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
+        this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
     }
 }

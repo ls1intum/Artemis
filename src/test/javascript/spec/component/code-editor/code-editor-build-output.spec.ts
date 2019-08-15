@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { CookieService } from 'ngx-cookie';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -13,7 +14,7 @@ import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
 import { SafeHtmlPipe } from 'app/shared';
-import { MockCodeEditorSessionService, MockParticipationWebsocketService } from '../../mocks';
+import { MockCodeEditorSessionService, MockCookieService, MockParticipationWebsocketService } from '../../mocks';
 import { ResultService } from 'app/entities/result';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { Feedback } from 'app/entities/feedback';
@@ -43,10 +44,12 @@ describe('CodeEditorBuildOutputComponent', () => {
             declarations: [CodeEditorBuildOutputComponent, SafeHtmlPipe],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: CookieService, useClass: MockCookieService },
             ],
         })
             .compileComponents()

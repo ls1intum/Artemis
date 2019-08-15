@@ -3,6 +3,8 @@
         "title": "Artemis",
         "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">upgrade your browser</a> to improve your experience.",
         "generic": {
+            "yes": "Yes",
+            "no": "No",
             "emptyList": "No items available"
         },
         "menu": {
@@ -67,6 +69,7 @@
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
+                "exerciseHint": "Exercise Hint",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -194,7 +197,8 @@
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
             "exercise": "Exercise",
-            "scores": "Scores"
+            "scores": "Scores",
+            "manageHints": "Manage Hints"
         },
         "detail": {
             "field": "Field",
@@ -241,7 +245,8 @@
         "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
         "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
         "invalid.template.repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
-        "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS."
+        "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
+        "unexpectedError": "An unexpected error occurred: {{error}}"
     },
     "contact": "Contact us",
     "bug": "Report a bug",

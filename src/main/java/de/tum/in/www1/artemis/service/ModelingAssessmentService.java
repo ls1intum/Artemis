@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,9 +37,9 @@ public class ModelingAssessmentService extends AssessmentService {
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
             ModelingSubmissionService modelingSubmissionService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -52,6 +52,7 @@ public class ModelingAssessmentService extends AssessmentService {
      *
      * @param result   the result the assessment belongs to
      * @param exercise the exercise the assessment belongs to
+     * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
@@ -71,13 +72,14 @@ public class ModelingAssessmentService extends AssessmentService {
      *
      * @param modelingSubmission the modeling submission to which the feedback belongs to
      * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param modelingExercise the modeling exercise for which assessment due date is checked
+     * @return result that was saved in the database
      */
     @Transactional
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            modelingSubmissionService.setNewResult(modelingSubmission);
-            result = modelingSubmission.getResult();
+            result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
         // check the assessment due date if the user tries to override an existing submitted result
         if (result.getCompletionDate() != null) {
