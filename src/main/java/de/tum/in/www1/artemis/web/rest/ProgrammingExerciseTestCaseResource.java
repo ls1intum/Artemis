@@ -134,7 +134,7 @@ public class ProgrammingExerciseTestCaseResource {
         Course course = programmingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 

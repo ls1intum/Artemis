@@ -1,5 +1,5 @@
 import * as $ from 'jquery';
-import { AfterViewInit, Component, ContentChild, ElementRef, Input } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, Input, ViewEncapsulation } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -12,6 +12,7 @@ import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     providers: [JhiAlertService, WindowRef, CodeEditorGridService],
+    encapsulation: ViewEncapsulation.None,
 })
 export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;

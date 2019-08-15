@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -33,11 +34,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private ResultService resultService;
 
+    private ProgrammingSubmissionService submissionService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService) {
+            ResultService resultService, ProgrammingSubmissionService submissionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -80,6 +84,29 @@ public class ProgrammingExerciseParticipationResource {
         else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    /**
+     * GET /programming-exercise-participation/:id/latest-pending-submission : get the latest pending submission for the participation.
+     * A pending submission is one that does not have a result yet.
+     *
+     * @param participationId the id of the participation get the latest submission for
+     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
+     */
+    @GetMapping("/programming-exercise-participation/{participationId}/latest-pending-submission")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
+        ProgrammingSubmission submission;
+        try {
+            submission = submissionService.getLatestPendingSubmission(participationId);
+        }
+        catch (EntityNotFoundException | IllegalArgumentException ex) {
+            return notFound();
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(submission);
     }
 
     /**

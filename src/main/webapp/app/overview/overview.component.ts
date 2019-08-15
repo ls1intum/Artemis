@@ -6,6 +6,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService, UserService } from 'app/core';
 import { CUSTOM_STUDENT_LOGIN_KEY } from 'app/app.constants';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',

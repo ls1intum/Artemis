@@ -23,10 +23,10 @@
     <!-- File level actions -->
     <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
         <button [disabled]="disableActions" (click)="setRenamingNode($event)" class="btn btn-small">
-            <fa-icon [icon]="['fa', 'edit']" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
+            <fa-icon icon="edit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
-            <fa-icon [icon]="['fa', 'trash']" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
+            <fa-icon icon="trash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
         </button>
     </span>
 </li>

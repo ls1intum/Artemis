@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
+
 import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -10,12 +12,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpSession;
+import javax.validation.constraints.NotNull;
 
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +39,8 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
@@ -54,16 +61,68 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager) {
+    private final Optional<LdapUserService> ldapUserService;
+
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
+        this.ldapUserService = ldapUserService;
+    }
+
+    /**
+     * find all users who do not have registration numbers: in case they are TUM users, try to retrieve their registration number and set a proper first name and last name
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void retrieveAllRegistrationNumbersForTUMUsers() {
+        if (ldapUserService.isPresent()) {
+            long start = System.currentTimeMillis();
+            List<User> users = userRepository.findAllByRegistrationNumberIsNull();
+            for (User user : users) {
+                if (TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
+                    loadUserDetailsFromLdap(user);
+                }
+            }
+            long end = System.currentTimeMillis();
+            log.info("LDAP search took " + (end - start) + "ms");
+        }
+    }
+
+    /**
+     * load additional user details from the ldap if it is available: correct firstname, correct lastname and registration number (= matriculation number)
+     * @param user the existing user for which the details should be retrieved
+     */
+    public void loadUserDetailsFromLdap(@NotNull User user) {
+        if (user == null || user.getLogin() == null) {
+            return;
+        }
+        try {
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findOne(user.getLogin());
+            if (ldapUserOptional.isPresent()) {
+                LdapUserDto ldapUser = ldapUserOptional.get();
+                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                user.setFirstName(ldapUser.getFirstName());
+                user.setLastName(ldapUser.getLastName());
+                user.setRegistrationNumber(ldapUser.getRegistrationNumber());
+                userRepository.save(user);
+            }
+            else {
+                log.warn("Ldap User " + user.getLogin() + " not found");
+            }
+        }
+        catch (Exception ex) {
+            log.error("Error in LDAP Search " + ex.getMessage());
+        }
     }
 
     private PBEPasswordEncoder passwordEncoder;
 
     private StandardPBEStringEncryptor encryptor;
 
+    /**
+     * Get the encoder for password encryption
+     * @return existing password encoder or newly created password encryptor
+     */
     public PBEPasswordEncoder passwordEncoder() {
         if (passwordEncoder != null) {
             return passwordEncoder;
@@ -73,6 +132,10 @@ public class UserService {
         return passwordEncoder;
     }
 
+    /**
+     * Get the the password encryptor with MD5 and DES encryption algorithm
+     * @return existing encryptor or newly created encryptor
+     */
     public StandardPBEStringEncryptor encryptor() {
         if (encryptor != null) {
             return encryptor;
@@ -86,6 +149,11 @@ public class UserService {
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
+    /**
+     * Activate user registration
+     * @param key activation key for user registration
+     * @return user if user exists otherwise null
+     */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneByActivationKey(key).map(user -> {
@@ -98,6 +166,12 @@ public class UserService {
         });
     }
 
+    /**
+     * Reset user password for given reset key
+     * @param newPassword new password string
+     * @param key reset key
+     * @return user for whom the password was performed
+     */
     public Optional<User> completePasswordReset(String newPassword, String key) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
@@ -109,6 +183,11 @@ public class UserService {
         });
     }
 
+    /**
+     * Request password reset for user email
+     * @param mail to find user
+     * @return user if user exists otherwise null
+     */
     public Optional<User> requestPasswordReset(String mail) {
         return userRepository.findOneByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
             user.setResetKey(RandomUtil.generateResetKey());
@@ -118,6 +197,12 @@ public class UserService {
         });
     }
 
+    /**
+     * Register user
+     * @param userDTO user data transfer object
+     * @param password string
+     * @return newly registered user or throw registration exception
+     */
     public User registerUser(UserDTO userDTO, String password) {
         userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
@@ -154,6 +239,11 @@ public class UserService {
         return newUser;
     }
 
+    /**
+     * Remove non activated user
+     * @param existingUser user object of an existing user
+     * @return true if removal has been executed successfully otherwise false
+     */
     private boolean removeNonActivatedUser(User existingUser) {
         if (existingUser.getActivated()) {
             return false;
@@ -164,6 +254,17 @@ public class UserService {
         return true;
     }
 
+    /**
+     * Create user
+     * @param login     user login string
+     * @param password  user password
+     * @param firstName first name of user
+     * @param lastName  last name of the user
+     * @param email     email of the user
+     * @param imageUrl  user image url
+     * @param langKey   user language
+     * @return newly created user
+     */
     public User createUser(String login, String password, String firstName, String lastName, String email, String imageUrl, String langKey) {
 
         User newUser = new User();
@@ -189,6 +290,11 @@ public class UserService {
         return newUser;
     }
 
+    /**
+     * Create user based on UserDTO
+     * @param userDTO user data transfer object
+     * @return newly created user
+     */
     public User createUser(UserDTO userDTO) {
         User user = new User();
         user.setLogin(userDTO.getLogin());
@@ -263,6 +369,10 @@ public class UserService {
         }).map(UserDTO::new);
     }
 
+    /**
+     * Delete user based on login string
+     * @param login user login string
+     */
     public void deleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             userRepository.delete(user);
@@ -271,6 +381,11 @@ public class UserService {
         });
     }
 
+    /**
+     * Change password of current user
+     * @param currentClearTextPassword cleartext password
+     * @param newPassword new password string
+     */
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentEncryptedPassword = user.getPassword();
@@ -284,6 +399,10 @@ public class UserService {
         });
     }
 
+    /**
+     * Get decrypted password for the current user
+     * @return decrypted password or empty string
+     */
     @Transactional(readOnly = true)
     public String decryptPassword() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
@@ -295,75 +414,100 @@ public class UserService {
         }
     }
 
+    /**
+     * Get decrypted password for given user login
+     * @param login of a user
+     * @return decrypted password or empty string
+     */
     @Transactional(readOnly = true)
     public Optional<String> decryptPasswordByLogin(String login) {
         return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
     }
 
+    /**
+     * Get all managed users
+     * @param pageable used to find users
+     * @return all users with roles other than ROLE_ANONYMOUS
+     */
     @Transactional(readOnly = true)
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllByLoginNot(pageable, AuthoritiesConstants.ANONYMOUS).map(UserDTO::new);
     }
 
+    /**
+     * Get user with groups and authorities by given login string
+     * @param login user login string
+     * @return existing user with given login string or null
+     */
     @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(user -> {
-            user.getGroups().size();
-            user.getAuthorities().size();
-            return user;
-        });
+        return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
+    /**
+     * Get user with groups and authorities by given user id
+     * @param id user id
+     * @return existing user with the given user id
+     */
     @Transactional(readOnly = true)
     public User getUserWithAuthorities(Long id) {
-        User user = userRepository.findById(id).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        return userRepository.findOneWithAuthoritiesById(id).get();
     }
 
+    /**
+     * @return existing user object by current user login
+     */
     @Transactional(readOnly = true)
     public User getUser() {
-        return userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        return userRepository.findOneByLogin(currentUserLogin).get();
     }
 
+    /**
+     * Get current user for login string
+     * @param login user login string
+     * @return existing user for the given login string or null
+     */
     @Transactional(readOnly = true)
     public Optional<User> getUserByLogin(String login) {
         return userRepository.findOneByLogin(login);
     }
 
+    /**
+     * Get user with user groups and authorities by login string
+     * @param login user login string
+     * @return existing user
+     */
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
-        User user = userRepository.findOneByLogin(login).orElse(null);
-        if (user != null) {
-            user.getGroups().size(); // eagerly load the association
-            user.getAuthorities().size(); // eagerly load the association
-        }
-        return user;
+        return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
     }
 
     @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
         return user;
     }
 
+    /**
+     * Get user with user groups and authorities of currently logged in user
+     * @return currently logged in user
+     */
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
     }
 
+    /**
+     * Get user with user groups and authorities by principal object
+     * @param principal abstract presentation for user
+     * @return existing user
+     */
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities(Principal principal) {
-        User user = userRepository.findOneByLogin(principal.getName()).get();
-        user.getGroups().size(); // eagerly load the association
-        user.getAuthorities().size(); // eagerly load the association
-        return user;
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
     }
 
     /**
@@ -391,12 +535,21 @@ public class UserService {
         cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
     }
 
+    /**
+     * Update user notification read date for current user
+     * @return currently logged in user
+     */
     public User updateUserNotificationReadDate() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
         userRepository.updateUserNotificationReadDate(loggedInUser.getId());
         return loggedInUser;
     }
 
+    /**
+     * Get tutors by given course
+     * @param course object
+     * @return list of tutors for given course
+     */
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }

@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A TextSubmission.
@@ -18,7 +22,18 @@ public class TextSubmission extends Submission implements Serializable {
     @Lob
     private String text;
 
+    @OneToMany(mappedBy = "submission")
+    @JsonIgnoreProperties("submission")
+    private List<TextBlock> blocks = new ArrayList<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
+    public TextSubmission() {
+    }
+
+    public TextSubmission(Long id) {
+        setId(id);
+    }
 
     public String getText() {
         return text;
@@ -33,6 +48,30 @@ public class TextSubmission extends Submission implements Serializable {
         this.text = text;
     }
 
+    public List<TextBlock> getBlocks() {
+        return blocks;
+    }
+
+    public TextSubmission blocks(List<TextBlock> textBlocks) {
+        this.blocks = textBlocks;
+        return this;
+    }
+
+    public TextSubmission addBlocks(TextBlock textBlock) {
+        this.blocks.add(textBlock);
+        textBlock.setSubmission(this);
+        return this;
+    }
+
+    public TextSubmission removeBlocks(TextBlock textBlock) {
+        this.blocks.remove(textBlock);
+        textBlock.setSubmission(null);
+        return this;
+    }
+
+    public void setBlocks(List<TextBlock> textBlocks) {
+        this.blocks = textBlocks;
+    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

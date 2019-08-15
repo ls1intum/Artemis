@@ -19,7 +19,7 @@ public abstract class AssessmentResource {
 
     /**
      * @param exercise exercise to check privileges for
-     * @throws AccessForbiddenException if current user is not at least teaching assistent in the given exercise
+     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
      * @throws BadRequestAlertException if no course is associated to the given exercise
      */
     void checkAuthorization(Exercise exercise) throws AccessForbiddenException, BadRequestAlertException {

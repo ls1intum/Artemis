@@ -8,12 +8,15 @@ import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
+    AssessmentType = AssessmentType;
+
     textExercise: TextExercise;
 
     formattedProblemStatement: SafeHtml | null;
