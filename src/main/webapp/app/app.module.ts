@@ -70,6 +70,7 @@ import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notifi
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
 import { ArTEMiSFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
+import { ArTEMiSFileUploadAssessmentModule } from 'app/file-upload-assessment/file-upload-assessment.module';
 
 @NgModule({
     imports: [
@@ -120,6 +121,7 @@ import { ArTEMiSFileUploadSubmissionModule } from 'app/file-upload-submission/fi
         ArTEMiSNotificationModule,
         ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
+        ArTEMiSFileUploadAssessmentModule,
         ArTEMiSModelingSubmissionModule,
         ArTEMiSFileUploadSubmissionModule,
         ArTEMiSExampleTextSubmissionModule,

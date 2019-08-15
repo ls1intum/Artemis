@@ -1,0 +1,7 @@
+{
+    "artemisApp": {
+        "fileUploadAssessment": {
+            "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}"
+        }
+    }
+}

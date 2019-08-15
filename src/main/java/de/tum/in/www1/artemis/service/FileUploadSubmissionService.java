@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.slf4j.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -15,16 +14,13 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
 public class FileUploadSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
-
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    private final ResultService resultService;
 
     private final ResultRepository resultRepository;
 
@@ -34,12 +30,11 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
-            ResultRepository resultRepository, ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
+    public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
             SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -149,6 +144,25 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
+     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
+     *
+     * @param submission the submission for which a new result should be created
+     * @return the newly created result
+     */
+    public Result setNewResult(FileUploadSubmission submission) {
+        Result result = new Result();
+        result.setSubmission(submission);
+        submission.setResult(result);
+        if (submission.getParticipation() != null) {
+            submission.getParticipation().addResult(result);
+        }
+        resultRepository.save(result);
+        fileUploadSubmissionRepository.save(submission);
+        return result;
+    }
+
+    /**
      * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
      *
      * @param fileUploadSubmission the submission that should be saved
@@ -207,7 +221,7 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByCourseId(Long courseId) {
@@ -216,10 +230,34 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
         return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    public FileUploadSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
+        return fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
+     * submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    public FileUploadSubmission findOneWithEagerResult(Long submissionId) {
+        return fileUploadSubmissionRepository.findByIdWithEagerResult(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 }

@@ -7,7 +7,6 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { fileUploadSubmissionRoute } from './file-upload-submission.route';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
-import { TextSharedModule } from 'app/text-shared/text-shared.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 
 const ENTITY_STATES = [...fileUploadSubmissionRoute];
@@ -15,7 +14,7 @@ const ENTITY_STATES = [...fileUploadSubmissionRoute];
 @NgModule({
     declarations: [FileUploadSubmissionComponent],
     entryComponents: [FileUploadSubmissionComponent],
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, ArTEMiSComplaintsModule],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSFileUploadSubmissionModule {
