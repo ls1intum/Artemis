@@ -121,9 +121,17 @@ public class FileUploadSubmissionResource {
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
-        log.debug("REST request to get FileUploadSubmission : {}", submissionId);
-        Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(submissionId);
-        return ResponseUtil.wrapOrNotFound(fileUploadSubmission);
+        log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
+        var fileUploadExercise = (FileUploadExercise) fileUploadSubmissionService.findOne(submissionId).getParticipation().getExercise();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+            return forbidden();
+        }
+        var fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        studentParticipation.setExercise(fileUploadExercise);
+        hideDetails(fileUploadSubmission);
+        return ResponseEntity.ok(fileUploadSubmission);
     }
 
     /**

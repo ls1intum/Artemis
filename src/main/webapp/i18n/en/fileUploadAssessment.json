@@ -1,7 +1,12 @@
 {
     "artemisApp": {
         "fileUploadAssessment": {
-            "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}"
+            "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}",
+            "messages": {
+                "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions."
+            },
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
         }
     }
 }

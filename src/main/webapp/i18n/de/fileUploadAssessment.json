@@ -1,7 +1,12 @@
 {
     "artemisApp": {
         "fileUploadAssessment": {
-            "editorTitle": "Bewertung Editor für Datei Upload Übung {{ title }}"
+            "editorTitle": "Bewertung Editor für Datei Upload Übung {{ title }}",
+            "messages": {
+                "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest."
+            },
+            "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
+            "updateAfterComplaintFailed": "Updating the Assessment failed."
         }
     }
 }

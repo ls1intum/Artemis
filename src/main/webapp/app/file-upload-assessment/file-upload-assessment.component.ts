@@ -25,6 +25,8 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { ExerciseType } from 'app/entities/exercise';
+import { filter } from 'rxjs/operators';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -51,8 +53,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     notFound = false;
     userId: number;
     canOverride = false;
-
-    paramSub: Subscription;
 
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
@@ -102,40 +102,39 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
-        this.paramSub = this.route.params.subscribe(params => {
+        this.route.params.subscribe(params => {
             const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
-                this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
-                    (submission: FileUploadSubmission) => {
-                        this.handleReceivedSubmission(submission);
-
-                        // Update the url with the new id, without reloading the page, to make the history consistent
-                        const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
-                        this.location.go(newUrl);
-                    },
-                    (error: HttpErrorResponse) => {
-                        if (error.status === 404) {
-                            // there is no submission waiting for assessment at the moment
-                            this.goToExerciseDashboard();
-                            this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
-                        } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                            this.goToExerciseDashboard();
-                        } else {
-                            this.onError(this.translateService.instant('modelingAssessmentEditor.messages.loadSubmissionFailed'));
-                        }
-                    },
-                );
+                this.loadOptimalSubmission(exerciseId);
             } else {
-                this.fileUploadAssessmentsService
-                    .getAssessment(submissionId)
-                    .subscribe(result => (this.result = result), (error: HttpErrorResponse) => this.onError(error.message));
+                this.loadSubmission(submissionId);
             }
         });
+    }
+
+    private loadOptimalSubmission(exerciseId: number): void {
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
+            (submission: FileUploadSubmission) => {
+                this.handleReceivedSubmission(submission);
+
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+                this.location.go(newUrl);
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there is no submission waiting for assessment at the moment
+                    this.goToExerciseDashboard();
+                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
+                } else {
+                    this.onError('modelingAssessmentEditor.messages.loadSubmissionFailed');
+                }
+            },
+        );
     }
 
     /**
@@ -198,7 +197,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
-        this.paramSub.unsubscribe();
     }
 
     public addAssessment(assessmentText: string): void {
@@ -213,6 +211,32 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
         this.referencedFeedback.splice(indexToDelete, 1);
         this.validateAssessment();
+    }
+
+    /**
+     * Load next assessment in the same page.
+     * It calls the api to load the new unassessed submission in the same page.
+     * For the new submission to appear on the same page, the url has to be reloaded.
+     */
+    assessNextOptimal() {
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+                (response: FileUploadSubmission) => {
+                    this.unassessedSubmission = response;
+                    this.router.onSameUrlNavigation = 'reload';
+                    // navigate to the new assessment page to trigger re-initialization of the components
+                    this.router.navigateByUrl(`/file-upload-exercise/${this.exercise.id}/submission/${this.unassessedSubmission.id}/assessment`, {});
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                        this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        }
     }
 
     public save(submit: boolean): void {
@@ -263,6 +287,24 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detectChanges();
     }
 
+    private loadSubmission(submissionId: number): void {
+        this.fileUploadSubmissionService
+            .get(submissionId)
+            .pipe(filter(res => !!res))
+            .subscribe(
+                res => {
+                    this.handleReceivedSubmission(res.body!);
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.goToExerciseDashboard();
+                    } else {
+                        this.onError('');
+                    }
+                },
+            );
+    }
+
     private handleReceivedSubmission(submission: FileUploadSubmission): void {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
@@ -278,7 +320,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.result.participation = this.submission.participation;
         if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
             this.jhiAlertService.clear();
-            this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
+            this.jhiAlertService.info('fileUploadAssessment.messages.lock');
         }
         this.checkPermissions();
         this.busy = false;
@@ -367,15 +409,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    public get headingTranslationKey(): string {
-        const baseKey = 'artemisApp.textAssessment.heading.';
-
-        if (this.submission && this.submission.exampleSubmission) {
-            return baseKey + 'exampleAssessment';
-        }
-        return baseKey + 'assessment';
-    }
-
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
@@ -394,11 +427,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.result = result;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
+                this.jhiAlertService.success('artemisApp.fileUploadAssessment.updateAfterComplaintSuccessful');
             },
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                this.jhiAlertService.error('artemisApp.fileUploadAssessment.updateAfterComplaintFailed');
             },
         );
     }

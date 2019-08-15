@@ -5,6 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Transactional
 public class FileUploadSubmissionService extends SubmissionService {
 
+    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
+    private final ResultService resultService;
 
     private final ResultRepository resultRepository;
 
@@ -32,13 +38,14 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, ResultService resultService) {
         super(submissionRepository, userService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
+        this.resultService = resultService;
     }
 
     /**
@@ -179,8 +186,6 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         participation.addSubmissions(fileUploadSubmission);
 
-        User user = participation.getStudent();
-
         if (fileUploadSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
 
@@ -195,6 +200,46 @@ public class FileUploadSubmissionService extends SubmissionService {
             }
         }
 
+        return fileUploadSubmission;
+    }
+
+    /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it.  We set the assessor and save the result to soft lock the assessment in the client. If no result exists for this submission we create one first.
+     *
+     * @param fileUploadSubmission the submission to lock
+     */
+    private void lockSubmission(FileUploadSubmission fileUploadSubmission) {
+        Result result = fileUploadSubmission.getResult();
+        if (result == null) {
+            result = setNewResult(fileUploadSubmission);
+        }
+
+        if (result.getAssessor() == null) {
+            resultService.setAssessor(result);
+        }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
+    }
+
+    /**
+     * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
+     * submission lock limit has been reached.
+     *
+     * @param submissionId     the id of the file upload submission
+     * @param fileUploadExercise the corresponding exercise
+     * @return the locked file upload submission
+     */
+    @Transactional
+    public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
+        FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+
+        if (fileUploadSubmission.getResult() == null || fileUploadSubmission.getResult().getAssessor() == null) {
+            checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
+        }
+
+        lockSubmission(fileUploadSubmission);
         return fileUploadSubmission;
     }
 
@@ -260,4 +305,28 @@ public class FileUploadSubmissionService extends SubmissionService {
         return fileUploadSubmissionRepository.findByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
+     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    private FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+        return fileUploadSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    public FileUploadSubmission findOne(Long submissionId) {
+        return fileUploadSubmissionRepository.findById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
+    }
+
 }
