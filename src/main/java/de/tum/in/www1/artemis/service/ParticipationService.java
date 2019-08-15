@@ -709,12 +709,11 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations belonging to course with relevant results.
+     * Get all participations of submissions that are submitted and do not already have any result.
      *
-     * @param courseId the id of the exercise
-     * @param includeNotRatedResults specify is not rated results are included
-     * @param includeAssessors specify id assessors are included
-     * @return list of participations belonging to course
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have any result
      */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
