@@ -35,13 +35,13 @@ public class TextSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private final TextAssessmentQueueService textAssessmentQueueService;
+    private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            TextAssessmentQueueService textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -146,8 +146,8 @@ public class TextSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
-        if (textExercise.isAutomaticAssessmentEnabled()) {
-            return textAssessmentQueueService.getProposedTextSubmission(textExercise);
+        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
+            return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
         Random r = new Random();
         List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
