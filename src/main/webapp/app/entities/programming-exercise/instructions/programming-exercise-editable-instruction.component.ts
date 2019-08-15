@@ -36,7 +36,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
-    unsavedChanges = false;
+    unsavedChangesValue = false;
 
     interactResizable: Interactable;
 
@@ -59,6 +59,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return this.participationValue;
     }
     @Output() participationChange = new EventEmitter<Participation>();
+    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
@@ -73,6 +74,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         this.exerciseValue = exercise;
         this.exerciseChange.emit(this.exerciseValue);
+    }
+
+    set unsavedChanges(hasChanges: boolean) {
+        this.unsavedChangesValue = hasChanges;
+        if (hasChanges) {
+            this.hasUnsavedChanges.emit(hasChanges);
+        }
     }
 
     constructor(

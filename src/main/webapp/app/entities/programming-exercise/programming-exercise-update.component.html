@@ -73,8 +73,8 @@
                     <select
                         required
                         class="form-control"
-                        [(ngModel)]="programmingExercise.programmingLanguage"
-                        (change)="onNewProgrammingLanguage()"
+                        [ngModel]="programmingExercise.programmingLanguage"
+                        (ngModelChange)="onNewProgrammingLanguage($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
                         [disabled]="programmingExercise.id"
@@ -159,6 +159,7 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
+                        (hasUnsavedChanges)="hashUnsavedChanges = $event"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

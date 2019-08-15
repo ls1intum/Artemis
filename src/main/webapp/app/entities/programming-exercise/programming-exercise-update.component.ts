@@ -1,5 +1,5 @@
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable, Subject } from 'rxjs';
@@ -11,6 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -21,6 +22,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
+    private confirmTemplateChangeText: string;
+
+    hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
@@ -42,6 +46,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseService: ExerciseService,
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -74,10 +79,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.onNewProgrammingLanguage();
+            this.onNewProgrammingLanguage(this.JAVA);
         } else {
             this.problemStatementLoaded = true;
         }
+
+        this.translateService.get('artemisApp.programmingExercise.unsavedChangesLanguageChange').subscribe(text => (this.confirmTemplateChangeText = text));
     }
 
     previousState() {
@@ -126,18 +133,22 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return item.id;
     }
 
-    onNewProgrammingLanguage() {
-        this.problemStatementLoaded = false;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
-            file => {
-                this.programmingExercise.problemStatement = file;
-                this.problemStatementLoaded = true;
-            },
-            err => {
-                this.programmingExercise.problemStatement = '';
-                this.problemStatementLoaded = true;
-                console.log('Error while getting template instruction file!', err);
-            },
-        );
+    onNewProgrammingLanguage(language: ProgrammingLanguage) {
+        if (!this.hashUnsavedChanges || window.confirm(this.confirmTemplateChangeText)) {
+            this.hashUnsavedChanges = false;
+            this.problemStatementLoaded = false;
+            this.programmingExercise.programmingLanguage = language;
+            this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+                file => {
+                    this.programmingExercise.problemStatement = file;
+                    this.problemStatementLoaded = true;
+                },
+                err => {
+                    this.programmingExercise.problemStatement = '';
+                    this.problemStatementLoaded = true;
+                    console.log('Error while getting template instruction file!', err);
+                },
+            );
+        }
     }
 }
