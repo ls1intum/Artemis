@@ -77,14 +77,15 @@ public class TokenProvider implements InitializingBean {
     }
 
     /**
-     * Generates a access token that allows user to download a file. This token is only valid for 30 seconds.
+     * Generates a access token that allows user to download a file. This token is only valid for the given validity period.
      *
      * @param authentication
      * @param durationValidityInSeconds
+     * @param fileName
      * @return
      */
-    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds) {
-        String authorities = DOWNLOAD_FILE_AUTHORITY;
+    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) {
+        String authorities = DOWNLOAD_FILE_AUTHORITY + fileName;
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + durationValidityInSeconds * 1000);
@@ -108,15 +109,16 @@ public class TokenProvider implements InitializingBean {
      *
      * @param authToken
      * @param authority
+     * @param fileName
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthority(String authToken, String authority) {
+    public boolean validateTokenForAuthority(String authToken, String authority, String fileName) {
         if (!validateToken(authToken)) {
             return false;
         }
         try {
             String tokenAuthorities = (String) Jwts.parser().setSigningKey(key).parseClaimsJws(authToken).getBody().get("auth");
-            return tokenAuthorities.contains(authority);
+            return tokenAuthorities.contains(authority + fileName);
         }
         catch (Exception e) {
             log.trace("Invalid action: {}", e);

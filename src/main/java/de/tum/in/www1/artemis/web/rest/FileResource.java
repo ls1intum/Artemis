@@ -209,11 +209,14 @@ public class FileResource {
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
     }
 
-    @GetMapping("files/attachments/access-token")
+    @GetMapping("files/attachments/access-token/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getTemporaryFileAccessToken() {
+    public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30);
+        if (filename == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
         return ResponseEntity.ok(temporaryAccessToken);
     }
 
@@ -232,7 +235,7 @@ public class FileResource {
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthority(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY)) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthority(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
             log.info("Attachment with invalid token was accessed");
             return ResponseEntity.status(403).body("Provided token is invalid!");
         }

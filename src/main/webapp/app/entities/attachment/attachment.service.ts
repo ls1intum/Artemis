@@ -56,8 +56,9 @@ export class AttachmentService {
      * @param downloadUrl url that is stored in the attachment model
      */
     downloadAttachment(downloadUrl: string) {
+        const fileName = downloadUrl.split('/').slice(-1)[0];
         return this.http
-            .get('api/files/attachments/access-token', { observe: 'response', responseType: 'text' })
+            .get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })
             .switchMap(result => this.http.get(`${downloadUrl}?access_token=${result.body}`, { observe: 'response', responseType: 'blob' }))
             .do(response => {
                 const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
