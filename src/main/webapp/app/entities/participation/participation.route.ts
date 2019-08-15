@@ -27,7 +27,7 @@ export const participationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participation-submission/:participation',
+        path: 'participation-submission/:participationId',
         component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
