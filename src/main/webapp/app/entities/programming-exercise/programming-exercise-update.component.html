@@ -71,11 +71,11 @@
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select
-                        #languageSelect
+                        #select
                         required
                         class="form-control"
-                        [ngModel]="programmingExercise.programmingLanguage"
-                        (ngModelChange)="onNewProgrammingLanguage($event, languageSelect)"
+                        [ngModel]="selectedProgrammingLanguage"
+                        (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
                         [disabled]="programmingExercise.id"

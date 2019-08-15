@@ -31,7 +31,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText: string | null;
-    selectedLanguage: ProgrammingLanguage;
+    // This is used to revert the select if the user cancels to override the new selected programming language.
+    private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
     maxScorePattern = MAX_SCORE_PATTERN;
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -50,6 +51,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
     ) {}
+
+    /**
+     * Will also trigger loading the corresponding programming exercise language template.
+     *
+     * @param language to change to.
+     */
+    set selectedProgrammingLanguage(language: ProgrammingLanguage) {
+        this.selectedProgrammingLanguageValue = language;
+        this.loadProgrammingLanguageTemplate(language);
+    }
+
+    get selectedProgrammingLanguage() {
+        return this.selectedProgrammingLanguageValue;
+    }
 
     ngOnInit() {
         this.isSaving = false;
@@ -81,12 +96,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.onNewProgrammingLanguage(ProgrammingLanguage.JAVA);
+            this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
         } else {
             this.problemStatementLoaded = true;
         }
-
-        this.selectedLanguage = ProgrammingLanguage.JAVA;
     }
 
     previousState() {
@@ -136,24 +149,31 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Change the selected programming language for the current exercise. If there are unsaved changes, the user
-     * will see a confirmation dialog about switching to a new template
+     * When setting the programming language, a change guard is triggered.
+     * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
+     * If the user cancels the language will not be changed.
      *
-     * @param language The new programming language
-     * @param languageSelect The <select> HTML element, which caused the language change
+     * @param language to switch to.
      */
-    onNewProgrammingLanguage(language: ProgrammingLanguage, languageSelect?: HTMLSelectElement) {
+    onProgrammingLanguageChange(language: ProgrammingLanguage) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hashUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
             if (!window.confirm(confirmLanguageChangeText)) {
-                if (languageSelect) {
-                    languageSelect.selectedIndex = this.offeredLanguages.indexOf(this.programmingExercise.programmingLanguage);
-                }
-                return;
+                return this.selectedProgrammingLanguage;
             }
         }
+        this.selectedProgrammingLanguage = language;
+        return language;
+    }
 
+    /**
+     * Change the selected programming language for the current exercise. If there are unsaved changes, the user
+     * will see a confirmation dialog about switching to a new template
+     *
+     * @param language The new programming language
+     */
+    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
         this.hashUnsavedChanges = false;
         this.problemStatementLoaded = false;
