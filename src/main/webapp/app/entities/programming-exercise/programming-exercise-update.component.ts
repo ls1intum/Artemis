@@ -133,6 +133,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return item.id;
     }
 
+    /**
+     * Change the selected programming language for the current exercise. If there are unsaved changes, the user
+     * will see a confirmation dialog about switching to a new template
+     *
+     * @param language The new programming language
+     */
     onNewProgrammingLanguage(language: ProgrammingLanguage) {
         if (!this.hashUnsavedChanges || window.confirm(this.confirmTemplateChangeText)) {
             this.hashUnsavedChanges = false;
