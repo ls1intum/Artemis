@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
@@ -197,7 +197,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxFilter((result: Result | null) => !!result && !!result.feedbacks),
+            rxMap((result: Result | null) => (!result || !result.feedbacks ? throwError('no result available') : result)),
             rxMap(({ feedbacks }: Result) =>
                 compose(
                     map(({ text }) => text),
