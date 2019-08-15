@@ -3,12 +3,13 @@ from sorting_algorithms import *
 from context import Context
 from policy import Policy
 
+
 class TestSortingBehavior(unittest.TestCase):
     unordered = []
-    ordered = [1,1,2,3,4,8]
+    ordered = [1, 1, 2, 3, 4, 8]
 
     def setUp(self):
-        self.unordered = [3,4,2,1,8,1]
+        self.unordered = [3, 4, 2, 1, 8, 1]
 
     def test_bubble_sort(self):
         bubble_sort = BubbleSort()

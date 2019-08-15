@@ -22,7 +22,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
-    private confirmTemplateChangeText: string;
+    private translationBasePath = 'artemisApp.programmingExercise';
 
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
@@ -83,8 +83,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else {
             this.problemStatementLoaded = true;
         }
-
-        this.translateService.get('artemisApp.programmingExercise.unsavedChangesLanguageChange').subscribe(text => (this.confirmTemplateChangeText = text));
     }
 
     previousState() {
@@ -140,21 +138,28 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param language The new programming language
      */
     onNewProgrammingLanguage(language: ProgrammingLanguage) {
-        if (!this.hashUnsavedChanges || window.confirm(this.confirmTemplateChangeText)) {
-            this.hashUnsavedChanges = false;
-            this.problemStatementLoaded = false;
-            this.programmingExercise.programmingLanguage = language;
-            this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
-                file => {
-                    this.programmingExercise.problemStatement = file;
-                    this.problemStatementLoaded = true;
-                },
-                err => {
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                    console.log('Error while getting template instruction file!', err);
-                },
-            );
+        // If there are unsaved changes and the user does not confirm, the language doesn't get changed
+        if (this.hashUnsavedChanges) {
+            const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
+            if (!window.confirm(confirmLanguageChangeText)) {
+                return;
+            }
         }
+
+        // Otherwise, just change the language and load the new template
+        this.hashUnsavedChanges = false;
+        this.problemStatementLoaded = false;
+        this.programmingExercise.programmingLanguage = language;
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+            file => {
+                this.programmingExercise.problemStatement = file;
+                this.problemStatementLoaded = true;
+            },
+            err => {
+                this.programmingExercise.problemStatement = '';
+                this.problemStatementLoaded = true;
+                console.log('Error while getting template instruction file!', err);
+            },
+        );
     }
 }
