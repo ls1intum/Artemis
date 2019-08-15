@@ -45,17 +45,18 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationHasResult = !!this.participation.results && !!this.participation.results.length;
             this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            of(this.participationHasResult)
+            const participationHasResult = !!this.participation.results && !!this.participation.results.length;
+            of(participationHasResult)
                 .pipe(
                     // Ideally this component is provided a participation with an attached result. If this is not the cased, try retrieve it from the server.
                     switchMap((participationHashResult: boolean) => {
                         return participationHashResult ? of(true) : this.checkIfHasResult(this.participation.id);
                     }),
                     // If there is no result yet for a participation, create a websocket subscription to get the first incoming result.
-                    tap((participationHasResult: boolean) => {
-                        if (!participationHasResult) {
+                    tap((hasResult: boolean) => {
+                        this.participationHasResult = hasResult;
+                        if (!hasResult) {
                             this.setupResultSubscription();
                         }
                     }),

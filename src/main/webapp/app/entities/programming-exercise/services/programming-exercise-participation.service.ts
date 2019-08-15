@@ -8,6 +8,7 @@ import { Participation, ProgrammingExerciseStudentParticipation } from 'app/enti
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number) => Observable<Result>;
     getStudentParticipationWithLatestResult: (participationId: number) => Observable<ProgrammingExerciseStudentParticipation>;
+    checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -14,13 +14,14 @@ import { ArTEMiSTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result } from 'app/entities/result';
 import { ArTEMiSSharedModule } from 'app/shared';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
 import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService, ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,6 +32,9 @@ describe('TriggerBuildButtonSpec', () => {
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
     let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+
+    let checkIfParticipationHasResult: SinonStub;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
@@ -64,6 +68,7 @@ describe('TriggerBuildButtonSpec', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
         })
             .compileComponents()
@@ -74,6 +79,7 @@ describe('TriggerBuildButtonSpec', () => {
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
@@ -83,6 +89,7 @@ describe('TriggerBuildButtonSpec', () => {
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmission | null>();
                 getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
 
+                checkIfParticipationHasResult = stub(programmingExerciseParticipationService, 'checkIfParticipationHasResult');
                 triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
             });
     });
@@ -98,7 +105,7 @@ describe('TriggerBuildButtonSpec', () => {
     };
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
-        comp.participation = { ...participation, results: [gradedResult1] };
+        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
@@ -127,13 +134,15 @@ describe('TriggerBuildButtonSpec', () => {
     });
 
     it('should be disabled if the participation has no result as this means that probably no commit was made yet', () => {
-        comp.participation = { ...participation, results: [] };
+        checkIfParticipationHasResult.returns(of(false));
+        comp.participation = { ...participation, results: [], initializationState: InitializationState.INITIALIZED };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
         comp.ngOnChanges(changes);
 
         fixture.detectChanges();
+        expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);
 
         const triggerButton = getTriggerButton();
         expect(triggerButton.disabled).to.be.true;
@@ -142,6 +151,21 @@ describe('TriggerBuildButtonSpec', () => {
         subscribeForLatestResultOfParticipationSubject.next(gradedResult2);
         fixture.detectChanges();
         expect(comp.isBuilding).to.be.undefined;
+        expect(triggerButton.disabled).to.be.false;
+    });
+
+    it('should be become enabled if a result is not attached to the participation but could be found on the server', () => {
+        checkIfParticipationHasResult.returns(of(true));
+        comp.participation = { ...participation, results: [], initializationState: InitializationState.INITIALIZED };
+        const changes: SimpleChanges = {
+            participation: new SimpleChange(undefined, comp.participation, true),
+        };
+        comp.ngOnChanges(changes);
+
+        fixture.detectChanges();
+        expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);
+
+        const triggerButton = getTriggerButton();
         expect(triggerButton.disabled).to.be.false;
     });
 });
