@@ -43,7 +43,7 @@
             <tbody>
                 <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a routerLink="/participation/{{ participation.id }}">{{ participation.id }}</a>
+                        <a routerLink="/participation-submission/{{ participation }}">{{ participation.id }}</a>
                     </td>
                     <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                     <td *ngIf="exercise?.type == PROGRAMMING">

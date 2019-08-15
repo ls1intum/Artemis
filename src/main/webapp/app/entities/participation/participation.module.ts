@@ -17,6 +17,7 @@ import {
     ParticipationService,
     ParticipationWebsocketService,
 } from './';
+import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
@@ -29,6 +30,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
+        ParticipationSubmissionComponent,
     ],
     entryComponents: [
         ParticipationComponent,

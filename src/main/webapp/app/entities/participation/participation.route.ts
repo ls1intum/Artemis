@@ -5,6 +5,7 @@ import { ParticipationComponent } from './participation.component';
 import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
 import { InstructorDashboardResultPopupComponent } from 'app/dashboard/exercise-dashboard-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
+import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 
 export const participationRoute: Routes = [
     {
@@ -19,6 +20,15 @@ export const participationRoute: Routes = [
     {
         path: 'exercise/:exerciseId/participation',
         component: ParticipationComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.participation.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'participation-submission/:participation',
+        component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.participation.home.title',
