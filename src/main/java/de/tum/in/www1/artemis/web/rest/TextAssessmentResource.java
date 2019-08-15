@@ -82,6 +82,14 @@ public class TextAssessmentResource extends AssessmentResource {
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
+    /**
+     * Saves a given manual textAssessment
+     *
+     * @param exerciseId the exerciseId of the exercise which will be saved
+     * @param resultId the resultId the assessment belongs to
+     * @param textAssessments the assessments
+     * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
@@ -98,6 +106,14 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
+     *
+     * @param exerciseId the exerciseId of the exercise which will be saved
+     * @param resultId the resultId the assessment belongs to
+     * @param textAssessments the assessments which should be submitted
+     * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
@@ -118,6 +134,14 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Updates a Assessment to a TextExercise if the student complaints
+     *
+     * @param exerciseId the exerciseId of the exercise which will be corrected
+     * @param resultId the resultId the assessment belongs to
+     * @param assessmentUpdate the update of the Assessment
+     * @return 200 Ok if successful with the updated result as a body, but sensitive information are filtered out
+     */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
@@ -138,6 +162,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param exerciseId the exerciseId of the exercise for which the assessment gets canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
@@ -159,6 +184,15 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Splits the TextSubmission corresponding to a resultId into TextBlocks.
+     * The TextBlocks get a suggested feedback if automatic assessment is enabled and feedback available
+     *
+     * @param resultId the resultId the which needs TextBlocks
+     * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
+     * @throws EntityNotFoundException if the corresponding Exercise isn't a TextExercise
+     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
+     */
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
@@ -308,6 +342,13 @@ public class TextAssessmentResource extends AssessmentResource {
         return ENTITY_NAME;
     }
 
+    /**
+     * Checks if the given textExercise is valid and if the requester have the
+     * required permissions
+     * @param textExercise which needs to be checked
+     * @throws BadRequestAlertException if no request was found
+     *
+     */
     @Nullable
     private void checkTextExerciseForRequest(TextExercise textExercise) {
         if (textExercise == null) {

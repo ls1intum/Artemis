@@ -91,7 +91,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);
     }
 
@@ -104,7 +104,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.getFile(exerciseId, filename);
     }
 
