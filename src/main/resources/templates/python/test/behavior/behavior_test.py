@@ -22,13 +22,13 @@ class TestSortingBehavior(unittest.TestCase):
 
     def test_merge_sort_for_big_list(self):
         big_list = [42] * 11
-        chosen_strategy = self.configure_policy_and_context(big_list)
+        chosen_strategy = self._configure_policy_and_context(big_list)
 
         self.assertTrue(isinstance(chosen_strategy, MergeSort))
 
     def test_bubble_sort_for_small_list(self):
         small_list = [42] * 3
-        chosen_strategy = self.configure_policy_and_context(small_list)
+        chosen_strategy = self._configure_policy_and_context(small_list)
 
         self.assertTrue(isinstance(chosen_strategy, BubbleSort))
 

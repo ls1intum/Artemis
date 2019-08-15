@@ -53,7 +53,7 @@ class Context {
 }
 
 abstract class SortStrategy {
-  <color:testsColor(testMethods[SortStrategy])>+perform_sort(List<int>)</color>
+  <color:testsColor(test_sort_strategy_methods)>+perform_sort(List<int>)</color>
 }
 
 class BubbleSort {
