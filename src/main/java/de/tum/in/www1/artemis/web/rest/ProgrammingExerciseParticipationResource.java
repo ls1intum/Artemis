@@ -83,6 +83,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Check if the participation has a result yet.
      *
+     * @param participationId of the participation to check.
      * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
