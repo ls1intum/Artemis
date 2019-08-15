@@ -1,8 +1,8 @@
 import { ActivatedRoute } from '@angular/router';
-import { Component, EventEmitter, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
@@ -22,7 +22,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
-    private translationBasePath = 'artemisApp.programmingExercise';
+    private offeredLanguages = [this.JAVA, this.PYTHON];
+    private translationBasePath = 'artemisApp.programmingExercise.';
 
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
@@ -30,6 +31,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText: string | null;
+    selectedLanguage: ProgrammingLanguage;
 
     maxScorePattern = MAX_SCORE_PATTERN;
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -79,10 +81,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.onNewProgrammingLanguage(this.JAVA);
+            this.onNewProgrammingLanguage(ProgrammingLanguage.JAVA);
         } else {
             this.problemStatementLoaded = true;
         }
+
+        this.selectedLanguage = ProgrammingLanguage.JAVA;
     }
 
     previousState() {
@@ -136,12 +140,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * will see a confirmation dialog about switching to a new template
      *
      * @param language The new programming language
+     * @param languageSelect The <select> HTML element, which caused the language change
      */
-    onNewProgrammingLanguage(language: ProgrammingLanguage) {
+    onNewProgrammingLanguage(language: ProgrammingLanguage, languageSelect?: HTMLSelectElement) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hashUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
             if (!window.confirm(confirmLanguageChangeText)) {
+                if (languageSelect) {
+                    languageSelect.selectedIndex = this.offeredLanguages.indexOf(this.programmingExercise.programmingLanguage);
+                }
                 return;
             }
         }
