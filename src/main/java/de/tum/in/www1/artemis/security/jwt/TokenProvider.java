@@ -85,10 +85,10 @@ public class TokenProvider implements InitializingBean {
     /**
      * Generates a access token that allows user to download a file. This token is only valid for the given validity period.
      *
-     * @param authentication
-     * @param durationValidityInSeconds
-     * @param fileName
-     * @return
+     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param durationValidityInSeconds The duration how long the access token should be valid
+     * @param fileName The name of the file, which the token belongs to
+     * @return File access token as a JWT token
      */
     public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) {
         String authorities = DOWNLOAD_FILE_AUTHORITY + fileName;
@@ -116,14 +116,14 @@ public class TokenProvider implements InitializingBean {
     }
 
     /**
-     * Checks if a certain authority is inside the JWT token. Also validates the JWT token if it is still valid.
+     * Checks if a certain authority and filename is inside the JWT token. Also validates the JWT token if it is still valid.
      *
-     * @param authToken
-     * @param authority
-     * @param fileName
+     * @param authToken The token that has to be checked
+     * @param authority What authority should be included in the token
+     * @param fileName The name of the file the token belongs to
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthority(String authToken, String authority, String fileName) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, String authority, String fileName) {
         if (!validateToken(authToken)) {
             return false;
         }

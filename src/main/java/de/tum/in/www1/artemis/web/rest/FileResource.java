@@ -209,6 +209,12 @@ public class FileResource {
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
     }
 
+    /**
+     * GET /files/attachments/access-token/{filename:.+} : Generates an access token that is valid for 30 seconds and given filename
+     *
+     * @param filename name of the file, the access token is for
+     * @return The generated access token
+     */
     @GetMapping("files/attachments/access-token/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
@@ -225,6 +231,7 @@ public class FileResource {
      *
      * @param lectureId ID of the lecture, the attachment belongs to
      * @param filename  the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
@@ -235,7 +242,7 @@ public class FileResource {
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthority(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
             log.info("Attachment with invalid token was accessed");
             return ResponseEntity.status(403).body("Provided token is invalid!");
         }
