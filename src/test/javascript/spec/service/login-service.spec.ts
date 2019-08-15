@@ -21,6 +21,7 @@ describe('LoginService', () => {
     let router: MockRouter;
     let alertService: MockAlertService;
     let loginService: LoginService;
+    let localStorageService: MockSyncStorage;
 
     let removeAuthTokenFromCachesStub: SinonStub;
     let authenticateStub: SinonStub;
@@ -34,8 +35,9 @@ describe('LoginService', () => {
         authServerProvider = new MockAuthServerProviderService();
         router = new MockRouter();
         alertService = new MockAlertService();
+        localStorageService = new MockSyncStorage();
         // @ts-ignore
-        loginService = new LoginService(accountService, { provide: LocalStorageService, useClass: MockSyncStorage }, websocketService, authServerProvider, router, alertService);
+        loginService = new LoginService(accountService, localStorageService, websocketService, authServerProvider, router, alertService);
 
         removeAuthTokenFromCachesStub = stub(authServerProvider, 'removeAuthTokenFromCaches');
         authenticateStub = stub(accountService, 'authenticate');
