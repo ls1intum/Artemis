@@ -106,9 +106,35 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.paramSub.unsubscribe();
         }
         this.paramSub = this.route.params.subscribe(params => {
+            const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
-            this.fileUploadAssessmentsService.getAssessment(submissionId).subscribe(result => (this.result = result), (error: HttpErrorResponse) => this.onError(error.message));
+            if (submissionValue === 'new') {
+                this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
+                    (submission: FileUploadSubmission) => {
+                        this.handleReceivedSubmission(submission);
+
+                        // Update the url with the new id, without reloading the page, to make the history consistent
+                        const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+                        this.location.go(newUrl);
+                    },
+                    (error: HttpErrorResponse) => {
+                        if (error.status === 404) {
+                            // there is no submission waiting for assessment at the moment
+                            this.goToExerciseDashboard();
+                            this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                        } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                            this.goToExerciseDashboard();
+                        } else {
+                            this.onError(this.translateService.instant('modelingAssessmentEditor.messages.loadSubmissionFailed'));
+                        }
+                    },
+                );
+            } else {
+                this.fileUploadAssessmentsService
+                    .getAssessment(submissionId)
+                    .subscribe(result => (this.result = result), (error: HttpErrorResponse) => this.onError(error.message));
+            }
         });
     }
 
@@ -237,24 +263,25 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detectChanges();
     }
 
-    private receiveParticipation(participation: StudentParticipation): void {
-        this.participation = participation;
-        this.submission = <FileUploadSubmission>this.participation.submissions[0];
-        this.exercise = <FileUploadExercise>this.participation.exercise;
-
-        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
-        this.result = this.participation.results[0];
+    private handleReceivedSubmission(submission: FileUploadSubmission): void {
+        this.submission = submission;
+        const studentParticipation = this.submission.participation as StudentParticipation;
+        this.exercise = studentParticipation.exercise as FileUploadExercise;
+        this.result = this.submission.result;
         if (this.result.hasComplaint) {
             this.getComplaint();
         }
-
-        this.loadFeedbacks(this.result.feedbacks || []);
-        this.busy = false;
-        this.validateAssessment();
+        if (!this.result.feedbacks) {
+            this.result.feedbacks = [];
+        }
+        this.submission.participation.results = [this.result];
+        this.result.participation = this.submission.participation;
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+            this.jhiAlertService.clear();
+            this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
+        }
         this.checkPermissions();
+        this.busy = false;
     }
 
     getComplaint(): void {
