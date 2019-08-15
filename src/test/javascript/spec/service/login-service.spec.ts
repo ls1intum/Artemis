@@ -35,7 +35,7 @@ describe('LoginService', () => {
         router = new MockRouter();
         alertService = new MockAlertService();
         // @ts-ignore
-        loginService = new LoginService(accountService, websocketService, authServerProvider, router, alertService, { provide: LocalStorageService, useClass: MockSyncStorage });
+        loginService = new LoginService(accountService, { provide: LocalStorageService, useClass: MockSyncStorage }, websocketService, authServerProvider, router, alertService);
 
         removeAuthTokenFromCachesStub = stub(authServerProvider, 'removeAuthTokenFromCaches');
         authenticateStub = stub(accountService, 'authenticate');

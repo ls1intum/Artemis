@@ -14,7 +14,5 @@ export class MockSyncStorage implements StorageService {
 
     retrieve(key: string): any {}
 
-    clear(key: string): any {}
-
     store(key: string, value: any): any {}
 }
