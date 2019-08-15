@@ -204,6 +204,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     loadLatestResult(): Observable<Result | null> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id).pipe(
             catchError(() => Observable.of(null)),
+            filter((result: Result | null) => !!result),
             flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : Observable.of(latestResult))),
         );
     }
