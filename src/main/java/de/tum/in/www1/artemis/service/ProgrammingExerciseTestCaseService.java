@@ -149,11 +149,11 @@ public class ProgrammingExerciseTestCaseService {
      */
     @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean removeAfterDueDateTests = isStudentParticipation && exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !removeAfterDueDateTests || !testCase.isAfterDueDate())
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
                 .collect(Collectors.toSet());
         // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
@@ -170,7 +170,7 @@ public class ProgrammingExerciseTestCaseService {
             updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, removeAfterDueDateTests && testCases.size() > testCasesForCurrentDate.size());
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, shouldTestsWithAfterDueDateFlagBeRemoved && testCases.size() > testCasesForCurrentDate.size());
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {

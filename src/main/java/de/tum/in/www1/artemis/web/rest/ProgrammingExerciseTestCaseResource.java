@@ -95,7 +95,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-cases")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeights(@PathVariable Long exerciseId,
+    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
         try {
