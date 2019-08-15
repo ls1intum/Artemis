@@ -40,22 +40,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
             this.programmingExerciseParticipationService
                 .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
-                .pipe(
-                    catchError(() => of(null)),
-                    filter((result: Result) => !!result),
-                )
+                .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
-                    this.programmingExercise.solutionParticipation.results = [result];
+                    this.programmingExercise.solutionParticipation.results = result ? [result] : [];
                 });
 
             this.programmingExerciseParticipationService
                 .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    catchError(() => of(null)),
-                    filter((result: Result) => !!result),
-                )
+                .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
-                    this.programmingExercise.templateParticipation.results = [result];
+                    this.programmingExercise.templateParticipation.results = result ? [result] : [];
                 });
         });
     }
