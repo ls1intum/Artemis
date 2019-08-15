@@ -12,7 +12,7 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { Result, ResultService } from 'app/entities/result';
 import { hasExerciseChanged } from 'app/entities/exercise';
@@ -78,7 +78,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: JhiAlertService,
-        private resultService: ResultService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
     ) {}
 
@@ -196,8 +196,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
-        return this.resultService.getLatestResultWithFeedbacks(templateParticipationId).pipe(
-            rxMap((res: HttpResponse<Result>) => res.body),
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
             rxFilter((result: Result) => !!result.feedbacks),
             rxMap(({ feedbacks }: Result) =>
                 compose(
