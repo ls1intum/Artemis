@@ -39,7 +39,8 @@
             "feedbackTextRequired": "Feedback text is required.",
             "positive": "Positive",
             "graded": "Graded",
-            "notGraded": "Not graded"
+            "notGraded": "Not graded",
+            "preliminary": "Your result is not final. More tests will be executed after the exercise's due date."
         }
     }
 }

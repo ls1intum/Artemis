@@ -11,20 +11,20 @@ import {
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
-    ProgrammingExercisePopupComponent,
-    ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseEditableInstructionComponent,
+    ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseInstructionTaskStatusComponent,
+    ProgrammingExerciseInstructionTestcaseStatusComponent,
+    ProgrammingExerciseInstructorStatusComponent,
+    ProgrammingExerciseManageTestCasesComponent,
+    ProgrammingExerciseParticipationService,
+    ProgrammingExercisePopupComponent,
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
-    ProgrammingExerciseUpdateComponent,
-    ProgrammingExerciseInstructorStatusComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
-    ProgrammingExerciseParticipationService,
-    ProgrammingExerciseManageTestCasesComponent,
-    ProgrammingExerciseInstructionTaskStatusComponent,
+    ProgrammingExerciseUpdateComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -34,6 +34,7 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
+import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
@@ -53,6 +54,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArTEMiSDifficultyPickerModule,
         ArTEMiSResultModule,
         ArTEMiSMarkdownEditorModule,
+        ArtemisTableModule,
         NgxDatatableModule,
     ],
     declarations: [
