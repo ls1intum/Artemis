@@ -10,15 +10,20 @@ import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exe
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 
+export enum EditableField {
+    WEIGHT = 'weight',
+}
+
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
+    EditableField = EditableField;
+
     exerciseId: number;
-    editing: ProgrammingExerciseTestCase | null = null;
+    editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
     paramSub: Subscription;
 
@@ -86,13 +91,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Show an input to edit the test cases weight.
      * @param rowIndex
      */
-    enterEditing(rowIndex: number) {
-        this.editing = this.filteredTestCases[rowIndex];
-        setTimeout(() => {
-            if (this.editingInput) {
-                this.editingInput.nativeElement.focus();
-            }
-        });
+    enterEditing(rowIndex: number, field: EditableField) {
+        this.editing = [this.filteredTestCases[rowIndex], field];
     }
 
     /**
@@ -106,26 +106,25 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Update the weight of the edited test case in the component state (does not persist the value on the server!).
      * Adds the currently edited weight to the list of unsaved changes.
      *
-     * @param event
+     * @param newValue of updated field;
      */
-    updateWeight(event: any) {
+    updateEditedField(newValue: any) {
         if (!this.editing) {
             return;
         }
         // Don't allow an empty string as a value!
-        if (!event.target.value) {
+        if (!newValue) {
             this.editing = null;
             return;
         }
-        const editedTestCase = this.editing;
-        const weight = event.target.value;
+        const [editedTestCase, field] = this.editing;
         // If the weight has not changed, don't do anything besides closing the input.
-        if (weight === editedTestCase.weight) {
+        if (newValue === editedTestCase[field]) {
             this.editing = null;
             return;
         }
         this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
-        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, weight: event.target.value }));
+        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
         this.editing = null;
     }
 
@@ -137,10 +136,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-        const weightUpdates = testCasesToUpdate.map(({ id, weight }) => ({ id, weight }));
+        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, afterDueDate }) => ({ id, weight, afterDueDate }));
 
         this.testCaseService
-            .updateWeights(this.exerciseId, weightUpdates)
+            .updateTestCase(this.exerciseId, testCaseUpdates)
             .pipe(
                 tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                     // From successfully updated test cases from dirty checking list.
@@ -153,19 +152,29 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     // Find out if there are test cases that were not updated, show an error.
                     const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
                     if (notUpdatedTestCases.length) {
-                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
                     } else {
-                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsUpdated`);
+                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
                 }),
                 catchError((err: HttpErrorResponse) => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightCouldNotBeUpdated`, { testCases: testCasesToUpdate });
+                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
                     return of(null);
                 }),
             )
             .subscribe(() => {
                 this.isSaving = false;
             });
+    }
+
+    /**
+     * Toggle the after due date of the test case related to the provided row of the datatable.
+     * @param rowIndex
+     */
+    toggleAfterDueDate(rowIndex: number) {
+        const testCase = this.filteredTestCases[rowIndex];
+        this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id];
+        this.testCases = this.testCases.map(t => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
     }
 
     /**
