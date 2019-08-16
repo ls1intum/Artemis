@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
@@ -39,16 +40,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
             this.programmingExerciseParticipationService
                 .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
-                .pipe(filter((result: Result) => !!result))
+                .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
-                    this.programmingExercise.solutionParticipation.results = [result];
+                    this.programmingExercise.solutionParticipation.results = result ? [result] : [];
                 });
 
             this.programmingExerciseParticipationService
                 .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
-                .pipe(filter((result: Result) => !!result))
+                .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
-                    this.programmingExercise.templateParticipation.results = [result];
+                    this.programmingExercise.templateParticipation.results = result ? [result] : [];
                 });
         });
     }

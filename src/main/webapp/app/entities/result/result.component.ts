@@ -37,6 +37,8 @@ export class ResultComponent implements OnInit, OnChanges {
     resultIconClass: string[];
     resultString: string;
 
+    resultTooltip: string;
+
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private resultService: ResultService,
@@ -84,6 +86,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
+            this.resultTooltip = this.buildResultTooltip();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
@@ -101,6 +104,12 @@ export class ResultComponent implements OnInit, OnChanges {
             return this.translate.instant('artemisApp.editor.buildFailed');
         }
         return this.result!.resultString;
+    }
+
+    buildResultTooltip() {
+        if (this.result && this.result.resultString.includes('(preliminary)')) {
+            return this.translate.instant('artemisApp.result.preliminary');
+        }
     }
 
     getHasFeedback() {
