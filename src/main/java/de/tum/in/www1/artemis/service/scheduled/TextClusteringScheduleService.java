@@ -65,7 +65,7 @@ public class TextClusteringScheduleService {
             cancelScheduledClustering(exercise);
             return;
         }
-        if (exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
+        if (exercise.getDueDate() == null || exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
             return;
         }
 
