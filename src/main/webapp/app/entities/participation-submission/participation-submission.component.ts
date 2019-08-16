@@ -3,22 +3,33 @@ import { ParticipationService, StudentParticipation } from 'app/entities/partici
 import { ExerciseService } from 'app/entities/exercise';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
 })
 export class ParticipationSubmissionComponent implements OnInit {
-    @Input() participation: any;
+    @Input() participationId: number;
+    submissions: Submission[];
+    participation: StudentParticipation;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private participationService: ParticipationService) {}
 
     ngOnInit() {
         this.route.params.subscribe(params => {
-            this.participation = params['participationId'];
+            this.participationId = +params['participationId'];
+            console.log(params);
+        });
+
+        this.participationService.find(this.participationId).subscribe(participationsResponse => {
+            this.participation = participationsResponse.body!;
+            this.submissions = this.participation.submissions;
+            console.log(participationsResponse);
         });
 
         console.log('test');
+        console.log(this.participationId);
         console.log(this.participation);
     }
 }
