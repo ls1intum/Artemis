@@ -81,11 +81,10 @@ public class FileUploadSubmissionResource {
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
      *         ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-            @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
+            @RequestBody FileUploadSubmission fileUploadSubmission) {
         log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
         if (fileUploadSubmission.getId() != null) {
             throw new BadRequestAlertException("A new fileUploadSubmission cannot already have an ID", ENTITY_NAME, "idexists");

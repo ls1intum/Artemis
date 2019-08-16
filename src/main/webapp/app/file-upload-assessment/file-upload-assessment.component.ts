@@ -1,6 +1,5 @@
 /* angular */
 import { Component, OnInit, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -114,10 +113,22 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
+    attachmentExtension(filePath: string): string {
+        if (!filePath) {
+            return 'N/A';
+        }
+
+        return filePath.split('.').pop()!;
+    }
+
     private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
             (submission: FileUploadSubmission) => {
-                this.handleReceivedSubmission(submission);
+                this.submission = submission;
+                const studentParticipation = this.submission.participation as StudentParticipation;
+                this.exercise = studentParticipation.exercise as FileUploadExercise;
+                this.checkPermissions();
+                this.busy = false;
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
@@ -199,9 +210,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detach();
     }
 
-    public addAssessment(assessmentText: string): void {
+    public addAssessment(): void {
         const assessment = new Feedback();
-        assessment.reference = assessmentText;
         assessment.credits = 0;
         this.referencedFeedback.push(assessment);
         this.validateAssessment();
@@ -349,7 +359,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     /**
      * Checks if the assessment is valid:
-     *   - There must be at least one feedback referencing a text element or a general feedback.
+     *   - There must be at least one referenced feedback or a general feedback.
      *   - Each reference feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
@@ -363,11 +373,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.totalScore = 0;
             this.assessmentsAreValid = false;
             return;
-        }
-
-        if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
-            this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
-            this.assessmentsAreValid = false;
         }
 
         let credits = this.referencedFeedback.map(assessment => assessment.credits);

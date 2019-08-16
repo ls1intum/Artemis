@@ -5,8 +5,11 @@
             "messages": {
                 "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest."
             },
-            "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
-            "updateAfterComplaintFailed": "Updating the Assessment failed."
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
+            "detail": {
+                "scoreFor": "Bewertung für das Teil {{ index }}"
+            }
         }
     }
 }

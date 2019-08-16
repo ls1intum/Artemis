@@ -88,11 +88,19 @@
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
     <div class="row flex-nowrap col-12">
-        <div class="card flex-grow-1 resizable-submission mr-4">
+        <div class="card flex-grow-1 mr-4">
             <div class="card-header text-white bg-primary" jhiTranslate="artemisApp.textAssessment.studentSubmission">
                 Student submission
             </div>
-            <div class="card-body"></div>
+            <div class="card-body">
+                <div class="card-text">
+                    <a [href]="submission.filePath" target="_blank">Open</a>
+                    <span class="ml-1 badge badge-info">
+                        {{ attachmentExtension(submission.filePath) | uppercase }}
+                    </span>
+                </div>
+                <button class="btn btn-success" (click)="addAssessment()">Add new Feedback</button>
+            </div>
         </div>
 
         <jhi-resizable-instructions
@@ -107,9 +115,6 @@
             <div resizingbar class="resizing-bar"><span></span></div>
         </jhi-resizable-instructions>
     </div>
-
-    <!-- Required for resizing; don't remove empty span -->
-    <div class="col-12 resizing-bar-bottom"><span></span></div>
 </div>
 
 <ng-container *ngIf="!busy && !notFound">
@@ -120,6 +125,14 @@
             <div class="alert alert-secondary text-center" role="alert">
                 <p jhiTranslate="artemisApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
             </div>
+        </div>
+        <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
+            <jhi-file-upload-assessment-detail
+                [index]="i + 1"
+                [(assessment)]="referencedFeedback[i]"
+                (assessmentChange)="validateAssessment()"
+                (deleteAssessment)="deleteAssessment($event)"
+            ></jhi-file-upload-assessment-detail>
         </div>
     </div>
     <div class="row mt-2">
