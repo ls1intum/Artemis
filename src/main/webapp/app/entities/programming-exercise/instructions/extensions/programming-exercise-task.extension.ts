@@ -61,9 +61,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
                 const idPlaceholder = '%idPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
-                const taskRegex = /\[task\]\[.*\]\(.*\)/g;
+                const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
                 // E.g. Implement BubbleSort, testBubbleSort
-                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)/;
+                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
                 // Without class="d-flex" the injected components height would be 0.
                 const taskContainer = `<div id="task-${idPlaceholder}" class="d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
@@ -71,9 +71,15 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     .map(task => {
                         return task.match(innerTaskRegex);
                     })
-                    .filter(testMatch => !!testMatch && testMatch.length === 3)
+                    // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
+                    .filter(testMatch => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
-                        return { completeString: testMatch[0], taskName: testMatch[1], tests: testMatch[2].split(',').map(s => s.trim()) };
+                        return {
+                            completeString: testMatch[0],
+                            taskName: testMatch[1],
+                            tests: testMatch[2].split(',').map(s => s.trim()),
+                            hints: testMatch[4] ? testMatch[4].split(',').map(s => s.trim()) : [],
+                        };
                     });
                 this.testsForTaskSubject.next(testsForTask);
                 // Emit new found elements that need to be injected into html after it is rendered.
