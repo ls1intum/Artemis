@@ -1,10 +1,11 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { catchError, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { Observable, of, Subscription } from 'rxjs';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService, SubmissionState } from 'app/submission/programming-submission-websocket.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { Result } from 'app/entities/result';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
+import { Submission } from 'app/entities/submission';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -27,6 +28,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     participationHasResult: boolean;
     participationIsActive: boolean;
+    participationHasLatestSubmissionWithoutResult: boolean;
     isBuilding: boolean;
 
     private submissionSubscription: Subscription;
@@ -99,7 +101,24 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         }
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmission(this.participation.id)
-            .pipe(tap(submission => (this.isBuilding = !!submission)))
+            .pipe(
+                tap(([submissionState, submission]) => {
+                    console.log(submission);
+                    switch (submissionState) {
+                        case SubmissionState.HAS_NO_PENDING_SUBMISSION:
+                            this.isBuilding = false;
+                            this.participationHasLatestSubmissionWithoutResult = false;
+                            break;
+                        case SubmissionState.IS_BUILDING_PENDING_SUBMISSION:
+                            this.isBuilding = true;
+                            break;
+                        case SubmissionState.HAS_PENDING_SUBMISSION_WITHOUT_RESULT:
+                            this.participationHasLatestSubmissionWithoutResult = true;
+                            this.isBuilding = false;
+                            break;
+                    }
+                }),
+            )
             .subscribe();
     }
 

@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { of, Subject, Subscription } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
@@ -36,7 +36,7 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
             this.submissionSubscription = this.submissionService
                 .getLatestPendingSubmission(this.participationId)
                 .pipe(
-                    map((submission: ProgrammingSubmission) => !!submission),
+                    map(([, submission]) => !!submission),
                     tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                 )
                 .subscribe();

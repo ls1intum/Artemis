@@ -1,6 +1,7 @@
 <button
+    *ngIf="participationHasResult && participationIsActive && participationHasLatestSubmissionWithoutResult"
     [ngClass]="['btn', 'btn-primary', btnSize]"
-    [disabled]="!participationHasResult || !participationIsActive || isBuilding"
+    [disabled]="isBuilding"
     (click)="triggerBuild($event)"
     ngbTooltip="{{ getTooltip() | translate }}"
 >

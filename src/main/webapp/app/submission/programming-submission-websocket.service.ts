@@ -9,8 +9,16 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 
+export enum SubmissionState {
+    HAS_NO_PENDING_SUBMISSION = 'HAS_NO_PENDING_SUBMISSION',
+    IS_BUILDING_PENDING_SUBMISSION = 'IS_BUILDING_PENDING_SUBMISSION',
+    HAS_PENDING_SUBMISSION_WITHOUT_RESULT = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
+}
+
+export type SubmissionStateObj = [SubmissionState, Submission | null];
+
 export interface ISubmissionWebsocketService {
-    getLatestPendingSubmission: (participationId: number) => Observable<Submission | null>;
+    getLatestPendingSubmission: (participationId: number) => Observable<SubmissionStateObj>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -25,11 +33,11 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     private submissionTopicsSubscribed: { [participationId: number]: string } = {};
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
-    private submissionSubjects: { [participationId: number]: BehaviorSubject<Submission | null | undefined> } = {};
+    private submissionSubjects: { [participationId: number]: BehaviorSubject<[SubmissionState, Submission | null | undefined]> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
-    private latestValue: { [participationId: number]: Submission | null } = {};
+    private latestSubmission: { [participationId: number]: Submission | null } = {};
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -55,19 +63,19 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission | null> => {
         return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission').pipe(
             catchError(() => of(null)),
-            map((submission: Submission | null) => {
+            tap((submission: Submission | null) => {
                 if (submission) {
                     const remainingTime = this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
                     if (remainingTime > 0) {
+                        this.submissionSubjects[participationId].next([SubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
                         this.startResultWaitingTimer(participationId, remainingTime);
-                        return submission;
-                    } else {
-                        // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
-                        this.onError();
-                        return null;
+                        return;
                     }
+                    // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
+                    this.onError(participationId);
+                    return;
                 }
-                return null;
+                this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
             }),
         );
     };
@@ -85,13 +93,13 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             .pipe(
                 tap(() => {
                     this.resultTimerSubjects[participationId].next(null);
-                    this.onError();
                 }),
             )
             .subscribe();
     };
 
-    private onError = () => {
+    private onError = (participationId: number) => {
+        this.submissionSubjects[participationId].next([SubmissionState.HAS_PENDING_SUBMISSION_WITHOUT_RESULT, null]);
         this.alertService.error('artemisApp.submission.resultTimeout');
     };
 
@@ -117,11 +125,11 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
                 .pipe(
                     tap((submission: Submission) => {
                         const subject = this.submissionSubjects[participationId];
-                        subject.next(submission);
+                        subject.next([SubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
                         // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
                     }),
-                    tap((submission: Submission) => (this.latestValue[participationId] = submission)),
+                    tap((submission: Submission) => (this.latestSubmission[participationId] = submission)),
                 )
                 .subscribe();
         }
@@ -143,17 +151,28 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
                 if (!result || !result.submission) {
                     return false;
                 }
-                return result.submission.id === this.latestValue[participationId]!.id;
+                return result.submission.id === this.latestSubmission[participationId]!.id;
             }),
             distinctUntilChanged(),
+            tap(() => {
+                // This is the normal case - the last pending submission received a result, so we emit null as the message that there is no pending submission anymore.
+                this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+            }),
         );
 
-        this.resultSubscriptions[participationId] = merge(this.resultTimerSubjects[participationId], resultObservable)
+        // If the timer runs out, we will emit an error as we assume the result is lost.
+        const timerObservable = this.resultTimerSubjects[participationId].pipe(
+            tap(() => {
+                this.onError(participationId);
+            }),
+        );
+
+        this.resultSubscriptions[participationId] = merge(timerObservable, resultObservable)
             .pipe(
-                filter(() => !!this.latestValue[participationId]),
+                filter(() => !!this.latestSubmission[participationId]),
                 tap(() => {
+                    // We reset the timer when a new result came through OR the timer ran out. The stream will then be inactive until the next submission comes in.
                     this.resetResultWaitingTimer(participationId);
-                    this.submissionSubjects[participationId].next(null);
                 }),
             )
             .subscribe();
@@ -176,27 +195,25 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     public getLatestPendingSubmission = (participationId: number) => {
         const subject = this.submissionSubjects[participationId];
         if (subject) {
-            return subject.asObservable().pipe(filter(s => s !== undefined)) as Observable<Submission | null>;
+            return subject.asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<SubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
-        this.submissionSubjects[participationId] = new BehaviorSubject<Submission | null | undefined>(undefined);
+        this.submissionSubjects[participationId] = new BehaviorSubject<[SubmissionState, Submission | null | undefined]>([SubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]);
         this.fetchLatestPendingSubmission(participationId)
             .pipe(
                 tap((submission: Submission | null) => {
-                    this.latestValue[participationId] = submission;
+                    this.latestSubmission[participationId] = submission;
                 }),
                 tap(() => {
                     this.setupWebsocketSubscription(participationId);
                     this.subscribeForNewResult(participationId);
                 }),
-                tap((submission: Submission | null) => {
-                    this.submissionSubjects[participationId].next(submission);
-                }),
+                tap((submission: Submission | null) => {}),
             )
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
-        return this.submissionSubjects[participationId].asObservable().pipe(filter(s => s !== undefined)) as Observable<Submission | null>;
+        return this.submissionSubjects[participationId].asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<SubmissionStateObj>;
     };
 
     public triggerBuild(participationId: number) {
