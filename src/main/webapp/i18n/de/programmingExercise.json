@@ -76,7 +76,10 @@
                 "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}."
             },
             "resubmit": "Erneute Abgabe deiner Lösung. Diese Aktion führt einen neuen Build aus, der deine Abgabe testet.",
-            "triggerInstructorBuild": "Führe einen neuen Build für diese Teilnahme aus. Das Ergebnis wird unabhängig vom Abgabedatum als 'bewertet' gelten."
+            "triggerInstructorBuild": "Führe einen neuen Build für diese Teilnahme aus. Das Ergebnis wird unabhängig vom Abgabedatum als 'bewertet' gelten.",
+            "saveTestCases": "Testfälle speichern",
+            "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
+            "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}."
         }
     }
 }

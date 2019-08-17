@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { filter, map, tap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
@@ -41,15 +41,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
-            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe((results: Result[]) => {
-                this.programmingExercise.solutionParticipation.results = results;
-                this.loadingSolutionParticipationResults = false;
-            });
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
+                .pipe(catchError(() => of(null)))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.solutionParticipation.results = result ? [result] : [];
+                    this.loadingSolutionParticipationResults = false;
+                });
 
-            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe((results: Result[]) => {
-                this.programmingExercise.templateParticipation.results = results;
-                this.loadingTemplateParticipationResults = false;
-            });
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
+                .pipe(catchError(() => of(null)))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.templateParticipation.results = result ? [result] : [];
+                    this.loadingTemplateParticipationResults = false;
+                });
         });
     }
 

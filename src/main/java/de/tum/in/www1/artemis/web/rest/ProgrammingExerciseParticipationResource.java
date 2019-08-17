@@ -60,7 +60,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Get the latest result for a given programming exercise participation including it's result.
      *
-     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body.
+     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -119,7 +119,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Util method for retrieving the latest result with feedbacks of participation. Generates the appropriate response type (ok, forbidden, notFound).
      *
-     * @param participation
+     * @param participation to retrieve the latest result for.
      * @return the appropriate ResponseEntity for the result request.
      */
     private ResponseEntity<Result> getLatestResultWithFeedbacks(ProgrammingExerciseParticipation participation) {
@@ -131,7 +131,7 @@ public class ProgrammingExerciseParticipationResource {
             result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
         }
         catch (EntityNotFoundException ex) {
-            return notFound();
+            return ResponseEntity.ok(null);
         }
         return ResponseEntity.ok(result);
     }
