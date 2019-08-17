@@ -4,7 +4,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +148,7 @@ public class ProgrammingSubmissionService {
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
         }
-        catch (GitAPIException ex) {
+        catch (EntityNotFoundException ex) {
             throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
         }
 
