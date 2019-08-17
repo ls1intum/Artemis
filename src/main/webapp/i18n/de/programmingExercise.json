@@ -52,7 +52,8 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
-                "testCaseCommand": "Testfall einfügen"
+                "testCaseCommand": "Testfall einfügen",
+                "exerciseHintCommand": "Aufgaben spezifischen Hinweis hinzufügen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution Repository oder den Testfällen hinweisen.",

@@ -17,6 +17,9 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/p
 import { Result, ResultService } from 'app/entities/result';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
+import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
+import { ExerciseHintService } from 'app/entities/exercise-hint';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -28,12 +31,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     exerciseValue: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
+    exerciseHints: ExerciseHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
+    taskHintCommand = new TaskHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
 
     savingInstructions = false;
     unsavedChanges = false;
@@ -80,11 +85,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
+            this.loadExerciseHints(this.exercise.id);
         }
     }
 
@@ -114,6 +121,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     // Update element height
                     target.style.height = event.rect.height + 'px';
                 }
+            });
+    }
+
+    loadExerciseHints(exerciseId: number) {
+        this.exerciseHintService
+            .findByExerciseId(exerciseId)
+            .pipe(rxMap(({ body }) => body || []))
+            .subscribe((exerciseHints: ExerciseHint[]) => {
+                this.exerciseHints = exerciseHints;
+                this.taskHintCommand.setValues(this.exerciseHints.map(({ title }) => title));
             });
     }
 
