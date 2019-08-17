@@ -306,8 +306,9 @@ public class Result implements Serializable {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else
+        else {
             setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+        }
     }
 
     public Submission getSubmission() {
