@@ -26,6 +26,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() showProgress: boolean;
     @Input() btnSize = ButtonSize.SMALL;
 
+    alwaysShowTriggerButton = false;
+
     participationHasResult: boolean;
     participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
@@ -112,7 +114,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                         case SubmissionState.IS_BUILDING_PENDING_SUBMISSION:
                             this.isBuilding = true;
                             break;
-                        case SubmissionState.HAS_PENDING_SUBMISSION_WITHOUT_RESULT:
+                        case SubmissionState.HAS_FAILED_SUBMISSION:
                             this.participationHasLatestSubmissionWithoutResult = true;
                             this.isBuilding = false;
                             break;

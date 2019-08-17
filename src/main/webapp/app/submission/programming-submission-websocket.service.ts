@@ -8,11 +8,15 @@ import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 export enum SubmissionState {
+    // The last submission of participation has a result.
     HAS_NO_PENDING_SUBMISSION = 'HAS_NO_PENDING_SUBMISSION',
+    // The submission was created on the server, we assume that the build is running within an expected time frame.
     IS_BUILDING_PENDING_SUBMISSION = 'IS_BUILDING_PENDING_SUBMISSION',
-    HAS_PENDING_SUBMISSION_WITHOUT_RESULT = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
+    // A failed submission is a pending submission that has not received a result within an expected time frame.
+    HAS_FAILED_SUBMISSION = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
 }
 
 export type SubmissionStateObj = [SubmissionState, Submission | null];
@@ -61,23 +65,9 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * @param participationId
      */
     private fetchLatestPendingSubmission = (participationId: number): Observable<Submission | null> => {
-        return this.http.get<Submission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission').pipe(
-            catchError(() => of(null)),
-            tap((submission: Submission | null) => {
-                if (submission) {
-                    const remainingTime = this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
-                    if (remainingTime > 0) {
-                        this.submissionSubjects[participationId].next([SubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
-                        this.startResultWaitingTimer(participationId, remainingTime);
-                        return;
-                    }
-                    // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
-                    this.onError(participationId);
-                    return;
-                }
-                this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
-            }),
-        );
+        return this.http
+            .get<ProgrammingSubmission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
+            .pipe(catchError(() => of(null)));
     };
 
     /**
@@ -99,7 +89,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     };
 
     private onError = (participationId: number) => {
-        this.submissionSubjects[participationId].next([SubmissionState.HAS_PENDING_SUBMISSION_WITHOUT_RESULT, null]);
+        this.emitFailedSubmission(participationId);
         this.alertService.error('artemisApp.submission.resultTimeout');
     };
 
@@ -178,6 +168,28 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             .subscribe();
     };
 
+    private emitNoPendingSubmission = (participationId: number) => {
+        this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+    };
+
+    private emitBuildingSubmission = (participationId: number, submission: ProgrammingSubmission) => {
+        this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, submission]);
+    };
+
+    private emitFailedSubmission = (participationId: number) => {
+        this.submissionSubjects[participationId].next([SubmissionState.HAS_FAILED_SUBMISSION, null]);
+    };
+
+    /**
+     * Check how much time is still left for the build.
+     *
+     * @param submission for which to check the passed build time.
+     * @return the expected rest time to wait for the build.
+     */
+    private getExpectedRemainingTimeForBuild = (submission: ProgrammingSubmission): number => {
+        return this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
+    };
+
     /**
      * Subscribe for the latest pending submission for the given participation.
      * A latest pending submission is characterized by the following properties:
@@ -202,14 +214,27 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
         this.submissionSubjects[participationId] = new BehaviorSubject<[SubmissionState, Submission | null | undefined]>([SubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]);
         this.fetchLatestPendingSubmission(participationId)
             .pipe(
-                tap((submission: Submission | null) => {
+                tap((submission: ProgrammingSubmission | null) => {
                     this.latestSubmission[participationId] = submission;
                 }),
                 tap(() => {
                     this.setupWebsocketSubscription(participationId);
                     this.subscribeForNewResult(participationId);
                 }),
-                tap((submission: Submission | null) => {}),
+                tap((submission: ProgrammingSubmission | null) => {
+                    if (submission) {
+                        const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
+                        if (remainingTime > 0) {
+                            this.emitBuildingSubmission(participationId, submission);
+                            this.startResultWaitingTimer(participationId, remainingTime);
+                            return;
+                        }
+                        // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
+                        this.onError(participationId);
+                        return;
+                    }
+                    this.emitNoPendingSubmission(participationId);
+                }),
             )
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
