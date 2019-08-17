@@ -142,7 +142,8 @@ public class ProgrammingSubmissionService {
      * @throws IllegalStateException if the last commit hash can't be retrieved.
      */
     @Transactional
-    public ProgrammingSubmission createSubmissionForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType) throws IllegalStateException {
+    public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
+            throws IllegalStateException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         ObjectId lastCommitHash;
         try {

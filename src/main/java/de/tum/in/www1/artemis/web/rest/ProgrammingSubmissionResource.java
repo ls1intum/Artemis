@@ -124,7 +124,7 @@ public class ProgrammingSubmissionResource {
         }
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSubmissionForParticipation(programmingExerciseParticipation, SubmissionType.MANUAL);
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.MANUAL);
         }
         catch (IllegalStateException ex) {
             return notFound();
@@ -155,7 +155,7 @@ public class ProgrammingSubmissionResource {
         }
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSubmissionForParticipation(programmingExerciseParticipation, SubmissionType.INSTRUCTOR);
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.INSTRUCTOR);
         }
         catch (IllegalStateException ex) {
             return notFound();
