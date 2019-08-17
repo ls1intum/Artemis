@@ -15,6 +15,7 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {
         super(participationWebsocketService, submissionService, programmingExerciseParticipationService);
+        this.btnType = 'btn-danger';
     }
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.

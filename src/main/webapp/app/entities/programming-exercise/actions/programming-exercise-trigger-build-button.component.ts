@@ -27,6 +27,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() btnSize = ButtonSize.SMALL;
 
     alwaysShowTriggerButton = false;
+    btnType = 'btn-primary';
 
     participationHasResult: boolean;
     participationIsActive: boolean;

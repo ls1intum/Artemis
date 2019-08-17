@@ -1,6 +1,6 @@
 <button
     *ngIf="alwaysShowTriggerButton || (participationHasResult && participationIsActive && participationHasLatestSubmissionWithoutResult)"
-    [ngClass]="['btn', 'btn-primary', btnSize]"
+    [ngClass]="['btn', btnType, btnSize]"
     [disabled]="isBuilding"
     (click)="triggerBuild($event)"
     ngbTooltip="{{ getTooltip() | translate }}"
