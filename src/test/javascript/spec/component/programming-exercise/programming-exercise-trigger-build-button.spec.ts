@@ -17,10 +17,9 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
@@ -40,7 +39,7 @@ describe('TriggerBuildButtonSpec', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
 
     let getLatestPendingSubmissionStub: SinonStub;
-    let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmission | null>;
+    let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
 
     let triggerBuildStub: SinonStub;
 
@@ -86,7 +85,7 @@ describe('TriggerBuildButtonSpec', () => {
                     subscribeForLatestResultOfParticipationSubject,
                 );
 
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmission | null>();
+                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
                 getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
 
                 checkIfParticipationHasResult = stub(programmingExerciseParticipationService, 'checkIfParticipationHasResult');
@@ -101,10 +100,11 @@ describe('TriggerBuildButtonSpec', () => {
     });
 
     const getTriggerButton = () => {
-        return debugElement.query(By.css('button')).nativeElement;
+        const triggerButton = debugElement.query(By.css('button'));
+        return triggerButton ? triggerButton.nativeElement : null;
     };
 
-    it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
+    it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
@@ -113,7 +113,30 @@ describe('TriggerBuildButtonSpec', () => {
 
         fixture.detectChanges();
 
-        const triggerButton = getTriggerButton();
+        // Button should not show if there is no failed submission.
+        let triggerButton = getTriggerButton();
+        expect(triggerButton).not.to.exist;
+
+        // After a failed submission is sent, the button should be displayed.
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+
+        fixture.detectChanges();
+        triggerButton = getTriggerButton();
+        expect(triggerButton).to.exist;
+    });
+
+    it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
+        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        const changes: SimpleChanges = {
+            participation: new SimpleChange(undefined, comp.participation, true),
+        };
+        comp.ngOnChanges(changes);
+
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+
+        fixture.detectChanges();
+
+        let triggerButton = getTriggerButton();
         expect(triggerButton.disabled).to.be.false;
 
         // Click the button to start a build.
@@ -121,16 +144,17 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerBuildStub).to.have.been.calledOnce;
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
-        getLatestPendingSubmissionSubject.next(submission);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
         expect(comp.isBuilding).to.be.true;
         fixture.detectChanges();
         expect(triggerButton.disabled).to.be.true;
 
-        // Now the server signals that the build is done, the button should be enabled again.
-        getLatestPendingSubmissionSubject.next(null);
+        // Now the server signals that the build is done, the button should now be removed.
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
         expect(comp.isBuilding).to.be.false;
         fixture.detectChanges();
-        expect(triggerButton.disabled).to.be.false;
+        triggerButton = getTriggerButton();
+        expect(triggerButton).not.to.exist;
     });
 
     it('should be disabled if the participation has no result as this means that probably no commit was made yet', () => {
@@ -141,16 +165,22 @@ describe('TriggerBuildButtonSpec', () => {
         };
         comp.ngOnChanges(changes);
 
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+
         fixture.detectChanges();
+
+        // There is no result within the participation object, button should not show.
         expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(comp.isBuilding).to.be.false;
+        let triggerButton = getTriggerButton();
+        expect(triggerButton).not.to.exist;
 
-        const triggerButton = getTriggerButton();
-        expect(triggerButton.disabled).to.be.true;
-
-        // As soon as the participation receives a first result, the button is enabled.
+        // If the participation receives a result, the trigger button should now show.
         subscribeForLatestResultOfParticipationSubject.next(gradedResult2);
+        expect(comp.isBuilding).to.be.false;
         fixture.detectChanges();
-        expect(comp.isBuilding).to.be.undefined;
+        triggerButton = getTriggerButton();
+        expect(triggerButton).to.exist;
         expect(triggerButton.disabled).to.be.false;
     });
 
@@ -161,6 +191,8 @@ describe('TriggerBuildButtonSpec', () => {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
         comp.ngOnChanges(changes);
+
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
 
         fixture.detectChanges();
         expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);

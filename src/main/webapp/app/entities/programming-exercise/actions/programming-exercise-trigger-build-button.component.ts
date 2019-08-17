@@ -1,7 +1,7 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { catchError, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { Observable, of, Subscription } from 'rxjs';
-import { ProgrammingSubmissionWebsocketService, SubmissionState } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService, ProgrammingSubmissionState } from 'app/submission/programming-submission-websocket.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { Result } from 'app/entities/result';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
@@ -105,17 +105,16 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmission(this.participation.id)
             .pipe(
-                tap(([submissionState, submission]) => {
-                    console.log(submission);
+                tap(([submissionState]) => {
                     switch (submissionState) {
-                        case SubmissionState.HAS_NO_PENDING_SUBMISSION:
+                        case ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION:
                             this.isBuilding = false;
                             this.participationHasLatestSubmissionWithoutResult = false;
                             break;
-                        case SubmissionState.IS_BUILDING_PENDING_SUBMISSION:
+                        case ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION:
                             this.isBuilding = true;
                             break;
-                        case SubmissionState.HAS_FAILED_SUBMISSION:
+                        case ProgrammingSubmissionState.HAS_FAILED_SUBMISSION:
                             this.participationHasLatestSubmissionWithoutResult = true;
                             this.isBuilding = false;
                             break;

@@ -10,7 +10,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
-export enum SubmissionState {
+export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
     HAS_NO_PENDING_SUBMISSION = 'HAS_NO_PENDING_SUBMISSION',
     // The submission was created on the server, we assume that the build is running within an expected time frame.
@@ -19,10 +19,10 @@ export enum SubmissionState {
     HAS_FAILED_SUBMISSION = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
 }
 
-export type SubmissionStateObj = [SubmissionState, Submission | null];
+export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, Submission | null];
 
 export interface ISubmissionWebsocketService {
-    getLatestPendingSubmission: (participationId: number) => Observable<SubmissionStateObj>;
+    getLatestPendingSubmission: (participationId: number) => Observable<ProgrammingSubmissionStateObj>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -37,7 +37,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     private submissionTopicsSubscribed: { [participationId: number]: string } = {};
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
-    private submissionSubjects: { [participationId: number]: BehaviorSubject<[SubmissionState, Submission | null | undefined]> } = {};
+    private submissionSubjects: { [participationId: number]: BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
@@ -115,7 +115,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
                 .pipe(
                     tap((submission: Submission) => {
                         const subject = this.submissionSubjects[participationId];
-                        subject.next([SubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
+                        subject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
                         // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
                     }),
@@ -146,7 +146,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             distinctUntilChanged(),
             tap(() => {
                 // This is the normal case - the last pending submission received a result, so we emit null as the message that there is no pending submission anymore.
-                this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+                this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
             }),
         );
 
@@ -169,15 +169,15 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     };
 
     private emitNoPendingSubmission = (participationId: number) => {
-        this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
     };
 
     private emitBuildingSubmission = (participationId: number, submission: ProgrammingSubmission) => {
-        this.submissionSubjects[participationId].next([SubmissionState.HAS_NO_PENDING_SUBMISSION, submission]);
+        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
     };
 
     private emitFailedSubmission = (participationId: number) => {
-        this.submissionSubjects[participationId].next([SubmissionState.HAS_FAILED_SUBMISSION, null]);
+        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
     };
 
     /**
@@ -207,11 +207,14 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     public getLatestPendingSubmission = (participationId: number) => {
         const subject = this.submissionSubjects[participationId];
         if (subject) {
-            return subject.asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<SubmissionStateObj>;
+            return subject.asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
-        this.submissionSubjects[participationId] = new BehaviorSubject<[SubmissionState, Submission | null | undefined]>([SubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]);
+        this.submissionSubjects[participationId] = new BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]>([
+            ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            undefined,
+        ]);
         this.fetchLatestPendingSubmission(participationId)
             .pipe(
                 tap((submission: ProgrammingSubmission | null) => {
@@ -238,7 +241,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             )
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
-        return this.submissionSubjects[participationId].asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<SubmissionStateObj>;
+        return this.submissionSubjects[participationId].asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
     };
 
     public triggerBuild(participationId: number) {
