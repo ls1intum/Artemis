@@ -209,7 +209,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     importIntoIntelliJ() {
         const title = this.exercise.title;
+        const id = this.exercise.id;
         const repo = this.repositoryUrl(this.exercise.participations[0]);
-        this.javaBridge.clone(repo, title);
+        this.javaBridge.clone(repo, title, id);
     }
 }

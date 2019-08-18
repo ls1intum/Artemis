@@ -11,9 +11,9 @@ export class JavaBridgeService {
         window.intellij.login(username, password);
     }
 
-    clone(repository: string, exerciseName: string) {
+    clone(repository: string, exerciseName: string, exerciseId: number) {
         // @ts-ignore
-        window.intellij.clone(repository, exerciseName);
+        window.intellij.clone(repository, exerciseName, exerciseId);
     }
 
     submit() {
