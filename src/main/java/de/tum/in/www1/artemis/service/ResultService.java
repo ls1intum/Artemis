@@ -61,11 +61,23 @@ public class ResultService {
         this.testCaseService = testCaseService;
     }
 
+    /**
+     * Get a result from the database by its id,
+     *
+     * @param id the id of the result to load from the database
+     * @return the result
+     */
     public Result findOne(long id) {
         log.debug("Request to get Result: {}", id);
         return resultRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
+    /**
+     * Get a result from the database by its id together with the associated list of feedback items.
+     *
+     * @param id the id of the result to load from the database
+     * @return the result with feedback list
+     */
     public Result findOneWithEagerFeedbacks(long id) {
         log.debug("Request to get Result: {}", id);
         return resultRepository.findByIdWithEagerFeedbacks(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
@@ -83,6 +95,13 @@ public class ResultService {
                 .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
     }
 
+    /**
+     * Get the latest result from the database by participation id together with the list of feedback items.
+     *
+     * @param participationId the id of the participation to load from the database
+     * @return the result with feedback list
+     * @throws EntityNotFoundException when result for participation could not be found
+     */
     public Result findLatestResultWithFeedbacksForParticipation(Long participationId) throws EntityNotFoundException {
         Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
         if (!result.isPresent()) {
@@ -97,7 +116,7 @@ public class ResultService {
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
      * 
-     * @param result
+     * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
         User currentUser = userService.getUser();
@@ -124,6 +143,7 @@ public class ResultService {
      *
      * @param participation the participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
+     * @return result after compilation
      */
     @Transactional
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
@@ -141,17 +161,19 @@ public class ResultService {
             return Optional.empty();
         }
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-        // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-        if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
-            extractTestCasesFromResult(programmingExercise, result);
-        }
         if (result != null) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
+            boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+                extractTestCasesFromResult(programmingExercise, result);
+            }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
-            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            resultRepository.save(result);
         }
-        resultRepository.save(result);
         return Optional.ofNullable(result);
     }
 
@@ -171,6 +193,12 @@ public class ResultService {
         }
     }
 
+    /**
+     * Notify a user via websocket
+     *
+     * @param participation participation used for notification
+     * @param result result used for notification
+     */
     @Transactional(readOnly = true)
     public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
@@ -190,7 +218,8 @@ public class ResultService {
     /**
      * Handle the manual creation of a new result potentially including feedback
      *
-     * @param result
+     * @param result newly created Result
+     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      */
     public void createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
@@ -235,6 +264,12 @@ public class ResultService {
         }
     }
 
+    /**
+     * Get a course from the database by its id.
+     *
+     * @param courseId the id of the course to load from the database
+     * @return the course
+     */
     public List<Result> findByCourseId(Long courseId) {
         return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
     }

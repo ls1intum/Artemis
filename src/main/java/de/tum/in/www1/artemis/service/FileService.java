@@ -36,7 +36,7 @@ public class FileService {
      *
      * @param path the path for the file to load
      * @return file contents as a byte[], or null, if the file doesn't exist
-     * @throws IOException
+     * @throws IOException if the file can't be accessed.
      */
     @Cacheable(value = "files", unless = "#result == null")
     public byte[] getFileForPath(String path) throws IOException {
@@ -63,6 +63,17 @@ public class FileService {
         return manageFilesForUpdatedFilePath(oldFilePath, newFilePath, targetFolder, entityId, false);
     }
 
+    /**
+     * Takes care of any changes that have to be made to the filesystem (deleting old files, moving temporary files into their proper location) and returns the public path for the
+     * resulting file (as it might have been moved from newFilePath to another path)
+     *
+     * @param oldFilePath  the old file path (this file will be deleted if not null and different from newFilePath)
+     * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
+     * @param targetFolder the folder that a temporary file should be moved to
+     * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
+     * @param keepFileName flag for determining if the current filename should be kept.
+     * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
+     */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId, Boolean keepFileName) {
         log.debug("Manage files for {} to {}", oldFilePath, newFilePath);
 
@@ -179,7 +190,7 @@ public class FileService {
      * @param originalFilename the original filename of the file (needed to determine the file type)
      * @param targetFolder     the folder where the new file should be created
      * @return the newly created file
-     * @throws IOException
+     * @throws IOException if the file can't be generated.
      */
     private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
@@ -241,8 +252,10 @@ public class FileService {
      * This copies the directory at the old directory path to the new path, including all files and subfolders
      *
      * @param resources           the resources that should be copied
+     * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
      * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @throws IOException
+     * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException if the copying operation fails.
      */
     public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
 
@@ -276,7 +289,7 @@ public class FileService {
      *
      * @param oldDirectoryPath    the path of the folder that should be renamed
      * @param targetDirectoryPath the path of the folder where the renamed folder should be located
-     * @throws IOException
+     * @throws IOException if the directory could not be renamed.
      */
     public void renameDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
         File oldDirectory = new File(oldDirectoryPath);
@@ -382,7 +395,7 @@ public class FileService {
      * @param startPath         the path where the file is located
      * @param targetString      the string that should be replaced
      * @param replacementString the string that should be used to replace the target
-     * @throws IOException
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInDirectoryName(String startPath, String targetString, String replacementString) throws IOException {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
@@ -413,7 +426,7 @@ public class FileService {
      * @param startPath          the path where the start directory is located
      * @param targetStrings      the strings that should be replaced
      * @param replacementStrings the strings that should be used to replace the target strings
-     * @throws IOException
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
         log.debug("Replacing {} with {} in files in directory {}", targetStrings, replacementStrings, startPath);
@@ -449,7 +462,7 @@ public class FileService {
      * @param filePath           the path where the file is located
      * @param targetStrings      the strings that should be replaced
      * @param replacementStrings the strings that should be used to replace the target strings
-     * @throws IOException
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFile(String filePath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
         log.debug("Replacing {} with {} in file {}", targetStrings, replacementStrings, filePath);

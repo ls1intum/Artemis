@@ -224,6 +224,12 @@ public class DatabaseUtilService {
         return result;
     }
 
+    public Result addResultToSubmission(Submission submission) {
+        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
+        resultRepo.save(result);
+        return result;
+    }
+
     public void addCourseWithOneModelingExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -309,9 +315,9 @@ public class DatabaseUtilService {
         programmingExerciseRepository.save(programmingExercise);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise).afterDueDate(true));
         testCaseRepository.saveAll(testCases);
 
         assertThat(programmingExerciseRepository.findAll()).as("programming exercise is initialized").hasSize(1);
@@ -372,6 +378,23 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    public Submission addSubmission(Exercise exercise, Submission submission, String login) {
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    public Submission addSubmission(StudentParticipation participation, Submission submission, String login) {
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
         participationRepo.save(participation);
         return submission;
     }

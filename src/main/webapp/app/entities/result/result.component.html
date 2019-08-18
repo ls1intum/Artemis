@@ -11,9 +11,9 @@
             <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
             <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
             <span *ngIf="hasFeedback">
-                <span class="result" (click)="showDetails(result)">{{ resultString }}</span>
+                <span class="result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip">{{ resultString }}</span>
             </span>
-            <span *ngIf="!hasFeedback"> {{ result.resultString }}</span>
+            <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip"> {{ result.resultString }}</span>
             <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }})</span>
             <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
         </span>

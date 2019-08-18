@@ -2,22 +2,4 @@
     .test-case--inactive {
         color: grey;
     }
-    .datatable-body-cell-label {
-        display: flex;
-        align-items: center;
-
-        .edit-weight__value {
-            flex: 2 1 auto;
-        }
-
-        .edit-weight__input {
-            flex: 2 1 auto;
-        }
-
-        .edit-weight__edit-icon {
-            flex: 1 1 auto;
-            cursor: pointer;
-            margin-left: auto;
-        }
-    }
 }

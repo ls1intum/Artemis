@@ -28,7 +28,7 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
         return of();
     }
 
-    updateWeights(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
+    updateTestCase(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
         return of();
     }
 }
