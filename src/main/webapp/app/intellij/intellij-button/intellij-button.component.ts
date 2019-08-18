@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
-import { JavaBridgeService } from 'app/core/intellij/java-bridge.service';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     /* tslint:disable-next-line component-selector */

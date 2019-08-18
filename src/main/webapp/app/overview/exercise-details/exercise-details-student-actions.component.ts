@@ -10,8 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { Result } from 'app/entities/result';
-import { JavaBridgeService } from 'app/core/intellij/java-bridge.service';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

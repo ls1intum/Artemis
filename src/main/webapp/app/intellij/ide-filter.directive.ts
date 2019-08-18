@@ -1,5 +1,5 @@
 import { Directive, Input, ElementRef, OnInit } from '@angular/core';
-import { JavaBridgeService } from 'app/core/intellij/java-bridge.service';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Directive({
     selector: '[jhi-ide-filter]',

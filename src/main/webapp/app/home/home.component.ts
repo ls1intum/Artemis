@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JavaBridgeService } from 'app/core/intellij/java-bridge.service';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-home',
