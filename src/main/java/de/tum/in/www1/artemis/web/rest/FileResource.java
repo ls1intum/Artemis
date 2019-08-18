@@ -24,7 +24,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -49,13 +52,16 @@ public class FileResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository) {
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.lectureRepository = lectureRepository;
+        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
 
     /**
@@ -201,6 +207,44 @@ public class FileResource {
     public ResponseEntity<byte[]> getCoursIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
+    }
+
+    /**
+     * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission
+     *
+     * @param submissionId ID of the submission, the attachment belongs to
+     * @param filename  the filename of the file
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/file-upload/submission/{submissionId}/{filename:.+}")
+    // @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Resource> getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
+        if (!optionalSubmission.isPresent()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Submission submission = optionalSubmission.get();
+        try {
+            byte[] file = fileService.getFileForPath(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + submission.getId() + '/' + filename);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            ByteArrayResource resource = new ByteArrayResource(file);
+
+            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(contentDisposition);
+            String mediaType = "application/pdf";
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
+        }
+        catch (IOException ex) {
+            log.error("File upload submission download lef to the following exception", ex);
+            return ResponseEntity.status(500).build();
+        }
+
     }
 
     /**

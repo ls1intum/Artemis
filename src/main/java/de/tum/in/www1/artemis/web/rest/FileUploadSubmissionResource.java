@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,9 +62,14 @@ public class FileUploadSubmissionResource {
 
     private final ResultRepository resultRepository;
 
+    private final FileService fileService;
+
+    private final CacheManager cacheManager;
+
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
             FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
+            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository, FileService fileService,
+            CacheManager cacheManager) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -73,6 +79,8 @@ public class FileUploadSubmissionResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.fileService = fileService;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -226,6 +234,7 @@ public class FileUploadSubmissionResource {
     @NotNull
     private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) {
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(fileUploadSubmission.getFilePath()));
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         ResponseEntity<FileUploadSubmission> responseFailure = this.checkExerciseValidity(fileUploadExercise);
         if (responseFailure != null) {

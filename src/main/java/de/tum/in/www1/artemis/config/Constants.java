@@ -30,6 +30,8 @@ public final class Constants {
 
     public static final String LECTURE_ATTACHMENT_FILEPATH = "uploads" + File.separator + "attachments" + File.separator + "lecture" + File.separator;
 
+    public static final String FILE_UPLOAD_SUBMISSION_FILEPATH = "uploads" + File.separator + "file-upload" + File.separator + "submission" + File.separator;
+
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String FILEPATH_COMPASS = "compass";
