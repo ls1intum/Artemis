@@ -16,6 +16,11 @@ export class JavaBridgeService {
         window.intellij.clone(repository, exerciseName);
     }
 
+    submit() {
+        // @ts-ignore
+        window.intellij.addCommitAndPushAllChanges();
+    }
+
     isIntelliJ(): boolean {
         return window.navigator.userAgent.includes('IntelliJ');
     }

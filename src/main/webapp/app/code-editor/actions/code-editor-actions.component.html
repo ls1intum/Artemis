@@ -27,6 +27,8 @@
         data-toggle="tooltip"
         data-placement="left"
         title="Save all unsaved changes in your files."
+        jhi-ide-filter
+        [showInIDE]="false"
     >
         <span *ngIf="editorState === EditorState.SAVING"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span>
         <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>

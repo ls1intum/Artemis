@@ -46,6 +46,7 @@ import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -60,6 +61,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
         ArtemisExerciseHintModule,
+        IntellijModule,
     ],
     declarations: [
         CodeEditorGridComponent,
