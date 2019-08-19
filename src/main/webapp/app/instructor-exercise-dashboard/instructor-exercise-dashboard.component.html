@@ -43,7 +43,8 @@
             </div>
 
             <div class="col-md-4" *ngIf="stats.numberOfSubmissions > 0">
-                <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
+                <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Manual assessments', 'Assessments with Automatic Assistance']" chartType="pie">
+                </canvas>
             </div>
         </div>
 
