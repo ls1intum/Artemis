@@ -134,7 +134,8 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Create a submission with type INSTRUCTOR for the last commit hash of the given participation.
+     * Create a submission with given submission type for the last commit hash of the given participation.
+     * WARNING: The commitHash is used to map incoming results to submissions. Using this method could cause the result to have multiple fitting submissions.
      *
      * @param participation to create submission for.
      * @param submissionType of the submission to create.
