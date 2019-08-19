@@ -320,6 +320,19 @@ public class ResultService {
     }
 
     /**
+     * Calculate the number of assessments which are either AUTOMATIC or SEMI_AUTOMATIC for a given exercise
+     *
+     * @param exerciseId the exercise we are interested in
+     * @return number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(exerciseId, true, AssessmentType.AUTOMATIC)
+                + resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(exerciseId, true,
+                        AssessmentType.SEMI_AUTOMATIC);
+    }
+
+    /**
      * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
      * the original result of a submission before updating the result due to a complaint.
      *

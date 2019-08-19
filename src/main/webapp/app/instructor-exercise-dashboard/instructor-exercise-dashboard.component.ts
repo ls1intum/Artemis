@@ -18,7 +18,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     stats = new StatsForDashboard();
 
     dataForAssessmentPieChart: number[];
-    totalAssessmentPercentage: number;
+    totalManualAssessmentPercentage: number;
+    totalAutomaticAssessmentPercentage: number;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -48,7 +49,10 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                 this.stats = Object.assign({}, this.stats, res.body);
 
                 if (this.stats.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.stats.numberOfAssessments / this.stats.numberOfSubmissions) * 100);
+                    this.totalManualAssessmentPercentage = Math.round(
+                        ((this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfSubmissions) * 100,
+                    );
+                    this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions) * 100);
                 }
 
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];

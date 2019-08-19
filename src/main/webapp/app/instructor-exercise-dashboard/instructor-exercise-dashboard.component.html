@@ -14,12 +14,18 @@
                         <div class="col-4">{{ stats.numberOfSubmissions }}</div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfAssessments }} ({{ totalAssessmentPercentage }}%)</div>
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfAssessments - stats.numberOfAutomaticAssistedAssessments }} ({{ totalManualAssessmentPercentage }}%)</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfAutomaticAssistedAssessments }} ({{ totalAutomaticAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
+                        <div class="col-4">
+                            {{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAutomaticAssessmentPercentage - totalManualAssessmentPercentage }}%)
+                        </div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}</div>

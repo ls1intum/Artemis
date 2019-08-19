@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -90,6 +91,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
+
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(long exerciseId, boolean rated, AssessmentType assessmentType);
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
