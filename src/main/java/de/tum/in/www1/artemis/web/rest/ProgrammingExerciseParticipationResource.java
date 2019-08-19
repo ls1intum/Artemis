@@ -119,13 +119,7 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
             return forbidden();
         }
-        Result result;
-        try {
-            result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
-        }
-        catch (EntityNotFoundException ex) {
-            return ResponseEntity.ok(null);
-        }
-        return ResponseEntity.ok(result);
+        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 }
