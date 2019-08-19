@@ -6,6 +6,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
+    C = 'C',
 }
 
 export class ProgrammingExercise extends Exercise {

@@ -98,7 +98,7 @@ public class BambooBuildPlanService {
                     new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
                     new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
-        else if (programmingLanguage == ProgrammingLanguage.PYTHON && !sequentialBuildRuns) {
+        else if ((programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) && !sequentialBuildRuns) {
             return new Stage("Default Stage")
                     .jobs(new Job("Default Job", new BambooKey("JOB1"))
                             .tasks(createCheckoutTask("", "tests"),
@@ -106,7 +106,7 @@ public class BambooBuildPlanService {
                                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
                             .requirements(new Requirement("Python3")));
         }
-        else if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
             return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
                     new ScriptTask().description("Builds and tests the structural tests")
                             .inlineBody("pytest tests/structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
