@@ -13,6 +13,7 @@ export const enum InitializationState {
     BUILD_PLAN_CONFIGURED = 'BUILD_PLAN_CONFIGURED',
     INITIALIZED = 'INITIALIZED',
     FINISHED = 'FINISHED',
+    INACTIVE = 'INACTIVE',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java

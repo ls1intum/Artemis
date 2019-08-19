@@ -24,6 +24,11 @@
             [short]="true"
             class="mr-2"
         ></jhi-updating-result>
+        <jhi-programming-exercise-student-trigger-build-button
+            class="mr-2"
+            [participation]="participation"
+            [btnSize]="ButtonSize.MEDIUM"
+        ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
         <jhi-code-editor-actions
             [unsavedFiles]="unsavedFiles"

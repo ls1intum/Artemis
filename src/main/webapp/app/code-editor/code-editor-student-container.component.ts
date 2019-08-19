@@ -18,6 +18,7 @@ import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
 import { CodeEditorAceComponent } from 'app/code-editor/ace';
 import { ExerciseType } from 'app/entities/exercise';
+import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -30,6 +31,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
+    ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;

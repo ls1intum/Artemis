@@ -24,6 +24,7 @@ import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -292,6 +293,22 @@ public class Result implements Serializable {
 
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
+    }
+
+    /**
+     * Sets the result to rated if:
+     * - It was created by an instructor (SubmissionType)
+     * - OR if the submissionDate is <= the exerciseDueDate.
+     * @param exerciseDueDate date after which no normal submission is considered rated.
+     * @param submission to which the result belongs.
+     */
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
+        if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
+            this.rated = true;
+        }
+        else {
+            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+        }
     }
 
     public Submission getSubmission() {
