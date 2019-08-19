@@ -121,7 +121,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException If the exercise with the given ID does not exist
      */
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
         if (!exerciseOpt.isPresent())
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         ProgrammingExercise programmingExercise = exerciseOpt.get();

@@ -10,16 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
-import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
@@ -49,7 +43,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping(value = "/programming-exercises-participation/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
@@ -68,7 +62,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
-    @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId) {
         Participation participation;
@@ -87,13 +81,26 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * Check if the participation has a result yet.
+     *
+     * @param participationId of the participation to check.
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     */
+    @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        boolean hasResult = resultService.existsByParticipationId(participationId);
+        return ResponseEntity.ok(hasResult);
+    }
+
+    /**
      * GET /programming-exercise-participation/:id/latest-pending-submission : get the latest pending submission for the participation.
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
      */
-    @GetMapping("/programming-exercise-participation/{participationId}/latest-pending-submission")
+    @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
         ProgrammingSubmission submission;
@@ -122,4 +129,5 @@ public class ProgrammingExerciseParticipationResource {
         Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
+
 }
