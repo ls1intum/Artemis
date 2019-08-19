@@ -58,6 +58,7 @@ public class ProgrammingSubmissionResource {
      * VCS Server at the push of a new commit
      *
      * @param participationId the participationId of the participation the repository is linked to
+     * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
@@ -99,6 +100,7 @@ public class ProgrammingSubmissionResource {
      * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
+     * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")

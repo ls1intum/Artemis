@@ -25,6 +25,11 @@
             "fieldName": "active",
             "fieldType": "Boolean",
             "fieldValidateRules": []
+        },
+        {
+            "fieldName": "afterDueDate",
+            "fieldType": "Boolean",
+            "fieldValidateRules": []
         }
     ],
     "changelogDate": "20190526152122",
