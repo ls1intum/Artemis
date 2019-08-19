@@ -75,7 +75,8 @@
                 "weightsUpdated": "The weights were updated successfully.",
                 "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
             },
-            "resubmit": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
             "saveTestCases": "Save test cases",
             "testCasesUpdated": "The test cases were updated successfully.",
             "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
