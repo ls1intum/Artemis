@@ -18,6 +18,7 @@
             "detail": {
                 "title": "Programmieraufgabe"
             },
+            "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Lösung Repository Url (optional)",

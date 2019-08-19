@@ -18,6 +18,7 @@
             "detail": {
                 "title": "Programming Exercise"
             },
+            "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Solution Repository Url (optional)",
