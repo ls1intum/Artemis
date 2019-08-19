@@ -17,7 +17,7 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 
 chai.use(sinonChai);
@@ -78,7 +78,9 @@ describe('UpdatingResultComponent', () => {
                     subscribeForLatestResultOfParticipationSubject,
                 );
 
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(of(null));
+                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(
+                    of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]),
+                );
             });
     });
 
@@ -171,7 +173,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        getLatestPendingSubmissionStub.returns(of(submission));
+        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
         expect(comp.isBuilding).to.be.true;
@@ -180,14 +182,14 @@ describe('UpdatingResultComponent', () => {
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.isBuilding = true;
-        getLatestPendingSubmissionStub.returns(of(null));
+        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
         expect(comp.isBuilding).to.equal(false);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
-        getLatestPendingSubmissionStub.returns(of(submission));
+        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.to.have.been.called;
         expect(comp.isBuilding).to.equal(undefined);

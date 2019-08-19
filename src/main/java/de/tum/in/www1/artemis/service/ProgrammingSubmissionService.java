@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -16,6 +18,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,12 +40,14 @@ public class ProgrammingSubmissionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final GitService gitService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
@@ -50,6 +55,7 @@ public class ProgrammingSubmissionService {
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.gitService = gitService;
     }
 
     /**
@@ -135,5 +141,41 @@ public class ProgrammingSubmissionService {
             return null;
         }
         return submissionOpt.get();
+    }
+
+    /**
+     * Create a submission with given submission type for the last commit hash of the given participation.
+     * WARNING: The commitHash is used to map incoming results to submissions. Using this method could cause the result to have multiple fitting submissions.
+     *
+     * See discussion in: https://github.com/ls1intum/Artemis/pull/712#discussion_r314944129;
+     *
+     * Worst case scenario when using this method:
+     * 1) Student executes a submission, the build is created on Bamboo
+     * 2) The build takes longer than 2 minutes, this enables the student to trigger the submission again
+     * 3) A new submission with the same commitHash is created on the server, there are now 2 submissions for the same commitHash and 2 running builds
+     * 4) The first build returns a result to Artemis, this result is now attached to the second submission (that was just created)
+     * 5) The second build finishes and returns a result to Artemis, this result is attached to the first submission
+     *
+     * @param participation to create submission for.
+     * @param submissionType of the submission to create.
+     * @return created submission.
+     * @throws IllegalStateException if the last commit hash can't be retrieved.
+     */
+    @Transactional
+    public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
+            throws IllegalStateException {
+        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        ObjectId lastCommitHash;
+        try {
+            lastCommitHash = gitService.getLastCommitHash(repoUrl);
+        }
+        catch (EntityNotFoundException ex) {
+            throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
+        }
+
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(lastCommitHash.getName()).submitted(true)
+                .submissionDate(ZonedDateTime.now()).type(submissionType);
+        newSubmission.setParticipation((Participation) participation);
+        return programmingSubmissionRepository.save(newSubmission);
     }
 }
