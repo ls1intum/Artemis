@@ -26,6 +26,12 @@ public class UserMapper {
         return users.stream().filter(Objects::nonNull).map(this::userToUserDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Map the dto object to a user object.
+     *
+     * @param userDTO to map to user.
+     * @return the mapped user from the dto.
+     */
     public User userDTOToUser(UserDTO userDTO) {
         if (userDTO == null) {
             return null;
@@ -61,6 +67,13 @@ public class UserMapper {
         return user;
     }
 
+    /**
+     * Map a set of strings to a set of authorities with the string as their names.
+     * E.g. {"edit", "delete"} => {Authority[name="edit"], Authority[name="delete"]}.
+     *
+     * @param strings to map into authorities.
+     * @return the set of authorities mapped from the strings.
+     */
     public Set<Authority> authoritiesFromStrings(Set<String> strings) {
         return strings.stream().map(string -> {
             Authority auth = new Authority();
