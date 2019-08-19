@@ -26,10 +26,9 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
-    @Input()
-    public exercise: ProgrammingExercise;
-    @Input()
-    public participation: Participation;
+    @Input() public exercise: ProgrammingExercise;
+    @Input() public participation: Participation;
+    @Input() private exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
@@ -84,10 +83,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                // If the exercise has changed, load its hints so that they are accessible in the instructions.
-                map(() => hasExerciseChanged(changes)),
-                switchMap((exerciseHasChanged: boolean) => (exerciseHasChanged ? this.loadExerciseHints(this.exercise.id) : of([]))),
+                switchMap(() => (this.exerciseHints ? of(this.exerciseHints) : this.loadExerciseHints(this.exercise.id))),
                 tap((hints: ExerciseHint[]) => {
+                    this.exerciseHints = hints;
                     this.programmingExerciseTaskWrapper.exerciseHints = hints;
                 }),
                 // If the participation has changed, set up the websocket subscriptions.

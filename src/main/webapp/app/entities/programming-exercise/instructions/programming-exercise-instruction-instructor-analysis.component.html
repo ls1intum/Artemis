@@ -6,6 +6,15 @@
     <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
     <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
 </div>
+<div *ngIf="invalidHints.length > 0; else hintsOk">
+    <fa-icon icon="exclamation-triangle" class="text-warning mr-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.issues">Hints issues.</span>
+</div>
+
+<ng-template #hintsOk>
+    <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.ok">Hints ok.</span>
+</ng-template>
 
 <ng-template #tooltipContent>
     <div class="text-left w-100">

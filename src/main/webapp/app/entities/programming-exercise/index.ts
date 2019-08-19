@@ -3,7 +3,7 @@ export * from './programming-exercise-participation.model';
 export * from './programming-exercise-popup.service';
 export * from './instructions/programming-exercise-instruction.component';
 export * from './instructions/programming-exercise-editable-instruction.component';
-export * from './instructions/programming-exercise-instruction-testcase-status.component';
+export * from './instructions/programming-exercise-instruction-instructor-analysis.component';
 export * from './instructions/programming-exercise-instruction-task-status.component';
 export * from './programming-exercise-dialog.component';
 export * from './programming-exercise-delete-dialog.component';

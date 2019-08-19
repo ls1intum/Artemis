@@ -20,7 +20,7 @@ import {
     ProgrammingExercise,
     ProgrammingExerciseEditableInstructionComponent,
     ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
+    ProgrammingExerciseInstructionInstructorAnalysisComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExerciseTestCaseService,
 } from 'src/main/webapp/app/entities/programming-exercise';
@@ -55,7 +55,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             declarations: [
                 ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
+                MockComponent(ProgrammingExerciseInstructionInstructorAnalysisComponent),
                 MockComponent(MarkdownEditorComponent),
                 ProgrammingExerciseInstructionComponent,
                 SafeHtmlPipe,

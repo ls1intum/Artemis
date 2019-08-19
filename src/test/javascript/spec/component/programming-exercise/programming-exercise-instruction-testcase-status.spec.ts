@@ -7,7 +7,7 @@ import { ArTEMiSTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseInstructionTestcaseStatusComponent } from '../../../../../main/webapp/app/entities/programming-exercise';
+import { ProgrammingExerciseInstructionInstructorAnalysisComponent } from '../../../../../main/webapp/app/entities/programming-exercise';
 import { TaskCommand } from '../../../../../main/webapp/app/markdown-editor/domainCommands/programming-exercise/task.command';
 
 const expect = chai.expect;
@@ -31,13 +31,13 @@ describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructionTestcaseStatusComponent],
+            declarations: [ProgrammingExerciseInstructionInstructorAnalysisComponent],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseInstructionTestcaseStatusComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseInstructionInstructorAnalysisComponent);
                 debugElement = fixture.debugElement;
-                comp = fixture.componentInstance as ProgrammingExerciseInstructionTestcaseStatusComponent;
+                comp = fixture.componentInstance as ProgrammingExerciseInstructionInstructorAnalysisComponent;
             });
     }));
 
