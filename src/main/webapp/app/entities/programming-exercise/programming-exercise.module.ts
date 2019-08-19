@@ -16,6 +16,7 @@ import {
     ProgrammingExerciseInstructionTaskStatusComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseInstructorStatusComponent,
+    ProgrammingExerciseInstructorTriggerBuildButtonComponent,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
@@ -23,6 +24,7 @@ import {
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
+    ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
 } from './';
@@ -74,6 +76,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionTestcaseStatusComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -96,6 +100,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ],
     providers: [
         ProgrammingExerciseService,

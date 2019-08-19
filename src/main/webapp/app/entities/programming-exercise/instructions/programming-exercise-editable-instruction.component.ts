@@ -15,7 +15,7 @@ import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { Result, ResultService } from 'app/entities/result';
-import { hasExerciseChanged } from 'app/entities/exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
@@ -36,7 +36,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
-    unsavedChanges = false;
+    unsavedChangesValue = false;
 
     interactResizable: Interactable;
 
@@ -59,6 +59,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return this.participationValue;
     }
     @Output() participationChange = new EventEmitter<Participation>();
+    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
@@ -75,6 +76,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.exerciseChange.emit(this.exerciseValue);
     }
 
+    set unsavedChanges(hasChanges: boolean) {
+        this.unsavedChangesValue = hasChanges;
+        if (hasChanges) {
+            this.hasUnsavedChanges.emit(hasChanges);
+        }
+    }
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: JhiAlertService,
@@ -83,6 +91,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (problemStatementHasChanged(changes)) {
+            this.generateHtml();
+        }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
         }

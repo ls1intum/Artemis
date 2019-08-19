@@ -545,7 +545,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
                 // In this case we know the submission time, so we use it for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission.getSubmissionDate());
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission);
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -621,7 +621,7 @@ public class BambooService implements ContinuousIntegrationService {
         String commitHash = null;
         for (Object changeSet : vcsList) {
             Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-            if (submissionType.equals(SubmissionType.MANUAL) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
+            if ((submissionType.equals(SubmissionType.MANUAL) || submissionType.equals(SubmissionType.INSTRUCTOR)) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
                 // We are only interested in the last commit hash of the assignment repo, not the test repo
                 commitHash = (String) changeSetMap.get("id");
             } else if (submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(TEST_REPO_NAME)) {

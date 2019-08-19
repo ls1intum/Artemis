@@ -63,7 +63,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.fileService.getTemplateFile('readme').subscribe(
+            this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
                 file => {
                     this.programmingExercise.problemStatement = file;
                     this.problemStatementLoaded = true;
