@@ -71,9 +71,9 @@
                 "resetWeights": "Reset weights",
                 "weightsReset": "The weights were reset successfully.",
                 "weightsResetFailed": "The weights could not be reset.",
-                "saveWeights": "Save weights",
-                "weightsUpdated": "The weights were updated successfully.",
-                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
+                "saveTestCases": "Save test cases",
+                "testCasesUpdated": "The test cases were updated successfully.",
+                "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
             }
         }
     }

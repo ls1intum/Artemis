@@ -6,4 +6,6 @@
 
 <suppressions>
     <suppress files="\/artemis\/config" checks=".*"/>
+    <suppress files="\/artemis\/web\/rest\/errors" checks=".*"/>
+    <suppress files="LdapConfig.java" checks=".*"/>
 </suppressions>
