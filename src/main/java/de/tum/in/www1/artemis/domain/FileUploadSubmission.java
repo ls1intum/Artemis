@@ -58,6 +58,12 @@ public class FileUploadSubmission extends Submission implements Serializable {
         }
     }
 
+    @PreUpdate
+    public void onUpdate() {
+        // move file and delete old file if necessary
+        filePath = fileService.manageFilesForUpdatedFilePath(prevFilePath, filePath, Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + getId() + '/', getId(), true);
+    }
+
     @PostRemove
     public void onDelete() {
         // delete old file if necessary

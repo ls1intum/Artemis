@@ -7,9 +7,7 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import {
     FileUploadExerciseComponent,
     FileUploadExerciseDeleteDialogComponent,
-    FileUploadExerciseDeletePopupComponent,
     FileUploadExerciseDetailComponent,
-    fileUploadExercisePopupRoute,
     FileUploadExercisePopupService,
     fileUploadExerciseRoute,
     FileUploadExerciseService,
@@ -21,7 +19,7 @@ import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/
 import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
-const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
+const ENTITY_STATES = [...fileUploadExerciseRoute];
 
 @NgModule({
     imports: [
@@ -33,14 +31,8 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         ArTEMiSDifficultyPickerModule,
         ArTEMiSMarkdownEditorModule,
     ],
-    declarations: [
-        FileUploadExerciseComponent,
-        FileUploadExerciseDetailComponent,
-        FileUploadExerciseUpdateComponent,
-        FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent,
-    ],
-    entryComponents: [FileUploadExerciseComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent, FileUploadExerciseDeletePopupComponent],
+    declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
+    entryComponents: [FileUploadExerciseComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
     exports: [FileUploadExerciseComponent],
     providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

@@ -3,7 +3,6 @@ import { Routes, Resolve, RouterStateSnapshot, ActivatedRouteSnapshot } from '@a
 import { UserRouteAccessService } from '../../core';
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
-import { FileUploadExerciseDeletePopupComponent } from './file-upload-exercise-delete-dialog.component';
 
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { Observable } from 'rxjs';
@@ -86,18 +85,5 @@ export const fileUploadExerciseRoute: Routes = [
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const fileUploadExercisePopupRoute: Routes = [
-    {
-        path: 'file-upload-exercise/:id/delete',
-        component: FileUploadExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

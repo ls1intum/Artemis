@@ -229,7 +229,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNextOptimal() {
-        if (this.exercise.type === ExerciseType.TEXT) {
+        if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
                 (response: FileUploadSubmission) => {
                     this.unassessedSubmission = response;

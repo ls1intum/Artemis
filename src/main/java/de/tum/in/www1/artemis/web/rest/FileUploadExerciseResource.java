@@ -20,10 +20,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -42,6 +39,8 @@ public class FileUploadExerciseResource {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
+    private final FileUploadExerciseService fileUploadExerciseService;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -51,12 +50,13 @@ public class FileUploadExerciseResource {
     private final GroupNotificationService groupNotificationService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
+        this.fileUploadExerciseService = fileUploadExerciseService;
     }
 
     /**
@@ -182,7 +182,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        fileUploadExerciseRepository.deleteById(exerciseId);
+        fileUploadExerciseService.delete(exerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 }

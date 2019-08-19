@@ -1,24 +1,30 @@
+/* angular */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 
+/* 3rd party */
+import { Observable } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
+
+/* application */
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
-import { JhiAlertService } from 'ng-jhipster';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
+import { MAX_SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
+    styleUrls: ['./file-upload-exercise-update.component.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
-    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     courses: Course[];

@@ -72,7 +72,7 @@
                             </button>
                             <button
                                 type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/' + fileUploadExercise.id + '/delete' } }]"
+                                (click)="openDeleteFileUploadExercisePopup(fileUploadExercise.id)"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1"

@@ -210,14 +210,13 @@ public class FileResource {
     }
 
     /**
-     * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission
+     * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
      * @param submissionId ID of the submission, the attachment belongs to
      * @param filename  the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/file-upload/submission/{submissionId}/{filename:.+}")
-    // @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @GetMapping("/files/file-upload-submission/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<Resource> getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -237,11 +236,10 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDisposition(contentDisposition);
-            String mediaType = "application/pdf";
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
-            log.error("File upload submission download lef to the following exception", ex);
+            log.error("File upload submission download let to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
 
@@ -293,7 +291,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
-            log.error("Lecture attachement download lef to the following exception", ex);
+            log.error("Lecture attachment download let to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
 
