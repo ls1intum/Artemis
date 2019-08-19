@@ -29,14 +29,7 @@ describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
-    let participationWebsocketService: ParticipationWebsocketService;
     let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
-    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-
-    let checkIfParticipationHasResult: SinonStub;
-
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
 
     let getLatestPendingSubmissionStub: SinonStub;
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
@@ -66,8 +59,6 @@ describe('TriggerBuildButtonSpec', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
-                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
         })
             .compileComponents()
@@ -76,27 +67,18 @@ describe('TriggerBuildButtonSpec', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
-                    subscribeForLatestResultOfParticipationSubject,
-                );
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
                 getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
 
-                checkIfParticipationHasResult = stub(programmingExerciseParticipationService, 'checkIfParticipationHasResult');
                 triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
             });
     });
 
     afterEach(() => {
-        subscribeForLatestResultOfParticipationStub.restore();
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
-        subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
+        getLatestPendingSubmissionStub.restore();
+        triggerBuildStub.restore();
     });
 
     const getTriggerButton = () => {
@@ -155,49 +137,5 @@ describe('TriggerBuildButtonSpec', () => {
         fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).not.to.exist;
-    });
-
-    it('should be disabled if the participation has no result as this means that probably no commit was made yet', () => {
-        checkIfParticipationHasResult.returns(of(false));
-        comp.participation = { ...participation, results: [], initializationState: InitializationState.INITIALIZED };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
-
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
-
-        fixture.detectChanges();
-
-        // There is no result within the participation object, button should not show.
-        expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);
-        expect(comp.isBuilding).to.be.false;
-        let triggerButton = getTriggerButton();
-        expect(triggerButton).not.to.exist;
-
-        // If the participation receives a result, the trigger button should now show.
-        subscribeForLatestResultOfParticipationSubject.next(gradedResult2);
-        expect(comp.isBuilding).to.be.false;
-        fixture.detectChanges();
-        triggerButton = getTriggerButton();
-        expect(triggerButton).to.exist;
-        expect(triggerButton.disabled).to.be.false;
-    });
-
-    it('should be become enabled if a result is not attached to the participation but could be found on the server', () => {
-        checkIfParticipationHasResult.returns(of(true));
-        comp.participation = { ...participation, results: [], initializationState: InitializationState.INITIALIZED };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
-
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
-
-        fixture.detectChanges();
-        expect(checkIfParticipationHasResult).to.have.been.calledOnceWithExactly(comp.participation.id);
-
-        const triggerButton = getTriggerButton();
-        expect(triggerButton.disabled).to.be.false;
     });
 });
