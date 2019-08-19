@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.TextAssessmentService;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
 @Service
@@ -95,6 +97,9 @@ public class DatabaseUtilService {
     FeedbackRepository feedbackRepo;
 
     @Autowired
+    TextBlockRepository textBlockRepository;
+
+    @Autowired
     ComplaintRepository complaintRepo;
 
     @Autowired
@@ -113,6 +118,9 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
+    TextAssessmentService textAssessmentService;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -125,6 +133,7 @@ public class DatabaseUtilService {
         complaintRepo.deleteAll();
         resultRepo.deleteAll();
         feedbackRepo.deleteAll();
+        textBlockRepository.deleteAll();
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
@@ -670,6 +679,25 @@ public class DatabaseUtilService {
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    @Transactional
+    public Result addFeedbackForTextSubmission(TextExercise exercise, TextSubmission submission, Feedback feedback) {
+        final Result result = submission.getResult();
+        return textAssessmentService.saveAssessment(result.getId(), asList(feedback), exercise);
+    }
+
+    @Transactional
+    public Result addFeedbackAndTextBlockForTextSubmission(TextExercise exercise, TextSubmission submission, Feedback feedback, TextBlock block) {
+        final Result result = submission.getResult();
+        block.computeId();
+        block.setSubmission(submission);
+        block = textBlockRepository.save(block);
+        submission.addBlocks(block);
+        textSubmissionRepo.save(submission);
+        feedback.setReference(block.getId());
+
+        return textAssessmentService.saveAssessment(result.getId(), asList(feedback), exercise);
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
