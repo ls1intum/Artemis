@@ -46,6 +46,7 @@ public class ComplaintService {
      * Create a new complaint checking the user has still enough complaint to create
      *
      * @param complaint the complaint to create
+     * @param principal the current Principal
      * @return the saved complaint
      */
     @Transactional

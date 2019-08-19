@@ -102,6 +102,10 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
         }
     }
 
+    /** Gets a ShortAnswerSubmittedText, that correspond to a given spot
+     * @param spot the ShortAnswerSpot for which the ShortAnswerSubmittedText should be determined
+     * @return the ShortAnswerSubmittedText or null if nothing was found
+     */
     public ShortAnswerSubmittedText getSubmittedTextForSpot(ShortAnswerSpot spot) {
         for (ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()) {
             if (submittedText.getSpot().equals(spot)) {
