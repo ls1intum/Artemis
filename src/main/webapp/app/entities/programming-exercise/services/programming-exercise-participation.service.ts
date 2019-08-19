@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result';
 import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export interface IProgrammingExerciseParticipationService {
-    getLatestResultWithFeedback: (participationId: number) => Observable<Result>;
+    getLatestResultWithFeedback: (participationId: number) => Observable<Result | null>;
     getStudentParticipationWithLatestResult: (participationId: number) => Observable<ProgrammingExerciseStudentParticipation>;
 }
 
@@ -16,8 +16,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     constructor(private http: HttpClient) {}
 
-    getLatestResultWithFeedback(participationId: number): Observable<Result> {
-        return this.http.get<Result>(this.resourceUrl + participationId + '/latest-result-with-feedbacks');
+    getLatestResultWithFeedback(participationId: number): Observable<Result | null> {
+        return this.http.get<Result | null>(this.resourceUrl + participationId + '/latest-result-with-feedbacks');
     }
 
     getStudentParticipationWithLatestResult(participationId: number) {

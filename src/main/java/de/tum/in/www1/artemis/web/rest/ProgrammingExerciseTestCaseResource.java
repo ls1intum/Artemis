@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -86,19 +86,20 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     /**
-     * Update the weights of the provided test case dtos. We don't transfer the whole test case object here, because we need to make sure that only weights can be updated! Will
+     * Update the changable fields of the provided test case dtos. We don't transfer the whole test case object here, because we need to make sure that only weights can be updated! Will
      * only return test case objects in the response that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseWeightUpdates of the test cases to update the weights of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
      * @return the set of test cases for the given programming exercise.
      */
-    @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-case-weights")
+    @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-cases")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeights(@PathVariable Long exerciseId, @RequestBody Set<WeightUpdate> testCaseWeightUpdates) {
-        log.debug("REST request to update the weights {} of the exercise {}", testCaseWeightUpdates, exerciseId);
+    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
+            @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
+        log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
         try {
-            Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.updateWeights(exerciseId, testCaseWeightUpdates);
+            Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
             // We don't need the linked exercise here.
             for (ProgrammingExerciseTestCase testCase : updatedTests) {
                 testCase.setExercise(null);
@@ -141,5 +142,4 @@ public class ProgrammingExerciseTestCaseResource {
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.resetWeights(exerciseId);
         return ResponseEntity.ok(testCases);
     }
-
 }

@@ -6,12 +6,12 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
 
-export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number };
+export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
 
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
-    updateWeights(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
+    updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
@@ -76,11 +76,10 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * Needs the exercise to verify permissions on the server.
      *
      * @param exerciseId
-     * @param testCaseId
-     * @param weight
+     * @param updates dto for updating test cases to avoid setting automatic parameters (e.g. active or testName)
      */
-    public updateWeights(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/update-test-case-weights`, updates);
+    public updateTestCase(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/update-test-cases`, updates);
     }
 
     /**

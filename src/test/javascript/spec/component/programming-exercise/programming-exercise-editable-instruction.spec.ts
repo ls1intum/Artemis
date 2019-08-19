@@ -21,6 +21,7 @@ import {
     ProgrammingExerciseEditableInstructionComponent,
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
+    ProgrammingExerciseParticipationService,
     ProgrammingExerciseTestCaseService,
 } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
@@ -39,7 +40,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
     let testCaseService: ProgrammingExerciseTestCaseService;
-    let resultService: ResultService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
     let subscribeForTestCaseSpy: SinonSpy;
     let getLatestResultWithFeedbacksStub: SinonStub;
@@ -78,9 +79,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 debugElement = fixture.debugElement;
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
-                resultService = debugElement.injector.get(ResultService);
+                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 subscribeForTestCaseSpy = spy(testCaseService, 'subscribeForTestCases');
-                getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks');
+                getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
             });
     });
 
@@ -153,7 +154,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
-        const subject = new Subject<HttpResponse<Result>>();
+        const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.returns(subject);
 
         const changes: SimpleChanges = {
@@ -169,7 +170,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
         expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
 
-        subject.next({ body: { feedbacks: [{ text: 'testY' }, { text: 'testX' }] } } as HttpResponse<Result>);
+        subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
         tick();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
