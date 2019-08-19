@@ -55,7 +55,11 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                     this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions) * 100);
                 }
 
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+                this.dataForAssessmentPieChart = [
+                    this.stats.numberOfSubmissions - this.stats.numberOfAssessments,
+                    this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments,
+                    this.stats.numberOfAutomaticAssistedAssessments,
+                ];
             },
             (response: string) => this.onError(response),
         );
