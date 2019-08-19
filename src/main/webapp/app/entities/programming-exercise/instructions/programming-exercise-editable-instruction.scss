@@ -5,6 +5,11 @@
     flex: 1 1 auto;
     height: inherit;
 
+    // Override bootstrap tooltip width.
+    .tooltip-inner {
+        width: 500px;
+    }
+
     &__instructions {
         height: 100%;
     }

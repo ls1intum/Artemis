@@ -65,6 +65,11 @@
                 "issues": "Testfall Probleme.",
                 "ok": "Testfälle ok."
             },
+            "hintsAnalysis": {
+                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sindÖ",
+                "issues": "Hinweis Probleme.",
+                "ok": "Hinweise ok."
+            },
             "manageTestCases": {
                 "title": "Verwalte Testfälle",
                 "hideInactive": "Inaktive Testfälle verbergen",

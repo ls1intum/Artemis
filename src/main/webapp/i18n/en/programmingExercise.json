@@ -60,10 +60,15 @@
                 "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."
             },
             "testCaseAnalysis": {
-                "invalidTestCases": "There are {{number}} test cases that are part of the problem statement but can't be found in your test repository:",
-                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
+                "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
+                "missingTestCases": "There are {{number}} test cases that are valid test cases in your test repository but were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but can't be found in the database or are not assigned to this programming exercise:",
+                "issues": "Hints issues.",
+                "ok": "Hints ok."
             },
             "manageTestCases": {
                 "title": "Manage Test Cases",

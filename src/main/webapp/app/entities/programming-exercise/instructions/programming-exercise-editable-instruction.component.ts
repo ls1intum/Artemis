@@ -1,10 +1,9 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
 import { ProgrammingExercise } from '../programming-exercise.model';
@@ -14,7 +13,7 @@ import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { Result, ResultService } from 'app/entities/result';
+import { Result } from 'app/entities/result';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
@@ -25,6 +24,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges {
     participationValue: Participation;
