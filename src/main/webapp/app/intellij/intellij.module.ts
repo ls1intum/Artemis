@@ -6,7 +6,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IdeProgrammingExerciseDetailsComponent } from './ide-programming-exercise-details/ide-programming-exercise-details.component';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
-import { ArTEMiSOverviewModule } from 'app/overview';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { MomentModule } from 'ngx-moment';
@@ -18,7 +17,6 @@ import { MomentModule } from 'ngx-moment';
         FontAwesomeModule,
         ArTEMiSProgrammingExerciseModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
-        ArTEMiSOverviewModule,
         ArTEMiSSharedModule,
         ArTEMiSResultModule,
         MomentModule,
