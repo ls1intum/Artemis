@@ -113,6 +113,12 @@
                 [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
+            <jhi-programming-exercise-student-trigger-build-button
+                class="mr-3"
+                *ngIf="selectedRepository !== REPOSITORY.TEST"
+                [participation]="selectedParticipation"
+                [btnSize]="ButtonSize.MEDIUM"
+            ></jhi-programming-exercise-student-trigger-build-button>
             <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
             <jhi-code-editor-actions
                 [buildable]="selectedRepository !== REPOSITORY.TEST"
