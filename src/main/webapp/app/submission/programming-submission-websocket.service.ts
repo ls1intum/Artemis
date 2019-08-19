@@ -1,6 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
 import { BehaviorSubject, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
@@ -43,12 +42,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
 
     private latestSubmission: { [participationId: number]: Submission | null } = {};
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private alertService: JhiAlertService,
-    ) {}
+    constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
@@ -90,7 +84,6 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
 
     private onError = (participationId: number) => {
         this.emitFailedSubmission(participationId);
-        this.alertService.error('artemisApp.submission.resultTimeout');
     };
 
     private resetResultWaitingTimer = (participationId: number) => {
