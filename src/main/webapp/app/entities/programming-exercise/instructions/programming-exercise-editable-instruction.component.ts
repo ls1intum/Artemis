@@ -244,9 +244,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 Object.values(issues).map((issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' })),
             ),
         );
+
         this.markdownEditor.aceEditorContainer
             .getEditor()
             .getSession()
-            .setAnnotations(lineWarnings);
+            .clearAnnotations();
+        setTimeout(() => {
+            this.markdownEditor.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .setAnnotations(lineWarnings);
+        }, 0);
     };
 }

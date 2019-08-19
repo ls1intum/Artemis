@@ -1,7 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { compose, differenceWith, filter, flatten, intersectionWith, map, uniq, reduce } from 'lodash/fp';
-import { unionBy as _unionBy } from 'lodash';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
+import { compose, filter, flatten, map, uniq } from 'lodash/fp';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 export type ProblemStatementAnalysis = Array<{
@@ -22,13 +23,15 @@ type AnalysisItem = [number, string[], ProblemStatementIssue];
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
     templateUrl: './programming-exercise-instruction-instructor-analysis.component.html',
 })
-export class ProgrammingExerciseInstructionInstructorAnalysisComponent implements OnChanges {
+export class ProgrammingExerciseInstructionInstructorAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];
     @Input() exerciseHints: ExerciseHint[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
 
     @Output() problemStatementAnalysis = new EventEmitter<ProblemStatementAnalysis>();
+    delayedAnalysisSubject = new Subject<ProblemStatementAnalysis>();
+    analysisSubscription: Subscription;
 
     invalidTestCases: string[] = [];
     missingTestCases: string[] = [];
@@ -37,10 +40,23 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
 
     constructor(private translateService: TranslateService) {}
 
+    ngOnInit(): void {
+        this.analysisSubscription = this.delayedAnalysisSubject
+            .pipe(
+                debounceTime(500),
+                tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),
+            )
+            .subscribe();
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.exerciseHints && this.problemStatement && this.taskRegex) {
             this.analyzeTasks();
         }
+    }
+
+    ngOnDestroy(): void {
+        this.analysisSubscription.unsubscribe();
     }
 
     /**
@@ -54,7 +70,7 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
         const tasksFromProblemStatement: [number, string][] = [];
         let match = this.taskRegex.exec(this.problemStatement);
         while (match) {
-            const lineNumber = this.problemStatement.substring(0, match.index + match[1].length + 1).split('\n').length;
+            const lineNumber = this.problemStatement.substring(0, match.index + match[1].length + 1).split('\n').length - 1;
             tasksFromProblemStatement.push([lineNumber, match[1]]);
             match = this.taskRegex.exec(this.problemStatement);
         }
@@ -106,7 +122,11 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
             return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
         }, {}) as ProblemStatementAnalysis;
 
-        this.problemStatementAnalysis.emit(completeAnalysis);
+        this.delayedAnalysisSubject.next(completeAnalysis);
+    }
+
+    private emitAnalysis(analysis: ProblemStatementAnalysis) {
+        this.problemStatementAnalysis.emit(analysis);
     }
 
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
