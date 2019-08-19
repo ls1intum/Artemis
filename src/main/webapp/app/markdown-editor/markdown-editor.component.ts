@@ -76,6 +76,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
     @Input() editorMode = EditorMode.NONE;
+    // If false will hide the line numbers.
+    @Input() showGutter = false;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<SafeHtml | null>();
 
@@ -217,7 +219,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     setupMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
-        this.aceEditorContainer.getEditor().renderer.setShowGutter(false);
+        this.aceEditorContainer.getEditor().renderer.setShowGutter(this.showGutter);
         this.aceEditorContainer.getEditor().renderer.setPadding(10);
         this.aceEditorContainer.getEditor().renderer.setScrollMargin(8, 8);
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);

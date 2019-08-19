@@ -2,6 +2,7 @@
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     <jhi-markdown-editor
         class="editable-instruction-container__editor"
+        [showGutter]="true"
         [domainCommands]="domainCommands"
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"

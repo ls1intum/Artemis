@@ -1,6 +1,21 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { compose, difference, filter, flatten, intersection, map, uniq } from 'lodash/fp';
+import { Component, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
+import { compose, differenceWith, filter, flatten, intersectionWith, map, uniq, reduce } from 'lodash/fp';
+import { unionBy as _unionBy } from 'lodash';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+
+export type ProblemStatementAnalysis = Array<{
+    task: string;
+    invalidTestCases: string[];
+    invalidHints: string[];
+}>;
+
+enum ProblemStatementIssue {
+    INVALID_TEST_CASES = 'invalidTestCases',
+    MISSING_TEST_CASES = 'missingTestCases',
+    INVALID_HINTS = 'invalidHints',
+}
+
+type AnalysisItem = [string, string[], ProblemStatementIssue];
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -12,8 +27,10 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
 
-    missingTestCases: string[] = [];
+    @Output() problemStatementAnalysis = new EventEmitter<ProblemStatementAnalysis>();
+
     invalidTestCases: string[] = [];
+    missingTestCases: string[] = [];
 
     invalidHints: string[] = [];
 
@@ -34,33 +51,55 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
         const tasksFromProblemStatement = this.problemStatement.match(this.taskRegex) || [];
         const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, /.*\((.*)\)/);
 
-        this.invalidTestCases = compose(
-            difference(testCasesInMarkdown),
-            intersection(this.exerciseTestCases),
-        )(testCasesInMarkdown);
-        this.missingTestCases = difference(this.exerciseTestCases, testCasesInMarkdown);
+        const invalidTestCaseAnalysis: AnalysisItem[] = testCasesInMarkdown
+            .map(([task, testCases]) => [task, testCases.filter(testCase => !this.exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem)
+            .filter(([, testCases]) => testCases.length);
+        this.missingTestCases = this.exerciseTestCases.filter(testCase => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.includes(testCase)));
 
         const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, /.*{(.*)}/);
+        const invalidHintAnalysis: AnalysisItem[] = hintsInMarkdown
+            .map(([task, hints]) => [
+                task,
+                hints.filter(hint => !this.exerciseHints.some(exerciseHint => exerciseHint.id.toString(10) === hint)),
+                ProblemStatementIssue.INVALID_HINTS,
+            ])
+            .filter(([, hints]) => !!hints.length) as AnalysisItem[];
+
+        this.invalidTestCases = compose(
+            flatten,
+            map(([, testCases]) => testCases),
+        )(invalidTestCaseAnalysis);
 
         this.invalidHints = compose(
-            difference(hintsInMarkdown),
-            intersection(this.exerciseHints.map(({ id }) => id.toString(10))),
-        )(hintsInMarkdown);
+            flatten,
+            map(([, testCases]) => testCases),
+        )(invalidHintAnalysis);
+
+        const completeAnalysis: ProblemStatementAnalysis = [...invalidTestCaseAnalysis, ...invalidHintAnalysis].reduce((acc, [task, values, issueType]) => {
+            const taskValues = acc[task];
+            const issueValues = taskValues ? taskValues[issueType] : [];
+            return { ...acc, [task]: { ...taskValues, [issueType]: [...issueValues, ...values] } };
+        }, {}) as ProblemStatementAnalysis;
+
+        this.problemStatementAnalysis.emit(completeAnalysis);
     }
 
-    private extractRegexFromTasks(tasks: string[], regex: RegExp) {
+    private extractRegexFromTasks(tasks: string[], regex: RegExp): AnalysisItem[] {
         return compose(
-            uniq,
-            filter(hints => !!hints),
-            flatten,
-            map((match: string) => match.split(',').map(string => string.trim())),
-            flatten,
-            filter(match => !!match),
-            map((taskMatch: string) => {
-                const extractedValue = taskMatch.match(regex);
-                return extractedValue && extractedValue.length > 1 ? extractedValue[1] : null;
+            map(([task, match]) => {
+                const cleanedMatches = compose(
+                    uniq,
+                    filter(m => !!m),
+                    flatten,
+                )(match.split(',').map((m: string) => m.trim()));
+                return [task, cleanedMatches];
             }),
-            filter((match: string) => !!match),
-        )(tasks) as string[];
+            filter(([, testCases]) => !!testCases),
+            map((task: string) => {
+                const extractedValue = task.match(regex);
+                return extractedValue && extractedValue.length > 1 ? [task, extractedValue[1]] : [task, null];
+            }),
+            filter((task: string) => !!task),
+        )(tasks) as AnalysisItem[];
     }
 }
