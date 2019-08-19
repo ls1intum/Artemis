@@ -48,6 +48,13 @@ public class TextEmbeddingService {
         return embedTextBlocks(blocks, 1);
     }
 
+    /**
+     * Calls the remote embedding service to embedd a List of textBlocks
+     * @param blocks a List of TextBlocks which should be embedded
+     * @param maxRetries number of retries before the request will be canceled
+     * @return a List of TextEmbedding corresponding to the given TextBlocks
+     * @throws NetworkingError if the request isn't successful
+     */
     public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to embed " + blocks.size() + " student text answer blocks.");
         final Request request = new Request(blocks);

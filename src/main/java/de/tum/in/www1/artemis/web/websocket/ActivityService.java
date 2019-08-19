@@ -29,6 +29,13 @@ public class ActivityService implements ApplicationListener<SessionDisconnectEve
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * Sends activityDTO to /topic/tracker
+     * @param activityDTO the Payload  Activity Data Transfer Object
+     * @param stompHeaderAccessor the corresponding Header  Accessor
+     * @param principal the current principal
+     * @return the modified activityDTO
+     */
     @SubscribeMapping("/topic/activity")
     @SendTo("/topic/tracker")
     public ActivityDTO sendActivity(@Payload ActivityDTO activityDTO, StompHeaderAccessor stompHeaderAccessor, Principal principal) {

@@ -42,6 +42,12 @@ public class QuizSubmissionWebsocketService {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * Saves a Submission
+     * @param exerciseId the exerciseID to the corresponding QuizExercise
+     * @param quizSubmission the submission which should be saved
+     * @param principal the current principal
+     */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
         String username = principal.getName();

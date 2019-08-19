@@ -58,6 +58,11 @@ public class UserMapper {
         return userDTOs.stream().filter(Objects::nonNull).map(this::userDTOToUser).collect(Collectors.toList());
     }
 
+    /**
+     * Creates an UserBased on a ID
+     * @param id the ID for the User
+     * @return a new User with the ID or null if the ID is null
+     */
     public User userFromId(Long id) {
         if (id == null) {
             return null;

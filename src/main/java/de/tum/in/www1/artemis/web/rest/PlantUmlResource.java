@@ -33,7 +33,7 @@ public class PlantUmlResource {
      *
      * @param plantuml PlantUML command(s)
      * @return ResponseEntity PNG stream
-     * @throws IOException
+     * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(value = "/plantuml/png")
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
