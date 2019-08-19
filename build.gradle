@@ -330,7 +330,7 @@ if (project.hasProperty('nodeInstall')) {
 checkstyle {
     toolVersion = '6.16.1'
     configDir = new File('checkstyle')
-    maxErrors = 155
+    maxErrors = 90
 }
 
 task executeCheckstyle (type: Exec) {
