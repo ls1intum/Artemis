@@ -242,6 +242,15 @@ public class CompassService {
         assessAllAutomatically(engine.getModelIds(), exerciseId);
     }
 
+    /**
+     * Get the assessment conflicts between newly assessed model elements and already persisted ones.
+     *
+     * @param modelingSubmission The submissions for which conflicts should be detected
+     * @param exerciseId The ID of the exercise related to the submission
+     * @param result The result of the submission
+     * @param modelingAssessment A list of feedbacks for which should be scanned for conflicts
+     * @return All conflicts between the assessed model elements except for conflicts related to general feedback
+     */
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         if (!isSupported(exerciseId)) {
             return new ArrayList<>();
@@ -537,6 +546,7 @@ public class CompassService {
     /**
      * format: uniqueElements [{id} name apollonId conflicts] numberModels numberConflicts totalConfidence totalCoverage models [{id} confidence coverage conflicts]
      *
+     * @param exerciseId The ID of the exercise for which to collect statistics
      * @return statistics about the UML model
      */
     public JsonObject getStatistics(long exerciseId) {
