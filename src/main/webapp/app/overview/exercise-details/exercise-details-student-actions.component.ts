@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -36,6 +37,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
+    readonly isIntelliJ = isIntelliJ;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;

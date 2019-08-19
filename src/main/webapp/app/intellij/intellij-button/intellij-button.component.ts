@@ -1,5 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     /* tslint:disable-next-line component-selector */
@@ -8,6 +9,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
     styleUrls: ['./intellij-button.component.scss'],
 })
 export class IntellijButtonComponent {
+    readonly isIntellij = isIntelliJ;
     @Input() buttonLabel: string;
     @Input() buttonLoading = false;
     @HostBinding('class.btn-outline-primary') @Input() outlined = false;

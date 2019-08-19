@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-home',
@@ -87,7 +88,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
 
                 // Log in to IntelliJ
-                if (this.javaBridge.isIntelliJ()) {
+                if (isIntelliJ) {
                     this.javaBridge.login(this.username, this.password);
                 }
             })

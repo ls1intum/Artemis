@@ -152,7 +152,7 @@
             </div>
         </div>
         <!-- RESULTS END -->
-        <div class="col-sm-12 col-md-4 col-lg-4" jhi-ide-filter [showInIDE]="false">
+        <div class="col-sm-12 col-md-4 col-lg-4" *ngIf="!isIntelliJ">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>

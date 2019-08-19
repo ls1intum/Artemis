@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IdeFilterDirective } from 'app/intellij/ide-filter.directive';
 import { IntellijButtonComponent } from 'app/intellij/intellij-button/intellij-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IdeProgrammingExerciseDetailsComponent } from './ide-programming-exercise-details/ide-programming-exercise-details.component';
@@ -11,7 +10,7 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 import { MomentModule } from 'ngx-moment';
 
 @NgModule({
-    declarations: [IdeFilterDirective, IntellijButtonComponent, IdeProgrammingExerciseDetailsComponent],
+    declarations: [IntellijButtonComponent, IdeProgrammingExerciseDetailsComponent],
     imports: [
         CommonModule,
         FontAwesomeModule,
@@ -21,6 +20,6 @@ import { MomentModule } from 'ngx-moment';
         ArTEMiSResultModule,
         MomentModule,
     ],
-    exports: [IdeFilterDirective, IntellijButtonComponent],
+    exports: [IntellijButtonComponent],
 })
 export class IntellijModule {}

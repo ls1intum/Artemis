@@ -179,37 +179,31 @@
         ></button>
         <button
             jhi-intellij-button
-            jhi-ide-filter
             (click)="importIntoIntelliJ()"
-            [showInIDE]="true"
             [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+            *ngIf="isIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
             jhi-intellij-button
-            jhi-ide-filter
             (click)="submitChanges()"
-            [showInIDE]="true"
             buttonLabel="Submit"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+            *ngIf="isIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
         ></button>
         <button
             jhi-exercise-action-button
-            jhi-ide-filter
             buttonIcon="download"
-            [showInIDE]="false"
             [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+            *ngIf="!isIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>

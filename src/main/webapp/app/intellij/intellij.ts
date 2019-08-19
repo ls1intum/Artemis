@@ -8,6 +8,4 @@ export interface Window {
     intellij: Intellij;
 }
 
-export const isIntelliJ = () => {
-    return window.navigator.userAgent.includes('IntelliJ');
-};
+export const isIntelliJ = window.navigator.userAgent.includes('IntelliJ');

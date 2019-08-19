@@ -10,6 +10,7 @@ import { CodeEditorConflictStateService, GitConflictState } from 'app/code-edito
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -121,7 +122,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * If there are unsaved changes, save them first before trying to commit again.
      */
     commit() {
-        if (this.javaBridge.isIntelliJ()) {
+        if (isIntelliJ) {
             this.javaBridge.submit();
             return;
         }
