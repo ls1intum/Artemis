@@ -6,6 +6,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 
 /**
  * A FileUploadExercise.
@@ -14,6 +15,10 @@ import javax.persistence.Entity;
 @Entity
 @DiscriminatorValue(value = "F")
 public class FileUploadExercise extends Exercise implements Serializable {
+
+    @Column(name = "sample_solution")
+    @Lob
+    private String sampleSolution;
 
     @Column(name = "filePattern")
     private String filePattern;
@@ -31,6 +36,19 @@ public class FileUploadExercise extends Exercise implements Serializable {
 
     public void setFilePattern(String filePattern) {
         this.filePattern = filePattern;
+    }
+
+    public String getSampleSolution() {
+        return sampleSolution;
+    }
+
+    public FileUploadExercise sampleSolution(String sampleSolution) {
+        this.sampleSolution = sampleSolution;
+        return this;
+    }
+
+    public void setSampleSolution(String sampleSolution) {
+        this.sampleSolution = sampleSolution;
     }
 
     @Override
