@@ -147,6 +147,7 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         try {
