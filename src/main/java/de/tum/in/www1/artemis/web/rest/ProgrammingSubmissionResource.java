@@ -110,6 +110,7 @@ public class ProgrammingSubmissionResource {
      *
      * @param participationId of the participation.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
+     * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -141,6 +142,7 @@ public class ProgrammingSubmissionResource {
      *
      * @param participationId of the participation.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
+     * The REST path would be: "/programming-submissions/{participationId}/trigger-instructor-build"
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-instructor-build")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
