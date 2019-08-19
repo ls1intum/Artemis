@@ -18,11 +18,12 @@ import {
     ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSProgrammingExerciseModule],
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,

@@ -27,6 +27,7 @@ import {
 } from 'app/code-editor';
 import { ResultService, UpdatingResultComponent } from 'app/entities/result';
 import { ExerciseType } from 'app/entities/exercise';
+import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -55,6 +56,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
 
+    ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
     PROGRAMMING = ExerciseType.PROGRAMMING;
