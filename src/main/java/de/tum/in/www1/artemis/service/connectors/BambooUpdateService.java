@@ -92,7 +92,7 @@ public class BambooUpdateService {
                 // workaround to pass additional fields
                 bambooClient.doWork(args);
 
-                log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
+                log.debug("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
                 String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "BITBUCKET_SERVER",
                         null, false, true, true);
                 log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
