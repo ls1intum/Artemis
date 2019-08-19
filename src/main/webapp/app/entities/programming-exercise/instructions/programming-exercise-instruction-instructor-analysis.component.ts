@@ -1,12 +1,13 @@
 import { Component, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { compose, differenceWith, filter, flatten, intersectionWith, map, uniq, reduce } from 'lodash/fp';
 import { unionBy as _unionBy } from 'lodash';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 export type ProblemStatementAnalysis = Array<{
-    task: string;
-    invalidTestCases: string[];
-    invalidHints: string[];
+    lineNumber: number;
+    invalidTestCases?: string[];
+    invalidHints?: string[];
 }>;
 
 enum ProblemStatementIssue {
@@ -15,7 +16,7 @@ enum ProblemStatementIssue {
     INVALID_HINTS = 'invalidHints',
 }
 
-type AnalysisItem = [string, string[], ProblemStatementIssue];
+type AnalysisItem = [number, string[], ProblemStatementIssue];
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -34,6 +35,8 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
 
     invalidHints: string[] = [];
 
+    constructor(private translateService: TranslateService) {}
+
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.exerciseHints && this.problemStatement && this.taskRegex) {
             this.analyzeTasks();
@@ -48,22 +51,33 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
      * The method makes sure to filter out duplicates in the test case list.
      */
     analyzeTasks() {
-        const tasksFromProblemStatement = this.problemStatement.match(this.taskRegex) || [];
+        const tasksFromProblemStatement: [number, string][] = [];
+        let match = this.taskRegex.exec(this.problemStatement);
+        while (match) {
+            const lineNumber = this.problemStatement.substring(0, match.index + match[1].length + 1).split('\n').length;
+            tasksFromProblemStatement.push([lineNumber, match[1]]);
+            match = this.taskRegex.exec(this.problemStatement);
+        }
         const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, /.*\((.*)\)/);
 
-        const invalidTestCaseAnalysis: AnalysisItem[] = testCasesInMarkdown
-            .map(([task, testCases]) => [task, testCases.filter(testCase => !this.exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem)
+        const invalidTestCaseAnalysis = testCasesInMarkdown
+            .map(
+                ([lineNumber, testCases]) =>
+                    [lineNumber, testCases.filter(testCase => !this.exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem,
+            )
             .filter(([, testCases]) => testCases.length);
         this.missingTestCases = this.exerciseTestCases.filter(testCase => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.includes(testCase)));
 
         const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, /.*{(.*)}/);
-        const invalidHintAnalysis: AnalysisItem[] = hintsInMarkdown
-            .map(([task, hints]) => [
-                task,
-                hints.filter(hint => !this.exerciseHints.some(exerciseHint => exerciseHint.id.toString(10) === hint)),
-                ProblemStatementIssue.INVALID_HINTS,
-            ])
-            .filter(([, hints]) => !!hints.length) as AnalysisItem[];
+        const invalidHintAnalysis = hintsInMarkdown
+            .map(
+                ([lineNumber, hints]): AnalysisItem => [
+                    lineNumber,
+                    hints.filter(hint => !this.exerciseHints.some(exerciseHint => exerciseHint.id.toString(10) === hint)),
+                    ProblemStatementIssue.INVALID_HINTS,
+                ],
+            )
+            .filter(([, hints]) => !!hints.length);
 
         this.invalidTestCases = compose(
             flatten,
@@ -75,31 +89,42 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
             map(([, testCases]) => testCases),
         )(invalidHintAnalysis);
 
-        const completeAnalysis: ProblemStatementAnalysis = [...invalidTestCaseAnalysis, ...invalidHintAnalysis].reduce((acc, [task, values, issueType]) => {
-            const taskValues = acc[task];
-            const issueValues = taskValues ? taskValues[issueType] : [];
-            return { ...acc, [task]: { ...taskValues, [issueType]: [...issueValues, ...values] } };
+        const completeAnalysis: ProblemStatementAnalysis = [
+            ...(invalidTestCaseAnalysis.map(([lineNumber, values, issueType]) => [
+                lineNumber,
+                values.map(name => this.translateService.instant('artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', { name })),
+                issueType,
+            ]) as AnalysisItem[]),
+            ...(invalidHintAnalysis.map(([lineNumber, values, issueType]) => [
+                lineNumber,
+                values.map(id => this.translateService.instant('artemisApp.programmingExercise.hintsAnalysis.invalidHint', { id })),
+                issueType,
+            ]) as AnalysisItem[]),
+        ].reduce((acc, [lineNumber, values, issueType]) => {
+            const lineNumberValues = acc[lineNumber];
+            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+            return { ...acc, [lineNumber]: { ...lineNumberValues, [issueType]: [...issueValues, ...values] } };
         }, {}) as ProblemStatementAnalysis;
 
         this.problemStatementAnalysis.emit(completeAnalysis);
     }
 
-    private extractRegexFromTasks(tasks: string[], regex: RegExp): AnalysisItem[] {
+    private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
         return compose(
-            map(([task, match]) => {
+            map(([lineNumber, match]) => {
                 const cleanedMatches = compose(
                     uniq,
                     filter(m => !!m),
                     flatten,
                 )(match.split(',').map((m: string) => m.trim()));
-                return [task, cleanedMatches];
+                return [lineNumber, cleanedMatches];
             }),
             filter(([, testCases]) => !!testCases),
-            map((task: string) => {
+            map(([lineNumber, task]) => {
                 const extractedValue = task.match(regex);
-                return extractedValue && extractedValue.length > 1 ? [task, extractedValue[1]] : [task, null];
+                return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, null];
             }),
-            filter((task: string) => !!task),
-        )(tasks) as AnalysisItem[];
+            filter(([, task]) => !!task),
+        )(tasks) as [number, string[]][];
     }
 }

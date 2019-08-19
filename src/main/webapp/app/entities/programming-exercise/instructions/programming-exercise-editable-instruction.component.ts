@@ -6,6 +6,7 @@ import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
+import { flatten as _flatten } from 'lodash';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
@@ -19,6 +20,7 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
 import { ExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ProblemStatementAnalysis } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -223,5 +225,17 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             ),
             catchError(() => of([])),
         );
+    };
+
+    onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
+        const lineWarnings = _flatten(
+            (Object.entries(analysis) as [string, any][]).map(([lineNumber, issues]) =>
+                Object.values(issues).map((issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' })),
+            ),
+        );
+        this.markdownEditor.aceEditorContainer
+            .getEditor()
+            .getSession()
+            .setAnnotations(lineWarnings);
     };
 }

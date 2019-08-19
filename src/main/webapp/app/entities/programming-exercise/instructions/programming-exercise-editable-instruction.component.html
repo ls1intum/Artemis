@@ -49,6 +49,7 @@
             [exerciseHints]="exerciseHints"
             [problemStatement]="exercise.problemStatement"
             [taskRegex]="taskRegex"
+            (problemStatementAnalysis)="onAnalysisUpdate($event)"
             class="editable-instruction-container__status__testcase"
         ></jhi-programming-exercise-instruction-instructor-analysis>
     </div>

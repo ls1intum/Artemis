@@ -63,12 +63,14 @@
                 "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
                 "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfall Probleme.",
-                "ok": "Testfälle ok."
+                "ok": "Testfälle ok.",
+                "invalidTestCase": "Der Testfall '{{name}}' konnte nicht im Test Repository gefunden werden."
             },
             "hintsAnalysis": {
                 "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sindÖ",
                 "issues": "Hinweis Probleme.",
-                "ok": "Hinweise ok."
+                "ok": "Hinweise ok.",
+                "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
             },
             "manageTestCases": {
                 "title": "Verwalte Testfälle",
