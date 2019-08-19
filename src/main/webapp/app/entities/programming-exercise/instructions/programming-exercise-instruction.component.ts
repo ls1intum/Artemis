@@ -3,19 +3,22 @@ import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { merge, Observable, Subscription } from 'rxjs';
-import { problemStatementHasChanged } from 'app/entities/exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
+import { ExerciseHintService } from 'app/entities/exercise-hint';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -68,6 +71,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     /**
@@ -76,57 +80,78 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param changes
      */
     public ngOnChanges(changes: SimpleChanges) {
-        // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
-        if (!this.markdownExtensions) {
-            this.setupMarkdownSubscriptions();
-        }
-        const participationHasChanged = hasParticipationChanged(changes);
-        // It is possible that the exercise does not have an id in case it is being created now.
-        if (participationHasChanged) {
-            this.isInitial = true;
-            if (this.generateHtmlSubscription) {
-                this.generateHtmlSubscription.unsubscribe();
-            }
-            if (this.generateHtmlEvents) {
-                this.generateHtmlEvents.subscribe(() => {
-                    this.updateMarkdown();
-                });
-            }
-            this.setupResultWebsocket();
-        }
-        // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-        if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
-            this.isLoading = true;
-            this.loadInstructions()
-                .pipe(
-                    // If no instructions can be loaded, abort pipe and hide the instruction panel
-                    tap(problemStatement => {
-                        if (!problemStatement) {
-                            this.onNoInstructionsAvailable.emit();
-                            this.isLoading = false;
-                            this.isInitial = false;
-                            return Observable.of(null);
+        of(!!this.markdownExtensions)
+            .pipe(
+                // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
+                tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
+                // If the exercise has changed, load its hints so that they are accessible in the instructions.
+                map(() => hasExerciseChanged(changes)),
+                switchMap((exerciseHasChanged: boolean) => (exerciseHasChanged ? this.loadExerciseHints(this.exercise.id) : of([]))),
+                tap((hints: ExerciseHint[]) => {
+                    this.programmingExerciseTaskWrapper.exerciseHints = hints;
+                }),
+                // If the participation has changed, set up the websocket subscriptions.
+                map(() => hasParticipationChanged(changes)),
+                tap((participationHasChanged: boolean) => {
+                    if (participationHasChanged) {
+                        this.isInitial = true;
+                        if (this.generateHtmlSubscription) {
+                            this.generateHtmlSubscription.unsubscribe();
                         }
-                    }),
-                    filter(problemStatement => !!problemStatement),
-                    tap(problemStatement => (this.problemStatement = problemStatement!)),
-                    switchMap(() => this.loadInitialResult()),
-                    tap(latestResult => {
-                        this.latestResult = latestResult;
-                    }),
-                    tap(() => {
+                        if (this.generateHtmlEvents) {
+                            this.generateHtmlEvents.subscribe(() => {
+                                this.updateMarkdown();
+                            });
+                        }
+                        this.setupResultWebsocket();
+                    }
+                }),
+                switchMap((participationHasChanged: boolean) => {
+                    // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
+                    if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
+                        this.isLoading = true;
+                        return this.loadInstructions().pipe(
+                            // If no instructions can be loaded, abort pipe and hide the instruction panel
+                            tap(problemStatement => {
+                                if (!problemStatement) {
+                                    this.onNoInstructionsAvailable.emit();
+                                    this.isLoading = false;
+                                    this.isInitial = false;
+                                    return Observable.of(null);
+                                }
+                            }),
+                            filter(problemStatement => !!problemStatement),
+                            tap(problemStatement => (this.problemStatement = problemStatement!)),
+                            switchMap(() => this.loadInitialResult()),
+                            tap(latestResult => {
+                                this.latestResult = latestResult;
+                            }),
+                            tap(() => {
+                                this.updateMarkdown();
+                                this.isInitial = false;
+                                this.isLoading = false;
+                            }),
+                        );
+                    } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                        this.problemStatement = this.exercise.problemStatement!;
                         this.updateMarkdown();
-                        this.isInitial = false;
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe();
-        } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
-            this.problemStatement = this.exercise.problemStatement!;
-            this.updateMarkdown();
-        } else if (this.exercise && problemStatementHasChanged(changes)) {
-            this.problemStatement = this.exercise.problemStatement!;
-        }
+                        return of(null);
+                    } else if (this.exercise && problemStatementHasChanged(changes)) {
+                        this.problemStatement = this.exercise.problemStatement!;
+                        return of(null);
+                    } else {
+                        return of(null);
+                    }
+                }),
+            )
+            .subscribe();
+    }
+
+    private loadExerciseHints(exerciseId: number) {
+        return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
+            map(({ body }) => body),
+            catchError(() => []),
+        );
     }
 
     /**

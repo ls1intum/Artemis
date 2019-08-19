@@ -7,9 +7,11 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    public exerciseHints: ExerciseHint[] = [];
     private latestResult: Result | null = null;
 
     private testsForTaskSubject = new Subject<TaskArray>();
@@ -39,8 +41,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ taskName, tests }, index: number) => {
+        tasks.forEach(({ taskName, tests, hints }, index: number) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
+            componentRef.instance.exerciseHints = this.exerciseHints.filter(({ id }) => hints.includes(id.toString(10)));
             componentRef.instance.taskName = taskName;
             componentRef.instance.latestResult = this.latestResult;
             componentRef.instance.tests = tests;

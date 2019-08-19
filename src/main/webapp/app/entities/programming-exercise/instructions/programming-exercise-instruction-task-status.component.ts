@@ -1,10 +1,11 @@
 import { ApplicationRef, Component, ComponentFactoryResolver, Injector, Input } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
 import { TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -20,7 +21,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     get tests() {
         return this.testsValue;
     }
+    @Input() exerciseHints: ExerciseHint[] = [];
     @Input() latestResult: Result | null;
+
+    ngbModalRef: NgbModalRef | null;
 
     testsValue: string[];
     testCaseState: TestCaseState;
@@ -62,5 +66,19 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
         modalRef.componentInstance.tests = this.tests;
+    }
+
+    public openHintsModal() {
+        // Open hint modal.
+        this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+        this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
+        this.ngbModalRef.result.then(
+            () => {
+                this.ngbModalRef = null;
+            },
+            () => {
+                this.ngbModalRef = null;
+            },
+        );
     }
 }
