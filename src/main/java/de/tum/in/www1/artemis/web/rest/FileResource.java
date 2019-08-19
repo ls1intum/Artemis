@@ -62,7 +62,9 @@ public class FileResource {
      * POST /fileUpload : Upload a new file.
      *
      * @param file The file to save
+     * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
+     * @throws URISyntaxException if response path can't be converted into URI
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
