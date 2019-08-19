@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,16 +11,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -45,12 +44,22 @@ public class ProgrammingSubmissionResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
+        this.authCheckService = authCheckService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -93,6 +102,70 @@ public class ProgrammingSubmissionResource {
         }
 
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    /**
+     * Trigger the CI build of the given participation.
+     * The build result will be treated as if the user would have done a commit.
+     *
+     * @param participationId of the participation.
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
+     * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
+     */
+    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId) {
+        Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return notFound();
+        }
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
+            return forbidden();
+        }
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.MANUAL);
+        }
+        catch (IllegalStateException ex) {
+            return notFound();
+        }
+        // notify the user via websocket.
+        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
+        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the CI build of the given participation.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * @param participationId of the participation.
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
+     * The REST path would be: "/programming-submissions/{participationId}/trigger-instructor-build"
+     */
+    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-instructor-build")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerInstructorBuild(@PathVariable Long participationId) {
+        Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return notFound();
+        }
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+            return forbidden();
+        }
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.INSTRUCTOR);
+        }
+        catch (IllegalStateException ex) {
+            return notFound();
+        }
+        // notify the user via websocket.
+        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
+        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+        return ResponseEntity.ok().build();
     }
 
     /**

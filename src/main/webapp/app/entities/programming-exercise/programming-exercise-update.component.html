@@ -71,9 +71,11 @@
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select
+                        #select
                         required
                         class="form-control"
-                        [(ngModel)]="programmingExercise.programmingLanguage"
+                        [ngModel]="selectedProgrammingLanguage"
+                        (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
                         [disabled]="programmingExercise.id"
@@ -158,6 +160,7 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
+                        (hasUnsavedChanges)="hashUnsavedChanges = $event"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

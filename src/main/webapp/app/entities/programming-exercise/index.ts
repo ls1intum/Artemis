@@ -15,3 +15,4 @@ export * from './test-cases/programming-exercise-manage-test-cases.component';
 export * from './programming-exercise.route';
 export * from './services';
 export { TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
+export * from './actions';

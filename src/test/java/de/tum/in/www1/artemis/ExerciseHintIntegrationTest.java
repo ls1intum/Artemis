@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
@@ -39,7 +40,7 @@ public class ExerciseHintIntegrationTest {
     ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    ProgrammingExerciseRepository exerciseRepository;
 
     @Autowired
     DatabaseUtilService database;
@@ -51,12 +52,16 @@ public class ExerciseHintIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.resetDatabase();
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(2, 2, 2);
 
         exercise = exerciseRepository.findAll().get(0);
         database.addHintsToExercise(exercise);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

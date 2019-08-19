@@ -1,8 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { JhiAlertService } from 'ng-jhipster';
+import { of, Subject, Subscription } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 
@@ -15,7 +16,7 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionWebsocketService) {
+    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionWebsocketService, private alertService: JhiAlertService) {
         super(domainService);
         this.initDomainSubscription();
     }
@@ -36,7 +37,8 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
             this.submissionSubscription = this.submissionService
                 .getLatestPendingSubmission(this.participationId)
                 .pipe(
-                    map((submission: ProgrammingSubmission) => !!submission),
+                    tap(([submissionState]) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
+                    map(([, submission]) => !!submission),
                     tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                 )
                 .subscribe();
@@ -44,6 +46,10 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
             // There are no submissions for the test repository, so it is never building.
             this.isBuildingSubject.next(false);
         }
+    }
+
+    onError() {
+        this.alertService.error('artemisApp.submission.resultTimeout');
     }
 
     getBuildingState() {

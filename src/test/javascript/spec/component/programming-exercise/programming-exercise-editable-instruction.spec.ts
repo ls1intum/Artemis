@@ -44,6 +44,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     let subscribeForTestCaseSpy: SinonSpy;
     let getLatestResultWithFeedbacksStub: SinonStub;
+    let generateHtmlSubjectStub: SinonStub;
 
     const exercise = { id: 30, templateParticipation: { id: 99 } } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
@@ -82,6 +83,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 subscribeForTestCaseSpy = spy(testCaseService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                generateHtmlSubjectStub = stub(comp.generateHtmlSubject, 'next');
             });
     });
 
@@ -89,6 +91,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
         subscribeForTestCaseSpy.restore();
         getLatestResultWithFeedbacksStub.restore();
+        generateHtmlSubjectStub.restore();
     });
 
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
@@ -199,5 +202,20 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const saveProblemStatementButton = debugElement.query(By.css('#save-instructions-button'));
         expect(saveProblemStatementButton).not.to.exist;
+    }));
+
+    it('should re-render the preview html after changes to the problem statement have been made', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(generateHtmlSubjectStub).to.have.been.calledOnce;
     }));
 });
