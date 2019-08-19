@@ -1,9 +1,11 @@
 <button
-    *ngIf="alwaysShowTriggerButton || (participationHasResult && participationIsActive && participationHasLatestSubmissionWithoutResult)"
-    [ngClass]="['btn', btnType, btnSize]"
+    *ngIf="alwaysShowTriggerButton || (participationIsActive && participationHasLatestSubmissionWithoutResult)"
+    [ngClass]="['btn', btnSize]"
+    [class.btn-danger]="participationHasLatestSubmissionWithoutResult"
+    [class.btn-primary]="!participationHasLatestSubmissionWithoutResult"
     [disabled]="isBuilding"
     (click)="triggerBuild($event)"
-    ngbTooltip="{{ getTooltip() | translate }}"
+    ngbTooltip="{{ 'artemisApp.programmingExercise.resubmit' | translate }}"
 >
     <fa-icon icon="redo" [spin]="showProgress && isBuilding"></fa-icon>
 </button>

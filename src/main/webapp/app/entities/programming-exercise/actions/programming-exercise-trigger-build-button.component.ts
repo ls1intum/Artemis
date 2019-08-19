@@ -1,11 +1,8 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { catchError, filter, map, switchMap, take, tap } from 'rxjs/operators';
-import { Observable, of, Subscription } from 'rxjs';
-import { ProgrammingSubmissionWebsocketService, ProgrammingSubmissionState } from 'app/submission/programming-submission-websocket.service';
+import { tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
-import { Result } from 'app/entities/result';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
-import { Submission } from 'app/entities/submission';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -20,28 +17,20 @@ export enum ButtonSize {
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     abstract triggerBuild: (event: any) => void;
-    abstract getTooltip: () => string;
 
     @Input() participation: Participation;
     @Input() showProgress: boolean;
     @Input() btnSize = ButtonSize.SMALL;
 
-    alwaysShowTriggerButton = false;
-    btnType = 'btn-primary';
-
-    participationHasResult: boolean;
     participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
     isBuilding: boolean;
+    alwaysShowTriggerButton: boolean;
 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(
-        private participationWebsocketService: ParticipationWebsocketService,
-        protected submissionService: ProgrammingSubmissionWebsocketService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-    ) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionWebsocketService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -51,24 +40,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
             this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            const participationHasResult = !!this.participation.results && !!this.participation.results.length;
-            of(participationHasResult)
-                .pipe(
-                    // Ideally this component is provided a participation with an attached result. If this is not the cased, try retrieve it from the server.
-                    switchMap((participationHashResult: boolean) => {
-                        return participationHashResult ? of(true) : this.checkIfHasResult(this.participation.id);
-                    }),
-                    // If there is no result yet for a participation, create a websocket subscription to get the first incoming result.
-                    tap((hasResult: boolean) => {
-                        this.participationHasResult = hasResult;
-                        if (!hasResult) {
-                            this.setupResultSubscription();
-                        }
-                    }),
-                )
-                .subscribe(() => {
-                    this.setupSubmissionSubscription();
-                });
+            if (this.participationIsActive) {
+                this.setupSubmissionSubscription();
+            }
         }
     }
 
@@ -79,19 +53,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-    }
-
-    /**
-     * Check by executing a REST call if there is a result for the given participation.
-     *
-     * @param participationId of the participation for which to check if there is a result.
-     * @return Observable with true if there is a result.
-     */
-    private checkIfHasResult(participationId: number): Observable<boolean> {
-        return this.programmingExerciseParticipationService.checkIfParticipationHasResult(participationId).pipe(
-            catchError(() => of(null)),
-            map((hasResult: boolean | null) => !!hasResult),
-        );
     }
 
     /**
@@ -120,23 +81,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                             break;
                     }
                 }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Wait for the first result to come in, when it comes in set the boolean flag participationHasResult to true.
-     */
-    setupResultSubscription() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-        this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(
-                filter(result => !!result),
-                take(1),
-                tap(() => (this.participationHasResult = true)),
             )
             .subscribe();
     }
