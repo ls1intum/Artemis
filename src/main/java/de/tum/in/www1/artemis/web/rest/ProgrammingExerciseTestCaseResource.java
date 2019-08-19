@@ -91,7 +91,7 @@ public class ProgrammingExerciseTestCaseResource {
      *
      * @param exerciseId            of exercise the test cases belong to.
      * @param testCaseWeightUpdates of the test cases to update the weights of.
-     * @return
+     * @return the set of test cases for the given programming exercise.
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-case-weights")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -116,8 +116,8 @@ public class ProgrammingExerciseTestCaseResource {
     /**
      * Use with care: Set the weight of all test cases of an exercise to 1.
      *
-     * @param exerciseId
-     * @return
+     * @param exerciseId the id of the exercise to reset the test case weights of.
+     * @return the updated set of test cases for the programming exercise.
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
