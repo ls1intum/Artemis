@@ -211,6 +211,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         const title = this.exercise.title;
         const id = this.exercise.id;
         const repo = this.repositoryUrl(this.exercise.participations[0]);
-        this.javaBridge.clone(repo, title, id);
+        this.javaBridge.clone(repo, title, id, this.courseId);
+    }
+
+    submitChanges() {
+        this.javaBridge.submit();
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnInit } from '@angular/core';
 
 @Injectable({
     providedIn: 'root',
@@ -11,9 +11,9 @@ export class JavaBridgeService {
         window.intellij.login(username, password);
     }
 
-    clone(repository: string, exerciseName: string, exerciseId: number) {
+    clone(repository: string, exerciseName: string, exerciseId: number, courseId: number) {
         // @ts-ignore
-        window.intellij.clone(repository, exerciseName, exerciseId);
+        window.intellij.clone(repository, exerciseName, exerciseId, courseId);
     }
 
     submit() {
