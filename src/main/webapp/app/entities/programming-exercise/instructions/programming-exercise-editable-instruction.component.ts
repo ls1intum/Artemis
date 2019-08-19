@@ -130,7 +130,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .pipe(rxMap(({ body }) => body || []))
             .subscribe((exerciseHints: ExerciseHint[]) => {
                 this.exerciseHints = exerciseHints;
-                this.taskHintCommand.setValues(this.exerciseHints.map(({ title }) => title));
+                this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id.toString(10), value: title })));
             });
     }
 
@@ -198,7 +198,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     }),
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
-                        this.testCaseCommand.setValues(this.exerciseTestCases);
+                        this.testCaseCommand.setValues(this.exerciseTestCases.map(value => ({ value, id: value })));
                     }),
                     catchError(() => of()),
                 )

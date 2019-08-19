@@ -4,9 +4,12 @@ import { getStringSegmentPositions } from 'app/utils/global.utils';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 /**
- * This domain command will be used as a dropdown in the markdown editor.
+ * Allows the insertion of values within a comma separated list.
+ * Will e.g. remove duplicates and append new items to the list.
  */
 export abstract class DomainMultiOptionListCommand extends DomainMultiOptionCommand {
+    protected abstract getValueMeta(): string;
+
     setEditor(aceEditorContainer: AceEditorComponent) {
         super.setEditor(aceEditorContainer);
 
@@ -14,11 +17,11 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
                 callback(
                     null,
-                    this.getValues().map(function(word: string) {
+                    this.getValues().map(({ value, id }) => {
                         return {
-                            caption: word,
-                            value: word,
-                            meta: 'exerciseHint',
+                            caption: value,
+                            value: id,
+                            meta: this.getValueMeta(),
                         };
                     }),
                 );

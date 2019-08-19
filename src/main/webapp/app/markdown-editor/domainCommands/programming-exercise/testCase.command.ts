@@ -3,6 +3,10 @@ import { DomainMultiOptionListCommand } from 'app/markdown-editor/domainCommands
 export class TestCaseCommand extends DomainMultiOptionListCommand {
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.testCaseCommand';
 
+    protected getValueMeta(): string {
+        return 'testCase';
+    }
+
     /**
      * @function getOpeningIdentifier
      * @desc identify the start of the task

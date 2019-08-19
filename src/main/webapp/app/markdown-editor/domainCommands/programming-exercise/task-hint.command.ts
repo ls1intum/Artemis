@@ -7,6 +7,10 @@ import { DomainMultiOptionListCommand } from 'app/markdown-editor/domainCommands
 export class TaskHintCommand extends DomainMultiOptionListCommand {
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.exerciseHintCommand';
 
+    protected getValueMeta(): string {
+        return 'exerciseHint';
+    }
+
     /**
      * @function getOpeningIdentifier
      * @desc identify the start of the task

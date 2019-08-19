@@ -4,6 +4,7 @@ import { Result } from 'app/entities/result';
 import { TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
