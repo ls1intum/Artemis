@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,8 +22,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
@@ -48,7 +49,7 @@ public class ResultServiceIntegrationTest {
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
     DatabaseUtilService database;
@@ -59,15 +60,19 @@ public class ResultServiceIntegrationTest {
 
     @BeforeEach
     public void reset() {
-        database.resetDatabase();
         ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
         participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(programmingExercise);
         participation.setId(1L);
         programmingExercise.setSolutionParticipation(participation);
-        participationRepository.save(participation);
+        solutionProgrammingExerciseRepository.save(participation);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

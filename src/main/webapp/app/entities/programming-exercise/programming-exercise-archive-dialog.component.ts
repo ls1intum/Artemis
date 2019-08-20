@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ExerciseDashboardPopupService } from '../../dashboard/exercise-dashboard-popup.service';
+import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.service';
 import { Exercise, ExerciseService } from '../exercise/index';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
-    selector: 'jhi-instructor-dashboard-archive-dialog',
+    selector: 'jhi-exercise-scores-archive-dialog',
     templateUrl: './programming-exercise-archive-dialog.component.html',
 })
 export class ProgrammingExerciseArchiveDialogComponent {
@@ -49,13 +49,13 @@ export class ProgrammingExerciseArchiveDialogComponent {
 }
 
 @Component({
-    selector: 'jhi-instructor-dashboard-archive-popup',
+    selector: 'jhi-exercise-scores-archive-popup',
     template: '',
 })
 export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {

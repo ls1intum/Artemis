@@ -5,10 +5,10 @@ import { JhiEventManager } from 'ng-jhipster';
 import { User, UserService } from 'app/core';
 
 @Component({
-    selector: 'jhi-user-mgmt-delete-dialog',
+    selector: 'jhi-user-management-delete-dialog',
     templateUrl: './user-management-delete-dialog.component.html',
 })
-export class UserMgmtDeleteDialogComponent {
+export class UserManagementDeleteDialogComponent {
     user: User;
 
     constructor(private userService: UserService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}

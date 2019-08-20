@@ -5,11 +5,11 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks';
 import { UpdatingResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseType } from 'app/entities/exercise';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -48,7 +48,7 @@ describe('TextAssessmentComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
             declarations: [
                 TextAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

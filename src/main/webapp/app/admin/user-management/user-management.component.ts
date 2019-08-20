@@ -6,15 +6,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
-import { ITEMS_PER_PAGE } from '../../shared';
-import { AccountService, User, UserService } from '../../core';
-import { UserMgmtDeleteDialogComponent } from 'app/admin';
+import { ITEMS_PER_PAGE } from 'app/shared';
+import { AccountService, User, UserService } from 'app/core';
+import { UserManagementDeleteDialogComponent } from 'app/admin';
 
 @Component({
-    selector: 'jhi-user-mgmt',
+    selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
 })
-export class UserMgmtComponent implements OnInit, OnDestroy {
+export class UserManagementComponent implements OnInit, OnDestroy {
     currentAccount: User;
     users: User[];
     error: string | null;
@@ -118,7 +118,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     }
 
     deleteUser(user: User) {
-        const modalRef = this.modalService.open(UserMgmtDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(UserManagementDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.user = user;
         modalRef.result.then(
             result => {

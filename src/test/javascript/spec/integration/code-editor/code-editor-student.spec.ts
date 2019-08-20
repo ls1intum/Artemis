@@ -11,7 +11,7 @@ import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
-    ArTEMiSCodeEditorModule,
+    ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
     CodeEditorConflictStateService,
     CodeEditorFileService,
@@ -19,39 +19,36 @@ import {
     CodeEditorRepositoryService,
     CodeEditorSessionService,
     CodeEditorStudentContainerComponent,
-    CodeEditorSubmissionService,
     CommitState,
     DomainService,
     DomainType,
     EditorState,
     GitConflictState,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import {
+    MockActivatedRoute,
     MockCodeEditorBuildLogService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
-    MockParticipationService,
     MockParticipationWebsocketService,
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { Participation, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
-import { problemStatement, problemStatementNoneExecutedRendered } from '../../sample/problemStatement.json';
+import { problemStatement } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { By } from '@angular/platform-browser';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
@@ -86,19 +83,19 @@ describe('CodeEditorStudentIntegration', () => {
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let routeSubject: Subject<Params>;
-    let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmission | null>();
+    let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot(),
-                ArTEMiSTestModule,
+                ArtemisTestModule,
                 AceEditorModule,
                 TreeviewModule.forRoot(),
-                ArTEMiSSharedModule,
-                ArTEMiSProgrammingExerciseModule,
-                ArTEMiSResultModule,
-                ArTEMiSCodeEditorModule,
+                ArtemisSharedModule,
+                ArtemisProgrammingExerciseModule,
+                ArtemisResultModule,
+                ArtemisCodeEditorModule,
             ],
             declarations: [],
             providers: [
@@ -144,7 +141,7 @@ describe('CodeEditorStudentIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
 
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmission | null>();
+                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
@@ -179,7 +176,7 @@ describe('CodeEditorStudentIntegration', () => {
         // @ts-ignore
         (route as MockActivatedRoute).setSubject(routeSubject);
 
-        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmission | null>();
+        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
         getLatestPendingSubmissionStub.returns(getLatestPendingSubmissionSubject);
     });
 
@@ -206,7 +203,7 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
-        getLatestPendingSubmissionSubject.next(null);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
 
         containerFixture.detectChanges();
 
@@ -267,7 +264,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as Participation;
+        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as StudentParticipation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -285,7 +282,7 @@ describe('CodeEditorStudentIntegration', () => {
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
-        getLatestPendingSubmissionSubject.next(null);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
 
         containerFixture.detectChanges();
 
@@ -440,7 +437,7 @@ describe('CodeEditorStudentIntegration', () => {
         // commit
         expect(container.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         commitStub.returns(of(null));
-        getLatestPendingSubmissionSubject.next({} as ProgrammingSubmission);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, {} as ProgrammingSubmission]);
         container.actions.commit();
         containerFixture.detectChanges();
 
@@ -448,7 +445,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.buildOutput.isBuilding).to.be.true;
 
-        getLatestPendingSubmissionSubject.next(null);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
         subscribeForLatestResultOfParticipationSubject.next(result);
         containerFixture.detectChanges();
 
@@ -488,7 +485,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.editorState).to.equal(EditorState.CLEAN);
         subscribeForLatestResultOfParticipationSubject.next(result);
-        getLatestPendingSubmissionSubject.next({} as ProgrammingSubmission);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, {} as ProgrammingSubmission]);
         commitSubject.next(null);
         containerFixture.detectChanges();
 
@@ -496,7 +493,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.buildOutput.isBuilding).to.be.true;
 
-        getLatestPendingSubmissionSubject.next(null);
+        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).to.be.false;

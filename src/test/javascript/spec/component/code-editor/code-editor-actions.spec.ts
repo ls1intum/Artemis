@@ -15,7 +15,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState, EditorState } from 'app/code-editor';
 import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
@@ -34,7 +34,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorActionsComponent],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
