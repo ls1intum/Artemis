@@ -748,7 +748,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * Dtermines the Status of a QuizExercise
+     * Determines the Status of a QuizExercise
+     *
      * @param quiz the Quiz for which the status should be determined
      * @return the Status of the given Quiz
      */
