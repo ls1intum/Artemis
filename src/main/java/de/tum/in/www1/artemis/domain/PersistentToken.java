@@ -84,7 +84,7 @@ public class PersistentToken implements Serializable {
     }
 
     /**
-     * sets the userAgent
+     * sets the user agent that identifies the browser of the user: https://en.wikipedia.org/wiki/User_agent
      * @param userAgent the UserAgent which should be set
      */
     public void setUserAgent(String userAgent) {
