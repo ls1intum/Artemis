@@ -10,8 +10,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { isIntelliJ } from 'app/intellij/intellij';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -38,6 +38,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
     readonly isIntelliJ = isIntelliJ;
+    isOpenedInIntelliJ = false;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -69,6 +70,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
+        // this.javaBridge.openedExercise().subscribe(exerciseId => this.isOpenedInIntelliJ = exerciseId === this.exercise.id);
+        this.javaBridge.openedExercise().subscribe(exerciseId => this.javaBridge.log(exerciseId == null ? 'null' : exerciseId.toString()));
     }
 
     participationStatus(): ParticipationStatus {

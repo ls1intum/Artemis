@@ -1,5 +1,8 @@
 import { Injectable, OnInit } from '@angular/core';
 import { WindowRef } from 'app/core';
+import { Exercise } from 'app/entities/exercise';
+import { Observable } from 'rxjs';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Injectable({
     providedIn: 'root',
@@ -19,7 +22,11 @@ export class JavaBridgeService {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    isIntelliJ(): boolean {
-        return window.navigator.userAgent.includes('IntelliJ');
+    openedExercise(): Observable<number | null> {
+        return Observable.of(isIntelliJ ? this.window.nativeWindow.intellij.opened : null);
+    }
+
+    log(message: string) {
+        this.window.nativeWindow.intellij.log(message);
     }
 }

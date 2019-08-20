@@ -9,8 +9,6 @@ import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -68,7 +66,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         private conflictService: CodeEditorConflictStateService,
         private modalService: NgbModal,
         private submissionService: CodeEditorSubmissionService,
-        private javaBridge: JavaBridgeService,
     ) {}
 
     ngOnInit(): void {
@@ -122,10 +119,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * If there are unsaved changes, save them first before trying to commit again.
      */
     commit() {
-        if (isIntelliJ) {
-            this.javaBridge.submit();
-            return;
-        }
         // Avoid multiple commits at the same time.
         if (this.commitState === CommitState.COMMITTING) {
             return;

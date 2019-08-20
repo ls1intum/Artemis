@@ -66,6 +66,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 rememberMe: this.rememberMe,
             })
             .then(() => {
+                // Log in to IntelliJ
+                if (isIntelliJ) {
+                    this.javaBridge.login(this.username, this.password);
+                }
+
                 this.authenticationError = false;
                 this.authenticationAttempts = 0;
                 this.captchaRequired = false;
@@ -85,11 +90,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 if (redirect) {
                     this.stateStorageService.storeUrl(null);
                     this.router.navigate([redirect]);
-                }
-
-                // Log in to IntelliJ
-                if (isIntelliJ) {
-                    this.javaBridge.login(this.username, this.password);
                 }
             })
             .catch((error: HttpErrorResponse) => {
