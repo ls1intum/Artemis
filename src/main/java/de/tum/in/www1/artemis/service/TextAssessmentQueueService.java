@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 @Service
 @Profile("automaticText")
@@ -15,11 +17,11 @@ public class TextAssessmentQueueService {
 
     private final TextClusterRepository textClusterRepository;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, TextSubmissionRepository textSubmissionRepository) {
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService) {
         this.textClusterRepository = textClusterRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
+        this.textSubmissionService = textSubmissionService;
     }
 
     /**
@@ -30,17 +32,30 @@ public class TextAssessmentQueueService {
      * @return a TextSubmission with the highest information Gain if there is one
      */
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise) {
+        return getProposedTextSubmission(textExercise, null);
+    }
+
+    /**
+     * Calculates the proposedTextSubmission for a given Text exercise
+     *
+     * @param textExercise the exercise for
+     * @param languages  list of languages the submission which the returned  submission should have if null all languages are allowed
+     * @throws IllegalArgumentException if textExercise isn't automatically assessable
+     * @return a TextSubmission with the highest information Gain if there is one
+     */
+    @Transactional(readOnly = true)
+    public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
 
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");
         }
-
-        List<TextSubmission> textSubmissionList = textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(textExercise.getId());
+        List<TextSubmission> textSubmissionList = textSubmissionService.getAllOpenTextSubmissions(textExercise);
         if (textSubmissionList.isEmpty()) {
             return Optional.empty();
         }
         HashMap<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
-        Optional<TextSubmission> best = textSubmissionList.stream().max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
+        Optional<TextSubmission> best = textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
+                .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
         return best;
     }
 
@@ -103,7 +118,7 @@ public class TextAssessmentQueueService {
 
     /**
      * Calculates the Percentages of Smaller Clusters for a list of textSubmissions
-     *
+     * All TextSubmissions must have the same exercise
      * @param textSubmissionList for which the smaller clusters should be calculated
      * @throws IllegalArgumentException if not all TextSubmissions are from the same exercise
      * @return return a HashMap where the textBlock is the key and smaller cluster percentage is the value

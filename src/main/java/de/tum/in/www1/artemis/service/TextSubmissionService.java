@@ -160,6 +160,18 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
+     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
+     * The corresponding TextBlocks and Participations are retrieved from the database
+     * @param exercise Exercise for which all assessed submissions should be retrieved
+     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
+     *
+     */
+    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
+        return textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
+                .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
+    }
+
+    /**
      * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
