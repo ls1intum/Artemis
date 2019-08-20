@@ -81,10 +81,10 @@ public class ExerciseHintResource {
      * {@code PUT  /exercise-hints/{id}} : Updates an existing exerciseHint.
      *
      * @param exerciseHint the exerciseHint to update.
+     * @param id  the id to the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated exerciseHint,
      * or with status {@code 400 (Bad Request)} if the exerciseHint is not valid,
      * or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/exercise-hints/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")

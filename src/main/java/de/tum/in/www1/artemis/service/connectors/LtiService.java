@@ -413,6 +413,7 @@ public class LtiService {
 
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
+                // TODO remove workaround since IMSPOXRequest is fixed
                 log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
                         ltiOutcomeUrl.getSourcedId());
                 HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);

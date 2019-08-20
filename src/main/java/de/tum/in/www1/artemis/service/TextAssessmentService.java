@@ -54,6 +54,7 @@ public class TextAssessmentService extends AssessmentService {
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
+     * @param textExercise  the corresponding TextExercise
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */

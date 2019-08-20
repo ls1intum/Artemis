@@ -269,7 +269,7 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
+    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
@@ -284,6 +284,7 @@ public class ExerciseResource {
      *
      * @param id the id of the exercise to delete and archive the repositories
      * @return ResponseEntity with status
+     * @throws IOException if repositories can't be archived
      */
     @GetMapping(value = "/exercises/{id}/archive")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -309,6 +310,7 @@ public class ExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zipped
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")

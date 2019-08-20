@@ -120,14 +120,14 @@ public abstract class Participation implements Serializable {
     /**
      * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
      * 
-     * @return
+     * @return exrcise object
      */
     public abstract Exercise getExercise();
 
     /**
      * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
      * 
-     * @param exercise
+     * @param exercise that will be set
      */
     public abstract void setExercise(Exercise exercise);
 
