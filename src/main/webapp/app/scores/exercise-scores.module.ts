@@ -10,13 +10,21 @@ import { JhiMainComponent } from 'app/layouts';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
-import { InstructorDashboardArchivePopupComponent, ProgrammingExerciseArchiveDialogComponent, } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
-import { InstructorDashboardCleanupPopupComponent, ProgrammingExerciseCleanupDialogComponent, } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
-import { ExerciseScoresRepoExportComponent, InstructorDashboardExportReposPopupComponent } from './exercise-scores-repo-export-dialog.component';
-import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
-import { ExerciseScoresResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-scores-result-dialog.component';
+import {
+    InstructorDashboardArchivePopupComponent,
+    InstructorDashboardCleanupPopupComponent,
+    ProgrammingExerciseArchiveDialogComponent,
+    ProgrammingExerciseCleanupDialogComponent,
+} from 'app/entities/programming-exercise';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import {
+    ExerciseScoresPopupService,
+    ExerciseScoresRepoExportComponent,
+    ExerciseScoresResultDialogComponent,
+    InstructorDashboardExportReposPopupComponent,
+    InstructorDashboardResultPopupComponent,
+} from 'app/scores';
 
 const ENTITY_STATES = [
     {

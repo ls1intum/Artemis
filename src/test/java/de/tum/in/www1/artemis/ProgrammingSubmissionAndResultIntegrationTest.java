@@ -438,6 +438,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     /**
      * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
      */
+    @SuppressWarnings("unchecked")
     private void postTestRepositorySubmission() throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
@@ -474,6 +475,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
+    @SuppressWarnings("unchecked")
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String id = getPlanIdByParticipationType(participationType, participationNumber);
         JSONParser jsonParser = new JSONParser();
