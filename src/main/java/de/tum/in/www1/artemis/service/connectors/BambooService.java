@@ -161,11 +161,6 @@ public class BambooService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         String assignmentRepoName = ASSIGNMENT_REPO_NAME;
-        if (exercise.getId() <= 662) {
-            //Migration for old exercises on the production server: they use the following assignment repo name
-            //TODO: remove this migration in the future.
-            assignmentRepoName = "Assignment";
-        }
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
