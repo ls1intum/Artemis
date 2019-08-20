@@ -4,15 +4,15 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Exercise } from '../entities/exercise';
-import { ExerciseService } from '../entities/exercise/exercise.service';
-import { Participation } from '../entities/participation/participation.model';
-import { ParticipationService } from '../entities/participation/participation.service';
-import { Result } from '../entities/result/result.model';
+import { ExerciseService } from 'app/entities/exercise';
+import { Participation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation';
+import { Result } from 'app/entities/result';
 
 import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseDashboardPopupService {
+export class ExerciseScoresPopupService {
     private ngbModalRef: NgbModalRef | null;
 
     constructor(

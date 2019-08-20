@@ -12,7 +12,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 ...LAYOUT_ROUTES,
                 {
                     path: 'admin',
-                    loadChildren: './admin/admin.module#ArTEMiSAdminModule',
+                    loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
                 },
             ],
             { useHash: true, enableTracing: false },
@@ -20,4 +20,4 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
     ],
     exports: [RouterModule],
 })
-export class ArTEMiSAppRoutingModule {}
+export class ArtemisAppRoutingModule {}

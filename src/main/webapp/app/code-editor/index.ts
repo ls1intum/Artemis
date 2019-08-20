@@ -11,4 +11,4 @@ export * from './model';
 export * from './code-editor-instructor-container.component';
 export * from './code-editor-student-container.component';
 
-export { ArTEMiSCodeEditorModule } from './code-editor.module';
+export { ArtemisCodeEditorModule } from './code-editor.module';

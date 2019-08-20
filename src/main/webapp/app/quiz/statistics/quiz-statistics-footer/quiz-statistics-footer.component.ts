@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question';
-import { MultipleChoiceQuestionStatistic } from 'src/main/webapp/app/entities/multiple-choice-question-statistic';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
-import { QuizPointStatistic } from 'src/main/webapp/app/entities/quiz-point-statistic';
+import { QuizPointStatistic } from 'app/entities/quiz-point-statistic';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AccountService, JhiWebsocketService } from 'app/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import * as moment from 'moment';
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
-    styleUrls: ['./quiz-statistics-footer.component.scss', '../../quiz.scss'],
+    styleUrls: ['./quiz-statistics-footer.component.scss', '../../../quiz.scss'],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     @Input() isQuizPointStatistic: boolean;

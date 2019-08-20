@@ -3,8 +3,7 @@ import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSAdminModule } from 'app/admin/admin.module';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     ParticipationCleanupBuildPlanDialogComponent,
     ParticipationCleanupBuildPlanPopupComponent,
@@ -18,12 +17,12 @@ import {
     ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSProgrammingExerciseModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisProgrammingExerciseModule],
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
@@ -41,7 +40,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
     providers: [ParticipationService, ParticipationWebsocketService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSParticipationModule {
+export class ArtemisParticipationModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/components/table/table.module';
 import { TableEditableFieldComponent } from 'app/components/table';
 
@@ -20,7 +20,7 @@ describe('TableEditableFieldComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArtemisTableModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
         })
             .compileComponents()
             .then(() => {

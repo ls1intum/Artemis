@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DropLocationUpdateComponent } from 'app/entities/drop-location/drop-location-update.component';
 import { DropLocationService } from 'app/entities/drop-location/drop-location.service';
 import { DropLocation } from 'app/shared/model/drop-location.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DropLocationUpdateComponent],
             })
                 .overrideTemplate(DropLocationUpdateComponent, '')

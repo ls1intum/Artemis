@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
-import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';

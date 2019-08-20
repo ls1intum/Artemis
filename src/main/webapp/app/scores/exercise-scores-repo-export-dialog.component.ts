@@ -4,16 +4,16 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
+import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
-    selector: 'jhi-instructor-dashboard-repo-export-dialog',
-    templateUrl: './exercise-dashboard-repo-export-dialog.component.html',
+    selector: 'jhi-exercise-scores-repo-export-dialog',
+    templateUrl: './exercise-scores-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
 })
-export class InstructorDashboardExportReposComponent {
+export class ExerciseScoresRepoExportComponent {
     exercise: Exercise;
     exportInProgress: boolean;
     studentIdList: string;
@@ -53,17 +53,17 @@ export class InstructorDashboardExportReposComponent {
 }
 
 @Component({
-    selector: 'jhi-instructor-dashboard-export-repos-popup',
+    selector: 'jhi-exercise-scores-export-repos-popup',
     template: '',
 })
 export class InstructorDashboardExportReposPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(InstructorDashboardExportReposComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(ExerciseScoresRepoExportComponent as Component, params['id'], true);
         });
     }
 

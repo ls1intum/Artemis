@@ -3,7 +3,7 @@ version: '3'
 services:
   artemis-server:
     command: sh -c "./gradlew buildJarForDocker
-                    && java -jar build/libs/ArTEMiS-*.jar"
+                    && java -jar build/libs/Artemis-*.jar"
     depends_on:
       - artemis-mysql
     image: openjdk:12-jdk-alpine
