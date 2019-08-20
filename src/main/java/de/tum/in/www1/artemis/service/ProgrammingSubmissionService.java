@@ -58,6 +58,16 @@ public class ProgrammingSubmissionService {
         this.gitService = gitService;
     }
 
+    /**
+     * This method gets called if a new commit was pushed to the VCS
+     *
+     * @param participationId The ID to the Participation, where the push happend
+     * @param requestBody the body of the post request by the VCS.
+     * @return the ProgrammingSubmission for the last commitHash
+     * @throws EntityNotFoundException if no ProgrammingExerciseParticipation could be found
+     * @throws IllegalStateException if a ProgrammingSubmission already exists
+     * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
+     */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {

@@ -172,7 +172,9 @@ public class QuizScheduleService {
     }
 
     /**
-     * start scheduler
+     * Start scheduler of quiz schedule service
+     *
+     * @param delayInMillis gap for which the QuizScheduleService should run repeatly
      */
     public void startSchedule(long delayInMillis) {
         log.info("QuizScheduleService was started to run repeatedly with {} second gaps.", delayInMillis / 1000.0);
@@ -197,6 +199,11 @@ public class QuizScheduleService {
         }
     }
 
+    /**
+     * Start scheduler of quiz
+     *
+     * @param quizExercise that should be scheduled
+     */
     public void scheduleQuizStart(final QuizExercise quizExercise) {
         // first remove and cancel old scheduledFuture if it exists
         cancelScheduledQuizStart(quizExercise.getId());

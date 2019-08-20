@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async, inject, flush, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
@@ -8,18 +8,18 @@ import { sortBy as _sortBy } from 'lodash';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
-import { SinonStub, SinonSpy, spy, stub } from 'sinon';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import * as chai from 'chai';
 import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ArTEMiSSharedModule, JhiAlertComponent } from 'app/shared';
+import { JhiAlertComponent } from 'app/shared';
 import { ArtemisTableModule } from 'app/components/table/table.module';
 
 chai.use(sinonChai);
@@ -57,7 +57,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArtemisTableModule, NgxDatatableModule, FormsModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule, NgxDatatableModule, FormsModule],
             declarations: [ProgrammingExerciseManageTestCasesComponent, MockComponent(JhiAlertComponent)],
             providers: [
                 JhiAlertService,

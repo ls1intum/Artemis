@@ -22,6 +22,12 @@ public class NameSimilarity {
         return string1.equals(string2) ? 1 : 0;
     }
 
+    /**
+     * Returns a similarity score between two strings
+     * @param string1 first String
+     * @param string2 second String
+     * @return similarity score
+     */
     // TODO CZ: this is not a good similarity calculation
     public static double namePartiallyEqualsSimilarity(String string1, String string2) {
         if (string1.equals(string2)) {

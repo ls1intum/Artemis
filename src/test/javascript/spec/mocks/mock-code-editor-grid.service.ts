@@ -1,5 +1,5 @@
 import { ICodeEditorGridService, ResizeType } from 'app/code-editor';
-import { Observable, of, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 export class MockCodeEditorGridService implements ICodeEditorGridService {
     public subject = new Subject<ResizeType>();

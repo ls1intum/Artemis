@@ -147,6 +147,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    /**
+     * @return UserName as a concatenation of first and last Name
+     */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
             return firstName + " " + lastName;

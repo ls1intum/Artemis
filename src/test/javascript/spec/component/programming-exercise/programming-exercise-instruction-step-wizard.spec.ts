@@ -8,8 +8,8 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArTEMiSTestModule } from '../../test.module';
-import { ArTEMiSSharedModule } from 'src/main/webapp/app/shared';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
 
@@ -27,7 +27,7 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent],
             providers: [ProgrammingExerciseInstructionService],
         })

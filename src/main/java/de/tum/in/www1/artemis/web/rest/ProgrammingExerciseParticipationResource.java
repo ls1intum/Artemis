@@ -41,6 +41,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Get the given student participation with its latest result and feedbacks.
      *
+     * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
@@ -60,6 +61,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Get the latest result for a given programming exercise participation including it's result.
      *
+     * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")

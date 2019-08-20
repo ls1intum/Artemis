@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     ExerciseHintComponent,
     ExerciseHintDetailComponent,
@@ -16,12 +16,12 @@ import {
     ExerciseHintStudentDialogComponent,
     ExerciseHintStudentComponent,
 } from './';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArTEMiSMarkdownEditorModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownEditorModule],
     declarations: [
         ExerciseHintComponent,
         ExerciseHintDetailComponent,

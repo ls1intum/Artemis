@@ -10,9 +10,9 @@ import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
 import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { ArTEMiSSharedModule } from 'src/main/webapp/app/shared';
+import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
@@ -21,7 +21,6 @@ import {
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionTaskStatusComponent,
     ProgrammingExerciseParticipationService,
-    TestCaseState,
 } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
@@ -53,7 +52,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,

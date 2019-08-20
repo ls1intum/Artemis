@@ -1,4 +1,4 @@
-import { element, by, ElementFinder } from 'protractor';
+import { by, element, ElementFinder } from 'protractor';
 
 export class NavBarPage {
     entityMenu = element(by.id('entity-menu'));

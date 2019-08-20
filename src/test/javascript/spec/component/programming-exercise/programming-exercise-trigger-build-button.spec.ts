@@ -7,20 +7,18 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
 import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
-import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,7 +47,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
             declarations: [ProgrammingExerciseStudentTriggerBuildButtonComponent],
             providers: [
                 JhiLanguageHelper,

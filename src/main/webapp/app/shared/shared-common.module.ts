@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 
-import { ArTEMiSSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent } from './';
+import { ArtemisSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent } from './';
 
 @NgModule({
-    imports: [ArTEMiSSharedLibsModule],
+    imports: [ArtemisSharedLibsModule],
     declarations: [FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent],
-    exports: [ArTEMiSSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent],
+    exports: [ArtemisSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent],
 })
-export class ArTEMiSSharedCommonModule {}
+export class ArtemisSharedCommonModule {}
