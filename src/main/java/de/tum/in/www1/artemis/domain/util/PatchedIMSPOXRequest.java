@@ -34,6 +34,21 @@ public class PatchedIMSPOXRequest extends IMSPOXRequest {
         super(bodyString);
     }
 
+    /**
+     * Build outcome request with patchedReplaceResultMessage for LTI consumer score update to send later
+     *
+     * @param url LTI consumer outcome URL
+     * @param key OAUTH_KEY
+     * @param secret OAUTH_SECRET
+     * @param sourcedid LTI consumer outcome URL id
+     * @param score new score
+     * @param resultData result data
+     * @param isUrl boolean to define the formatting of @param resultData
+     * @return {HttpPost} LTI outcome request (xml-based) with patchedReplaceResultMessage
+     * @throws IOException if encoding the hash fails
+     * @throws OAuthException if signing HTTP request fails
+     * @throws GeneralSecurityException if getBodyHash(xml) fails
+     */
     public static HttpPost buildReplaceResult(String url, String key, String secret, String sourcedid, String score, String resultData, Boolean isUrl)
             throws IOException, OAuthException, GeneralSecurityException {
         String dataXml = "";
