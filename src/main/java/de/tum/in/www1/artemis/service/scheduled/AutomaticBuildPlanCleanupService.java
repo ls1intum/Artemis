@@ -36,6 +36,9 @@ public class AutomaticBuildPlanCleanupService {
         this.participationService = participationService;
     }
 
+    /**
+     *  Cleans up all build plans
+     */
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     @Transactional
     public void cleanupBuildPlans() {

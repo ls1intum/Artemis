@@ -104,9 +104,9 @@ public class TextCluster implements Serializable {
     }
 
     /**
-     * Adds a TextBlock to the cluster and returns itself afterwards
-     * @param textBlock Textblock to be added
-     * @return the cluster
+     * Adds a TextBlock to the Cluster
+     * @param textBlock the TextBlock which should be added
+     * @return the Cluster Object with the new TextBlock
      */
     public TextCluster addBlocks(TextBlock textBlock) {
         int newPosition = this.blocks.size();
@@ -147,10 +147,10 @@ public class TextCluster implements Serializable {
     }
 
     /**
-     * Calculates the distance between two TextBlocks which are in the cluster
-     * @param first First Textblock
-     * @param second Second Textblock
-     * @return Distance between the two Textblocks
+     * Calculates the distance between two textblocks if they are in the same cluster
+     * @param first the first TextBlock
+     * @param second the second Textblock
+     * @return the distance between the two parameters
      */
     public double distanceBetweenBlocks(TextBlock first, TextBlock second) {
         int firstIndex = getBlockIndex(first);

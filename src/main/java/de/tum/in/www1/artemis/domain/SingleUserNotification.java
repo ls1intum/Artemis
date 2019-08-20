@@ -50,6 +50,12 @@ public class SingleUserNotification extends Notification implements Serializable
         this.setText(text);
     }
 
+    /**
+     * Set the target JSON string for an exercise notification
+     *
+     * @param studentQuestionAnswer a question that was posted for an exercise
+     * @return JSON string with all properties for the notification target field
+     */
     public String studentQuestionAnswerTargetForExercise(StudentQuestionAnswer studentQuestionAnswer) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
@@ -60,6 +66,12 @@ public class SingleUserNotification extends Notification implements Serializable
         return target.toString();
     }
 
+    /**
+     * Set the target JSON string for a lecture notification
+     *
+     * @param studentQuestionAnswer a question that was posted for a lecture
+     * @return JSON string with all properties for the notification target field
+     */
     public String studentQuestionAnswerTargetForLecture(StudentQuestionAnswer studentQuestionAnswer) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");

@@ -161,11 +161,6 @@ public class BambooService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         String assignmentRepoName = ASSIGNMENT_REPO_NAME;
-        if (exercise.getId() <= 662) {
-            //Migration for old exercises on the production server: they use the following assignment repo name
-            //TODO: remove this migration in the future.
-            assignmentRepoName = "Assignment";
-        }
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
@@ -384,7 +379,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
-     * @return                      a message that indiates the result of the plan repository update.
+     * @return                      a message that indicates the result of the plan repository update.
      * @throws BambooException      if a communication issue occurs.
      */
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {

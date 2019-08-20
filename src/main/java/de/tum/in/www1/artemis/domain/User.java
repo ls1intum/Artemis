@@ -90,6 +90,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
+    /**
+     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
+     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
+     */
+    @Column(name = "`groups`")
     @ElementCollection
     private List<String> groups = new ArrayList<>();
 
@@ -147,6 +152,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    /**
+     * @return UserName as a concatenation of first and last Name
+     */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
             return firstName + " " + lastName;

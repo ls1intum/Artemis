@@ -81,6 +81,11 @@ public class TextClusteringService {
         return textEmbeddings;
     }
 
+    /**
+     * Calculates the similarity clusters for a given TextExercise
+     * Can Take a long time and should not be called in the main Thread
+     * @param exercise the TextExercise
+     */
     @Transactional
     public void calculateClusters(TextExercise exercise) {
         long start = System.currentTimeMillis();

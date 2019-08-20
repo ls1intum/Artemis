@@ -82,20 +82,27 @@ public class BambooUpdateService {
                 final BambooClient bambooClient = new BambooClient(new Base());
                 String[] args = new String[] { "--field1", "repository.stash.projectKey", "--value1", bitbucketProject, "--field2", "repository.stash.repositoryId", "--value2",
                         remoteRepository.getId().toString(), "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository, "--field4",
-                        "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g.
-                                                                                                                                    // "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-                        "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID, "--field6", "repository.stash.branch", "--value6", "master", "-s",
-                        BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password", BAMBOO_PASSWORD,
-                        // "--targetServer", "https://repobruegge.in.tum.de" //in the future, we might be able to use this and save many other arguments above, then we could also
+                        "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), "--field5", "repository.stash.server",
+                        "--value5", BITBUCKET_APPLICATION_LINK_ID, "--field6", "repository.stash.branch", "--value6", "master", "-s", BAMBOO_SERVER_URL.toString(), "--user",
+                        BAMBOO_USER, "--password", BAMBOO_PASSWORD,
+                        // TODO SK "--targetServer", "https://repobruegge.in.tum.de" //in the future, we might be able to use this and save many other arguments above, then we
+                        // could also
                         // get rid of BITBUCKET_APPLICATION_LINK_ID
                 };
                 // workaround to pass additional fields
                 bambooClient.doWork(args);
 
                 log.debug("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
+                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName,
+                        bambooProject + "-" + bambooPlan, false);
+                // Workaround for old exercises which used a different repositoryName
+                if (bambooRemoteRepository == null) {
+                    bambooRepositoryName = "Assignment";
+                }
+
                 String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "BITBUCKET_SERVER",
                         null, false, true, true);
-                log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+                log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful: " + message);
                 return message;
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -109,9 +116,14 @@ public class BambooUpdateService {
             // NOT NEEDED
         }
 
+        /**
+         * e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
+         * @param project the bitbucket project name
+         * @param slug the bitbucket repo name
+         * @return the ssh repository url
+         */
         private String buildSshRepositoryUrl(String project, String slug) {
             final int sshPort = 7999;
-
             return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
         }
     }

@@ -81,6 +81,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.conflictService = conflictService;
     }
 
+    /**
+     * GET modeling-submissions/:submissionId/partial-assessment : get a partial assessment for modeling submission
+     *
+     * @param submissionId id of the submission
+     * @return partial assessment for specified submission
+     */
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')") // TODO MJ better path
     // "/modeling-submissions/{submissionId}/result"?
@@ -170,6 +176,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
     }
 
+    /**
+     * PUT modeling-submissions/:submissionId/feedback : save manual modeling assessment
+     *
+     * @param submissionId id of the submission
+     * @param feedbacks list of feedbacks
+     * @param ignoreConflict currently not used
+     * @param submit if true the assessment is submitted, else only saved
+     * @return result after saving/submitting modeling assessment
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
@@ -220,6 +235,13 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * PUT modeling-submissions/:exampleSubmissionId/exampleAssessment : save manual example modeling assessment
+     *
+     * @param exampleSubmissionId id of the submission
+     * @param feedbacks list of feedbacks
+     * @return result after saving example modeling assessment
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
