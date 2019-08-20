@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOptionComponent } from 'app/entities/answer-option/answer-option.component';
 import { AnswerOptionService } from 'app/entities/answer-option/answer-option.service';
 import { AnswerOption } from 'app/shared/model/answer-option.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [AnswerOptionComponent],
                 providers: [],
             })

@@ -99,17 +99,20 @@ public class ResultService {
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
-     * @return the result with feedback list
-     * @throws EntityNotFoundException when result for participation could not be found
+     * @return an optional result (might exist or not).
      */
-    public Result findLatestResultWithFeedbacksForParticipation(Long participationId) throws EntityNotFoundException {
-        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        if (!result.isPresent()) {
-            throw new EntityNotFoundException("result for participation " + participationId + " could not be found");
-        }
-        else {
-            return result.get();
-        }
+    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId) {
+        return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+    }
+
+    /**
+     * Check if there is a result for the given participation.
+     *
+     * @param participationId the id of the participation for which to check if there is a result.
+     * @return true if there is a result for the given participation, otherwise not.
+     */
+    public Boolean existsByParticipationId(Long participationId) {
+        return resultRepository.existsByParticipationId(participationId);
     }
 
     /**

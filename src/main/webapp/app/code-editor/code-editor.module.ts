@@ -1,49 +1,44 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
-
-import { ArTEMiSSharedModule } from '../shared';
-import { codeEditorRoute } from './code-editor.route';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArTEMiSResultModule, ResultService } from 'app/entities/result';
-import { ParticipationService } from '../entities/participation';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { MomentModule } from 'ngx-moment';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 
+import { JhiLanguageHelper } from 'app/core';
+import { ArtemisSharedModule } from 'app/shared';
+import { codeEditorRoute } from './code-editor.route';
+import { ArtemisResultModule, ResultService } from 'app/entities/result';
+import { ParticipationService } from 'app/entities/participation';
+
 import {
-    // services
-    DomainService,
-    CodeEditorRepositoryService,
-    CodeEditorRepositoryFileService,
-    CodeEditorBuildLogService,
-    CodeEditorSessionService,
-    CodeEditorGridService,
-    CodeEditorConflictStateService,
-    CodeEditorSubmissionService,
-    // layout
-    CodeEditorGridComponent,
-    // components
     CodeEditorAceComponent,
+    CodeEditorActionsComponent,
+    CodeEditorBuildLogService,
+    CodeEditorBuildOutputComponent,
+    CodeEditorConflictStateService,
     CodeEditorFileBrowserComponent,
+    CodeEditorFileBrowserCreateNodeComponent,
     CodeEditorFileBrowserDeleteComponent,
     CodeEditorFileBrowserFileComponent,
     CodeEditorFileBrowserFolderComponent,
-    CodeEditorFileBrowserCreateNodeComponent,
-    CodeEditorBuildOutputComponent,
-    CodeEditorStatusComponent,
-    CodeEditorActionsComponent,
-    CodeEditorInstructionsComponent,
-    CodeEditorResolveConflictModalComponent,
-    // containers
-    CodeEditorInstructorContainerComponent,
-    CodeEditorStudentContainerComponent,
     CodeEditorFileService,
+    CodeEditorGridComponent,
+    CodeEditorGridService,
+    CodeEditorInstructionsComponent,
+    CodeEditorInstructorContainerComponent,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+    CodeEditorResolveConflictModalComponent,
+    CodeEditorSessionService,
+    CodeEditorStatusComponent,
+    CodeEditorStudentContainerComponent,
+    CodeEditorSubmissionService,
+    DomainService,
 } from './';
 
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 
@@ -51,12 +46,12 @@ const ENTITY_STATES = [...codeEditorRoute];
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
+        ArtemisSharedModule,
         AceEditorModule,
-        ArTEMiSResultModule,
-        ArTEMiSMarkdownEditorModule,
+        ArtemisResultModule,
+        ArtemisMarkdownEditorModule,
         MomentModule,
-        ArTEMiSProgrammingExerciseModule,
+        ArtemisProgrammingExerciseModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
         ArtemisExerciseHintModule,
@@ -102,7 +97,7 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSCodeEditorModule {
+export class ArtemisCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

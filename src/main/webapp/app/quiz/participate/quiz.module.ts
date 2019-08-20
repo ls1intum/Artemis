@@ -4,7 +4,7 @@ import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArtemisSharedModule } from '../../shared';
 import { JhiWebsocketService } from '../../core';
 import { quizRoute } from './quiz.route';
 import { RepositoryService } from '../../entities/repository/repository.service';
@@ -22,7 +22,7 @@ import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent
 const ENTITY_STATES = [...quizRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), DndModule.forRoot(), AngularFittextModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), DndModule.forRoot(), AngularFittextModule],
     declarations: [
         QuizComponent,
         MultipleChoiceQuestionComponent,
@@ -36,7 +36,7 @@ const ENTITY_STATES = [...quizRoute];
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSQuizModule {
+export class ArtemisQuizModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

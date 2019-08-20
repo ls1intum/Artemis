@@ -1,4 +1,4 @@
-import { browser, element, by } from 'protractor';
+import { browser, by, element } from 'protractor';
 
 import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
 

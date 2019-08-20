@@ -1,11 +1,9 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
-import { IFileUploadSubmission, FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
+import { FileUploadSubmission, IFileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
 
 describe('Service Tests', () => {
     describe('FileUploadSubmission Service', () => {

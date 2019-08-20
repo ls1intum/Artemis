@@ -53,7 +53,15 @@ public class ProgrammingExerciseParticipationService {
         return solutionParticipationRepository.findById(participationId);
     }
 
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) {
+    /**
+     * Tries to retrieve a student participation for the given exercise id and username.
+     *
+     * @param exerciseId id of the exercise.
+     * @param username of the user to which the participation belongs.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;
         participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
         if (!participation.isPresent())
@@ -65,6 +73,15 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
     }
 
+    /**
+     * Check if the user can access a given participation.
+     * The method will treat the participation types differently:
+     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) and the courses instructor/tas.
+     * - Template/SolutionParticipations should only be accessible by the courses instructor/tas.
+     *
+     * @param participation to check permissions for.
+     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
+     */
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation);
@@ -93,6 +110,16 @@ public class ProgrammingExerciseParticipationService {
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
+    /**
+     * Check if the user can access a given participation.
+     * The method will treat the participation types differently:
+     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) and the courses instructor/tas.
+     * - Template/SolutionParticipations should only be accessible by the courses instructor/tas.
+     *
+     * @param participation to check permissions for.
+     * @param principal object to check permissions of the user with.
+     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
+     */
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation, Principal principal) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation, principal);

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
@@ -23,6 +23,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     programmingExercise: ProgrammingExercise;
 
+    loadingTemplateParticipationResults = true;
+    loadingSolutionParticipationResults = true;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -43,6 +46,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
                     this.programmingExercise.solutionParticipation.results = result ? [result] : [];
+                    this.loadingSolutionParticipationResults = false;
                 });
 
             this.programmingExerciseParticipationService
@@ -50,8 +54,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 .pipe(catchError(() => of(null)))
                 .subscribe((result: Result) => {
                     this.programmingExercise.templateParticipation.results = result ? [result] : [];
+                    this.loadingTemplateParticipationResults = false;
                 });
         });
+    }
+
+    /**
+     * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
+     * @param participationId of the given participation.
+     * @return an empty array if there is no result or an array with the single latest result.
+     */
+    private loadLatestResultWithFeedback(participationId: number) {
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
+            catchError(() => of(null)),
+            map((result: Result | null) => {
+                return result ? [result] : [];
+            }),
+        );
     }
 
     previousState() {
