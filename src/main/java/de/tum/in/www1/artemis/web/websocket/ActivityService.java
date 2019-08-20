@@ -28,6 +28,12 @@ public class ActivityService implements ApplicationListener<SessionDisconnectEve
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * Sends activityDTO to /topic/tracker
+     * @param activityDTO the Payload  Activity Data Transfer Object
+     * @param stompHeaderAccessor the corresponding Header  Accessor
+     * @param principal the current principal
+     */
     @MessageMapping("/topic/activity")
     public void sendActivity(@Payload ActivityDTO activityDTO, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
         activityDTO.setUserLogin(principal.getName());

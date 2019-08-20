@@ -18,6 +18,7 @@ import org.imsglobal.lti.launch.LtiOauthVerifier;
 import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
+import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
@@ -413,9 +413,10 @@ public class LtiService {
 
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
+                // TODO remove workaround since IMSPOXRequest is fixed
                 log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
                         ltiOutcomeUrl.getSourcedId());
-                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
+                HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);
                 String responseString = new BasicResponseHandler().handleResponse(response);

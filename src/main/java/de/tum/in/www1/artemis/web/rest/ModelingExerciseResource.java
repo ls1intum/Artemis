@@ -117,6 +117,7 @@ public class ModelingExerciseResource {
      * PUT /modeling-exercises : Updates an existing modelingExercise.
      *
      * @param modelingExercise the modelingExercise to update
+     * @param notificationText the text shown to students
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -150,6 +151,7 @@ public class ModelingExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/modeling-exercises")

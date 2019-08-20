@@ -135,6 +135,7 @@ public class TextExerciseResource {
      * PUT /text-exercises : Updates an existing textExercise.
      *
      * @param textExercise the textExercise to update
+     * @param notificationText about the text exercise update that should be displayed for the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or with status 500
      *         (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -180,6 +181,7 @@ public class TextExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId id of the course of which all the exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/text-exercises")
@@ -319,6 +321,12 @@ public class TextExerciseResource {
         return ResponseEntity.ok(participation);
     }
 
+    /**
+     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment (clustering task) for given exercise id
+     *
+     * @param exerciseId id of the exercised that for which the automatic assessment should be triggered
+     * @return the ResponseEntity with status 200 (OK) or with status 400 (Bad Request)
+     */
     @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {

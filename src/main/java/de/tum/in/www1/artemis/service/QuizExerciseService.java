@@ -277,6 +277,10 @@ public class QuizExerciseService {
         }
     }
 
+    /**
+     * Sends a QuizExercise to all subscribed clients
+     * @param quizExercise the QuizExercise which will be sent
+     */
     @Transactional(readOnly = true)
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
         try {

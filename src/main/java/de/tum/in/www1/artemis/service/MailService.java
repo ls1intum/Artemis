@@ -48,6 +48,15 @@ public class MailService {
         this.templateEngine = templateEngine;
     }
 
+    /**
+     * Sends an e-mail to the specified sender
+     *
+     * @param to The receiver address
+     * @param subject The mail subject
+     * @param content The content of the mail. Can be enriched with HTML tags
+     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
+     * @param isHtml Whether the mail should support HTML tags
+     */
     @Async
     public void sendEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, to, subject, content);
@@ -73,6 +82,13 @@ public class MailService {
         }
     }
 
+    /**
+     * Sends a predefined mail based on a template
+     *
+     * @param user The receiver of the mail
+     * @param templateName The name of the template
+     * @param titleKey The key mapping the title for the subject of the mail
+     */
     @Async
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
