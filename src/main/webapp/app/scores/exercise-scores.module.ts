@@ -10,20 +10,14 @@ import { JhiMainComponent } from 'app/layouts';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
-import {
-    InstructorDashboardArchivePopupComponent,
-    InstructorDashboardCleanupPopupComponent,
-    ProgrammingExerciseArchiveDialogComponent,
-    ProgrammingExerciseCleanupDialogComponent,
-} from 'app/entities/programming-exercise';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import {
     ExerciseScoresPopupService,
     ExerciseScoresRepoExportComponent,
     ExerciseScoresResultDialogComponent,
-    InstructorDashboardExportReposPopupComponent,
-    InstructorDashboardResultPopupComponent,
+    ExerciseScoresRepoExportPopupComponent,
+    ExerciseScoresResultResultPopupComponent,
 } from 'app/scores';
 
 const ENTITY_STATES = [
@@ -38,27 +32,7 @@ const ENTITY_STATES = [
     },
     {
         path: 'participation/:participationId/result/new',
-        component: InstructorDashboardResultPopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'exercise/:id/archive',
-        component: InstructorDashboardArchivePopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'exercise/:id/cleanup',
-        component: InstructorDashboardCleanupPopupComponent,
+        component: ExerciseScoresResultResultPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'instructorDashboard.title',
@@ -68,7 +42,7 @@ const ENTITY_STATES = [
     },
     {
         path: 'exercise/:id/exportRepos',
-        component: InstructorDashboardExportReposPopupComponent,
+        component: ExerciseScoresRepoExportPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'instructorDashboard.title',
@@ -82,14 +56,10 @@ const ENTITY_STATES = [
     imports: [ArtemisSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), NgbModule, ArtemisResultModule, SortByModule, FormDateTimePickerModule],
     declarations: [
         ExerciseScoresComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        InstructorDashboardArchivePopupComponent,
-        ProgrammingExerciseCleanupDialogComponent,
-        InstructorDashboardCleanupPopupComponent,
         ExerciseScoresResultDialogComponent,
-        InstructorDashboardResultPopupComponent,
+        ExerciseScoresResultResultPopupComponent,
         ExerciseScoresRepoExportComponent,
-        InstructorDashboardExportReposPopupComponent,
+        ExerciseScoresRepoExportPopupComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -97,14 +67,10 @@ const ENTITY_STATES = [
         JhiMainComponent,
         ResultComponent,
         ResultDetailComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        InstructorDashboardArchivePopupComponent,
-        ProgrammingExerciseCleanupDialogComponent,
-        InstructorDashboardCleanupPopupComponent,
         ExerciseScoresResultDialogComponent,
-        InstructorDashboardResultPopupComponent,
+        ExerciseScoresResultResultPopupComponent,
         ExerciseScoresRepoExportComponent,
-        InstructorDashboardExportReposPopupComponent,
+        ExerciseScoresRepoExportPopupComponent,
     ],
     providers: [ExerciseScoresPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })

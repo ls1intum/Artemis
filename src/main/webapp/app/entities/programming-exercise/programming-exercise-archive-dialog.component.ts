@@ -10,7 +10,7 @@ import { Exercise, ExerciseService } from '../exercise/index';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
-    selector: 'jhi-exercise-scores-archive-dialog',
+    selector: 'jhi-programming-exercise-archive-dialog',
     templateUrl: './programming-exercise-archive-dialog.component.html',
 })
 export class ProgrammingExerciseArchiveDialogComponent {
@@ -49,10 +49,10 @@ export class ProgrammingExerciseArchiveDialogComponent {
 }
 
 @Component({
-    selector: 'jhi-exercise-scores-archive-popup',
+    selector: 'jhi-programming-exercise-archive-popup',
     template: '',
 })
-export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseArchivePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
     constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
