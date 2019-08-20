@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
+import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService, JhiWebsocketService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
-import { QuizQuestionType } from '../../entities/quiz-question';
+import { QuizQuestionType } from '../../../entities/quiz-question';
 import { Subscription } from 'rxjs/Subscription';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 

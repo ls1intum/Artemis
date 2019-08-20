@@ -11,7 +11,7 @@ import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
-    ArTEMiSCodeEditorModule,
+    ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
     CodeEditorConflictStateService,
     CodeEditorFileService,
@@ -25,8 +25,9 @@ import {
     EditorState,
     GitConflictState,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import {
+    MockActivatedRoute,
     MockCodeEditorBuildLogService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
@@ -35,17 +36,16 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { Participation, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
@@ -89,13 +89,13 @@ describe('CodeEditorStudentIntegration', () => {
         return TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot(),
-                ArTEMiSTestModule,
+                ArtemisTestModule,
                 AceEditorModule,
                 TreeviewModule.forRoot(),
-                ArTEMiSSharedModule,
-                ArTEMiSProgrammingExerciseModule,
-                ArTEMiSResultModule,
-                ArTEMiSCodeEditorModule,
+                ArtemisSharedModule,
+                ArtemisProgrammingExerciseModule,
+                ArtemisResultModule,
+                ArtemisCodeEditorModule,
             ],
             declarations: [],
             providers: [
@@ -264,7 +264,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as Participation;
+        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as StudentParticipation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();

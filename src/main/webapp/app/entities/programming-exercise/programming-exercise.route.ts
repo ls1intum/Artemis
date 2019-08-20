@@ -5,6 +5,8 @@ import { UserRouteAccessService } from 'app/core';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
+import { PendingChangesGuard } from 'app/shared';
+
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
@@ -13,7 +15,8 @@ import { ProgrammingExerciseUpdateComponent } from './programming-exercise-updat
 import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
-import { PendingChangesGuard } from 'app/shared';
+import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
+import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -83,6 +86,26 @@ export const programmingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'exercise/:id/archive',
+        component: ProgrammingExerciseArchivePopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+    {
+        path: 'exercise/:id/cleanup',
+        component: ProgrammingExerciseCleanupPopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
     },
 ];
 

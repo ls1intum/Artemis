@@ -1,18 +1,17 @@
-import { ComponentFixture, fakeAsync, discardPeriodicTasks, tick, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, throwError, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
-    ArTEMiSCodeEditorModule,
+    ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
     CodeEditorFileService,
     CodeEditorInstructorContainerComponent,
@@ -22,8 +21,9 @@ import {
     DomainService,
     DomainType,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import {
+    MockActivatedRoute,
     MockCodeEditorBuildLogService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
@@ -34,16 +34,14 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService, UpdatingResultComponent } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { getLatestResult, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';
-import { BuildLogEntryArray } from 'app/entities/build-log';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
@@ -88,13 +86,13 @@ describe('CodeEditorInstructorIntegration', () => {
         return TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot(),
-                ArTEMiSTestModule,
+                ArtemisTestModule,
                 AceEditorModule,
                 TreeviewModule.forRoot(),
-                ArTEMiSSharedModule,
-                ArTEMiSProgrammingExerciseModule,
-                ArTEMiSResultModule,
-                ArTEMiSCodeEditorModule,
+                ArtemisSharedModule,
+                ArtemisProgrammingExerciseModule,
+                ArtemisResultModule,
+                ArtemisCodeEditorModule,
             ],
             declarations: [],
             providers: [

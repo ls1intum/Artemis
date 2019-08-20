@@ -96,25 +96,27 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
+        VcsCheckoutTask checkoutTask = createCheckoutTask(ASSIGNMENT_REPO_PATH, "");
+        Stage defaultStage = new Stage("Default Stage");
+
         if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
-            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
                     new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true)));
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
                     new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
                     new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON && !sequentialBuildRuns) {
-            return new Stage("Default Stage")
+            return defaultStage
                     .jobs(new Job("Default Job", new BambooKey("JOB1"))
-                            .tasks(createCheckoutTask("", "tests"),
-                                    new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                            .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
                                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
                             .requirements(new Requirement("Python3")));
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
                     new ScriptTask().description("Builds and tests the structural tests")
                             .inlineBody("pytest tests/structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
                     new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest tests/behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),

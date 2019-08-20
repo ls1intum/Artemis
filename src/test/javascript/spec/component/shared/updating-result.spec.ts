@@ -10,10 +10,10 @@ import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CodeEditorFileService } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result, ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
@@ -50,7 +50,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
             declarations: [UpdatingResultComponent, ResultComponent],
             providers: [
                 JhiLanguageHelper,

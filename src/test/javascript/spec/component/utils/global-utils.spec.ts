@@ -1,5 +1,4 @@
 import * as chai from 'chai';
-import { ParticipationType, ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
 import { getStringSegmentPositions } from '../../../../../main/webapp/app/utils/global.utils';
 
 const expect = chai.expect;

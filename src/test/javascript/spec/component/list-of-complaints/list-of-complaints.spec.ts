@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArTEMiSTestModule } from '../../test.module';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'app/shared';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SortByModule } from 'app/components/pipes';
 import { JhiAlertService } from 'ng-jhipster';
@@ -28,7 +28,7 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSSharedModule, TranslateModule.forRoot(), ArTEMiSTestModule, RouterTestingModule.withRoutes([]), SortByModule],
+            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([]), SortByModule],
             declarations: [ListOfComplaintsComponent],
             providers: [
                 {

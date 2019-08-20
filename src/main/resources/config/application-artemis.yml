@@ -1,5 +1,5 @@
 # ===================================================================
-# ArTEMiS specific properties
+# Artemis specific properties
 # ===================================================================
 
 artemis:
@@ -35,7 +35,7 @@ artemis:
         user-group-name_edx: edx
         user-group-name_u4i: u4i
     git:
-        name: ArTEMiS
+        name: Artemis
         email: artemis@in.tum.de
     automatic-text:
         embedding-url: http://localhost:8000/embed

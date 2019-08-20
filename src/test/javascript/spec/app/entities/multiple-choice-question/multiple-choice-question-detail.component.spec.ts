@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { MultipleChoiceQuestionDetailComponent } from 'app/entities/multiple-choice-question/multiple-choice-question-detail.component';
 import { MultipleChoiceQuestion } from 'app/shared/model/multiple-choice-question.model';
 
@@ -15,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [MultipleChoiceQuestionDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

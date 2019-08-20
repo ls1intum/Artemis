@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +52,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
     }
+
+    @Value("${artemis.bamboo.authentication-token}")
+    private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
 
     @MockBean
     GitService gitServiceMock;
@@ -438,6 +442,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     /**
      * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
      */
+    @SuppressWarnings("unchecked")
     private void postTestRepositorySubmission() throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
@@ -474,6 +479,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
+    @SuppressWarnings("unchecked")
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String id = getPlanIdByParticipationType(participationType, participationNumber);
         JSONParser jsonParser = new JSONParser();
@@ -495,7 +501,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         }
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", "<secrettoken>");
+        httpHeaders.add("Authorization", CI_AUTHENTICATION_TOKEN);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
     }
 

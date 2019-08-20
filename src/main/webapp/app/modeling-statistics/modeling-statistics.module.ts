@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from '../shared';
+import { ArtemisSharedModule } from '../shared';
 import { UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
 import { JhiMainComponent } from '../layouts';
@@ -23,12 +23,12 @@ const ENTITY_STATES = [
 ];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule],
     declarations: [ModelingStatisticsComponent],
     entryComponents: [HomeComponent, ModelingStatisticsComponent, JhiMainComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
-export class ArTEMiSModelingStatisticsModule {
+export class ArtemisModelingStatisticsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

@@ -1,31 +1,31 @@
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { UserMgmtDeleteDialogComponent } from 'app/admin/user-management/user-management-delete-dialog.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { UserManagementDeleteDialogComponent } from 'app/admin/user-management/user-management-delete-dialog.component';
 import { UserService } from 'app/core';
 
 describe('Component Tests', () => {
     describe('User Management Delete Component', () => {
-        let comp: UserMgmtDeleteDialogComponent;
-        let fixture: ComponentFixture<UserMgmtDeleteDialogComponent>;
+        let comp: UserManagementDeleteDialogComponent;
+        let fixture: ComponentFixture<UserManagementDeleteDialogComponent>;
         let service: UserService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [UserMgmtDeleteDialogComponent],
+                imports: [ArtemisTestModule],
+                declarations: [UserManagementDeleteDialogComponent],
             })
-                .overrideTemplate(UserMgmtDeleteDialogComponent, '')
+                .overrideTemplate(UserManagementDeleteDialogComponent, '')
                 .compileComponents();
         }));
 
         beforeEach(() => {
-            fixture = TestBed.createComponent(UserMgmtDeleteDialogComponent);
+            fixture = TestBed.createComponent(UserManagementDeleteDialogComponent);
             comp = fixture.componentInstance;
             service = fixture.debugElement.injector.get(UserService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);

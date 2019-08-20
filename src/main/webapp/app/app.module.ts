@@ -1,6 +1,6 @@
 import './vendor.ts';
 
-import { NgModule, ErrorHandler } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
@@ -8,73 +8,73 @@ import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgJhipsterModule } from 'ng-jhipster';
 import { Angulartics2Module } from 'angulartics2';
+import * as moment from 'moment';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
 import { JhiWebsocketService, UserRouteAccessService } from './core';
-import { ArTEMiSSharedModule } from './shared';
-import { ArTEMiSCoreModule } from 'app/core';
-import { ArTEMiSAppRoutingModule } from './app-routing.module';
-import { ArTEMiSHomeModule } from './home';
-import { ArTEMiSLegalModule } from './legal';
-import { ArTEMiSOverviewModule } from './overview';
-import { ArTEMiSAccountModule } from './account/account.module';
-import { ArTEMiSCourseListModule } from './course-list';
-import { ArTEMiSEntityModule } from './entities/entity.module';
-import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
+import { ArtemisSharedModule } from './shared';
+import { ArtemisCoreModule } from 'app/core';
+import { ArtemisAppRoutingModule } from './app-routing.module';
+import { ArtemisHomeModule } from './home';
+import { ArtemisLegalModule } from './legal';
+import { ArtemisOverviewModule } from './overview';
+import { ArtemisAccountModule } from './account/account.module';
+import { ArtemisCourseListModule } from './course-list';
+import { ArtemisEntityModule } from './entities/entity.module';
+import { ArtemisCourseScoresModule, ArtemisExerciseScoresModule } from './scores';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { ArTEMiSCodeEditorModule } from './code-editor';
+import { ArtemisCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
-import { ArTEMiSQuizModule } from './quiz/participate';
-import { ArTEMiSTextModule } from './text-editor';
-import { ArTEMiSTextAssessmentModule } from './text-assessment';
-import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
+import { ArtemisQuizModule } from './quiz/participate';
+import { ArtemisTextModule } from './text-editor';
+import { ArtemisTextAssessmentModule } from './text-assessment';
+import { ArtemisModelingStatisticsModule } from './modeling-statistics/';
 import {
     ActiveMenuDirective,
     ErrorComponent,
     FooterComponent,
-    SystemNotificationComponent,
     JhiMainComponent,
     NavbarComponent,
+    NotificationContainerComponent,
     PageRibbonComponent,
     ProfileService,
-    NotificationContainerComponent,
+    SystemNotificationComponent,
 } from './layouts';
-import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
-import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
-import { ArTEMiSModelingSubmissionModule } from 'app/modeling-submission';
+import { ArtemisApollonDiagramsModule } from './apollon-diagrams';
+import { ArtemisStatisticModule } from './quiz/statistics/quiz-statistic.module';
+import { ArtemisModelingSubmissionModule } from 'app/modeling-submission';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from 'app/shared';
-import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
-import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
+import { ArtemisInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
+import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
 import { ParticipationDataProvider } from 'app/course-list';
-import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
-import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
-import { ArTEMiSExampleTextSubmissionModule } from 'app/example-text-submission';
-import { ArTEMiSExampleModelingSubmissionModule } from 'app/example-modeling-submission';
-import { ArTEMiSComplaintsModule } from 'app/complaints';
-import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
-import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
-import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
-import * as moment from 'moment';
-import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solution';
-import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
-import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { ArtemisTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
+import { ArtemisTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ArtemisExampleTextSubmissionModule } from 'app/example-text-submission';
+import { ArtemisExampleModelingSubmissionModule } from 'app/example-modeling-submission';
+import { ArtemisComplaintsModule } from 'app/complaints';
+import { ArtemisNotificationModule } from 'app/entities/notification/notification.module';
+import { ArtemisSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
+import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
+import { ArtemisExampleModelingSolutionModule } from 'app/example-modeling-solution';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
-import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
-import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
+import { ArtemisConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
+import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { ArtemisAdminModule } from 'app/admin/admin.module';
 
 @NgModule({
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
-        ArTEMiSAppRoutingModule,
+        ArtemisAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
         /**
@@ -92,41 +92,42 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
          * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
          */
         Angulartics2Module.forRoot(),
-        ArTEMiSSharedModule.forRoot(),
-        ArTEMiSCoreModule,
-        ArTEMiSHomeModule,
-        ArTEMiSLegalModule,
-        ArTEMiSOverviewModule,
-        ArTEMiSAccountModule,
-        ArTEMiSEntityModule,
-        ArTEMiSApollonDiagramsModule,
-        ArTEMiSCourseListModule,
-        ArTEMiSCodeEditorModule,
-        ArTEMiSQuizModule,
-        ArTEMiSInstructorCourseDashboardModule,
-        ArTEMiSInstructorDashboardModule,
-        ArTEMiSStatisticModule,
-        ArTEMiSModelingSubmissionModule,
-        ArTEMiSMarkdownEditorModule,
-        ArTEMiSModelingStatisticsModule,
-        ArTEMiSTextModule,
-        ArTEMiSTextAssessmentModule,
-        ArTEMiSInstructorCourseStatsDashboardModule,
-        ArTEMiSInstructorExerciseStatsDashboardModule,
-        ArTEMiSTutorCourseDashboardModule,
-        ArTEMiSTutorExerciseDashboardModule,
-        ArTEMiSComplaintsModule,
-        ArTEMiSComplaintsForTutorModule,
-        ArTEMiSNotificationModule,
-        ArTEMiSSystemNotificationModule,
-        ArTEMiSModelingAssessmentEditorModule,
-        ArTEMiSModelingSubmissionModule,
-        ArTEMiSExampleTextSubmissionModule,
-        ArTEMiSExampleModelingSubmissionModule,
-        ArTEMiSExampleModelingSolutionModule,
-        ArTEMiSHeaderExercisePageWithDetailsModule,
-        ArTEMiSConnectionNotificationModule,
-        ArTEMiSListOfComplaintsModule,
+        ArtemisSharedModule.forRoot(),
+        ArtemisCoreModule,
+        ArtemisHomeModule,
+        ArtemisAdminModule,
+        ArtemisLegalModule,
+        ArtemisOverviewModule,
+        ArtemisAccountModule,
+        ArtemisEntityModule,
+        ArtemisApollonDiagramsModule,
+        ArtemisCourseListModule,
+        ArtemisCodeEditorModule,
+        ArtemisQuizModule,
+        ArtemisCourseScoresModule,
+        ArtemisExerciseScoresModule,
+        ArtemisStatisticModule,
+        ArtemisModelingSubmissionModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisModelingStatisticsModule,
+        ArtemisTextModule,
+        ArtemisTextAssessmentModule,
+        ArtemisInstructorCourseStatsDashboardModule,
+        ArtemisInstructorExerciseStatsDashboardModule,
+        ArtemisTutorCourseDashboardModule,
+        ArtemisTutorExerciseDashboardModule,
+        ArtemisComplaintsModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisNotificationModule,
+        ArtemisSystemNotificationModule,
+        ArtemisModelingAssessmentEditorModule,
+        ArtemisModelingSubmissionModule,
+        ArtemisExampleTextSubmissionModule,
+        ArtemisExampleModelingSubmissionModule,
+        ArtemisExampleModelingSolutionModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisConnectionNotificationModule,
+        ArtemisListOfComplaintsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
