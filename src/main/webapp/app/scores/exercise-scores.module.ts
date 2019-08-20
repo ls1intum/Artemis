@@ -1,34 +1,27 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper, UserRouteAccessService } from 'app/core';
 
-import { ArTEMiSSharedModule } from '../shared';
-import { UserRouteAccessService } from '../core';
-import { HomeComponent } from '../home';
+import { ArtemisSharedModule } from 'app/shared';
+import { HomeComponent } from 'app/home';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
-import { ExerciseDashboardComponent } from './exercise-dashboard.component';
+import { JhiMainComponent } from 'app/layouts';
+import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
-import {
-    InstructorDashboardArchivePopupComponent,
-    ProgrammingExerciseArchiveDialogComponent,
-} from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
-import {
-    InstructorDashboardCleanupPopupComponent,
-    ProgrammingExerciseCleanupDialogComponent,
-} from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
-import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './exercise-dashboard-repo-export-dialog.component';
-import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
-import { ExerciseDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-dashboard-result-dialog.component';
-import { SortByModule } from '../components/pipes';
-import { FormDateTimePickerModule } from '../shared/date-time-picker/date-time-picker.module';
+import { ArtemisResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
+import { InstructorDashboardArchivePopupComponent, ProgrammingExerciseArchiveDialogComponent, } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
+import { InstructorDashboardCleanupPopupComponent, ProgrammingExerciseCleanupDialogComponent, } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
+import { ExerciseScoresRepoExportComponent, InstructorDashboardExportReposPopupComponent } from './exercise-scores-repo-export-dialog.component';
+import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
+import { ExerciseScoresResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-scores-result-dialog.component';
+import { SortByModule } from 'app/components/pipes';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [
     {
         path: 'course/:courseId/exercise/:exerciseId/dashboard',
-        component: ExerciseDashboardComponent,
+        component: ExerciseScoresComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'instructorDashboard.title',
@@ -78,21 +71,21 @@ const ENTITY_STATES = [
 ];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), NgbModule, ArTEMiSResultModule, SortByModule, FormDateTimePickerModule],
+    imports: [ArtemisSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), NgbModule, ArtemisResultModule, SortByModule, FormDateTimePickerModule],
     declarations: [
-        ExerciseDashboardComponent,
+        ExerciseScoresComponent,
         ProgrammingExerciseArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
-        ExerciseDashboardResultDialogComponent,
+        ExerciseScoresResultDialogComponent,
         InstructorDashboardResultPopupComponent,
-        InstructorDashboardExportReposComponent,
+        ExerciseScoresRepoExportComponent,
         InstructorDashboardExportReposPopupComponent,
     ],
     entryComponents: [
         HomeComponent,
-        ExerciseDashboardComponent,
+        ExerciseScoresComponent,
         JhiMainComponent,
         ResultComponent,
         ResultDetailComponent,
@@ -100,14 +93,14 @@ const ENTITY_STATES = [
         InstructorDashboardArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
-        ExerciseDashboardResultDialogComponent,
+        ExerciseScoresResultDialogComponent,
         InstructorDashboardResultPopupComponent,
-        InstructorDashboardExportReposComponent,
+        ExerciseScoresRepoExportComponent,
         InstructorDashboardExportReposPopupComponent,
     ],
-    providers: [ExerciseDashboardPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ExerciseScoresPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
-export class ArTEMiSInstructorDashboardModule {
+export class ArtemisExerciseScoresModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

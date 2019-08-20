@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     FileUploadExerciseComponent,
     FileUploadExerciseDeleteDialogComponent,
@@ -22,7 +22,7 @@ import { SortByModule } from 'app/components/pipes';
 const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         FileUploadExerciseComponent,
         FileUploadExerciseDetailComponent,
@@ -44,7 +44,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
     providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSFileUploadExerciseModule {
+export class ArtemisFileUploadExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

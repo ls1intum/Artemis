@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "textAssessment": {
-            "loading": "Please wait while ArTEMiS is finding the submission!",
+            "loading": "Please wait while Artemis is finding the submission!",
             "heading": {
                 "assessment": "Assessment Editor for Text Exercise {{exerciseTitle}}",
                 "exampleAssessment": "Example Assessment Editor for Text Exercise {{exerciseTitle}}"
