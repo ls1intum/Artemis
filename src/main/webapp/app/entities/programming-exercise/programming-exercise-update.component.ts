@@ -21,8 +21,8 @@ import { TranslateService } from '@ngx-translate/core';
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
+    readonly C = ProgrammingLanguage.C;
 
-    private offeredLanguages = [this.JAVA, this.PYTHON];
     private translationBasePath = 'artemisApp.programmingExercise.';
 
     hashUnsavedChanges = false;
