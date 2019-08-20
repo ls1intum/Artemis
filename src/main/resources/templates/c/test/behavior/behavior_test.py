@@ -1,7 +1,7 @@
 import unittest
-from sorting_algorithms import *
-from context import Context
-from policy import Policy
+from assignment.sorting_algorithms import *
+from assignment.context import Context
+from assignment.policy import Policy
 
 
 class TestSortingBehavior(unittest.TestCase):

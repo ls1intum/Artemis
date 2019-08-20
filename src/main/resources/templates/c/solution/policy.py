@@ -1,4 +1,4 @@
-from sorting_algorithms import *
+from .sorting_algorithms import *
 
 
 class Policy:
