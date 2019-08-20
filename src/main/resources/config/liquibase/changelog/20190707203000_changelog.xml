@@ -44,9 +44,9 @@
                                  referencedColumnNames="id"
                                  referencedTableName="submission"/>
 
-        <!--
-            Added the entity TextCluster.
-        -->
+    <!--
+        Added the entity TextCluster.
+    -->
         <createTable tableName="text_cluster">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
