@@ -210,11 +210,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detach();
     }
 
-    public addAssessment(): void {
-        const assessment = new Feedback();
-        assessment.credits = 0;
-        this.referencedFeedback.push(assessment);
-        this.validateAssessment();
+    public addReferencedFeedback(): void {
+        const referencedFeedback = new Feedback();
+        referencedFeedback.credits = 0;
+        this.referencedFeedback.push(referencedFeedback);
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
@@ -330,7 +329,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.result.participation = this.submission.participation;
         if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
             this.jhiAlertService.clear();
-            this.jhiAlertService.info('fileUploadAssessment.messages.lock');
+            this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }
         this.checkPermissions();
         this.busy = false;
