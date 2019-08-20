@@ -1,4 +1,4 @@
-from sort_strategy import SortStrategy
+from .sort_strategy import SortStrategy
 
 
 class BubbleSort(SortStrategy):
