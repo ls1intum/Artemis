@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +52,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
     }
+
+    @Value("${artemis.bamboo.authentication-token}")
+    private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
 
     @MockBean
     GitService gitServiceMock;
@@ -497,7 +501,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         }
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", "<secrettoken>");
+        httpHeaders.add("Authorization", CI_AUTHENTICATION_TOKEN);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
     }
 
