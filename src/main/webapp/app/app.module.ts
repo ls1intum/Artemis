@@ -108,7 +108,6 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
         ArtemisExerciseScoresModule,
         ArtemisStatisticModule,
         ArtemisModelingSubmissionModule,
-        ArtemisMarkdownEditorModule,
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,
         ArtemisTextAssessmentModule,

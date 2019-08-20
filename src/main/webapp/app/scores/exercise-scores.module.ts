@@ -62,11 +62,7 @@ const ENTITY_STATES = [
         ExerciseScoresRepoExportPopupComponent,
     ],
     entryComponents: [
-        HomeComponent,
         ExerciseScoresComponent,
-        JhiMainComponent,
-        ResultComponent,
-        ResultDetailComponent,
         ExerciseScoresResultDialogComponent,
         ExerciseScoresResultResultPopupComponent,
         ExerciseScoresRepoExportComponent,

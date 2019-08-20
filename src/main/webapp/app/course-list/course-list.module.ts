@@ -26,7 +26,7 @@ const ENTITY_STATES = [...courseListRoute];
     imports: [BrowserModule, ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [CourseListComponent, CourseScoreCalculationComponent, ExerciseListComponent, ShowExercisePipe],
     exports: [ResultComponent],
-    entryComponents: [HomeComponent, CourseListComponent, CourseScoreCalculationComponent, JhiMainComponent, ResultComponent],
+    entryComponents: [CourseListComponent, CourseScoreCalculationComponent, JhiMainComponent, ResultComponent],
     providers: [
         CourseService,
         JhiAlertService,
