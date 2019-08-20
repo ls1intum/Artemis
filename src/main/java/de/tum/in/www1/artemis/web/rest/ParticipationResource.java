@@ -664,9 +664,9 @@ public class ParticipationResource {
         return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 
-    @PutMapping(value = "/submission/{participationId}")
+    @GetMapping(value = "/participation-submission/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Submission> getSubmissionsOfParticipant(@PathVariable Long participationId) {
+    public ResponseEntity<Submission> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         return (ResponseEntity<Submission>) participationService.getSubmissionsWithParticipationId(participationId);
     }
 }

@@ -210,4 +210,9 @@ export class ParticipationService {
         }
         return combinedParticipation;
     }
+
+    findAllSubmissionsOfParticipation(participationId: number): Observable<Submission[]> {
+        console.log('enter rest call');
+        return this.http.get<Submission[]>(SERVER_API_URL + `api/participation-submission/${participationId}`);
+    }
 }
