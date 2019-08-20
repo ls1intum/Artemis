@@ -1,4 +1,4 @@
-import { browser, ExpectedConditions, element, by, ElementFinder } from 'protractor';
+import { by, element, ElementFinder } from 'protractor';
 
 export class ExerciseHintComponentsPage {
     createButton = element(by.id('jh-create-entity'));

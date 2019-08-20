@@ -13,7 +13,7 @@ buildscript {
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        // this allows us to find outdated dependencies via './gradlew dependencyUpdates'
+        // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
         classpath "com.github.ben-manes:gradle-versions-plugin:0.22.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
@@ -25,29 +25,29 @@ plugins {
     id "maven"
     id "idea"
     id "jacoco"
-    id "com.google.cloud.tools.jib" version "1.4.0"
-    id "com.gorylenko.gradle-git-properties" version "2.0.0"
+    id "com.google.cloud.tools.jib" version "1.5.0"
+    id "com.gorylenko.gradle-git-properties" version "2.1.0"
     id "com.github.node-gradle.node" version "2.0.0"
     id "net.ltgt.apt-eclipse" version "0.21"
     id "net.ltgt.apt-idea" version "0.21"
     id "net.ltgt.apt" version "0.21"
     id "com.moowork.node" version "1.3.1"
-//    id 'org.liquibase.gradle' version "2.0.1"
+//    id "org.liquibase.gradle" version "2.0.1"
     id "com.github.ben-manes.versions" version "0.22.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.24.0"
+    id "com.diffplug.gradle.spotless" version "3.24.1"
 }
 
 sourceCompatibility=12
 targetCompatibility=12
 
-apply plugin: 'org.springframework.boot'
-apply plugin: 'propdeps'
+apply plugin: "org.springframework.boot"
+apply plugin: "propdeps"
 apply plugin: "com.github.ben-manes.versions"
 
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
-apply from: 'gradle/liquibase.gradle'
+apply from: "gradle/liquibase.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty("prod")) {
@@ -66,7 +66,7 @@ if (project.hasProperty("war")) {
 
 idea {
     module {
-        excludeDirs += files('node_modules')
+        excludeDirs += files("node_modules")
     }
 }
 
@@ -74,12 +74,12 @@ spotless {
     // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
     java {
         target project.fileTree(project.rootDir) {
-            include '**/*.java'
-            exclude '**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java', '**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java', '**/node_modules/**', '**/out/**', '**/repos/**', '**/build/**', '**/src/main/resources/templates/**'
+            include "**/*.java"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/resources/templates/**"
         }
-        importOrderFile 'artemis-spotless.importorder'
+        importOrderFile "artemis-spotless.importorder"
         removeUnusedImports()
-        eclipse().configFile 'artemis-spotless-style.xml'
+        eclipse().configFile "artemis-spotless-style.xml"
     }
 }
 
@@ -103,14 +103,14 @@ if (OperatingSystem.current().isWindows()) {
     }
 }
 
-defaultTasks 'bootRun'
+defaultTasks "bootRun"
 
-group = 'de.tum.in.www1.artemis'
-version = '3.5.0'
-description = 'Interactive Learning with Individual Feedback'
+group = "de.tum.in.www1.artemis"
+version = "3.5.0"
+description = "Interactive Learning with Individual Feedback"
 
 springBoot {
-    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
+    mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -148,8 +148,8 @@ task integrationTestReport(type: TestReport) {
     reportOn integrationTest
 }
 
-if (!project.hasProperty('runList')) {
-    project.ext.runList = 'main'
+if (!project.hasProperty("runList")) {
+    project.ext.runList = "main"
 }
 
 configurations {
@@ -166,17 +166,17 @@ repositories {
 
 dependencies {
 
-    implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.4.0.201906121030-r'
+    implementation group: "org.eclipse.jgit", name: "org.eclipse.jgit", version: "5.4.0.201906121030-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
+    implementation group: "net.sourceforge.plantuml", name: "plantuml", version: "8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
-    implementation group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
-    implementation group: 'com.thoughtworks.qdox', name: 'qdox', version: '2.0-M10'
-    implementation 'io.sentry:sentry-spring:1.7.26'
+    implementation group: "com.atlassian.bamboo", name: "bamboo-specs", version: "6.8.1"
+    implementation group: "com.thoughtworks.qdox", name: "qdox", version: "2.0-M10"
+    implementation "io.sentry:sentry-spring:1.7.26"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -197,7 +197,7 @@ dependencies {
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP"
     implementation "org.apache.commons:commons-lang3:3.9"
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.7'
+    implementation group: "org.apache.commons", name: "commons-text", version: "1.7"
     implementation "commons-io:commons-io"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.ehcache:ehcache"
@@ -217,7 +217,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-security"
     implementation ("org.springframework.boot:spring-boot-starter-web") {
-        exclude module: 'spring-boot-starter-tomcat'
+        exclude module: "spring-boot-starter-tomcat"
     }
     implementation "org.springframework.boot:spring-boot-starter-undertow"
     implementation "org.springframework.boot:spring-boot-starter-websocket"
@@ -234,7 +234,7 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson"
     implementation ("io.springfox:springfox-swagger2") {
-        exclude module: 'mapstruct'
+        exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators"
     implementation "mysql:mysql-connector-java"
@@ -256,22 +256,22 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.assertj:assertj-core:3.13.2"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.1.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.1'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.1"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.1"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.1"
     testImplementation "org.mockito:mockito-core:3.0.0"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2"
-    testImplementation 'org.awaitility:awaitility:3.1.6'
+    testImplementation "org.awaitility:awaitility:3.1.6"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
 task cleanResources(type: Delete) {
-    delete 'build/resources'
+    delete "build/resources"
 }
 
 task executeTests (type: Exec) {
-    commandLine './gradlew', 'test', '-x', 'webpackBuildDev', '-x', 'webpack'
+    commandLine "./gradlew", "test", "-x", "webpackBuildDev", "-x", "webpack"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -302,22 +302,22 @@ tasks.withType(Test) {
         afterSuite { desc, result ->
             if (!desc.parent) { // will match the outermost suite
                 def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-                def startItem = '|  ', endItem = '  |'
+                def startItem = "|  ", endItem = "  |"
                 def repeatLength = startItem.length() + output.length() + endItem.length()
-                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
             }
         }
     }
 }
 
 wrapper {
-    gradleVersion = '5.5.1'
+    gradleVersion = "5.6"
 }
 
-task stage(dependsOn: 'bootWar') {
+task stage(dependsOn: "bootWar") {
 }
 
-if (project.hasProperty('nodeInstall')) {
+if (project.hasProperty("nodeInstall")) {
     node {
         version = "${node_version}"
         npmVersion = "${npm_version}"
@@ -328,16 +328,25 @@ if (project.hasProperty('nodeInstall')) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion = '6.16.1'
-    config = rootProject.resources.text.fromFile('checkstyle/rules.xml')
+    toolVersion = "6.16.1"
+    config = rootProject.resources.text.fromFile("checkstyle/rules.xml")
     maxErrors = 156
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine './gradlew', 'checkstyleMain', '-x', 'yarn_install', '-x', 'webpackBuildDev', '-x', 'webpack'
+    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpackBuildDev", "-x", "webpack"
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine './gradlew', 'build', '-x', 'webpackBuildDev', '-x', 'webpack', '-x', 'test'
+    commandLine "./gradlew", "build", "-x", "webpackBuildDev", "-x", "webpack", "-x", "test"
 }
 
+// Available commands:
+//
+// 1) Build production:             ./gradlew -Pprod -Pwar clean bootWar
+// 2) Execute tests:                ./gradlew executeTests
+// 3) Check Java code format:       ./gradlew spotlessCheck
+// 4) Apply Java code formatter:    ./gradlew spotlessApply
+// 4) Find dependency updates:      ./gradlew dependencyUpdates
+// 5) Check JavaDoc:                ./gradlew checkstyleMain
+// 6) Generate liquibase diff:      ./gradlew liquibaseDiffChangelog

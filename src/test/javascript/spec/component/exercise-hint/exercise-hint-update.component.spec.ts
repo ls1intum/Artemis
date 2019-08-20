@@ -1,13 +1,13 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { ExerciseHintUpdateComponent } from 'app/entities/exercise-hint/exercise-hint-update.component';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Component Tests', () => {
     describe('ExerciseHint Management Update Component', () => {
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ExerciseHintUpdateComponent],
                 providers: [FormBuilder],
             })

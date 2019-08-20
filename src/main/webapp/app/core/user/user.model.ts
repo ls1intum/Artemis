@@ -1,4 +1,4 @@
-import { Account } from '../../core';
+import { Account } from 'app/core';
 import { Moment } from 'moment';
 
 export class User extends Account {

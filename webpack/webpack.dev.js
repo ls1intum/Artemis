@@ -141,7 +141,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             utils.root('src/test'),
         ]),
         new WebpackNotifierPlugin({
-            title: 'ArTEMiS'
+            title: 'Artemis'
         })
     ].filter(Boolean),
     mode: 'development'

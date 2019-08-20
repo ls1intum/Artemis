@@ -5,17 +5,16 @@ import { ActivatedRoute } from '@angular/router';
 import { Course, CourseExerciseService, CourseService } from '../entities/course';
 import { Exercise, ExerciseType } from '../entities/exercise';
 import { User } from 'app/core';
-import { Participation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { DecimalPipe } from '@angular/common';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
-    selector: 'jhi-instructor-course-dashboard',
-    templateUrl: './course-dashboard.component.html',
+    selector: 'jhi-course-scores',
+    templateUrl: './course-scores.component.html',
     providers: [JhiAlertService],
 })
-export class CourseDashboardComponent implements OnInit, OnDestroy {
+export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT];
 

@@ -11,10 +11,10 @@ import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
     imports: [NgbModule.forRoot(), InfiniteScrollModule, CookieModule.forRoot(), ArtemisIconsModule],
     exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, ArtemisIconsModule],
 })
-export class ArTEMiSSharedLibsModule {
+export class ArtemisSharedLibsModule {
     static forRoot() {
         return {
-            ngModule: ArTEMiSSharedLibsModule,
+            ngModule: ArtemisSharedLibsModule,
         };
     }
 }

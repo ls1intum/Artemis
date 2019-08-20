@@ -180,6 +180,7 @@ public class TextCluster implements Serializable {
     }
 
     // region Binary Cast
+    @SuppressWarnings("unchecked")
     private <T> T castFromBinary(byte[] data) {
         final ByteArrayInputStream bais = new ByteArrayInputStream(data);
         try (final ObjectInputStream ois = new ObjectInputStream(bais)) {

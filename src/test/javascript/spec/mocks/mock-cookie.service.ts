@@ -1,4 +1,4 @@
-import { ICookieService, CookieOptions } from 'ngx-cookie';
+import { CookieOptions, ICookieService } from 'ngx-cookie';
 
 export class MockCookieService implements ICookieService {
     get(key: string): string {

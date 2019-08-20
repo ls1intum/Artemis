@@ -342,6 +342,9 @@ public class GitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     public ObjectId getLastCommitHash(URL repoUrl) throws EntityNotFoundException {
+        if (repoUrl == null) {
+            return null;
+        }
         // Get refs of repo without cloning it locally
         Collection<Ref> refs;
         try {

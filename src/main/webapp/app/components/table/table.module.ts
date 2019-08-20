@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { TableEditableCheckboxComponent, TableEditableFieldComponent } from './';
-import { ArTEMiSSharedLibsModule } from 'app/shared';
+import { ArtemisSharedLibsModule } from 'app/shared';
 
 @NgModule({
-    imports: [ArTEMiSSharedLibsModule],
+    imports: [ArtemisSharedLibsModule],
     declarations: [TableEditableFieldComponent, TableEditableCheckboxComponent],
     exports: [TableEditableFieldComponent, TableEditableCheckboxComponent],
 })

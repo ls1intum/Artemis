@@ -1,21 +1,19 @@
 import { SimpleChange, SimpleChanges } from '@angular/core';
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { Subject } from 'rxjs';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
-import { ParticipationType } from 'app/entities/programming-exercise';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ParticipationType, ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
+import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockSyncStorage } from '../../mocks';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { SinonStub, stub } from 'sinon';
-import { Result } from '../../../../../main/webapp/app/entities/result';
-import { ParticipationWebsocketService } from '../../../../../main/webapp/app/entities/participation';
+import { Result } from 'app/entities/result';
+import { ParticipationWebsocketService } from 'app/entities/participation';
 
 const expect = chai.expect;
 
@@ -29,7 +27,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructorStatusComponent],
             providers: [
                 { provide: CookieService, useClass: MockCookieService },
