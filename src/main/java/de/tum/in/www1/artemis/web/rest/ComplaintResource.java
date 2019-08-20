@@ -64,6 +64,7 @@ public class ComplaintResource {
      * POST /complaint: create a new complaint
      *
      * @param complaint the complaint to create
+     * @param principal that wants to complain
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -158,6 +159,7 @@ public class ComplaintResource {
      * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      *
      * @param exerciseId the id of the exercise we are interested in
+     * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("/exercises/{exerciseId}/complaints-for-tutor-dashboard")
@@ -177,6 +179,7 @@ public class ComplaintResource {
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
      * @param exerciseId the id of the exercise we are interested in
+     * @param principal that wants to get more feedback requests
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
     @GetMapping("/exercises/{exerciseId}/more-feedback-for-tutor-dashboard")

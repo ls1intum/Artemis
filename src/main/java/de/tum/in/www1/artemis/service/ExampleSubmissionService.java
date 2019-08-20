@@ -90,6 +90,10 @@ public class ExampleSubmissionService {
         return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
     }
 
+    /**
+     * Deletes a ExampleSubmission by id if the ID has a corresponding ExampleSubmission
+     * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
+     */
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerSubmissionAndEagerTutorParticipation(exampleSubmissionId);
 

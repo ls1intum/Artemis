@@ -1,11 +1,11 @@
-import { ComponentFixture, async, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/components/table/table.module';
-import { TableEditableCheckboxComponent, TableEditableFieldComponent } from 'app/components/table';
+import { TableEditableCheckboxComponent } from 'app/components/table';
 
 const expect = chai.expect;
 
@@ -18,7 +18,7 @@ describe('TableEditableFieldComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArtemisTableModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
         })
             .compileComponents()
             .then(() => {

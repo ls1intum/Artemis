@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
@@ -6,9 +6,9 @@ import { of } from 'rxjs';
 import { SinonStub, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArTEMiSSharedModule, CacheableImageService, CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared';
+import { ArtemisSharedModule, CacheableImageService, CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared';
 import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
 
 chai.use(sinonChai);
@@ -35,7 +35,7 @@ describe('SecuredImageComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [UpdatingResultComponent, MockComponent(ResultComponent)],
             providers: [{ provide: CacheableImageService, useClass: MockCacheableImageService }],
         })

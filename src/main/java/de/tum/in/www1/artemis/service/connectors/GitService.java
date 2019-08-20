@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GitService {
@@ -338,12 +339,20 @@ public class GitService {
      *
      * @param repoUrl to get the latest hash from.
      * @return the latestHash of the given repo.
-     * @throws GitAPIException if retrieving the latestHash from the git repo failed.
+     * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
-    private ObjectId getLatestHash(URL repoUrl) throws GitAPIException {
+    public ObjectId getLastCommitHash(URL repoUrl) throws EntityNotFoundException {
+        if (repoUrl == null) {
+            return null;
+        }
         // Get refs of repo without cloning it locally
-        Collection<Ref> refs = Git.lsRemoteRepository().setRemote(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
-                .call();
+        Collection<Ref> refs;
+        try {
+            refs = Git.lsRemoteRepository().setRemote(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        }
+        catch (GitAPIException ex) {
+            throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUrl " + repoUrl + " due to the following exception: " + ex);
+        }
         for (Ref ref : refs) {
             // We are looking for the latest commit hash of the master branch
             if (ref.getName().equalsIgnoreCase("refs/heads/master")) {
@@ -395,7 +404,7 @@ public class GitService {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLatestHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
@@ -439,7 +448,7 @@ public class GitService {
             repository.close();
 
         }
-        catch (GitAPIException | JGitInternalException ex) {
+        catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.error("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
         }
     }

@@ -2,8 +2,8 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
-import { ParticipationType, ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
+import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -30,7 +30,7 @@ describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionTestcaseStatusComponent],
         })
             .compileComponents()

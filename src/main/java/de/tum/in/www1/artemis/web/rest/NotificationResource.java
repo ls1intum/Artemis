@@ -83,6 +83,7 @@ public class NotificationResource {
     /**
      * GET /notifications : get all notifications by pages.
      *
+     * @param pageable Pagination information for fetching the nofications
      * @return the list notifications
      */
     @GetMapping("/notifications")
@@ -100,6 +101,7 @@ public class NotificationResource {
     /**
      * GET /notifications/for-user : get all notifications for users including the active system notification.
      *
+     * @param pageable Pagination information for fetching the nofications, <b>currently ignored</b>
      * @return the list notifications
      */
     @GetMapping("/notifications/for-user")

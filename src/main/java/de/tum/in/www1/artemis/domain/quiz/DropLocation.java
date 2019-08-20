@@ -187,6 +187,7 @@ public class DropLocation implements Serializable {
      * check if the DropLocation is solved correctly
      *
      * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
+     * @return if the drop location is correct
      */
     public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer) {
 

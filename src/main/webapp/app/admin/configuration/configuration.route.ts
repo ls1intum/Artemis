@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 
-import { JhiConfigurationComponent } from './configuration.component';
+import { JhiConfigurationComponent } from 'app/admin';
 
 export const configurationRoute: Route = {
     path: 'jhi-configuration',
