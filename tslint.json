@@ -120,6 +120,6 @@
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
         "directive-class-suffix": true,
-        "completed-docs": [true, "enums", "functions", "methods"]
+        "completed-docs": [true, "enums", { "functions": { "visibilities": ["exported"] } }, { "methods": { "privacies": ["public", "protected"] } }]
     }
 }

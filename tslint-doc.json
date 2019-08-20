@@ -1,0 +1,21 @@
+{
+    "completed-docs": [
+        true,
+        "enums",
+        {
+            "functions": {
+                "visibilities": [
+                    "exported"
+                ]
+            }
+        },
+        {
+            "methods": {
+                "privacies": [
+                    "public",
+                    "protected"
+                ]
+            }
+        }
+    ]
+}
