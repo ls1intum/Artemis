@@ -41,7 +41,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     /**
      * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
-     * @param exerciseId
+     * @param exerciseId the Id of the exercise
      * @return List of Text Submissions
      */
     @EntityGraph(attributePaths = { "blocks", "result", "participation" })
