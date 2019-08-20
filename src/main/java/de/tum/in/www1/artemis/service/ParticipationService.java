@@ -711,17 +711,13 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations of submissions that are submitted and do not already have any result.
+     * Get all participations belonging to course with relevant results.
      *
-     *
-     * @param exerciseId the id of the exercise the participations should belong to
-     * @return a list of participations including their submitted submissions that do not have any result
+     * @param courseId the id of the exercise
+     * @param includeNotRatedResults specify is not rated results are included
+     * @param includeAssessors specify id assessors are included
+     * @return list of participations belonging to course
      */
-    @Transactional(readOnly = true)
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionWithoutResult(exerciseId);
-    }
-
     @Transactional(readOnly = true)
     public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
         List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
