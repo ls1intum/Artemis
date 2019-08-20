@@ -119,6 +119,7 @@
         "use-lifecycle-interface": true,
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
-        "directive-class-suffix": true
+        "directive-class-suffix": true,
+        "completed-docs": [true, "enums", "functions", "methods"]
     }
 }

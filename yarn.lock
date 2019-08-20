@@ -340,6 +340,14 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0"
 
+"@babel/runtime-corejs2@^7.1.5":
+  version "7.5.5"
+  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs2/-/runtime-corejs2-7.5.5.tgz#c3214c08ef20341af4187f1c9fbdc357fbec96b2"
+  integrity sha512-FYATQVR00NSNi7mUfpPDp7E8RYMXDuO8gaix7u/w3GekfUinKgX1AcTxs7SoiEmoEW9mbpjrwqWSW6zCmw5h8A==
+  dependencies:
+    core-js "^2.6.5"
+    regenerator-runtime "^0.13.2"
+
 "@babel/runtime@^7.0.0", "@babel/runtime@^7.3.4":
   version "7.4.5"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.4.5.tgz#582bb531f5f9dc67d2fcb682979894f75e253f12"
@@ -3570,7 +3578,7 @@ core-js@3.2.1:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.2.1.tgz#cd41f38534da6cc59f7db050fe67307de9868b09"
   integrity sha512-Qa5XSVefSVPRxy2XfUC13WbvqkxhkwB3ve+pgCQveNgYzbM/UxZeu1dcOX/xr4UmfUd+muuvsaxilQzCyUurMw==
 
-core-js@^2.4.0:
+core-js@^2.4.0, core-js@^2.6.5:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.9.tgz#6b4b214620c834152e179323727fc19741b084f2"
   integrity sha512-HOpZf6eXmnl7la+cUdMnLvUxKNqLUzJvgIziQ0DiF3JwSImNphIqdGqzj6hIKyX04MmV0poclQ7+wjWvxQyR2A==
@@ -13472,6 +13480,13 @@ tslint-loader@3.6.0:
     object-assign "^4.1.1"
     rimraf "^2.4.4"
     semver "^5.3.0"
+
+tslint-teamcity-reporter@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/tslint-teamcity-reporter/-/tslint-teamcity-reporter-3.2.2.tgz#a228aeba780b800093701f1d1f1416868eb8e45b"
+  integrity sha512-1lvhwfTQnsh2We39+5u4/FzDdheGLooYlW2vMmR473Ai/3ERoXMFsu6Nt2fKf1y1rJUTztX2RnygF1hBV5xMIw==
+  dependencies:
+    "@babel/runtime-corejs2" "^7.1.5"
 
 tslint@5.18.0:
   version "5.18.0"

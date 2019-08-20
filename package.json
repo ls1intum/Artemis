@@ -76,6 +76,7 @@
         "sugar": "2.0.6",
         "ts-jest": "24.0.2",
         "tslib": "1.10.0",
+        "tslint-teamcity-reporter": "^3.2.2",
         "webstomp-client": "1.2.6",
         "yarn": "1.17.3",
         "zone.js": "0.10.2"
@@ -184,7 +185,7 @@
     "scripts": {
         "prettier:format": "prettier --write \"src/**/*.{json,ts,css,scss,html}\"",
         "prettier:check": "prettier --check \"src/**/*.{json,ts,css,scss,html}\"",
-        "lint": "tslint --project tsconfig.json -e 'node_modules/**'",
+        "lint": "tslint --project tsconfig.json -t ./node_modules/tslint-teamcity-reporter/index.js  -e 'node_modules/**'",
         "lint:fix": "yarn run lint --fix",
         "ngc": "ngc -p tsconfig-aot.json",
         "cleanup": "rimraf build/{aot,www}",
@@ -207,5 +208,11 @@
         "webpack-dev-server": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js",
         "prepare": "patch-package"
+    },
+    "tslint-teamcity-reporter": {
+        "reporter": "inspections",
+        "report-name": "My TSLint Violations",
+        "error-statistics-name": "My TSLint Error Count",
+        "warning-statistics-name": "My TSLint Warning Count"
     }
 }
