@@ -1,30 +1,25 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 @Service
 @Profile("automaticText")
 public class TextAssessmentQueueService {
 
-    private final ParticipationService participationService;
-
     private final TextClusterRepository textClusterRepository;
 
-    private Instant start;
+    private final TextSubmissionRepository textSubmissionRepository;
 
-    private boolean running = false;
-
-    public TextAssessmentQueueService(ParticipationService participationService, TextClusterRepository textClusterRepository) {
-        this.participationService = participationService;
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, TextSubmissionRepository textSubmissionRepository) {
         this.textClusterRepository = textClusterRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
@@ -37,11 +32,10 @@ public class TextAssessmentQueueService {
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise) {
 
         if (!textExercise.isAutomaticAssessmentEnabled()) {
-            throw new IllegalArgumentException("The TextExercise is not   automatic assessable");
+            throw new IllegalArgumentException("The TextExercise is not automatic assessable");
         }
 
-        List<TextSubmission> textSubmissionList = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).parallelStream()
-                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<TextSubmission> textSubmissionList = textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(textExercise.getId());
         if (textSubmissionList.isEmpty()) {
             return Optional.empty();
         }
