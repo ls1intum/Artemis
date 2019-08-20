@@ -9,11 +9,11 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 public class ScoringStrategyShortAnswerUtil {
 
     /**
-     * TODO Francisco describe this method in detail here
+     * Get number of correct and incorrect solutions for the short answer question
      * 
-     * @param shortAnswerQuestion
-     * @param shortAnswerAnswer
-     * @return
+     * @param shortAnswerQuestion for which the correct and incorrect solutions should be counted
+     * @param shortAnswerAnswer for the given short answer question
+     * @return array with correct and incorrect solution count
      */
     // TODO I don't really like the int array return type. Instead we should use something different here, either an object or
     public static int[] getCorrectAndIncorrectSolutionCount(ShortAnswerQuestion shortAnswerQuestion, ShortAnswerSubmittedAnswer shortAnswerAnswer) {

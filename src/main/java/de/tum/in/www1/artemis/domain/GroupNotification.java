@@ -111,6 +111,13 @@ public class GroupNotification extends Notification implements Serializable {
         return getLectureTarget(lecture, "attachmentUpdated");
     }
 
+    /**
+     * Create JSON representation for a GroupNotification for an Exercise.
+     *
+     * @param exercise for which to create the notification.
+     * @param message to use for the notification.
+     * @return the stringified JSON of the target.
+     */
     public String getExerciseTarget(Exercise exercise, String message) {
         JsonObject target = new JsonObject();
         target.addProperty("message", message);
@@ -121,6 +128,13 @@ public class GroupNotification extends Notification implements Serializable {
         return target.toString();
     }
 
+    /**
+     * Create JSON representation for a GroupNotification for a Lecture.
+     *
+     * @param lecture for which to create the notification.
+     * @param message to use for the notification.
+     * @return the stringified JSON of the target.
+     */
     public String getLectureTarget(Lecture lecture, String message) {
         JsonObject target = new JsonObject();
         target.addProperty("message", message);

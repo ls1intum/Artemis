@@ -52,6 +52,9 @@ public class SolutionProgrammingExerciseParticipation extends Participation impl
         this.buildPlanId = buildPlanId;
     }
 
+    /**
+     * @return the repository URL as an URL Object
+     */
     @JsonIgnore
     public URL getRepositoryUrlAsUrl() {
         if (repositoryUrl == null) {
