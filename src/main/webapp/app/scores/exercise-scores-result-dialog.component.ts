@@ -83,7 +83,7 @@ export class ExerciseScoresResultDialogComponent implements OnInit {
     selector: 'jhi-exercise-scores-result-popup',
     template: '',
 })
-export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
+export class ExerciseScoresResultResultPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
     constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}

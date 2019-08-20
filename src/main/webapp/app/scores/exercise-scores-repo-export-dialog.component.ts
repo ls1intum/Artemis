@@ -56,7 +56,7 @@ export class ExerciseScoresRepoExportComponent {
     selector: 'jhi-exercise-scores-export-repos-popup',
     template: '',
 })
-export class InstructorDashboardExportReposPopupComponent implements OnInit, OnDestroy {
+export class ExerciseScoresRepoExportPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
     constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}

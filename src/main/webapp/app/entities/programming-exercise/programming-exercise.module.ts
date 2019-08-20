@@ -6,6 +6,10 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
+    ProgrammingExerciseArchiveDialogComponent,
+    ProgrammingExerciseArchivePopupComponent,
+    ProgrammingExerciseCleanupDialogComponent,
+    ProgrammingExerciseCleanupPopupComponent,
     ProgrammingExerciseComponent,
     ProgrammingExerciseDeleteDialogComponent,
     ProgrammingExerciseDeletePopupComponent,
@@ -67,6 +71,10 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseArchiveDialogComponent,
+        ProgrammingExerciseArchivePopupComponent,
+        ProgrammingExerciseCleanupDialogComponent,
+        ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
@@ -86,6 +94,10 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseArchiveDialogComponent,
+        ProgrammingExerciseArchivePopupComponent,
+        ProgrammingExerciseCleanupDialogComponent,
+        ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseInstructionTaskStatusComponent,
