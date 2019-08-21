@@ -121,6 +121,7 @@ public class StudentQuestionResource {
     /**
      * GET /studentQuestions : get all student questions for exercise.
      *
+     * @param lectureId  the lecture that the student questions belong to
      * @param exerciseId the exercise that the student questions belong to
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
      */
