@@ -30,10 +30,10 @@ export enum CachingStrategy {
     selector: 'jhi-secured-image',
     template: `
         <ng-template [ngIf]="!this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl$ | async" />
+            <img [attr.src]="dataUrl$ | async" alt="alt" />
         </ng-template>
         <ng-template [ngIf]="this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl$ | async" class="dnd-drag-start" draggable="true" dnd-draggable />
+            <img [attr.src]="dataUrl$ | async" class="dnd-drag-start" draggable="true" alt="alt" dnd-draggable />
         </ng-template>
     `,
 })
@@ -44,6 +44,7 @@ export class SecuredImageComponent implements OnChanges {
     @Input() mobileDragAndDrop: boolean;
     @Input() private src: string;
     @Input() cachingStrategy = CachingStrategy.SESSION_STORAGE;
+    @Input() alt = '';
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
 
