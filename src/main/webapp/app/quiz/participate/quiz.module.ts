@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -34,7 +34,6 @@ const ENTITY_STATES = [...quizRoute];
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService, DeviceDetectorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisQuizModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
