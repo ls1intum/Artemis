@@ -8,9 +8,8 @@ import { of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
-import { NavbarComponent } from 'app/layouts';
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
@@ -43,7 +42,7 @@ describe('Component Tests', () => {
     };
 
     const courseOverviewTour: GuidedTour = {
-        settingsKey: 'showCourseOverviewTour',
+        settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
@@ -58,15 +57,15 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [
-                    ArTEMiSTestModule,
+                    ArtemisTestModule,
                     RouterTestingModule.withRoutes([
                         {
                             path: 'overview',
-                            component: NavbarComponent,
+                            component: GuidedTourComponent,
                         },
                     ]),
                 ],
-                declarations: [GuidedTourComponent, NavbarComponent],
+                declarations: [GuidedTourComponent],
                 schemas: [NO_ERRORS_SCHEMA],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -74,7 +73,6 @@ describe('Component Tests', () => {
                     { provide: CookieService, useClass: MockCookieService },
                 ],
             })
-                .overrideTemplate(NavbarComponent, '')
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
@@ -180,7 +178,9 @@ describe('Component Tests', () => {
             });
 
             afterEach(() => {
-                guidedTourComponent.currentTourStep!.orientation = undefined;
+                if (guidedTourComponent.currentTourStep) {
+                    guidedTourComponent.currentTourStep!.orientation = undefined;
+                }
             });
 
             it('should determine if the tour step has bottom orientation', () => {
