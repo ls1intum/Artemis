@@ -2,7 +2,10 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import {
+    ProgrammingExerciseInstructionService,
+    TestCaseState,
+} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
 
 @Component({
