@@ -2,87 +2,49 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 
-import com.google.gson.Gson;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.Table;
 
 /**
  * GuidedTourSettings
- */
+ **/
+@Embeddable
+@Table(name = "guided_tour_settings")
 public class GuidedTourSettings implements Serializable {
 
-    private boolean showCourseOverviewTour;
+    @Column(name = "guided_tour_key")
+    private String guidedTourKey = null;
 
-    private boolean showProgrammingExerciseTour;
-
-    private boolean showQuizExerciseTour;
-
-    private boolean showModelingExerciseTour;
-
-    private boolean showTextExerciseTour;
+    @Column(name = "guided_tour_step")
+    private Integer guidedTourStep = 0;
 
     public GuidedTourSettings() {
-        this.showCourseOverviewTour = false;
-        this.showProgrammingExerciseTour = false;
-        this.showQuizExerciseTour = false;
-        this.showModelingExerciseTour = false;
-        this.showTextExerciseTour = false;
     }
 
-    public boolean isShowCourseOverviewTour() {
-        return showCourseOverviewTour;
+    public String getGuidedTourKey() {
+        return guidedTourKey;
     }
 
-    public void setShowCourseOverviewTour(boolean showCourseOverviewTour) {
-        this.showCourseOverviewTour = showCourseOverviewTour;
+    public void setGuidedTourKey(String guidedTourKey) {
+        this.guidedTourKey = guidedTourKey;
     }
 
-    public boolean isShowProgrammingExerciseTour() {
-        return showProgrammingExerciseTour;
+    public Integer getGuidedTourStep() {
+        return guidedTourStep;
     }
 
-    public void setShowProgrammingExerciseTour(boolean showProgrammingExerciseTour) {
-        this.showProgrammingExerciseTour = showProgrammingExerciseTour;
+    public void setGuidedTourStep(Integer guidedTourStep) {
+        this.guidedTourStep = guidedTourStep;
     }
 
-    public boolean isShowQuizExerciseTour() {
-        return showQuizExerciseTour;
+    public GuidedTourSettings guidedTourKey(String guidedTourKey) {
+        this.guidedTourKey = guidedTourKey;
+        return this;
     }
 
-    public void setShowQuizExerciseTour(boolean showQuizExerciseTour) {
-        this.showQuizExerciseTour = showQuizExerciseTour;
-    }
-
-    public boolean isShowModelingExerciseTour() {
-        return showModelingExerciseTour;
-    }
-
-    public void setShowModelingExerciseTour(boolean showModelingExerciseTour) {
-        this.showModelingExerciseTour = showModelingExerciseTour;
-    }
-
-    public boolean isShowTextExerciseTour() {
-        return showTextExerciseTour;
-    }
-
-    public void setShowTextExerciseTour(boolean showTextExerciseTour) {
-        this.showTextExerciseTour = showTextExerciseTour;
-    }
-
-    public static GuidedTourSettings createFromJson(String guidedTourSettingsJson) {
-        Gson gson = new Gson();
-        return gson.fromJson(guidedTourSettingsJson, GuidedTourSettings.class);
-    }
-
-    public static GuidedTourSettings defaultSettings() {
-        return new GuidedTourSettings();
-    }
-
-    public String toJson() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
-    }
-
-    @Override
-    public String toString() {
-        return this.toJson();
+    public GuidedTourSettings guidedTourStep(Integer guidedTourStep) {
+        this.guidedTourStep = guidedTourStep;
+        return this;
     }
 }

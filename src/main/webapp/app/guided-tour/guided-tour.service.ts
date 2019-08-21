@@ -8,19 +8,19 @@ import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
+import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ContentType, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
-export type EntityResponseType = HttpResponse<GuidedTourSettings>;
+export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    private guidedTourSettings: GuidedTourSettings;
+    private guidedTourSettings: GuidedTourSetting[];
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private currentTourStepIndex = 0;
     public currentTour: GuidedTour | null;
@@ -111,7 +111,7 @@ export class GuidedTourService {
             if (this.currentTour.completeCallback) {
                 this.currentTour.completeCallback();
             }
-            this.updateGuidedTourSettings(this.currentTour.settingsId, false).subscribe(guidedTourSettings => {
+            this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay).subscribe(guidedTourSettings => {
                 if (guidedTourSettings.body) {
                     this.guidedTourSettings = guidedTourSettings.body;
                 }
@@ -155,6 +155,11 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
+            this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay).subscribe(guidedTourSettings => {
+                if (guidedTourSettings.body) {
+                    this.guidedTourSettings = guidedTourSettings.body;
+                }
+            });
             this.resetTour();
         }
     }
@@ -220,7 +225,7 @@ export class GuidedTourService {
                     // If error handler is configured this should not block the browser.
                     new Error(
                         `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                            this.currentTour.settingsId
+                            this.currentTour.settingsKey
                         }`,
                     ),
                 );
@@ -336,10 +341,10 @@ export class GuidedTourService {
 
     /**
      * Send a GET request for the guided tour settings of the current user
-     * @return {Observable<GuidedTourSettings} guided tour settings
+     * @return {Observable GuidedTourSetting[] } guided tour settings
      */
-    private fetchGuidedTourSettings(): Observable<GuidedTourSettings> {
-        return this.http.get<GuidedTourSettings>(this.resourceUrl, { observe: 'response' }).map((res: EntityResponseType) => {
+    private fetchGuidedTourSettings(): Observable<GuidedTourSetting[]> {
+        return this.http.get<GuidedTourSetting[]>(this.resourceUrl, { observe: 'response' }).map(res => {
             if (!res.body) {
                 throw new Error('Empty response returned while fetching guided tour settings');
             }
@@ -349,16 +354,21 @@ export class GuidedTourService {
 
     /**
      * Send a PUT request to update the guided tour settings of the current user
-     * @param settingName   name of the tour setting that is stored in the guided tour settings json in the DB, e.g. showCourseOverviewTour
-     * @param settingValue  boolean value that defines if the tour for [settingName] should be displayed automatically
+     * @param guidedTourKey
+     * @param guidedTourStep
      * @return {Observable<EntityResponseType>} updated guided tour settings
      */
-    public updateGuidedTourSettings(settingName: string, settingValue: boolean): Observable<EntityResponseType> {
+    public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             throw new Error('Cannot update non existing guided tour settings');
         }
-        this.guidedTourSettings[settingName] = settingValue;
-        return this.http.put<GuidedTourSettings>(this.resourceUrl, this.guidedTourSettings, { observe: 'response' });
+        const existingSettingIndex = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
+        if (existingSettingIndex !== -1) {
+            this.guidedTourSettings[existingSettingIndex].guidedTourStep = guidedTourStep;
+        } else {
+            this.guidedTourSettings.push(new GuidedTourSetting(guidedTourKey, guidedTourStep));
+        }
+        return this.http.put<GuidedTourSetting[]>(this.resourceUrl, this.guidedTourSettings, { observe: 'response' });
     }
 
     /**

@@ -94,8 +94,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
     private List<String> groups = new ArrayList<>();
 
     @JsonIgnore
-    @Column(name = "guided_tour_settings")
-    private String guidedTourSettings = null;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    private List<GuidedTourSettings> guidedTourSettings = new ArrayList<>();
 
     @JsonIgnore
     @ManyToMany
@@ -251,15 +252,12 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.persistentTokens = persistentTokens;
     }
 
-    public GuidedTourSettings getGuidedTourSettings() {
-        if (this.guidedTourSettings == null) {
-            return GuidedTourSettings.defaultSettings();
-        }
-        return GuidedTourSettings.createFromJson(this.guidedTourSettings);
+    public List<GuidedTourSettings> getGuidedTourSettings() {
+        return this.guidedTourSettings;
     }
 
-    public void setGuidedTourSettings(GuidedTourSettings guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings.toJson();
+    public void setGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override

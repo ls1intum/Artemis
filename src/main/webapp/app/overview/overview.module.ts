@@ -28,9 +28,7 @@ import { ArtemisResultModule } from 'app/entities/result';
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
-import { ArTEMiSCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
-import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 

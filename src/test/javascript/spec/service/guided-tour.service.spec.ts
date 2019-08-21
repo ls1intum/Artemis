@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,8 +10,8 @@ import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
-import { ArTEMiSTestModule } from '../test.module';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisTestModule } from '../test.module';
 import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -31,7 +31,7 @@ describe('Service Tests', () => {
 
             beforeEach(() => {
                 TestBed.configureTestingModule({
-                    imports: [ArTEMiSTestModule, ArTEMiSSharedModule, HttpClientTestingModule],
+                    imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
                     providers: [GuidedTourService],
                 });
 
@@ -63,7 +63,7 @@ describe('Service Tests', () => {
             let router: Router;
 
             const courseOverviewTour: GuidedTour = {
-                settingsId: 'showCourseOverviewTour',
+                settingsKey: 'course_overview_tour',
                 preventBackdropFromAdvancing: true,
                 steps: [
                     {
@@ -84,7 +84,7 @@ describe('Service Tests', () => {
             beforeEach(() => {
                 TestBed.configureTestingModule({
                     imports: [
-                        ArTEMiSTestModule,
+                        ArtemisTestModule,
                         RouterTestingModule.withRoutes([
                             {
                                 path: 'overview',

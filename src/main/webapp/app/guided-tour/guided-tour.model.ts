@@ -2,7 +2,7 @@ import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export interface GuidedTour {
     /** Identifier for tour */
-    settingsId: string;
+    settingsKey: string;
     /** Steps fo the tour */
     steps: TourStep[];
     /** Function will be called when tour is skipped */
