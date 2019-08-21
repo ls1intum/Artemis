@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';

@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
