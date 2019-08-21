@@ -76,8 +76,6 @@
         "sugar": "2.0.6",
         "ts-jest": "24.0.2",
         "tslib": "1.10.0",
-        "tslint-html-report": "^2.0.3",
-        "tslint-teamcity-reporter": "^3.2.2",
         "webstomp-client": "1.2.6",
         "yarn": "1.17.3",
         "zone.js": "0.10.2"
@@ -159,7 +157,9 @@
         "ts-node": "8.3.0",
         "tslint": "5.18.0",
         "tslint-config-prettier": "1.18.0",
+        "tslint-html-report": "^2.0.3",
         "tslint-loader": "3.6.0",
+        "tslint-teamcity-reporter": "^3.2.2",
         "typescript": "3.5.3",
         "webpack": "4.39.2",
         "webpack-cli": "3.3.7",
