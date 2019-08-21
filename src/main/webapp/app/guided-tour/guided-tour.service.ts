@@ -354,8 +354,8 @@ export class GuidedTourService {
 
     /**
      * Send a PUT request to update the guided tour settings of the current user
-     * @param guidedTourKey
-     * @param guidedTourStep
+     * @param guidedTourKey the guided_tour_key that will be stored in the database
+     * @param guidedTourStep the last tour step the user visited before finishing / skipping the tour
      * @return {Observable<EntityResponseType>} updated guided tour settings
      */
     public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number): Observable<EntityResponseType> {
