@@ -15,10 +15,6 @@ import {
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTaskStatusComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseInstructorStatusComponent,
     ProgrammingExerciseInstructorTriggerBuildButtonComponent,
     ProgrammingExerciseManageTestCasesComponent,
@@ -41,12 +37,6 @@ import { ArtemisResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 import { ArtemisTableModule } from 'app/components/table/table.module';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
-import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -75,14 +65,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
-        ProgrammingExerciseInstructionStepWizardComponent,
-        ProgrammingExerciseInstructionResultDetailComponent,
-        ProgrammingExerciseInstructionTestcaseStatusComponent,
-        ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
@@ -99,32 +83,16 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseInstructionTaskStatusComponent,
-        ProgrammingExerciseInstructionStepWizardComponent,
-        ProgrammingExerciseInstructionResultDetailComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
-        ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
     ],
     exports: [
         ProgrammingExerciseComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ],
-    providers: [
-        ProgrammingExerciseService,
-        ProgrammingExerciseTestCaseService,
-        ProgrammingExercisePopupService,
-        ProgrammingExerciseTaskExtensionWrapper,
-        ProgrammingExercisePlantUmlExtensionWrapper,
-        ProgrammingExerciseInstructionService,
-        ProgrammingExercisePlantUmlService,
-        ProgrammingExerciseParticipationService,
-    ],
+    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisProgrammingExerciseModule {

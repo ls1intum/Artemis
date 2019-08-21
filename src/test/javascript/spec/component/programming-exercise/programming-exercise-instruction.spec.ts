@@ -27,11 +27,11 @@ import { MockRepositoryFileService } from '../../mocks/mock-repository-file.serv
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);

@@ -26,10 +26,10 @@ import {
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
 
 chai.use(sinonChai);
 const expect = chai.expect;
