@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { StudentQuestionsComponent, StudentQuestionRowComponent } from './';
@@ -9,6 +9,5 @@ import { ArtemisConfirmIconModule } from 'app/components/confirm-icon/confirm-ic
     imports: [ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule],
     declarations: [StudentQuestionsComponent, StudentQuestionRowComponent],
     exports: [StudentQuestionsComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisStudentQuestionsModule {}

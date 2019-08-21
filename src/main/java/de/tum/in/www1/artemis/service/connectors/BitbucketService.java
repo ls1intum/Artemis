@@ -94,6 +94,11 @@ public class BitbucketService implements VersionControlService {
         }
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+        protectMasterBranch(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+    }
+
+    private void protectMasterBranch(String projectKeyFromUrl, String repositorySlugFromUrl, String username) {
+        // TODO: Simon Leiß implement, prevent deletion and prevent force push
     }
 
     @Override
@@ -195,6 +200,7 @@ public class BitbucketService implements VersionControlService {
      * @param username           The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
+    @SuppressWarnings("unchecked")
     private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
         String forkName = String.format("%s-%s", baseRepositorySlug, username);
         Map<String, Object> body = new HashMap<>();
@@ -223,11 +229,11 @@ public class BitbucketService implements VersionControlService {
                 throw e;
             }
         }
-        catch (Exception e) {
-            log.error("Could not fork base repository for user " + username, e);
+        catch (Exception emAll) {
+            log.error("Could not fork base repository for user " + username, emAll);
             throw new BitbucketException("Error while forking repository");
         }
-        if (response != null && response.getStatusCode().equals(HttpStatus.CREATED)) {
+        if (response.getStatusCode().equals(HttpStatus.CREATED)) {
             String slug = (String) response.getBody().get("slug");
             String cloneUrl = buildCloneUrl(baseProjectKey, forkName, username).toString();
             Map<String, String> result = new HashMap<>();

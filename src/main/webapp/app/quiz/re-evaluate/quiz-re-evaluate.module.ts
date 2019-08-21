@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
@@ -39,7 +39,6 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisQuizReEvaluateModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

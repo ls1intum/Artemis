@@ -318,6 +318,10 @@ public class ExerciseResource {
         studentIds = studentIds.replaceAll(" ", "");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
+        // TODO: allow multiple options:
+        // - one boolean flag per stager task (see exportParticipations)
+        // - one boolean flag that all student submissions should be downloaded
+
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
 

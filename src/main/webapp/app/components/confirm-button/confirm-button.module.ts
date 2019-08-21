@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ConfirmButtonComponent } from 'app/components/confirm-button/confirm-button.component';
@@ -7,6 +7,5 @@ import { ConfirmButtonComponent } from 'app/components/confirm-button/confirm-bu
     imports: [ArtemisSharedModule],
     declarations: [ConfirmButtonComponent],
     exports: [ConfirmButtonComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisConfirmButtonModule {}
