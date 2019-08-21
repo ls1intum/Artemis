@@ -5,6 +5,12 @@ import { ProgrammingSubmissionWebsocketService } from 'app/submission/programmin
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    providers: [ProgrammingSubmissionWebsocketService],
 })
-export class ArtemisProgrammingSubmissionModule {}
+export class ArtemisProgrammingSubmissionModule {
+    static forRoot() {
+        return {
+            ngModule: ArtemisProgrammingSubmissionModule,
+            providers: [ProgrammingSubmissionWebsocketService],
+        };
+    }
+}

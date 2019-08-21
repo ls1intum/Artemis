@@ -67,6 +67,7 @@ import { ArtemisConnectionNotificationModule } from './layouts/connection-notifi
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
+import { ArtemisProgrammingSubmissionModule } from 'app/submission/submission.module';
 
 @NgModule({
     imports: [
@@ -95,6 +96,7 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
         ArtemisHomeModule,
         ArtemisAdminModule,
         ArtemisLegalModule,
+        ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
         ArtemisEntityModule,
