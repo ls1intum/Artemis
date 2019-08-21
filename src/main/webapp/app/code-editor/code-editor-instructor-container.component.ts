@@ -246,19 +246,19 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     }
 
     selectSolutionParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.solutionParticipation.id}`);
+        this.router.navigateByUrl(`/code-editor/admin/${this.exercise.id}/${this.exercise.solutionParticipation.id}`);
     }
 
     selectTemplateParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.templateParticipation.id}`);
+        this.router.navigateByUrl(`/code-editor/admin/${this.exercise.id}/${this.exercise.templateParticipation.id}`);
     }
 
     selectAssignmentParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.participations[0].id}`);
+        this.router.navigateByUrl(`/code-editor/admin/${this.exercise.id}/${this.exercise.participations[0].id}`);
     }
 
     selectTestRepository() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/test`);
+        this.router.navigateByUrl(`/code-editor/admin/${this.exercise.id}/test`);
     }
 
     /**
