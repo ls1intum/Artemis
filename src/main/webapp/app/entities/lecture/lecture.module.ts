@@ -24,7 +24,6 @@ const ENTITY_STATES = [...lectureRoute, ...lecturePopupRoute];
     declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureAttachmentsComponent, LectureDeletePopupComponent],
     entryComponents: [LectureComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureDeletePopupComponent, LectureAttachmentsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisLectureModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

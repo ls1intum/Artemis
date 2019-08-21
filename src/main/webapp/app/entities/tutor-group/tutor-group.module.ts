@@ -21,7 +21,6 @@ const ENTITY_STATES = [...tutorGroupRoute, ...tutorGroupPopupRoute];
     declarations: [TutorGroupComponent, TutorGroupDetailComponent, TutorGroupUpdateComponent, TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent],
     entryComponents: [TutorGroupComponent, TutorGroupUpdateComponent, TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorGroupModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

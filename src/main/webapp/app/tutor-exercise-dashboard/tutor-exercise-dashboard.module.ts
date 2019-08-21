@@ -53,7 +53,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         CourseScoreCalculationService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorExerciseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

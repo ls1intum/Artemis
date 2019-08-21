@@ -9,6 +9,5 @@ import { SystemNotificationService } from './';
     entryComponents: [],
     exports: [],
     providers: [SystemNotificationService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisSystemNotificationModule {}

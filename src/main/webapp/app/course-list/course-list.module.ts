@@ -37,7 +37,6 @@ const ENTITY_STATES = [...courseListRoute];
         CourseScoreCalculationService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCourseListModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

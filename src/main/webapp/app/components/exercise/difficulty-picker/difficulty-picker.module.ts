@@ -7,6 +7,5 @@ import { DifficultyPickerComponent } from 'app/components/exercise/difficulty-pi
     imports: [ArtemisSharedModule],
     declarations: [DifficultyPickerComponent],
     exports: [DifficultyPickerComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisDifficultyPickerModule {}

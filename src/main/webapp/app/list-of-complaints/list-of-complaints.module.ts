@@ -20,7 +20,6 @@ const ENTITY_STATES = [...listOfComplaintsRoute];
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisListOfComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

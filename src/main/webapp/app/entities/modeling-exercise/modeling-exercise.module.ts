@@ -51,7 +51,6 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
     ],
     providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisModelingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

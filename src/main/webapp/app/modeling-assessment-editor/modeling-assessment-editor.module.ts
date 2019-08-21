@@ -41,7 +41,6 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         ModelingAssessmentConflictComponent,
     ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisModelingAssessmentEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -15,7 +15,6 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
     declarations: [ComplaintsComponent],
     exports: [ComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

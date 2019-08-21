@@ -20,6 +20,5 @@ const ENTITY_STATES = instructorCourseDashboardRoute;
     exports: [],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisInstructorCourseStatsDashboardModule {}

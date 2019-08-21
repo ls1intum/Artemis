@@ -58,7 +58,6 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
     ],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent, CourseExerciseCardComponent, CourseDeletePopupComponent],
     providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCourseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

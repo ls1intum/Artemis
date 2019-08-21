@@ -11,6 +11,5 @@ import { CourseRegistrationSelectorComponent } from 'app/components/course-regis
     imports: [ArtemisSharedModule, ArtemisColorSelectorModule, ReactiveFormsModule, TagInputModule, BrowserAnimationsModule],
     declarations: [CourseRegistrationSelectorComponent],
     exports: [CourseRegistrationSelectorComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCourseRegistrationSelector {}

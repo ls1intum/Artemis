@@ -25,6 +25,5 @@ import {
         PasswordResetFinishComponent,
         SettingsComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisAccountModule {}

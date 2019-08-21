@@ -33,7 +33,7 @@ const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
     ],
     entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent, ExerciseHintStudentDialogComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+
     exports: [ExerciseHintStudentDialogComponent, ExerciseHintStudentComponent],
 })
 export class ArtemisExerciseHintModule {

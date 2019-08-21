@@ -7,6 +7,5 @@ import { ConfirmIconComponent } from 'app/components/confirm-icon/confirm-icon.c
     imports: [ArtemisSharedModule],
     declarations: [ConfirmIconComponent],
     exports: [ConfirmIconComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisConfirmIconModule {}

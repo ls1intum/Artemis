@@ -7,6 +7,5 @@ import { ColorSelectorComponent } from './color-selector.component';
     imports: [ArtemisSharedModule],
     declarations: [ColorSelectorComponent],
     exports: [ColorSelectorComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisColorSelectorModule {}

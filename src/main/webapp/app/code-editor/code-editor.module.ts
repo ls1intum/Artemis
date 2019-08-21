@@ -95,7 +95,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorSubmissionService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

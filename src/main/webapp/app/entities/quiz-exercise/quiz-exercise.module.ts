@@ -54,7 +54,6 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         QuizExerciseDetailComponent,
     ],
     providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisQuizExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

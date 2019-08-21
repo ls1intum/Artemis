@@ -12,6 +12,5 @@ import { ArtemisSharedModule } from 'app/shared';
     exports: [TutorLeaderboardComponent],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorLeaderboardModule {}

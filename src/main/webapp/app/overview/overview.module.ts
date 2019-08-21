@@ -62,7 +62,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+
     exports: [],
 })
 export class ArtemisOverviewModule {

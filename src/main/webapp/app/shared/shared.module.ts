@@ -56,7 +56,6 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         SanitizeHtmlPipe,
         SecuredImageComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisSharedModule {
     static forRoot() {

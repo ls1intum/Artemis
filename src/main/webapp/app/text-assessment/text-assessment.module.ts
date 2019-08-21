@@ -31,7 +31,6 @@ const ENTITY_STATES = [...textAssessmentRoutes];
     ],
     exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent, ResizableInstructionsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTextAssessmentModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

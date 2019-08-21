@@ -39,7 +39,6 @@ const ENTITY_STATES = [...quizStatisticRoute];
         ShortAnswerQuestionStatisticComponent,
     ],
     providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisStatisticModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

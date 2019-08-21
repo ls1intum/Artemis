@@ -7,6 +7,5 @@ import { SidePanelComponent } from './side-panel.component';
     imports: [ArtemisSharedModule],
     declarations: [SidePanelComponent],
     exports: [SidePanelComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisSidePanelModule {}

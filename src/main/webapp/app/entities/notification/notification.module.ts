@@ -10,6 +10,5 @@ import { RouterModule } from '@angular/router';
     entryComponents: [NotificationComponent],
     exports: [],
     providers: [NotificationService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisNotificationModule {}

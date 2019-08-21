@@ -8,6 +8,5 @@ import { ConnectionNotificationComponent } from './';
     declarations: [ConnectionNotificationComponent],
     entryComponents: [],
     exports: [ConnectionNotificationComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisConnectionNotificationModule {}

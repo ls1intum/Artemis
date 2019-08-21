@@ -11,6 +11,5 @@ import { CategorySelectorComponent } from 'app/components/category-selector/cate
     imports: [ArtemisSharedModule, ArtemisColorSelectorModule, ReactiveFormsModule, TagInputModule, BrowserAnimationsModule],
     declarations: [CategorySelectorComponent],
     exports: [CategorySelectorComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCategorySelectorModule {}

@@ -39,7 +39,6 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisQuizReEvaluateModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

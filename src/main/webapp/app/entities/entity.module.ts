@@ -34,6 +34,5 @@ import { ArtemisNotificationModule } from 'app/entities/notification/notificatio
     declarations: [],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisEntityModule {}

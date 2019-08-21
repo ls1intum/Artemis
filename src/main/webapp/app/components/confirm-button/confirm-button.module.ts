@@ -7,6 +7,5 @@ import { ConfirmButtonComponent } from 'app/components/confirm-button/confirm-bu
     imports: [ArtemisSharedModule],
     declarations: [ConfirmButtonComponent],
     exports: [ConfirmButtonComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisConfirmButtonModule {}
