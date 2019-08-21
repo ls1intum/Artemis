@@ -21,14 +21,9 @@ import { ProgrammingExerciseParticipationService } from 'src/main/webapp/app/ent
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionTestcaseStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instruction-testcase-status.component';
-import { MockLanguageHelper, MockLanguageService } from '../../helpers/mock-language.service';
-import { ArtemisSharedModule } from 'app/shared';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,10 +48,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
             declarations: [MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent), MockComponent(MarkdownEditorComponent)],
             providers: [
-                /*                JhiLanguageHelper,
-                ProgrammingExerciseInstructionService,
-                ProgrammingExerciseTaskExtensionWrapper,
-                ProgrammingExercisePlantUmlExtensionWrapper,*/
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
