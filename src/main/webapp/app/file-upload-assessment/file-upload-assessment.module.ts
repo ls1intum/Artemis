@@ -9,12 +9,12 @@ import { JhiLanguageService } from 'ng-jhipster';
 /* application */
 import { JhiLanguageHelper } from 'app/core';
 import { fileUploadAssessmentRoutes } from './file-upload-assessment.route';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSResultModule } from 'app/entities/result';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisResultModule } from 'app/entities/result';
 import { SortByModule } from 'app/components/pipes';
-import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
-import { ArTEMiSTextAssessmentModule } from 'app/text-assessment';
+import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 import { FileUploadAssessmentDetailComponent } from 'app/file-upload-assessment/file-upload-assessment-detail/file-upload-assessment-detail.component';
 
 const ENTITY_STATES = [...fileUploadAssessmentRoutes];
@@ -23,17 +23,17 @@ const ENTITY_STATES = [...fileUploadAssessmentRoutes];
         CommonModule,
         SortByModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSSharedModule,
-        ArTEMiSResultModule,
-        ArTEMiSComplaintsForTutorModule,
-        ArTEMiSTextAssessmentModule,
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisTextAssessmentModule,
     ],
     declarations: [FileUploadAssessmentComponent, FileUploadAssessmentDetailComponent],
     exports: [FileUploadAssessmentComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSFileUploadAssessmentModule {
+export class ArtemisFileUploadAssessmentModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

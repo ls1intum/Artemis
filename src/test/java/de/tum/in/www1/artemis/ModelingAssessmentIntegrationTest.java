@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -93,13 +94,17 @@ public class ModelingAssessmentIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(6, 1, 0);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

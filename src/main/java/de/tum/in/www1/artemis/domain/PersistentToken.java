@@ -83,6 +83,10 @@ public class PersistentToken implements Serializable {
         return userAgent;
     }
 
+    /**
+     * sets the user agent that identifies the browser of the user: https://en.wikipedia.org/wiki/User_agent
+     * @param userAgent the UserAgent which should be set
+     */
     public void setUserAgent(String userAgent) {
         if (userAgent.length() >= MAX_USER_AGENT_LEN) {
             this.userAgent = userAgent.substring(0, MAX_USER_AGENT_LEN - 1);

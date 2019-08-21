@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,11 +53,15 @@ public class TextSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(1, 1, 0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

@@ -747,6 +747,12 @@ public class QuizExercise extends Exercise implements Serializable {
         }
     }
 
+    /**
+     * Determines the Status of a QuizExercise
+     *
+     * @param quiz the Quiz for which the status should be determined
+     * @return the Status of the given Quiz
+     */
     public static Status statusForQuiz(QuizExercise quiz) {
         if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return Status.INACTIVE;

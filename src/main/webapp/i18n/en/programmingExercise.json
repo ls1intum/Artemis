@@ -18,6 +18,7 @@
             "detail": {
                 "title": "Programming Exercise"
             },
+            "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Solution Repository Url (optional)",
@@ -73,8 +74,13 @@
                 "weightsResetFailed": "The weights could not be reset.",
                 "saveWeights": "Save weights",
                 "weightsUpdated": "The weights were updated successfully.",
-                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}."
-            }
+                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}.",
+                "saveTestCases": "Save test cases",
+                "testCasesUpdated": "The test cases were updated successfully.",
+                "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
+            },
+            "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit."
         }
     }
 }

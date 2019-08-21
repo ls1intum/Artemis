@@ -95,6 +95,7 @@ public class FileUploadExerciseResource {
      * PUT /file-upload-exercises : Updates an existing fileUploadExercise.
      *
      * @param fileUploadExercise the fileUploadExercise to update
+     * @param notificationText the text shown to students
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -126,6 +127,7 @@ public class FileUploadExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/file-upload-exercises")

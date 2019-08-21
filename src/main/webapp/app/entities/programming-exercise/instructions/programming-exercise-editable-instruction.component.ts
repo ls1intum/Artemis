@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
@@ -12,10 +12,10 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { Result, ResultService } from 'app/entities/result';
-import { hasExerciseChanged } from 'app/entities/exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
@@ -36,7 +36,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
-    unsavedChanges = false;
+    unsavedChangesValue = false;
 
     interactResizable: Interactable;
 
@@ -59,6 +59,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return this.participationValue;
     }
     @Output() participationChange = new EventEmitter<Participation>();
+    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
@@ -75,14 +76,24 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.exerciseChange.emit(this.exerciseValue);
     }
 
+    set unsavedChanges(hasChanges: boolean) {
+        this.unsavedChangesValue = hasChanges;
+        if (hasChanges) {
+            this.hasUnsavedChanges.emit(hasChanges);
+        }
+    }
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: JhiAlertService,
-        private resultService: ResultService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (problemStatementHasChanged(changes)) {
+            this.generateHtml();
+        }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
         }
@@ -196,9 +207,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
-        return this.resultService.getLatestResultWithFeedbacks(templateParticipationId).pipe(
-            rxMap((res: HttpResponse<Result>) => res.body),
-            rxFilter((result: Result) => !!result.feedbacks),
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
+            rxMap((result: Result | null) => (!result || !result.feedbacks ? throwError('no result available') : result)),
             rxMap(({ feedbacks }: Result) =>
                 compose(
                     map(({ text }) => text),
