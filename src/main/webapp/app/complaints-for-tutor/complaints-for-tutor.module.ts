@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiAlertService } from 'ng-jhipster';
@@ -24,7 +24,6 @@ import { ComplaintResponseService } from 'app/entities/complaint-response';
             useClass: JhiLanguageService,
         },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisComplaintsForTutorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
