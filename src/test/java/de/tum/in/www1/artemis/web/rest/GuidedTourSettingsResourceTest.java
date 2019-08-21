@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,30 +40,20 @@ public class GuidedTourSettingsResourceTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void getDefaultGuidedTourSettings() throws Exception {
-        GuidedTourSettings guidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, GuidedTourSettings.class);
-        assertThat(guidedTourSettings.isShowCourseOverviewTour()).as("don't show course overview tour").isFalse();
-        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("don't show modeling exercise tour").isFalse();
-        assertThat(guidedTourSettings.isShowProgrammingExerciseTour()).as("don't show programming exercise tour").isFalse();
-        assertThat(guidedTourSettings.isShowQuizExerciseTour()).as("don't show quiz exercise tour").isFalse();
-        assertThat(guidedTourSettings.isShowModelingExerciseTour()).as("don't show modeling exercise tour").isFalse();
-        assertThat(guidedTourSettings.isShowTextExerciseTour()).as("don't show text exercise tour").isFalse();
+    public void getGuidedTourSettings() throws Exception {
+        List<GuidedTourSettings> guidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, List.class);
     }
 
     @Test
     @WithMockUser(value = "student1")
     public void updateGuidedTourSettings() throws Exception {
+        List<GuidedTourSettings> guidedTourSettingsList = new ArrayList<>();
         GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
-        guidedTourSettings.setShowCourseOverviewTour(true);
-        guidedTourSettings.setShowProgrammingExerciseTour(true);
-        guidedTourSettings.setShowModelingExerciseTour(true);
-        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettings, GuidedTourSettings.class, HttpStatus.OK);
+        guidedTourSettings.setGuidedTourKey("course_overview_tour");
+        guidedTourSettings.setGuidedTourStep(5);
 
-        GuidedTourSettings updatedGuidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, GuidedTourSettings.class);
-        assertThat(updatedGuidedTourSettings.isShowCourseOverviewTour()).as("show course overview tour").isTrue();
-        assertThat(updatedGuidedTourSettings.isShowProgrammingExerciseTour()).as("show programming exercise tour").isTrue();
-        assertThat(updatedGuidedTourSettings.isShowQuizExerciseTour()).as("don't show quiz exercise tour").isFalse();
-        assertThat(updatedGuidedTourSettings.isShowModelingExerciseTour()).as("show modeling exercise tour").isTrue();
-        assertThat(updatedGuidedTourSettings.isShowTextExerciseTour()).as("show text exercise tour").isFalse();
+        guidedTourSettingsList.add(guidedTourSettings);
+        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsList, List.class, HttpStatus.OK);
+        List<GuidedTourSettings> updatedGuidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, List.class);
     }
 }

@@ -43,7 +43,7 @@ describe('Component Tests', () => {
     };
 
     const courseOverviewTour: GuidedTour = {
-        settingsId: 'showCourseOverviewTour',
+        settingsKey: 'showCourseOverviewTour',
         preventBackdropFromAdvancing: true,
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };

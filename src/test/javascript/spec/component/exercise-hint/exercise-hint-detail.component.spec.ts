@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 
 import { ExerciseHintDetailComponent } from 'app/entities/exercise-hint/exercise-hint-detail.component';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Component Tests', () => {
     describe('ExerciseHint Management Detail Component', () => {
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ExerciseHintDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

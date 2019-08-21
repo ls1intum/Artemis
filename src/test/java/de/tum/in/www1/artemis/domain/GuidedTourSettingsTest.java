@@ -1,22 +1,26 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.junit.jupiter.api.Assertions;
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 
-public class GuidedTourSettingsTest {
+class GuidedTourSettingsTest {
 
     @Test
-    public void createFromJson() {
-        String guidedTourSettingsJson = "{\n" + "\t\"showCourseOverviewTour\" : true,\n" + "\t\"showProgrammingExerciseTour\" : true,\n" + "\t\"showQuizExerciseTour\" : false,\n"
-                + "\t\"showModelingExerciseTour\" : true,\n" + "\t\"showTextExerciseTour\" : false\n" + "}";
+    void testGuidedTourKey() {
+        GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
+        guidedTourSettings = guidedTourSettings.guidedTourKey("guided_tour_key").guidedTourStep(5);
 
-        GuidedTourSettings guidedTourSettings = GuidedTourSettings.createFromJson(guidedTourSettingsJson);
+        assertEquals(5, guidedTourSettings.getGuidedTourStep());
+        assertEquals("guided_tour_key", guidedTourSettings.getGuidedTourKey());
+    }
 
-        Assertions.assertTrue(guidedTourSettings.isShowCourseOverviewTour(), "showCourseOverviewTour must be true");
-        Assertions.assertTrue(guidedTourSettings.isShowProgrammingExerciseTour(), "showProgrammingExerciseTour must be true");
-        Assertions.assertTrue(guidedTourSettings.isShowModelingExerciseTour(), "showModelingExerciseTour must be true");
+    @Test
+    void testGuidedTourStep() {
+        GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
+        guidedTourSettings = guidedTourSettings.guidedTourStep(5).guidedTourKey("guided_tour_key");
 
-        Assertions.assertFalse(guidedTourSettings.isShowQuizExerciseTour(), "showQuizExerciseTour must be false");
-        Assertions.assertFalse(guidedTourSettings.isShowTextExerciseTour(), "showTextExerciseTour must be false");
+        assertEquals(5, guidedTourSettings.getGuidedTourStep());
+        assertEquals("guided_tour_key", guidedTourSettings.getGuidedTourKey());
     }
 }

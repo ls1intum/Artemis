@@ -1,10 +1,10 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     ExerciseHintComponent,
     ExerciseHintDetailComponent,
@@ -16,12 +16,12 @@ import {
     ExerciseHintStudentDialogComponent,
     ExerciseHintStudentComponent,
 } from './';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArTEMiSMarkdownEditorModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownEditorModule],
     declarations: [
         ExerciseHintComponent,
         ExerciseHintDetailComponent,
@@ -33,7 +33,7 @@ const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
     ],
     entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent, ExerciseHintStudentDialogComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+
     exports: [ExerciseHintStudentDialogComponent, ExerciseHintStudentComponent],
 })
 export class ArtemisExerciseHintModule {

@@ -43,6 +43,12 @@ public class TutorLeaderboardService {
         this.userService = userService;
     }
 
+    /**
+     * Returns tutor leaderboards for the specified course.
+     *
+     * @param course course for which leaderboard is created
+     * @return list of tutor leaderboard objects
+     */
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
 
         List<User> tutors = userService.getTutors(course);
@@ -59,6 +65,12 @@ public class TutorLeaderboardService {
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests);
     }
 
+    /**
+     * Returns tutor leaderboards for the specified exercise.
+     *
+     * @param exercise exercise for which leaderboard is created
+     * @return list of tutor leaderboard objects
+     */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
         List<User> tutors = userService.getTutors(exercise.getCourse());

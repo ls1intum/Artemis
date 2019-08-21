@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
-import { EMPTY, from, throwError, Observable } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, from } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 
-import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { AccountService } from 'app/core/auth/account.service';
+import { AccountService, AuthServerProvider, Credentials, JhiWebsocketService } from 'app/core';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {

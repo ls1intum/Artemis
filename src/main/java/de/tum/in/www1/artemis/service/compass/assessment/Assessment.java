@@ -59,6 +59,7 @@ public class Assessment {
 
     /**
      * Used for statistic
+     * @return the ContextFeedBackList
      */
     public Map<Context, List<Feedback>> getContextFeedbackList() {
         return this.contextFeedbackList;

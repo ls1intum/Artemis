@@ -552,7 +552,7 @@ public class UserService {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }
 
-    public User updateGuidedTourSettings(GuidedTourSettings guidedTourSettings) {
+    public User updateGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAndAuthorities();
         loggedInUser.setGuidedTourSettings(guidedTourSettings);
         userRepository.save(loggedInUser);

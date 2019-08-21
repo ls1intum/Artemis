@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -6,9 +6,9 @@ import { JhiLanguageHelper } from 'app/core';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'ngx-moment';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ArtemisStudentQuestionsModule } from 'app/student-questions/';
 
 import {
     CourseExerciseDetailsComponent,
@@ -24,29 +24,27 @@ import {
     OverviewComponent,
     OverviewCourseCardComponent,
 } from './';
-import { ArTEMiSResultModule } from 'app/entities/result';
-import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
-import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArtemisResultModule } from 'app/entities/result';
+import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
-import { ArTEMiSCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
-import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
+        ArtemisSharedModule,
         ChartsModule,
         ClipboardModule,
         MomentModule,
-        ArTEMiSResultModule,
-        ArTEMiSProgrammingExerciseModule,
-        ArTEMiSStudentQuestionsModule,
-        ArTEMiSSidePanelModule,
+        ArtemisResultModule,
+        ArtemisProgrammingExerciseModule,
+        ArtemisStudentQuestionsModule,
+        ArtemisSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSHeaderExercisePageWithDetailsModule,
-        ArTEMiSCourseRegistrationSelector,
+        ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisCourseRegistrationSelector,
     ],
     declarations: [
         OverviewComponent,
@@ -64,10 +62,10 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+
     exports: [],
 })
-export class ArTEMiSOverviewModule {
+export class ArtemisOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

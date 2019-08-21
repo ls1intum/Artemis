@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+    <changeSet author="phuong.anh.montag" id="1566406520708-1">
+        <createTable tableName="guided_tour_settings">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="guided_tour_key" type="VARCHAR(255)"/>
+            <column name="guided_tour_step" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="phuong.anh.montag" id="1566406520708-2">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="guided_tour_settings" constraintName="FKdbjfaktpewig8lac4jimhf34l" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

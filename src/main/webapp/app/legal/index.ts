@@ -1,1 +1,1 @@
-export { ArTEMiSLegalModule } from './legal.module';
+export { ArtemisLegalModule } from './legal.module';

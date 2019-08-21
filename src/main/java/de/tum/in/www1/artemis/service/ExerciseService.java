@@ -338,6 +338,7 @@ public class ExerciseService {
                 gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
                 programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
+                // TODO: unify encoding (UTF8) and line endings (unix)
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
                 zippedRepoFiles.add(zippedRepoFile);

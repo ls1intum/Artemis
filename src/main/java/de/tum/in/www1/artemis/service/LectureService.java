@@ -34,6 +34,12 @@ public class LectureService {
         return lectureRepository.findAllByCourseId(courseId);
     }
 
+    /**
+     * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
+     *
+     * @param lectureWithAttachments lecture that has attachments
+     * @return lecture with filtered attachments
+     */
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = lectureWithAttachments.getCourse();
@@ -51,6 +57,12 @@ public class LectureService {
         return lectureWithAttachments;
     }
 
+    /**
+     * Filter active attachments for a set of lectures.
+     *
+     * @param lecturesWithAttachments lectures that have attachments
+     * @return lectures with filtered attachments
+     */
     public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments) {
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {

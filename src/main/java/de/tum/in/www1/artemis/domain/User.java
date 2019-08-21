@@ -90,12 +90,18 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
+    /**
+     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
+     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
+     */
+    @Column(name = "`groups`")
     @ElementCollection
     private List<String> groups = new ArrayList<>();
 
     @JsonIgnore
-    @Column(name = "guided_tour_settings")
-    private String guidedTourSettings = null;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    private List<GuidedTourSettings> guidedTourSettings = new ArrayList<>();
 
     @JsonIgnore
     @ManyToMany
@@ -151,6 +157,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    /**
+     * @return UserName as a concatenation of first and last Name
+     */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
             return firstName + " " + lastName;
@@ -248,15 +257,12 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.persistentTokens = persistentTokens;
     }
 
-    public GuidedTourSettings getGuidedTourSettings() {
-        if (this.guidedTourSettings == null) {
-            return GuidedTourSettings.defaultSettings();
-        }
-        return GuidedTourSettings.createFromJson(this.guidedTourSettings);
+    public List<GuidedTourSettings> getGuidedTourSettings() {
+        return this.guidedTourSettings;
     }
 
-    public void setGuidedTourSettings(GuidedTourSettings guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings.toJson();
+    public void setGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override

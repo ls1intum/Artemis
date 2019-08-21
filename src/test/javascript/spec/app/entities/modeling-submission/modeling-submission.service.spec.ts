@@ -1,9 +1,7 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
 import { IModelingSubmission, ModelingSubmission } from 'app/shared/model/modeling-submission.model';
 

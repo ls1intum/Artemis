@@ -5,7 +5,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
-    settingsId: 'showCourseOverviewTour',
+    settingsKey: 'course_overview_tour',
     steps: [
         {
             contentType: ContentType.IMAGE,
