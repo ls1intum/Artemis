@@ -1,9 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NgJhipsterModule } from 'ng-jhipster';
-import { RouterModule } from '@angular/router';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
+import { RouterModule } from '@angular/router';
 import { MomentModule } from 'ngx-moment';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
@@ -37,12 +34,8 @@ import {
     CodeEditorSubmissionService,
     DomainService,
 } from './';
-
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
@@ -55,7 +48,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         AceEditorModule,
         ArtemisResultModule,
         MomentModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),

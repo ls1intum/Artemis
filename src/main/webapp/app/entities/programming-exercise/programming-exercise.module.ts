@@ -37,6 +37,8 @@ import { ArtemisResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 import { ArtemisTableModule } from 'app/components/table/table.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -48,8 +50,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
+        ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisResultModule,
-        ArtemisMarkdownEditorModule,
         ArtemisTableModule,
         NgxDatatableModule,
     ],
@@ -91,6 +93,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructorExerciseStatusComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ArtemisProgrammingExerciseInstructionsEditorModule,
     ],
     providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

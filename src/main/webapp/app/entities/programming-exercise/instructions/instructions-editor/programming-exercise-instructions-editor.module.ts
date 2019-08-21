@@ -10,7 +10,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities
     imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule, ArtemisProgrammingExerciseInstructionsRenderModule],
     declarations: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionTestcaseStatusComponent],
     entryComponents: [ProgrammingExerciseEditableInstructionComponent],
-    exports: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionTestcaseStatusComponent],
+    exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionTestcaseStatusComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisProgrammingExerciseInstructionsEditorModule {
