@@ -1,5 +1,4 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -27,7 +26,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
 @NgModule({
     imports: [
-        BrowserModule,
         ArtemisSharedModule,
         ArtemisResultModule,
         MomentModule,

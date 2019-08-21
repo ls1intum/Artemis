@@ -1,5 +1,4 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -23,16 +22,7 @@ import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/t
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
 @NgModule({
-    imports: [
-        BrowserModule,
-        ArtemisSharedModule,
-        ArtemisResultModule,
-        MomentModule,
-        ClipboardModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArtemisTutorLeaderboardModule,
-    ],
+    imports: [ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisTutorLeaderboardModule],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],

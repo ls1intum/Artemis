@@ -1,9 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 
 import { RouterModule } from '@angular/router';
 
-import { ArtemisSharedModule } from '../shared';
+import { ArtemisSharedCommonModule, ArtemisSharedModule } from '../shared';
 import { courseListRoute } from './course-list.route';
 import { CourseExerciseService, CourseScoreCalculationComponent, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
@@ -23,7 +22,7 @@ import * as moment from 'moment';
 const ENTITY_STATES = [...courseListRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [CourseListComponent, CourseScoreCalculationComponent, ExerciseListComponent, ShowExercisePipe],
     exports: [ResultComponent],
     entryComponents: [CourseListComponent, CourseScoreCalculationComponent, JhiMainComponent, ResultComponent],

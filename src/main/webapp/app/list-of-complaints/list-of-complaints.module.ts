@@ -1,5 +1,4 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
@@ -16,7 +15,7 @@ import { SortByModule } from 'app/components/pipes';
 const ENTITY_STATES = [...listOfComplaintsRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],

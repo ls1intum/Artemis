@@ -2,12 +2,11 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { PendingChangesGuard } from 'app/shared';
-import { CodeEditorInstructorContainerComponent } from './code-editor-instructor-container.component';
-import { CodeEditorStudentContainerComponent } from './code-editor-student-container.component';
+import { CodeEditorStudentContainerComponent, CodeEditorInstructorContainerComponent } from './';
 
 export const codeEditorRoute: Routes = [
     {
-        path: 'code-editor/:participationId',
+        path: ':participationId',
         component: CodeEditorStudentContainerComponent,
         data: {
             authorities: ['ROLE_USER'],

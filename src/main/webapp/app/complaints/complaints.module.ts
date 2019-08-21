@@ -1,5 +1,4 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
@@ -11,7 +10,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule],
+    imports: [ArtemisSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsComponent],
     exports: [ComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],

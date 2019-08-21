@@ -27,7 +27,6 @@ import { ArtemisEntityModule } from './entities/entity.module';
 import { ArtemisCourseScoresModule, ArtemisExerciseScoresModule } from './scores';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { ArtemisCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArtemisQuizModule } from './quiz/participate';
 import { ArtemisTextModule } from './text-editor';
@@ -54,7 +53,6 @@ import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/instructor-ex
 import { ParticipationDataProvider } from 'app/course-list';
 import { ArtemisTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArtemisTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArtemisExampleTextSubmissionModule } from 'app/example-text-submission';
 import { ArtemisExampleModelingSubmissionModule } from 'app/example-modeling-submission';
 import { ArtemisComplaintsModule } from 'app/complaints';
@@ -102,7 +100,6 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
         ArtemisEntityModule,
         ArtemisApollonDiagramsModule,
         ArtemisCourseListModule,
-        ArtemisCodeEditorModule,
         ArtemisQuizModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
