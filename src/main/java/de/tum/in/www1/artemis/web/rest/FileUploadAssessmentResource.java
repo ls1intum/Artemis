@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.*;
  * REST controller for managing FileUploadAssessment.
  */
 @RestController
-@RequestMapping("/api/file-upload-assessments")
+@RequestMapping("/api")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
