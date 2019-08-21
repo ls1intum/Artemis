@@ -377,6 +377,10 @@ public class GitService {
         try {
             Git git = new Git(repository);
 
+            // TODO: get the latest submission before the due date from the database for the user behind the repository
+            // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
+
+            // TODO: in case the above TASKS do not work, use the below code as fallback
             // Get last commit before deadline
             Date since = Date.from(Instant.EPOCH);
             Date until = Date.from(exercise.getDueDate().toInstant());

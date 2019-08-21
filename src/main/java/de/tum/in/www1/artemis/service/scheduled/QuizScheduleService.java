@@ -104,7 +104,6 @@ public class QuizScheduleService {
             }
             resultHashMap.get(quizId).add(result);
         }
-
     }
 
     /**
@@ -408,6 +407,8 @@ public class QuizScheduleService {
 
             // create and save new participation
             StudentParticipation participation = new StudentParticipation();
+            // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
+            participation.setInitializationDate(quizSubmission.getSubmissionDate());
             Optional<User> user = userService.getUserByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());
