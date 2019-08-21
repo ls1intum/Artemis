@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
