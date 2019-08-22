@@ -5,7 +5,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { ContentType, LinkType, Orientation } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextLinkTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -25,7 +25,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     // Sets the highlight padding around the selected .
     public highlightPadding = 4;
 
-    public currentTourStep: TourStep | null;
+    public currentTourStep: TourStep | TextTourStep | TextLinkTourStep | ImageTourStep | VideoTourStep | null;
     public selectedElementRect: DOMRect | null;
 
     private resizeSubscription: Subscription;
@@ -290,7 +290,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public getHighlightPadding(): number {
         if (this.currentTourStep) {
-            let paddingAdjustment = this.currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
+            let paddingAdjustment = this.currentTourStep.highlightPadding ? this.highlightPadding : 0;
             if (this.currentTourStep.highlightPadding) {
                 paddingAdjustment = this.currentTourStep.highlightPadding;
             }

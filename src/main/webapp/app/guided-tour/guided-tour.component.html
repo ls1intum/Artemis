@@ -25,10 +25,10 @@
                 <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}" [href]="currentTourStep.externalUrl" target="_blank"></a>
                 </div>
-                <div *ngIf="currentTourStep.contentType === ContentType.IMAGE && currentTourStep.imageUrl">
+                <div *ngIf="currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
-                <div *ngIf="currentTourStep.contentType === ContentType.VIDEO && currentTourStep.videoUrl">
+                <div *ngIf="currentTourStep.videoUrl">
                     <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>

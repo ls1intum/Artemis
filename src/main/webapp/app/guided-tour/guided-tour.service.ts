@@ -11,7 +11,7 @@ import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ContentType, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
@@ -44,11 +44,13 @@ export class GuidedTourService {
                 if (this.currentTour && this.currentTourStepIndex > -1) {
                     if (this.currentTour.minimumScreenSize && this.currentTour.minimumScreenSize >= window.innerWidth) {
                         this.onResizeMessage = true;
-                        this.guidedTourCurrentStepSubject.next({
-                            headlineTranslateKey: 'tour.resize.headline',
-                            contentType: ContentType.TEXT,
-                            contentTranslateKey: 'tour.resize.content',
-                        });
+                        this.guidedTourCurrentStepSubject.next(
+                            new TextTourStep({
+                                headlineTranslateKey: 'tour.resize.headline',
+                                contentType: ContentType.TEXT,
+                                contentTranslateKey: 'tour.resize.content',
+                            }),
+                        );
                     } else {
                         this.onResizeMessage = false;
                         this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
