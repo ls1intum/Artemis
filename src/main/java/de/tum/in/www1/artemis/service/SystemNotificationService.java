@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class SystemNotificationService {
     }
 
     public void sendNotification(SystemNotification systemNotification) {
-        messagingTemplate.convertAndSend("/topic/system-notification", systemNotification);
+        // we cannot send null over websockets so in case the systemNotification object is null, we send 'deleted' and handle this case in the client
+        messagingTemplate.convertAndSend("/topic/system-notification", Objects.requireNonNullElse(systemNotification, "deleted"));
     }
 }
