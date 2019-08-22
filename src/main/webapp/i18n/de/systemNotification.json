@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "systemNotification": {
+            "created": "Mitteilung erstellt mit ID {{ param }}",
+            "updated": "Mitteilung aktualisiert mit ID {{ param }}",
+            "deleted": "Mitteilung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll die Mitteilung {{ id }} wirklich dauerhaft gelöscht werden?"
+            }
+        }
+    }
+}

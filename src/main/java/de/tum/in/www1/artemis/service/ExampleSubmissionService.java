@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -20,9 +20,12 @@ public class ExampleSubmissionService {
 
     private final SubmissionRepository submissionRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+    private final ResultRepository resultRepository;
+
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     public Optional<ExampleSubmission> get(long id) {
@@ -91,18 +94,23 @@ public class ExampleSubmissionService {
     }
 
     /**
-     * Deletes a ExampleSubmission by id if the ID has a corresponding ExampleSubmission
+     * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
     public void deleteById(long exampleSubmissionId) {
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerSubmissionAndEagerTutorParticipation(exampleSubmissionId);
+        // Note: as we access all lazy elements (i.e. proxies) of the example submission (tutor participations, submission and result) in the same transaction in which we
+        // retrieved the example submission, Hibernate will take care to lazy load the proxies and we don't need to fetch them here.
+        // While it might be faster, it makes the code more complex in this case and deletion is a rare case which does not need to fully performance optimized
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
 
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
 
-            Set<TutorParticipation> tutorParticipations = exampleSubmission.getTutorParticipations();
-            tutorParticipations.forEach(tutorParticipation -> tutorParticipation.removeTrainedExampleSubmissions(exampleSubmission));
+            for (TutorParticipation tutorParticipation : exampleSubmission.getTutorParticipations()) {
+                tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
+            }
 
+            resultRepository.delete(exampleSubmission.getSubmission().getResult());
             submissionRepository.delete(exampleSubmission.getSubmission());
             exampleSubmissionRepository.delete(exampleSubmission);
         }
