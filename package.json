@@ -157,9 +157,7 @@
         "ts-node": "8.3.0",
         "tslint": "5.18.0",
         "tslint-config-prettier": "1.18.0",
-        "tslint-html-report": "^2.0.3",
         "tslint-loader": "3.6.0",
-        "tslint-teamcity-reporter": "^3.2.2",
         "typescript": "3.5.3",
         "webpack": "4.39.2",
         "webpack-cli": "3.3.7",
@@ -209,11 +207,5 @@
         "webpack-dev-server": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js",
         "prepare": "patch-package"
-    },
-    "tslint-teamcity-reporter": {
-        "reporter": "inspections",
-        "report-name": "My TSLint Violations",
-        "error-statistics-name": "My TSLint Error Count",
-        "warning-statistics-name": "My TSLint Warning Count"
     }
 }
