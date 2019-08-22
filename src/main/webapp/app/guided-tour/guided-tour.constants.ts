@@ -30,3 +30,8 @@ export enum LinkType {
     LINK,
     BUTTON,
 }
+
+export enum GuidedTourState {
+    STARTED,
+    FINISHED,
+}
