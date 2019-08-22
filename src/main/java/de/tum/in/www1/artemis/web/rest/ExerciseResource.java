@@ -18,12 +18,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -46,6 +49,8 @@ public class ExerciseResource {
 
     private final UserService userService;
 
+    private final CourseService courseService;
+
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
@@ -54,17 +59,35 @@ public class ExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final ObjectMapper objectMapper;
+
     private final ComplaintRepository complaintRepository;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository) {
+    private final TextSubmissionService textSubmissionService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    private final TutorLeaderboardService tutorLeaderboardService;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
+            ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
+        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.objectMapper = objectMapper;
         this.complaintRepository = complaintRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
+        this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
     /**
@@ -140,9 +163,42 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = exerciseService.populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
 
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * stats for tutor dashboard and for instructor dashboard
+     *
+     * @param exercise - the exercise we are interested in
+     * @return a object node with the stats
+     */
+    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+        Long exerciseId = exercise.getId();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+
+        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
+
+        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
+
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        return stats;
     }
 
     /**
@@ -161,7 +217,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = exerciseService.populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
