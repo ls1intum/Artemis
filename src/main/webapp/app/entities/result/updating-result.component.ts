@@ -35,20 +35,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     constructor(private participationWebsocketService: ParticipationWebsocketService, private resultService: ResultService) {}
 
-    ngOnInit() {
-        // initialize results array
-        this.resultService
-            .findResultsForParticipation(this.course.id, this.participation.exercise!.id, this.participation.id)
-            .pipe(
-                map((results: HttpResponse<Result[]>) => {
-                    if (results && results.body && results.body.length) {
-                        this.result = results.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                    }
-                }),
-            )
-            .subscribe();
-    }
-
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
             // Sort participation results by completionDate desc.

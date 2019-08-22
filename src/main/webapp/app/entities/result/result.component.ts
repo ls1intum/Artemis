@@ -1,13 +1,23 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Participation, ParticipationService, InitializationState } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
+import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService, JhiWebsocketService } from 'app/core';
+
+const enum ResultTemplateStatus {
+    IS_BUILDING = 'is-building',
+    HAS_RESULT = 'has-result',
+    NO_RESULT = 'no-result',
+    SUBMITTED = 'submitted', // submitted, not yet graded
+    LATE_NO_FEEDBACK = 'late-no-feedback', // started, submitted too late, not graded
+    LATE = 'late', // submitted too late, graded
+}
 
 @Component({
     selector: 'jhi-result',
@@ -25,6 +35,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
+    @Input() course: Course;
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -36,7 +47,7 @@ export class ResultComponent implements OnInit, OnChanges {
     hasFeedback: boolean;
     resultIconClass: string[];
     resultString: string;
-    isModelingOrText: boolean = false;
+    templateStatus: ResultTemplateStatus;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -50,46 +61,44 @@ export class ResultComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit(): void {
-        if (this.participation.exercise.type == ExerciseType.TEXT || this.participation.exercise.type == ExerciseType.MODELING) {
-            this.isModelingOrText = true;
+        // Get results initially if necessary
+        if (!this.hasParticipationResults() && this.course && this.participation.exercise) {
+            this.resultService.findResultsForParticipation(this.course.id, this.participation.exercise.id, this.participation.id).subscribe(results => {
+                this.participation.results = results.body!;
+                this.init(); // imitate the behavior implemented in ngOnChanges() after updates the participation results
+            });
         }
-        if (this.result) {
-            this.init();
-        } else if (this.participation && this.participation.id) {
-            const exercise = this.participation.exercise;
 
-            if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise && exercise.type === ExerciseType.MODELING) {
-                    // sort results by completionDate descending to ensure the newest result is shown
-                    // this is important for modeling exercises since students can have multiple tries
-                    // think about if this should be used for all types of exercises
-                    this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate! > r2.completionDate!) {
-                            return -1;
-                        }
-                        if (r1.completionDate! < r2.completionDate!) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                }
-                // Make sure result and participation are connected
-                this.result = this.participation.results[0];
-                this.result.participation = this.participation;
-            }
-
-            this.init();
-        }
+        this.init();
     }
 
     init() {
+        if (this.result) {
+            this.evaluate();
+        } else if (this.participation && this.participation.id) {
+            if (this.hasParticipationResults()) {
+                const result = this.getLatestResult(this.participation.results);
+
+                // Make sure result and participation are connected
+                this.result = result;
+                this.result.participation = this.participation;
+            }
+
+            this.evaluate();
+        }
+    }
+
+    evaluate() {
+        this.evaluateTemplateStatus();
+
         if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
-        } else if (this.participation && this.isModelingOrText) {
-            this.resultString = this.buildResultStringForTextModeling();
+        } else if (this.templateStatus === ResultTemplateStatus.LATE) {
+            this.textColorClass = 'result-gray';
+            this.resultIconClass = this.getResultIconClass();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
@@ -97,48 +106,50 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation || changes.result) {
-            this.ngOnInit();
+        if (changes.participation || changes.result || changes.participation) {
+            this.init();
         }
     }
 
-    buildResultStringForTextModeling() {
-        if (this.isSubmissionInDueTime(this.participation, this.participation.exercise)) {
-            if (this.hasResults(this.participation)) {
-                return '';
+    evaluateTemplateStatus() {
+        if (this.isModelingOrText()) {
+            if (this.isSubmissionInDueTime()) {
+                if (this.hasResultAndScore()) {
+                    this.templateStatus = ResultTemplateStatus.HAS_RESULT;
+                } else {
+                    this.templateStatus = ResultTemplateStatus.SUBMITTED;
+                }
             } else {
-                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseSubmitted');
+                if (this.hasResultAndScore()) {
+                    this.templateStatus = ResultTemplateStatus.LATE;
+                } else {
+                    this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
+                }
             }
         } else {
-            if (this.hasResults(this.participation)) {
-                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseLateFeedback');
+            if (this.isBuilding) {
+                this.templateStatus = ResultTemplateStatus.IS_BUILDING;
+            } else if (this.hasResultAndScore()) {
+                this.templateStatus = ResultTemplateStatus.HAS_RESULT;
             } else {
-                return this.translate.instant('artemisApp.courseOverview.exerciseList.exerciseLateSubmission');
+                this.templateStatus = ResultTemplateStatus.NO_RESULT;
             }
         }
+    }
+
+    isModelingOrText() {
+        return (
+            this.participation.initializationState === InitializationState.FINISHED &&
+            this.participation.exercise &&
+            (this.participation.exercise.type === ExerciseType.MODELING || this.participation.exercise.type === ExerciseType.TEXT)
+        );
     }
 
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
-        } else if (this.result && this.participation && this.isModelingOrText) {
-            return this.buildResultStringForTextModeling();
         }
         return this.result!.resultString;
-    }
-
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
-    }
-
-    isSubmissionInDueTime(participation: Participation, exercise: Exercise): boolean {
-        if (participation.latestSubmissionDate && exercise.dueDate) {
-            return participation.latestSubmissionDate.isBefore(exercise.dueDate);
-        } else if (!exercise.dueDate) {
-            return true;
-        } else {
-            return false; // latestSubmissionDate is null
-        }
     }
 
     getHasFeedback() {
@@ -148,6 +159,24 @@ export class ResultComponent implements OnInit, OnChanges {
             return false;
         }
         return this.result!.hasFeedback;
+    }
+
+    hasParticipationResults(): boolean {
+        return this.participation.results && this.participation.results.length > 0;
+    }
+
+    isSubmissionInDueTime(): boolean {
+        if (this.participation.latestSubmissionDate && this.participation.exercise.dueDate) {
+            return this.participation.latestSubmissionDate.isBefore(this.participation.exercise.dueDate);
+        } else if (!this.participation.exercise.dueDate) {
+            return true;
+        } else {
+            return false; // latestSubmissionDate is null
+        }
+    }
+
+    hasResultAndScore() {
+        return this.result && (this.result.score || this.result.score === 0);
     }
 
     showDetails(result: Result) {
@@ -208,5 +237,24 @@ export class ResultComponent implements OnInit, OnChanges {
             return ['far', 'check-circle'];
         }
         return ['far', 'times-circle'];
+    }
+
+    /**
+     * Find latest result in results array
+     *
+     * @param {Result} results
+     */
+    getLatestResult(results: Result[]) {
+        results.sort((r1: Result, r2: Result) => {
+            if (r1.completionDate! > r2.completionDate!) {
+                return -1;
+            }
+            if (r1.completionDate! < r2.completionDate!) {
+                return 1;
+            }
+            return 0;
+        });
+
+        return results[0];
     }
 }
