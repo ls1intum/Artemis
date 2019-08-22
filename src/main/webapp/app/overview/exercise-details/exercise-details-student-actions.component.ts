@@ -70,8 +70,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        // this.javaBridge.openedExercise().subscribe(exerciseId => this.isOpenedInIntelliJ = exerciseId === this.exercise.id);
-        this.javaBridge.openedExercise().subscribe(exerciseId => this.javaBridge.log(exerciseId == null ? 'null' : exerciseId.toString()));
+        this.javaBridge.state.subscribe(ideState => console.log(ideState));
     }
 
     participationStatus(): ParticipationStatus {

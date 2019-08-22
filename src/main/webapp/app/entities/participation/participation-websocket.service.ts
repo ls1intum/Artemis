@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { Participation } from './participation.model';

@@ -1,14 +1,20 @@
 import { Injectable, OnInit } from '@angular/core';
 import { WindowRef } from 'app/core';
-import { Exercise } from 'app/entities/exercise';
-import { Observable } from 'rxjs';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { BehaviorSubject } from 'rxjs';
+import { IntelliJState, JavaDowncallBridge } from 'app/intellij/intellij';
 
 @Injectable({
     providedIn: 'root',
 })
-export class JavaBridgeService {
-    constructor(private window: WindowRef) {}
+export class JavaBridgeService implements JavaDowncallBridge {
+    private readonly intellijState: IntelliJState;
+    private readonly intellijStateSubject: BehaviorSubject<IntelliJState>;
+
+    constructor(private window: WindowRef) {
+        this.window.nativeWindow.javaDowncallBridge = this;
+        this.intellijState = { opened: -1 };
+        this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
+    }
 
     login(username: string, password: string) {
         this.window.nativeWindow.intellij.login(username, password);
@@ -22,11 +28,16 @@ export class JavaBridgeService {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    openedExercise(): Observable<number | null> {
-        return Observable.of(isIntelliJ ? this.window.nativeWindow.intellij.opened : null);
+    get state(): BehaviorSubject<IntelliJState> {
+        return this.intellijStateSubject;
     }
 
     log(message: string) {
         this.window.nativeWindow.intellij.log(message);
+    }
+
+    onExerciseOpened(exerciseId: number): void {
+        this.intellijState.opened = exerciseId;
+        this.intellijStateSubject.next(this.intellijState);
     }
 }
