@@ -1,19 +1,23 @@
 import { Injectable, OnInit } from '@angular/core';
 import { WindowRef } from 'app/core';
-import { BehaviorSubject } from 'rxjs';
-import { IntelliJState, JavaDowncallBridge } from 'app/intellij/intellij';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { IntelliJState, isIntelliJ, JavaDowncallBridge } from 'app/intellij/intellij';
 
 @Injectable({
     providedIn: 'root',
 })
 export class JavaBridgeService implements JavaDowncallBridge {
-    private readonly intellijState: IntelliJState;
-    private readonly intellijStateSubject: BehaviorSubject<IntelliJState>;
+    private intellijState: IntelliJState;
+    private intellijStateSubject: BehaviorSubject<IntelliJState>;
 
-    constructor(private window: WindowRef) {
-        this.window.nativeWindow.javaDowncallBridge = this;
-        this.intellijState = { opened: -1 };
-        this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
+    constructor(private window: WindowRef) {}
+
+    initBridge() {
+        if (isIntelliJ) {
+            this.window.nativeWindow.javaDowncallBridge = this;
+            this.intellijState = { opened: -1 };
+            this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
+        }
     }
 
     login(username: string, password: string) {
@@ -28,7 +32,7 @@ export class JavaBridgeService implements JavaDowncallBridge {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    get state(): BehaviorSubject<IntelliJState> {
+    get state(): Observable<IntelliJState> {
         return this.intellijStateSubject;
     }
 
