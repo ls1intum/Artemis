@@ -7,7 +7,7 @@
     </div>
 
     <div class="container-fluid">
-        <div class="row mt-3" *ngIf="stats && stats.tutorLeaderboardEntries && stats.tutorLeaderboardEntries.length > 0; else loadingScreen">
+        <div class="row mt-3" *ngIf="!isLoading">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4" *ngIf="stats && !loading">
+            <div class="col-md-4" *ngIf="stats && !isLoading">
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
             </div>
         </div>
