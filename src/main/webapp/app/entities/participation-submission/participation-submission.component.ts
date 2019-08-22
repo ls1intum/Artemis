@@ -28,6 +28,12 @@ export class ParticipationSubmissionComponent implements OnInit {
             console.log(participationsResponse);
         });
 
+        this.participationService.findAllSubmissionsOfParticipation(this.participationId).subscribe(response => {
+            this.submissions = response;
+            console.log('submissions:');
+            console.log(response);
+        });
+
         console.log('test');
         console.log(this.participationId);
         console.log(this.participation);
