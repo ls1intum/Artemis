@@ -484,16 +484,16 @@ pre {
     border-radius: 4px;
 }
 
-code-error,
-code-warning,
-code-success {
+.code-error,
+.code-warning,
+.code-success {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, Courier New, monospace;
 }
 
-code-success {
+.code-success {
     padding: 2px 4px;
     font-size: 90%;
     color: green;
@@ -502,12 +502,12 @@ code-success {
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-code-error {
+.code-error {
     color: #c7254e;
     background-color: #f9f2f4;
 }
 
-code-warning {
+.code-warning {
     color: #e68a00;
     background-color: #fff5e6;
 }
