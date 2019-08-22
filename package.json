@@ -186,8 +186,7 @@
     "scripts": {
         "prettier:format": "prettier --write \"src/**/*.{json,ts,css,scss,html}\"",
         "prettier:check": "prettier --check \"src/**/*.{json,ts,css,scss,html}\"",
-        "lint": " mkdir reports && ctslint --project tsconfig.json -t checkstyle -e 'node_modules/**' > reports/tslint.xml",
-        "lint:html": "node ./scripts/lint.js",
+        "lint": "tslint --project tsconfig.json -e 'node_modules/**'",
         "lint:fix": "yarn run lint --fix",
         "ngc": "ngc -p tsconfig-aot.json",
         "cleanup": "rimraf build/{aot,www}",
