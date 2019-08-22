@@ -38,7 +38,20 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     back() {
         this.router.navigate([`/course/${this.courseId}/instructor-dashboard`]);
     }
+    public setStatistics() {
+        if (this.stats.numberOfSubmissions > 0) {
+            this.totalManualAssessmentPercentage = Math.round(
+                ((this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfSubmissions) * 100,
+            );
+            this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions) * 100);
+        }
 
+        this.dataForAssessmentPieChart = [
+            this.stats.numberOfSubmissions - this.stats.numberOfAssessments,
+            this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments,
+            this.stats.numberOfAutomaticAssistedAssessments,
+        ];
+    }
     private loadExercise(exerciseId: number) {
         this.exerciseService
             .find(exerciseId)
@@ -47,19 +60,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
-
-                if (this.stats.numberOfSubmissions > 0) {
-                    this.totalManualAssessmentPercentage = Math.round(
-                        ((this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfSubmissions) * 100,
-                    );
-                    this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions) * 100);
-                }
-
-                this.dataForAssessmentPieChart = [
-                    this.stats.numberOfSubmissions - this.stats.numberOfAssessments,
-                    this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments,
-                    this.stats.numberOfAutomaticAssistedAssessments,
-                ];
+                this.setStatistics();
             },
             (response: string) => this.onError(response),
         );
