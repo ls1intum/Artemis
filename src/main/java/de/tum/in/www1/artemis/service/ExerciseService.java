@@ -26,13 +26,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -64,9 +68,21 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final TextSubmissionService textSubmissionService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final TutorLeaderboardService tutorLeaderboardService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+            TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintRepository complaintRepository,
+            TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -77,6 +93,11 @@ public class ExerciseService {
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
+        this.complaintRepository = complaintRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
     /**
@@ -462,6 +483,39 @@ public class ExerciseService {
                 }
             });
         }
+    }
+
+    /**
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * stats for tutor dashboard and for instructor dashboard
+     *
+     * @param exercise - the exercise we are interested in
+     * @return a object node with the stats
+     */
+    public StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+        Long exerciseId = exercise.getId();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+
+        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
+
+        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
+
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        return stats;
     }
 
     private Map<Path, ScheduledFuture> futures = new HashMap<>();
