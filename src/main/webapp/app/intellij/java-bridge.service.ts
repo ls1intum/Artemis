@@ -15,9 +15,13 @@ export class JavaBridgeService implements JavaDowncallBridge {
     initBridge() {
         if (isIntelliJ) {
             this.window.nativeWindow.javaDowncallBridge = this;
-            this.intellijState = { opened: -1 };
-            this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
+            this.setupDefaultState();
         }
+    }
+
+    private setupDefaultState() {
+        this.intellijState = { opened: -1 };
+        this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
     }
 
     login(username: string, password: string) {
@@ -32,7 +36,10 @@ export class JavaBridgeService implements JavaDowncallBridge {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    get state(): Observable<IntelliJState | undefined> {
+    get state(): BehaviorSubject<IntelliJState> {
+        if (!this.intellijState) {
+            this.setupDefaultState();
+        }
         return this.intellijStateSubject;
     }
 

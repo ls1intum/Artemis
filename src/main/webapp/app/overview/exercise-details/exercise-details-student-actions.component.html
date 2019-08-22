@@ -174,7 +174,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isOnlineEditorAllowed() && participationStatus() == INITIALIZED && exercise.participations && exercise.participations.length > 0"
+            *ngIf="!isIntelliJ && isOnlineEditorAllowed() && participationStatus() == INITIALIZED && exercise.participations && exercise.participations.length > 0"
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
@@ -184,7 +184,6 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="isIntelliJ && !isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
-            routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
             jhi-intellij-button

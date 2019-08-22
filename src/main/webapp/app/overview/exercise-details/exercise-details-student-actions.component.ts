@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
@@ -69,11 +69,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        this.javaBridge.state.subscribe(ideState => {
-            if (ideState) {
-                this.isOpenedInIntelliJ = ideState.opened === this.exercise.id;
-            }
-        });
+        this.javaBridge.state.subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
     }
 
     participationStatus(): ParticipationStatus {
