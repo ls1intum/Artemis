@@ -32,7 +32,7 @@ export class JavaBridgeService implements JavaDowncallBridge {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    get state(): Observable<IntelliJState> {
+    get state(): Observable<IntelliJState | undefined> {
         return this.intellijStateSubject;
     }
 

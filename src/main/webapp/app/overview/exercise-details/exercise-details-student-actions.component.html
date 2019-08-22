@@ -183,7 +183,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="isIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+            *ngIf="isIntelliJ && !isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button

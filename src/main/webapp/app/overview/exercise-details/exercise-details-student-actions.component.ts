@@ -25,7 +25,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-
     readonly QUIZ_UNINITIALIZED = ParticipationStatus.QUIZ_UNINITIALIZED;
     readonly QUIZ_ACTIVE = ParticipationStatus.QUIZ_ACTIVE;
     readonly QUIZ_SUBMITTED = ParticipationStatus.QUIZ_SUBMITTED;
@@ -70,7 +69,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        this.javaBridge.state.subscribe(ideState => console.log(ideState));
+        this.javaBridge.state.subscribe(ideState => {
+            if (ideState) {
+                this.isOpenedInIntelliJ = ideState.opened === this.exercise.id;
+            }
+        });
     }
 
     participationStatus(): ParticipationStatus {
