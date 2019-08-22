@@ -159,12 +159,14 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        String assignmentRepoName = ASSIGNMENT_REPO_NAME;
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            ASSIGNMENT_REPO_NAME,
+            assignmentRepoName,
             getProjectKeyFromUrl(repositoryUrl),
             versionControlService.get().getRepositoryName(repositoryUrl)
         );
@@ -178,7 +180,7 @@ public class BambooService implements ContinuousIntegrationService {
             try {
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 gitService.commitAndPush(repo, "Setup");
-                ProgrammingExercise exercise = participation.getProgrammingExercise();
+
                 if (exercise == null) {
                     log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
                     gitService.deleteLocalRepository(repo);
@@ -333,7 +335,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         String toPlan = toProject + "-" + name;
         try {
-            log.info("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
+            log.debug("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
             String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
@@ -359,7 +361,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     public String enablePlan(String projectKey, String planKey) throws BambooException {
         try {
-            log.info("Enable build plan " + projectKey + "-" + planKey);
+            log.debug("Enable build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
             log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
             return message;
@@ -377,7 +379,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
-     * @return                      a message that indiates the result of the plan repository update.
+     * @return                      a message that indicates the result of the plan repository update.
      * @throws BambooException      if a communication issue occurs.
      */
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
@@ -545,7 +547,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
                 // In this case we know the submission time, so we use it for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission.getSubmissionDate());
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission);
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -621,10 +623,11 @@ public class BambooService implements ContinuousIntegrationService {
         String commitHash = null;
         for (Object changeSet : vcsList) {
             Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-            if (submissionType.equals(SubmissionType.MANUAL) && changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) {
+            String repositoryName = (String) changeSetMap.get("repositoryName");
+            if ((submissionType.equals(SubmissionType.MANUAL) || submissionType.equals(SubmissionType.INSTRUCTOR)) && repositoryName.equalsIgnoreCase(ASSIGNMENT_REPO_NAME)) {
                 // We are only interested in the last commit hash of the assignment repo, not the test repo
                 commitHash = (String) changeSetMap.get("id");
-            } else if (submissionType.equals(SubmissionType.TEST) && changeSetMap.get("repositoryName").equals(TEST_REPO_NAME)) {
+            } else if (submissionType.equals(SubmissionType.TEST) && repositoryName.equalsIgnoreCase(TEST_REPO_NAME)) {
                 commitHash = (String) changeSetMap.get("id");
             }
         }

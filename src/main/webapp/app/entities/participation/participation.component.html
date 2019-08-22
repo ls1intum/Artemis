@@ -109,6 +109,11 @@
                                 <fa-icon icon="file-powerpoint"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
+                            <jhi-programming-exercise-instructor-trigger-build-button
+                                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                                [participation]="participation"
+                                [showProgress]="true"
+                            ></jhi-programming-exercise-instructor-trigger-build-button>
                         </div>
                     </td>
                 </tr>

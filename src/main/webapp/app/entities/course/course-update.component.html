@@ -62,11 +62,10 @@
                             <image-cropper
                                 [imageChangedEvent]="imageChangedEvent"
                                 [maintainAspectRatio]="true"
-                                [aspectRatio]="1 / 1"
+                                [aspectRatio]="1"
                                 [resizeToWidth]="200"
                                 [cropperMinWidth]="100"
-                                [cropperMaxWidth]="400"
-                                [lyScaleDown]="true"
+                                [onlyScaleDown]="true"
                                 [roundCropper]="true"
                                 outputType="base64"
                                 (imageCropped)="imageCropped($event)"

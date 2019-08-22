@@ -6,7 +6,7 @@ import * as sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'ng2-ace-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
-import { ArTEMiSMarkdownEditorModule, MarkdownEditorComponent } from 'app/markdown-editor';
+import { ArtemisMarkdownEditorModule, MarkdownEditorComponent } from 'app/markdown-editor';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -17,7 +17,7 @@ describe('KatexCommand', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AceEditorModule, ArTEMiSMarkdownEditorModule],
+            imports: [TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {

@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { LtiOutcomeUrlUpdateComponent } from 'app/entities/lti-outcome-url/lti-outcome-url-update.component';
 import { LtiOutcomeUrlService } from 'app/entities/lti-outcome-url/lti-outcome-url.service';
 import { LtiOutcomeUrl } from 'app/shared/model/lti-outcome-url.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [LtiOutcomeUrlUpdateComponent],
             })
                 .overrideTemplate(LtiOutcomeUrlUpdateComponent, '')

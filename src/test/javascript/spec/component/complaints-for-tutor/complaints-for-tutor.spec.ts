@@ -1,12 +1,12 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
-import { By, BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
@@ -39,7 +39,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, HttpClientModule],
+            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule],
             declarations: [ComplaintsForTutorComponent],
             providers: [
                 {

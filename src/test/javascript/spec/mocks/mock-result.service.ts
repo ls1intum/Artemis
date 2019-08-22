@@ -1,8 +1,7 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs/Observable';
 
-import { EntityArrayResponseType, EntityResponseType, IResultService, Result } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
+import { IResultService, Result } from 'app/entities/result';
 
 export class MockResultService implements IResultService {
     create = (result: Result) => of();

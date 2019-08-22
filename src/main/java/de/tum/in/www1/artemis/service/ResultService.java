@@ -99,17 +99,20 @@ public class ResultService {
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
-     * @return the result with feedback list
-     * @throws EntityNotFoundException when result for participation could not be found
+     * @return an optional result (might exist or not).
      */
-    public Result findLatestResultWithFeedbacksForParticipation(Long participationId) throws EntityNotFoundException {
-        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        if (!result.isPresent()) {
-            throw new EntityNotFoundException("result for participation " + participationId + " could not be found");
-        }
-        else {
-            return result.get();
-        }
+    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId) {
+        return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+    }
+
+    /**
+     * Check if there is a result for the given participation.
+     *
+     * @param participationId the id of the participation for which to check if there is a result.
+     * @return true if there is a result for the given participation, otherwise not.
+     */
+    public Boolean existsByParticipationId(Long participationId) {
+        return resultRepository.existsByParticipationId(participationId);
     }
 
     /**
@@ -161,17 +164,19 @@ public class ResultService {
             return Optional.empty();
         }
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-        // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-        if (result != null && participation instanceof SolutionProgrammingExerciseParticipation) {
-            extractTestCasesFromResult(programmingExercise, result);
-        }
         if (result != null) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
+            boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+                extractTestCasesFromResult(programmingExercise, result);
+            }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
-            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            resultRepository.save(result);
         }
-        resultRepository.save(result);
         return Optional.ofNullable(result);
     }
 

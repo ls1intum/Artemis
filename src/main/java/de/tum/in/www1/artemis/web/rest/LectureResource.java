@@ -133,6 +133,7 @@ public class LectureResource {
     /**
      * GET /courses/:courseId/lectures : get all the lectures of a course.
      *
+     * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")

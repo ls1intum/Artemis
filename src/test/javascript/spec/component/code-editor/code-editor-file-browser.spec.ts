@@ -25,7 +25,7 @@ import {
     CommitState,
     GitConflictState,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 
@@ -51,7 +51,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, TreeviewModule.forRoot()],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot()],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 MockComponent(CodeEditorStatusComponent),

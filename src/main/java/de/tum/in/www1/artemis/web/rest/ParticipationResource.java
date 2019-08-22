@@ -523,8 +523,8 @@ public class ParticipationResource {
             response = new MappingJacksonValue(participation);
         }
         else {
-            Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-            response = participation == null ? null : new MappingJacksonValue(participation);
+            Optional<StudentParticipation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            response = participation.isEmpty() ? null : new MappingJacksonValue(participation.get());
         }
         if (response == null) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

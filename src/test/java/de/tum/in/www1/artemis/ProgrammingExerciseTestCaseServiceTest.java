@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,11 +21,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -50,7 +53,6 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @BeforeEach
     public void reset() {
-        database.resetDatabase();
         database.addUsers(0, 1, 0);
 
         database.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -58,6 +60,11 @@ public class ProgrammingExerciseTestCaseServiceTest {
         result = new Result();
 
         programmingExercise = programmingExerciseRepository.findAll().get(0);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
@@ -121,13 +128,13 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws IllegalAccessException {
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
-        Set<WeightUpdate> weightUpdates = new HashSet<>();
-        WeightUpdate weightUpdate = new WeightUpdate();
-        weightUpdate.setId(testCase.getId());
-        weightUpdate.setWeight(400);
-        weightUpdates.add(weightUpdate);
+        Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
+        ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
+        programmingExerciseTestCaseDTO.setId(testCase.getId());
+        programmingExerciseTestCaseDTO.setWeight(400);
+        programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
-        testCaseService.updateWeights(programmingExercise.getId(), weightUpdates);
+        testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
     }
@@ -137,7 +144,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         testCaseRepository.deleteAll();
 
         Long scoreBeforeUpdate = result.getScore();
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
     }
@@ -145,19 +152,129 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldRecalculateScoreBasedOnTestCasesWeight() {
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true));
-        feedbacks.add(new Feedback().text("test2").positive(true));
-        feedbacks.add(new Feedback().text("test3").positive(false));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise);
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
 
         Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
     }
 
+    @Test
+    public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+
+        // All available test cases are fulfilled, however there are more test cases that will be run after due date.
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.getResultString()).isEqualTo("1 of 1 passed (preliminary)");
+        assertThat(result.isSuccessful()).isFalse();
+        // The feedback of the after due date test case must be removed.
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
+    }
+
+    @Test
+    public void shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise, false);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getFeedbacks()).hasSize(2);
+    }
+
+    @Test
+    public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
+        // Set programming exercise due date in past.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+
+        // All available test cases are fulfilled.
+        Long expectedScore = 25L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
+        // The feedback of the after due date test case must be kept.
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
+    }
+
+    @Test
+    public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate() {
+        // Set programming exercise due date in future.
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        Long scoreBeforeUpdate = result.getScore();
+
+        // Set all test cases of the programming exercise to be executed after due date.
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setAfterDueDate(true);
+        }
+        testCaseRepository.saveAll(testCases);
+
+        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+
+        // No test case was executed.
+        Long expectedScore = 0L;
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getResultString()).isEqualTo("0 of 0 passed");
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.isSuccessful()).isFalse();
+        // The feedback must be empty as not test should be executed yet.
+        assertThat(result.getFeedbacks()).hasSize(0);
+    }
 }
