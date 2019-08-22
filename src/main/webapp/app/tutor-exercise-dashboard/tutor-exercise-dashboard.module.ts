@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
@@ -53,7 +53,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         CourseScoreCalculationService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorExerciseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

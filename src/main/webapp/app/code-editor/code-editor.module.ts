@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { MomentModule } from 'ngx-moment';
@@ -95,7 +95,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorSubmissionService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
