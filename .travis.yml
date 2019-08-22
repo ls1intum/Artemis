@@ -56,3 +56,5 @@ jobs:
         node_js: 12.8.0
         install: yarn install
         script: yarn lint
+    allow_failures:
+      - script: yarn lint
