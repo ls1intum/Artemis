@@ -1,6 +1,6 @@
 <div>
     <h2 id="page-heading">
-        <span jhiTranslate="notificationManagement.home.title">Lectures</span>
+        <span jhiTranslate="artemisApp.notificationManagement.home.title">Lectures</span>
     </h2>
     <jhi-alert></jhi-alert>
     <br />
@@ -9,13 +9,13 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
                     <th>
-                        <span jhiTranslate="notificationManagement.title">Title</span>
+                        <span jhiTranslate="artemisApp.notificationManagement.title">Title</span>
                     </th>
                     <th>
-                        <span jhiTranslate="notificationManagement.text">Text</span>
+                        <span jhiTranslate="artemisApp.notificationManagement.text">Text</span>
                     </th>
                     <th jhiSortBy="notificationDate">
-                        <span jhiTranslate="notificationManagement.notificationDate">Date</span>
+                        <span jhiTranslate="artemisApp.notificationManagement.notificationDate">Date</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -28,7 +28,7 @@
                     <td>{{ notification.notificationDate | date: 'medium' }}</td>
                     <td>
                         <button class="btn btn-block btn-primary" *ngIf="getTargetMessage(notification.target)" (click)="notificationService.interpretNotification(notification)">
-                            {{ 'notificationManagement.' + getTargetMessage(notification.target) | translate }}
+                            {{ 'artemisApp.notificationManagement.' + getTargetMessage(notification.target) | translate }}
                         </button>
                     </td>
                 </tr>
