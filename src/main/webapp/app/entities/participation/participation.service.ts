@@ -68,11 +68,6 @@ export class ParticipationService {
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    findAllSubmissionsOfParticipation(participationId: number): Observable<Submission[]> {
-        console.log('enter rest call');
-        return this.http.get<Submission[]>(SERVER_API_URL + `api/participation-submission/${participationId}`);
-    }
-
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
