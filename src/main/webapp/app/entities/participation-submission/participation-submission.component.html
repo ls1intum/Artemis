@@ -13,6 +13,8 @@
                 <th>
                     Submission Date
                 </th>
+                <th>Result</th>
+                <th>Assessor</th>
                 <th></th>
             </tr>
         </thead>
@@ -21,6 +23,10 @@
                 <td>{{ submission.id }}</td>
                 <td>{{ submission.type }}</td>
                 <td>{{ submission.submissionDate }}</td>
+                <td>
+                    <jhi-result [result]="submission.result ? submission.result : null"></jhi-result>
+                </td>
+                <td>{{ submission.result ? (submission.result.assessor ? submission.result.assessor.firstName : 'n.a') : 'n.a' }}</td>
                 <td>
                     <button class="btn btn-danger btn-sm mr-1" (click)="deleteSubmission(submission.id)">
                         <fa-icon icon="times"></fa-icon>

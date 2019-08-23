@@ -19,11 +19,12 @@ import {
 import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ArtemisResultModule } from 'app/entities/result';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisProgrammingExerciseModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisProgrammingExerciseModule, ArtemisResultModule],
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
