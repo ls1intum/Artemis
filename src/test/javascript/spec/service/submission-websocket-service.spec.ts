@@ -173,7 +173,7 @@ describe('SubmissionWebsocketService', () => {
         httpGetStub.returns(of(pendingSubmissions));
 
         // This load the submissions for participation 1 and 2, but not for 3.
-        await submissionWebsocketService.preloadLatestPendingSubmissionsForExercise(exerciseId).toPromise();
+        submissionWebsocketService.preloadLatestPendingSubmissionsForExercise(exerciseId).toPromise();
         submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participation1.id).subscribe(([state, sub]) => {
             submissionState = state;
             submission = sub;
