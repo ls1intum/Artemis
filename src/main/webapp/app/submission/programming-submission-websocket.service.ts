@@ -22,6 +22,7 @@ export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, Submiss
 
 export interface ISubmissionWebsocketService {
     getLatestPendingSubmissionByParticipationId: (participationId: number) => Observable<ProgrammingSubmissionStateObj>;
+    preloadLatestPendingSubmissionsForExercise: (exerciseId: number) => Observable<null>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -64,6 +65,12 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             .pipe(catchError(() => of(null)));
     };
 
+    /**
+     * Fetch the latest pending submission for all participations of a given exercise.
+     * Returns an empty array if the api request fails.
+     *
+     * @param exerciseId of programming exercise.
+     */
     private fetchLatestPendingSubmissionByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | null }> => {
         return this.http
             .get<{ [participationId: number]: ProgrammingSubmission | null }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submission`)
@@ -250,6 +257,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
                     }),
                 );
             }),
+            map(() => null),
         );
     };
 

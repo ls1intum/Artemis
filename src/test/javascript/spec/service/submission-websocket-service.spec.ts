@@ -11,6 +11,8 @@ import { IParticipationWebsocketService } from 'app/entities/participation/parti
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Submission } from 'app/entities/submission';
 import { Result } from 'app/entities/result';
+import { StudentParticipation } from 'app/entities/participation';
+import { SERVER_API_URL } from 'app/app.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -153,5 +155,38 @@ describe('SubmissionWebsocketService', () => {
             [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission2],
             [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null],
         ]);
+    });
+
+    it('should fetch the latest pending submissions for all participations of an exercise if preloadLatestPendingSubmissionsForExercise is called', async () => {
+        const exerciseId = 3;
+        const participation1 = { id: 2 } as StudentParticipation;
+        const participation2 = { id: 3 } as StudentParticipation;
+        // This participation will not be cached.
+        const participation3 = { id: 4 } as StudentParticipation;
+        let submissionState, submission;
+
+        const pendingSubmissions = { [participation1.id]: currentSubmission, [participation2.id]: currentSubmission2 };
+
+        // @ts-ignore
+        const fetchLatestPendingSubmissionSpy = spy(submissionWebsocketService, 'fetchLatestPendingSubmissionByParticipationId');
+
+        httpGetStub.returns(of(pendingSubmissions));
+
+        // This load the submissions for participation 1 and 2, but not for 3.
+        await submissionWebsocketService.preloadLatestPendingSubmissionsForExercise(exerciseId).toPromise();
+        submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participation1.id).subscribe(([state, sub]) => {
+            submissionState = state;
+            submission = sub;
+        });
+
+        expect(httpGetStub).to.have.been.calledOnceWithExactly('undefinedapi/programming-exercises/3/latest-pending-submission');
+        // Fetching the latest pending submission should not trigger a rest call for a cached submission.
+        expect(fetchLatestPendingSubmissionSpy).not.to.have.been.called;
+        expect(submissionState).to.equal(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        expect(submission).to.equal(currentSubmission);
+
+        // Fetching the latest pending submission should trigger a rest call if the submission is not cached.
+        await submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participation3.id);
+        expect(fetchLatestPendingSubmissionSpy).to.have.been.calledOnceWithExactly(participation3.id);
     });
 });
