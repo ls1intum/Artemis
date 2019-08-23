@@ -16,6 +16,7 @@ export type EntityArrayResponseType = HttpResponse<Submission[]>;
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
+    public resourceUrlParticipation = SERVER_API_URL + 'api/participation-submission';
 
     constructor(private http: HttpClient) {}
 
@@ -26,6 +27,14 @@ export class SubmissionService {
     delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
+    }
+
+    findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
+        console.log('enter rest call');
+
+        return this.http
+            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}`, { observe: 'response' })
+            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
@@ -65,5 +74,12 @@ export class SubmissionService {
             });
         }
         return convertedSubmissions;
+    }
+
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            this.convertSubmissionsDateFromServer(res.body);
+        }
+        return res;
     }
 }
