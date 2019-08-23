@@ -121,7 +121,12 @@ export class ResultComponent implements OnInit, OnChanges {
                 }
             } else {
                 if (this.hasResultAndScore()) {
-                    this.templateStatus = ResultTemplateStatus.LATE;
+                    // Prevent that result is shown before assessment due date
+                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isAfter()) {
+                        this.templateStatus = ResultTemplateStatus.LATE;
+                    } else {
+                        this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
+                    }
                 } else {
                     this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
                 }
