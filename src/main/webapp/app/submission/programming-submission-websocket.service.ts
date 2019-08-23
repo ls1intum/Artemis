@@ -38,6 +38,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
     private submissionTopicsSubscribed: { [participationId: number]: string } = {};
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]> } = {};
+    private exercisePreLoadingSubjects: { [exerciseId: number]: BehaviorSubject<undefined | null> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
@@ -239,26 +240,35 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
      */
     public preloadLatestPendingSubmissionsForExercise = (exerciseId: number) => {
-        return this.fetchLatestPendingSubmissionByExerciseId(exerciseId).pipe(
-            map(submissions => {
-                return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
-            }),
-            switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
-                if (!submissions.length) {
-                    return of([]);
-                }
-                return from(submissions).pipe(
-                    switchMap(([participationId, submission]) => {
-                        this.submissionSubjects[participationId] = new BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]>([
-                            ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-                            undefined,
-                        ]);
-                        return this.processPendingSubmission(submission, participationId);
-                    }),
-                );
-            }),
-            map(() => null),
-        );
+        // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple done.
+        const preloadingSubject = this.exercisePreLoadingSubjects[exerciseId];
+        if (preloadingSubject) {
+            return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<null>;
+        }
+        const newSubject = new BehaviorSubject<undefined | null>(undefined);
+        this.exercisePreLoadingSubjects[exerciseId] = newSubject;
+        this.fetchLatestPendingSubmissionByExerciseId(exerciseId)
+            .pipe(
+                map(submissions => {
+                    return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
+                }),
+                switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
+                    if (!submissions.length) {
+                        return of([]);
+                    }
+                    return from(submissions).pipe(
+                        switchMap(([participationId, submission]) => {
+                            this.submissionSubjects[participationId] = new BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]>([
+                                ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+                                undefined,
+                            ]);
+                            return this.processPendingSubmission(submission, participationId);
+                        }),
+                    );
+                }),
+            )
+            .subscribe(() => newSubject.next(null));
+        return newSubject.asObservable().filter(val => val !== undefined) as Observable<null>;
     };
 
     public triggerBuild(participationId: number) {
