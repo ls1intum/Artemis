@@ -30,6 +30,10 @@ public class TutorLeaderboardDTO {
         this.points = points;
     }
 
+    public TutorLeaderboardDTO() {
+
+    }
+
     public Long getUserId() {
         return userId;
     }

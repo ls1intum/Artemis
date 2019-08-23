@@ -15,10 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -547,6 +544,16 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
+        Result r = addResultToSubmission(submission);
+        r.setAssessmentType(assessmentType);
+        r.completionDate(ZonedDateTime.now());
+        r.setAssessor(user);
+        resultRepo.save(r);
+        return r;
+
     }
 
     public void addHintsToExercise(Exercise exercise) {
