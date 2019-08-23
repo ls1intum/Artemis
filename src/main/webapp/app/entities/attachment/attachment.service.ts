@@ -57,19 +57,19 @@ export class AttachmentService {
      */
     downloadAttachment(downloadUrl: string) {
         const fileName = downloadUrl.split('/').slice(-1)[0];
-        return this.http
+        const newWindow = window.open('about:blank');
+        this.http
             .get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })
-            .switchMap(result => this.http.get(`${downloadUrl}?access_token=${result.body}`, { observe: 'response', responseType: 'blob' }))
-            .do(response => {
-                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename')!);
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-            });
+            .toPromise()
+            .then(
+                (result: HttpResponse<String>) => {
+                    newWindow!.location.href = `${downloadUrl}?access_token=${result.body}`;
+                },
+                () => {
+                    newWindow!.close();
+                },
+            );
+        return newWindow;
     }
 
     protected convertDateFromClient(attachment: Attachment): Attachment {
