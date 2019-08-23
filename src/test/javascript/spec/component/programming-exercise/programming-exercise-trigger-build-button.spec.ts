@@ -22,7 +22,7 @@ import {
     ProgrammingSubmissionStateObj,
     ProgrammingSubmissionWebsocketService,
 } from 'app/programming-submission/programming-submission-websocket.service';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
 
 chai.use(sinonChai);
 const expect = chai.expect;
