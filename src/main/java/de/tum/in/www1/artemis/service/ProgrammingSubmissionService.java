@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -141,6 +141,22 @@ public class ProgrammingSubmissionService {
             return null;
         }
         return submissionOpt.get();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, ProgrammingSubmission> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+        Map<Long, ProgrammingSubmission> pendingSubmissions = new HashMap<>();
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+            if (submissionOpt.isPresent() && submissionOpt.get().getResult() == null) {
+                pendingSubmissions.put(participation.getId(), submissionOpt.get());
+            }
+            else {
+                pendingSubmissions.put(participation.getId(), null);
+            }
+        }
+        return pendingSubmissions;
     }
 
     /**

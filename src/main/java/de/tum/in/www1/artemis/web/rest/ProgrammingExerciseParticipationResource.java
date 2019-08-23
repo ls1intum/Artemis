@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -30,12 +31,19 @@ public class ProgrammingExerciseParticipationResource {
 
     private ProgrammingSubmissionService submissionService;
 
+    private ProgrammingExerciseService programmingExerciseService;
+
+    private AuthorizationCheckService authCheckService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService) {
+            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseService programmingExerciseService,
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
+        this.programmingExerciseService = programmingExerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -116,6 +124,23 @@ public class ProgrammingExerciseParticipationResource {
             return forbidden();
         }
         return ResponseEntity.ok(submission);
+    }
+
+    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submission")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Map<Long, ProgrammingSubmission>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+        ProgrammingExercise programmingExercise;
+        try {
+            programmingExercise = programmingExerciseService.findById(exerciseId);
+        }
+        catch (EntityNotFoundException ex) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        Map<Long, ProgrammingSubmission> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
+        return ResponseEntity.ok(pendingSubmissions);
     }
 
     /**
