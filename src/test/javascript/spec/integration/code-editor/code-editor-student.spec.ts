@@ -154,7 +154,7 @@ describe('CodeEditorStudentIntegration', () => {
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
             });
     });
 

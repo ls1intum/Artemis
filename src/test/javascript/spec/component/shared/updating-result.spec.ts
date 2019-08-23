@@ -78,7 +78,7 @@ describe('UpdatingResultComponent', () => {
                     subscribeForLatestResultOfParticipationSubject,
                 );
 
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(
+                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmissionByParticipationId').returns(
                     of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]),
                 );
             });

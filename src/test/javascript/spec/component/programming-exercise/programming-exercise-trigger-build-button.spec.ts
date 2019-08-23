@@ -68,7 +68,7 @@ describe('TriggerBuildButtonSpec', () => {
                 submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
 
                 triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
             });

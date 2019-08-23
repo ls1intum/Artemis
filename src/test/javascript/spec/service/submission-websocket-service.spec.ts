@@ -63,7 +63,7 @@ describe('SubmissionWebsocketService', () => {
     it('should return cached subject as Observable for provided participation if exists', () => {
         const cachedSubject = new BehaviorSubject(null);
         // @ts-ignore
-        const fetchLatestPendingSubmissionSpy = spy(submissionWebsocketService, 'fetchLatestPendingSubmission');
+        const fetchLatestPendingSubmissionSpy = spy(submissionWebsocketService, 'fetchLatestPendingSubmissionByParticipationId');
         // @ts-ignore
         const setupWebsocketSubscriptionSpy = spy(submissionWebsocketService, 'setupWebsocketSubscription');
         // @ts-ignore
