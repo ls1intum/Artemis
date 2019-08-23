@@ -115,14 +115,19 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.isModelingOrText()) {
             if (this.isSubmissionInDueTime()) {
                 if (this.hasResultAndScore()) {
-                    this.templateStatus = ResultTemplateStatus.HAS_RESULT;
+                    // Prevent that result is shown before assessment due date
+                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isBefore()) {
+                        this.templateStatus = ResultTemplateStatus.HAS_RESULT;
+                    } else {
+                        this.templateStatus = ResultTemplateStatus.NO_RESULT;
+                    }
                 } else {
                     this.templateStatus = ResultTemplateStatus.SUBMITTED;
                 }
             } else {
                 if (this.hasResultAndScore()) {
                     // Prevent that result is shown before assessment due date
-                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isAfter()) {
+                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isBefore()) {
                         this.templateStatus = ResultTemplateStatus.LATE;
                     } else {
                         this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
