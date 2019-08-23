@@ -6,6 +6,7 @@ import { ParticipationDeletePopupComponent } from './participation-delete-dialog
 import { ExerciseScoresResultResultPopupComponent } from 'app/scores/exercise-scores-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
 import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
+import { ParticipationSubmissionDeletePopupComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
 
 export const participationRoute: Routes = [
     {
@@ -63,6 +64,16 @@ export const participationPopupRoute: Routes = [
         component: ExerciseScoresResultResultPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.participation.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+    {
+        path: 'participationSubmission/:id/delete',
+        component: ParticipationSubmissionDeletePopupComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],

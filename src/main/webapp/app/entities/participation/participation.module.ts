@@ -43,6 +43,8 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
+        ParticipationSubmissionDeleteDialogComponent,
+        ParticipationSubmissionDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
