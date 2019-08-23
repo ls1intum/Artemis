@@ -3,6 +3,10 @@ import { ParticipationService, StudentParticipation } from 'app/entities/partici
 import { ActivatedRoute } from '@angular/router';
 import { Submission } from 'app/entities/submission';
 import { SubmissionService } from 'app/entities/submission/submission.service';
+import { Result } from 'app/entities/result';
+
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -11,10 +15,22 @@ import { SubmissionService } from 'app/entities/submission/submission.service';
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
     submissions: Submission[];
+    eventSubscriber: Subscription;
+    result: Result;
 
-    constructor(private route: ActivatedRoute, private participationService: ParticipationService, private submissionService: SubmissionService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private participationService: ParticipationService,
+        private submissionService: SubmissionService,
+        private eventManager: JhiEventManager,
+    ) {}
 
     ngOnInit() {
+        this.setupPage();
+        this.eventSubscriber = this.eventManager.subscribe('submissionsModification', () => this.setupPage());
+    }
+
+    setupPage() {
         this.route.params.subscribe(params => {
             this.participationId = +params['participationId'];
         });
@@ -25,9 +41,13 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     deleteSubmission(submissionId: number) {
-        this.submissionService.delete(submissionId).subscribe(response => {
-            console.log('delete');
-            console.log(response);
+        console.log(this.submissions);
+
+        this.submissionService.delete(submissionId).subscribe(() => {
+            this.eventManager.broadcast({
+                name: 'submissionsModification',
+                content: 'Deleted an submission',
+            });
         });
     }
 }
