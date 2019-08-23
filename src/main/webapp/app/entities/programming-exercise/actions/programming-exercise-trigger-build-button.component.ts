@@ -64,7 +64,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmission(this.participation.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id)
             .pipe(
                 tap(([submissionState]) => {
                     switch (submissionState) {

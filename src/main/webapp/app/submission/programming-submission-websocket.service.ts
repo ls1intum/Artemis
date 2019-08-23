@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, merge, Observable, of, from, Subject, Subscription, timer, pipe, UnaryFunction } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, last, concatAll, switchMap, map, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -21,7 +21,7 @@ export enum ProgrammingSubmissionState {
 export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, Submission | null];
 
 export interface ISubmissionWebsocketService {
-    getLatestPendingSubmission: (participationId: number) => Observable<ProgrammingSubmissionStateObj>;
+    getLatestPendingSubmissionByParticipationId: (participationId: number) => Observable<ProgrammingSubmissionStateObj>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -58,10 +58,16 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      *
      * @param participationId
      */
-    private fetchLatestPendingSubmission = (participationId: number): Observable<Submission | null> => {
+    private fetchLatestPendingSubmissionByParticipationId = (participationId: number): Observable<ProgrammingSubmission | null> => {
         return this.http
             .get<ProgrammingSubmission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
             .pipe(catchError(() => of(null)));
+    };
+
+    private fetchLatestPendingSubmissionByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | null }> => {
+        return this.http
+            .get<{ [participationId: number]: ProgrammingSubmission | null }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submission`)
+            .pipe(catchError(() => of([])));
     };
 
     /**
@@ -197,7 +203,7 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      *
      * @param participationId
      */
-    public getLatestPendingSubmission = (participationId: number) => {
+    public getLatestPendingSubmissionByParticipationId = (participationId: number) => {
         const subject = this.submissionSubjects[participationId];
         if (subject) {
             return subject.asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
@@ -208,33 +214,61 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             undefined,
         ]);
-        this.fetchLatestPendingSubmission(participationId)
-            .pipe(
-                tap((submission: ProgrammingSubmission | null) => {
-                    this.latestSubmission[participationId] = submission;
-                }),
-                tap(() => {
-                    this.setupWebsocketSubscription(participationId);
-                    this.subscribeForNewResult(participationId);
-                }),
-                tap((submission: ProgrammingSubmission | null) => {
-                    if (submission) {
-                        const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
-                        if (remainingTime > 0) {
-                            this.emitBuildingSubmission(participationId, submission);
-                            this.startResultWaitingTimer(participationId, remainingTime);
-                            return;
-                        }
-                        // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
-                        this.onError(participationId);
-                        return;
-                    }
-                    this.emitNoPendingSubmission(participationId);
-                }),
-            )
+        this.fetchLatestPendingSubmissionByParticipationId(participationId)
+            .pipe(switchMap(submission => this.processPendingSubmission(submission, participationId)))
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+    };
+
+    public preloadLatestPendingSubmissionsForExercise = (exerciseId: number) => {
+        // TODO: Add security mechanism for case of multiple subscribers.
+        return this.fetchLatestPendingSubmissionByExerciseId(exerciseId).pipe(
+            map(submissions => {
+                return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
+            }),
+            switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
+                if (!submissions.length) {
+                    return of([]);
+                }
+                return from(submissions).pipe(
+                    switchMap(([participationId, submission]) => {
+                        this.submissionSubjects[participationId] = new BehaviorSubject<[ProgrammingSubmissionState, Submission | null | undefined]>([
+                            ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+                            undefined,
+                        ]);
+                        return this.processPendingSubmission(submission, participationId);
+                    }),
+                );
+            }),
+        );
+    };
+
+    private processPendingSubmission = (submission: ProgrammingSubmission | null, participationId: number) => {
+        // TODO: Fix shadowed variable name.
+        return of(submission).pipe(
+            tap((submission: ProgrammingSubmission | null) => {
+                this.latestSubmission[participationId] = submission;
+            }),
+            tap(() => {
+                this.setupWebsocketSubscription(participationId);
+                this.subscribeForNewResult(participationId);
+            }),
+            tap((submission: ProgrammingSubmission | null) => {
+                if (submission) {
+                    const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
+                    if (remainingTime > 0) {
+                        this.emitBuildingSubmission(participationId, submission);
+                        this.startResultWaitingTimer(participationId, remainingTime);
+                        return;
+                    }
+                    // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
+                    this.onError(participationId);
+                    return;
+                }
+                this.emitNoPendingSubmission(participationId);
+            }),
+        );
     };
 
     public triggerBuild(participationId: number) {

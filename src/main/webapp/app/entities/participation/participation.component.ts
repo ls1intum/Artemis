@@ -9,6 +9,7 @@ import { Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 
 @Component({
     selector: 'jhi-participation',
@@ -27,26 +28,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
 
+    hasLoadedPendingSubmissions = false;
+
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
+        private programmingSubmissionService: ProgrammingSubmissionWebsocketService,
     ) {
         this.reverse = true;
         this.predicate = 'id';
-    }
-
-    loadAll() {
-        this.paramSub = this.route.params.subscribe(params => {
-            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
-                this.exercise = exerciseResponse.body!;
-                this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(participationsResponse => {
-                    this.participations = participationsResponse.body!;
-                });
-            });
-        });
     }
 
     ngOnInit() {
@@ -56,6 +49,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+    }
+
+    loadAll() {
+        this.paramSub = this.route.params.subscribe(params => {
+            this.hasLoadedPendingSubmissions = false;
+            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+                this.exercise = exerciseResponse.body!;
+                this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(participationsResponse => {
+                    this.participations = participationsResponse.body!;
+                });
+                if (this.exercise.type === this.PROGRAMMING) {
+                    this.programmingSubmissionService.preloadLatestPendingSubmissionsForExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
+                }
+            });
+        });
     }
 
     trackId(index: number, item: Participation) {

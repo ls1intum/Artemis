@@ -71,7 +71,7 @@ describe('SubmissionWebsocketService', () => {
         // @ts-ignore
         submissionWebsocketService.submissionSubjects = { [participationId]: cachedSubject };
 
-        const returnedObservable = submissionWebsocketService.getLatestPendingSubmission(participationId);
+        const returnedObservable = submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId);
         expect(fetchLatestPendingSubmissionSpy).to.not.have.been.called;
         expect(setupWebsocketSubscriptionSpy).to.not.have.been.called;
         expect(subscribeForNewResultSpy).to.not.have.been.called;
@@ -79,7 +79,7 @@ describe('SubmissionWebsocketService', () => {
 
     it('should query http endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
         httpGetStub.returns(of(currentSubmission));
-        const submission = await new Promise(resolve => submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => resolve(s)));
+        const submission = await new Promise(resolve => submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId).subscribe(s => resolve(s)));
         expect(submission).to.deep.equal([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]);
         expect(wsSubscribeStub).to.have.been.calledOnceWithExactly(submissionTopic);
         expect(wsReceiveStub).to.have.been.calledOnceWithExactly(submissionTopic);
@@ -89,7 +89,7 @@ describe('SubmissionWebsocketService', () => {
     it('should emit a null value when a new result comes in for the given participation to signal that the building process is over', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(currentSubmission));
-        submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
+        submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId).subscribe(s => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]]);
         // Result comes in for submission.
         result.submission = currentSubmission;
@@ -103,7 +103,7 @@ describe('SubmissionWebsocketService', () => {
     it('should NOT emit a null value when a new result comes that does not belong to the currentSubmission', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(currentSubmission));
-        submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
+        submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId).subscribe(s => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]]);
         // Result comes in for submission.
         result.submission = currentSubmission2;
@@ -115,7 +115,7 @@ describe('SubmissionWebsocketService', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         // No latest pending submission found.
         httpGetStub.returns(of(null));
-        submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
+        submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId).subscribe(s => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]]);
         // New submission comes in.
         wsSubmissionSubject.next(currentSubmission2);
@@ -139,7 +139,7 @@ describe('SubmissionWebsocketService', () => {
         submissionWebsocketService.EXPECTED_RESULT_CREATION_TIME_MS = 10;
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(null));
-        submissionWebsocketService.getLatestPendingSubmission(participationId).subscribe(s => returnedSubmissions.push(s));
+        submissionWebsocketService.getLatestPendingSubmissionByParticipationId(participationId).subscribe(s => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]]);
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
