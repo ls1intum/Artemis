@@ -221,8 +221,17 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
         return this.submissionSubjects[participationId].asObservable().pipe(filter(([, s]) => s !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
     };
 
+    /**
+     * Will retrieve and cache all pending submissions for all student participations of given exercise.
+     * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server for every participation.
+     *
+     * Will emit once at the end so the subscriber knows that the loading & setup process is done.
+     *
+     * If the user is not an instructor, this method will not be able to retrieve any pending submission.
+     *
+     * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
+     */
     public preloadLatestPendingSubmissionsForExercise = (exerciseId: number) => {
-        // TODO: Add security mechanism for case of multiple subscribers.
         return this.fetchLatestPendingSubmissionByExerciseId(exerciseId).pipe(
             map(submissions => {
                 return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
@@ -244,9 +253,22 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
         );
     };
 
-    private processPendingSubmission = (submission: ProgrammingSubmission | null, participationId: number) => {
-        // TODO: Fix shadowed variable name.
-        return of(submission).pipe(
+    public triggerBuild(participationId: number) {
+        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-build', {});
+    }
+
+    public triggerInstructorBuild(participationId: number) {
+        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-instructor-build', {});
+    }
+
+    /**
+     * Cache a retrieved pending submission and setup the websocket connections and timer.
+     *
+     * @param submissionToBeProcessed to cache and use for the websocket subscriptions
+     * @param participationId that serves as an identifier for caching the submission.
+     */
+    private processPendingSubmission = (submissionToBeProcessed: ProgrammingSubmission | null, participationId: number) => {
+        return of(submissionToBeProcessed).pipe(
             tap((submission: ProgrammingSubmission | null) => {
                 this.latestSubmission[participationId] = submission;
             }),
@@ -270,12 +292,4 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
             }),
         );
     };
-
-    public triggerBuild(participationId: number) {
-        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-build', {});
-    }
-
-    public triggerInstructorBuild(participationId: number) {
-        return this.http.post(this.RESOURCE_URL + participationId + '/trigger-instructor-build', {});
-    }
 }

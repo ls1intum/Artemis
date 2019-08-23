@@ -143,6 +143,12 @@ public class ProgrammingSubmissionService {
         return submissionOpt.get();
     }
 
+    /**
+     * For every student participation of a programming exercise, try to find a pending submission.
+     *
+     * @param programmingExerciseId for which to search pending submissions
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
+     */
     @Transactional(readOnly = true)
     public Map<Long, ProgrammingSubmission> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         Map<Long, ProgrammingSubmission> pendingSubmissions = new HashMap<>();
@@ -153,6 +159,7 @@ public class ProgrammingSubmissionService {
                 pendingSubmissions.put(participation.getId(), submissionOpt.get());
             }
             else {
+                // This means that there is no pending submission.
                 pendingSubmissions.put(participation.getId(), null);
             }
         }
