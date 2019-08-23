@@ -124,6 +124,15 @@ public class ModelingSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
+    /**
+     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
+     * only return all the modeling submissions where the tutor has a result associated
+     *
+     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param submittedOnly if true, it returns only submission with submitted flag set to true
+     * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
+     * @return a list of modeling submissions
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
@@ -185,6 +194,8 @@ public class ModelingSubmissionResource {
     /**
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment.
      *
+     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
@@ -271,6 +282,12 @@ public class ModelingSubmissionResource {
         }
     }
 
+    /**
+     * DELETE /exercises/{exerciseId}/optimal-model-submissions: Reset models waiting for assessment by Compass by emptying the waiting list
+     *
+     * @param exerciseId id of the exercise
+     * @return the response entity with status 200 (OK) if reset was performed successfully, otherwise appropriate error code
+     */
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {

@@ -4,7 +4,7 @@ bootWar {
     mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
     includes = ["WEB-INF/**", "META-INF/**"]
 }
-// Command for production build: './gradlew -Pprod bootWar'
+// Command for production build: ./gradlew -Pprod -Pwar clean bootWar
 
 war {
     webAppDirName = "build/resources/main/static/"

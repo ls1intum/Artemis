@@ -104,7 +104,6 @@ public class QuizScheduleService {
             }
             resultHashMap.get(quizId).add(result);
         }
-
     }
 
     /**
@@ -172,7 +171,9 @@ public class QuizScheduleService {
     }
 
     /**
-     * start scheduler
+     * Start scheduler of quiz schedule service
+     *
+     * @param delayInMillis gap for which the QuizScheduleService should run repeatly
      */
     public void startSchedule(long delayInMillis) {
         log.info("QuizScheduleService was started to run repeatedly with {} second gaps.", delayInMillis / 1000.0);
@@ -197,6 +198,11 @@ public class QuizScheduleService {
         }
     }
 
+    /**
+     * Start scheduler of quiz
+     *
+     * @param quizExercise that should be scheduled
+     */
     public void scheduleQuizStart(final QuizExercise quizExercise) {
         // first remove and cancel old scheduledFuture if it exists
         cancelScheduledQuizStart(quizExercise.getId());
@@ -401,6 +407,8 @@ public class QuizScheduleService {
 
             // create and save new participation
             StudentParticipation participation = new StudentParticipation();
+            // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
+            participation.setInitializationDate(quizSubmission.getSubmissionDate());
             Optional<User> user = userService.getUserByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());

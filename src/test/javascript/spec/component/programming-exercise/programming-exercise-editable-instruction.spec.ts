@@ -1,17 +1,16 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { of, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
+import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
@@ -52,7 +51,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule],
             declarations: [
                 ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseEditableInstructionComponent,

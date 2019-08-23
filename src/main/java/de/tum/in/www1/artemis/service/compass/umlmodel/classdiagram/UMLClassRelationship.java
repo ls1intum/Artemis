@@ -20,6 +20,10 @@ public class UMLClassRelationship extends UMLElement {
                     .collect(Collectors.toList());
         }
 
+        /**
+         * Converts the UMLClassRelationShip to a representing string
+         * @return the String which represents the RelationShip
+         */
         public String toSymbol() {
             switch (this) {
             case CLASS_DEPENDENCY:

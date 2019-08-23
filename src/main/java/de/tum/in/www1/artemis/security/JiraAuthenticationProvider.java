@@ -129,8 +129,10 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
-            User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(
-                    () -> userService.createUser((String) content.get("name"), "", (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en"));
+            final String login = (String) content.get("name");
+            final String emailAddress = (String) content.get("emailAddress");
+            User user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, "", (String) content.get("displayName"), "", emailAddress, null, "en"));
+            user.setEmail(emailAddress);
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);

@@ -65,11 +65,11 @@ public class GitService {
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     public GitService() {
-        log.debug("Default Charset=" + Charset.defaultCharset());
-        log.debug("file.encoding=" + System.getProperty("file.encoding"));
-        log.debug("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
-        log.debug("Default Charset=" + Charset.defaultCharset());
-        log.debug("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("file.encoding=" + System.getProperty("file.encoding"));
+        log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
     }
 
     /**
@@ -342,6 +342,9 @@ public class GitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     public ObjectId getLastCommitHash(URL repoUrl) throws EntityNotFoundException {
+        if (repoUrl == null) {
+            return null;
+        }
         // Get refs of repo without cloning it locally
         Collection<Ref> refs;
         try {
@@ -374,6 +377,10 @@ public class GitService {
         try {
             Git git = new Git(repository);
 
+            // TODO: get the latest submission before the due date from the database for the user behind the repository
+            // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
+
+            // TODO: in case the above TASKS do not work, use the below code as fallback
             // Get last commit before deadline
             Date since = Date.from(Instant.EPOCH);
             Date until = Date.from(exercise.getDueDate().toInstant());
