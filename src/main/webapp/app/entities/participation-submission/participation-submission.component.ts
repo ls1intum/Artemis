@@ -40,6 +40,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         });
     }
 
+    /*
     deleteSubmission(submissionId: number) {
         console.log(this.submissions);
 
@@ -50,4 +51,5 @@ export class ParticipationSubmissionComponent implements OnInit {
             });
         });
     }
+    */
 }
