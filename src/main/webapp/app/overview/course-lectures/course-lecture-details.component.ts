@@ -76,14 +76,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string): void {
         if (!this.isDownloadingLink) {
             this.isDownloadingLink = downloadUrl;
-            this.attachmentService.downloadAttachment(downloadUrl).subscribe(
-                response => {
-                    this.isDownloadingLink = null;
-                },
-                error => {
-                    this.isDownloadingLink = null;
-                },
-            );
+            this.attachmentService.downloadAttachment(downloadUrl);
         }
     }
 }

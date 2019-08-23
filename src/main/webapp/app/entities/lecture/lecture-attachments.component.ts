@@ -137,14 +137,7 @@ export class LectureAttachmentsComponent implements OnInit {
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.attachmentService.downloadAttachment(downloadUrl).subscribe(
-                () => {
-                    this.isDownloadingAttachmentLink = null;
-                },
-                error => {
-                    this.isDownloadingAttachmentLink = null;
-                },
-            );
+            this.attachmentService.downloadAttachment(downloadUrl);
         }
     }
 
