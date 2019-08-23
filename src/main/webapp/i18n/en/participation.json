@@ -36,7 +36,10 @@
             "student": "Student",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
-            "deleteBuildPlan": "Delete build plan"
+            "deleteBuildPlan": "Delete build plan",
+            "participationSubmission": {
+                "delete": "Are you sure you want to delete this submission?"
+            }
         }
     }
 }
