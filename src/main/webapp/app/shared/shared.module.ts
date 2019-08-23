@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedCommonModule, ArtemisSharedLibsModule, HasAnyAuthorityDirective } from './';
 import { FileUploaderService } from './http/file-uploader.service';
@@ -15,7 +15,6 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService],
     entryComponents: [],
     exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisSharedModule {
     static forRoot() {

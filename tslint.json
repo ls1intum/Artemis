@@ -27,8 +27,9 @@
         "member-access": false,
         "member-ordering": [
             true,
-            "static-before-instance",
-            "variables-before-functions"
+            {
+                "order": "fields-first"
+            }
         ],
         "no-arg": true,
         "no-bitwise": true,
@@ -119,6 +120,15 @@
         "use-lifecycle-interface": true,
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
-        "directive-class-suffix": true
+        "directive-class-suffix": true,
+        "completed-docs": [
+            true,
+            {
+                "properties": { "privacies": "public" },
+                "enums": { "visibilities": "all" },
+                "functions": { "visibilities": "all" },
+                "methods": { "privacies": "public"}
+            }
+        ]
     }
 }

@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
@@ -14,7 +14,6 @@ import { ArtemisProgrammingSubmissionModule } from 'app/submission/submission.mo
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],
     providers: [ResultService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisResultModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

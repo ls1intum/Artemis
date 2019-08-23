@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -89,7 +89,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisProgrammingExerciseInstructionsEditorModule,
     ],
     providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisProgrammingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

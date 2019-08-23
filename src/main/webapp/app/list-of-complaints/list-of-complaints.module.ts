@@ -1,9 +1,8 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
+import { NgModule } from '@angular/core';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from '../shared';
-import { JhiAlertService } from 'ng-jhipster';
 import { ListOfComplaintsComponent } from './list-of-complaints.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -19,7 +18,6 @@ const ENTITY_STATES = [...listOfComplaintsRoute];
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisListOfComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { RouterModule } from '@angular/router';
 import { MomentModule } from 'ngx-moment';
@@ -37,7 +37,6 @@ import {
 import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 
@@ -45,14 +44,14 @@ const ENTITY_STATES = [...codeEditorRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
         AceEditorModule,
-        ArtemisResultModule,
         MomentModule,
+        ArtemisSharedModule,
+        ArtemisResultModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
         TreeviewModule.forRoot(),
-        RouterModule.forChild(ENTITY_STATES),
         ArtemisExerciseHintModule,
     ],
     declarations: [
@@ -92,7 +91,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorSubmissionService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

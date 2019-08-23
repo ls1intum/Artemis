@@ -1,6 +1,5 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import { NgModule } from '@angular/core';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 
@@ -23,7 +22,6 @@ import { ComplaintResponseService } from 'app/entities/complaint-response';
             useClass: JhiLanguageService,
         },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisComplaintsForTutorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
