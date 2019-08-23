@@ -285,13 +285,13 @@ public abstract class RepositoryResource {
         try {
             responseEntitySuccess = executor.exec();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | FileAlreadyExistsException ex) {
             return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
         }
-        catch (FileAlreadyExistsException | CheckoutConflictException | WrongRepositoryStateException ex) {
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {

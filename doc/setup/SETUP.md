@@ -7,7 +7,7 @@ You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.j
 Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
 
 1. [Java 12 JDK](https://www.oracle.com/technetwork/java/javase/downloads/jdk12-downloads-5295953.html): Java is the main development language for the server application of Artemis.
-2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. (Please note that MySQL 8 is not yet supported)
+2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application.
 3. [Node.js](https://nodejs.org): We use Node (>=12.3.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. 
 4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.15.2) to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
@@ -31,7 +31,7 @@ artemis:
     secret: <password>
   bamboo:
     url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
+    bitbucket-application-link-id: <link-id>
     user: <username>
     password: <password>
     empty-commit-necessary: true
@@ -56,12 +56,12 @@ The Artemis server should startup by running the main class ```de.tum.in.www1.ar
 One typical problem in the development setup is that an exception occurs during the database initialization. Artemis uses [Liquibase](https://www.liquibase.org) to automatically upgrade the database scheme after changes to the data model. This ensures that the changes can also be applied to the production server. In some development environments, it can be the case that the liquibase migration from an empty database scheme to the current version of the database scheme fails, e.g. due to the fact that the asynchronous migration is too slow. In these cases, it can help to manually import an existing database scheme using e.g. MySQL Workbench or Sequel Pro into the `Artemis` database scheme in your MySQL server. You can find a recent scheme in the `data` folder in this git repository. If you then start the application server, liquibase will recognize that all migration steps have already been executed. In case you encounter errors with liquibase checksum values, run the following command in your terminal / command line:
 
 ```
-java -jar liquibase-core-3.5.3.jar --url=jdbc:mysql://localhost:3306/ArTEMiS --username=root --password='' --classpath=mysql-connector-java-5.1.43.jar  clearCheckSums
+java -jar liquibase-core-3.5.5.jar --url='jdbc:mysql://localhost:3306/Artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC' --username=root --password='' --classpath=mysql-connector-java-8.0.17.jar clearCheckSums
 ```
 You can download the required jar files here:
 
-* [liquibase-core-3.5.3.jar](http://central.maven.org/maven2/org/liquibase/liquibase-core/3.5.3/liquibase-core-3.5.3.jar)
-* [mysql-connector-java-5.1.43.jar](http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.43/mysql-connector-java-5.1.43.jar)
+* [liquibase-core-3.5.5.jar](http://central.maven.org/maven2/org/liquibase/liquibase-core/3.5.5/liquibase-core-3.5.5.jar)
+* [mysql-connector-java-8.0.17.jar](http://central.maven.org/maven2/mysql/mysql-connector-java/8.0.17/mysql-connector-java-8.0.17.jar)
 
 As an alternative you can use this gradle command:
 
@@ -71,13 +71,17 @@ As an alternative you can use this gradle command:
 
 If you use a password, you need to adapt it in Artemis/gradle/liquibase.gradle.
 
-**Please note:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+**Important:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
+If you use IntelliJ, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+
+    dev,bamboo,bitbucket,jira,artemis 
+
 ### Client Setup
 
-After installing Node, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
+After installing Node and Yarn, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
 
 ```
 yarn install
@@ -93,7 +97,7 @@ This compiles TypeScript code to JavaScript code, starts the hot module replacem
 
 For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
-### Using docker-compose
+### Alternative: Using docker-compose
 
 A full functioning development environment can also be set up using docker-compose: 
 

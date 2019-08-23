@@ -3,22 +3,19 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
+import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { stub, SinonStub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { Observable, of } from 'rxjs';
-import { CodeEditorBuildLogService, CodeEditorSessionService, CodeEditorBuildOutputComponent } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { CodeEditorBuildLogService, CodeEditorBuildOutputComponent, CodeEditorSessionService } from 'app/code-editor';
+import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
-import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
+import { MockCodeEditorBuildLogService, MockCodeEditorSessionService, MockCookieService, MockParticipationWebsocketService, MockResultService, MockSyncStorage } from '../../mocks';
 import { SafeHtmlPipe } from 'app/shared';
-import { MockCodeEditorSessionService, MockCookieService, MockParticipationWebsocketService } from '../../mocks';
 import { ResultService } from 'app/entities/result';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { Feedback } from 'app/entities/feedback';
-import { MockResultService } from '../../mocks/mock-result.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { AnnotationArray } from 'app/entities/ace-editor';
 
@@ -40,7 +37,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorBuildOutputComponent, SafeHtmlPipe],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
@@ -136,7 +133,6 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('should not retrieve build logs after participation change if result is successful (= all tests were passed)', () => {
         const result = { id: 1, successful: true };
         const participation = { id: 1, results: [result] } as Participation;
-        comp.participation = participation;
         comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
         getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));

@@ -122,8 +122,10 @@ public class DatabaseUtilService {
         textSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
-        programmingExerciseRepository.deleteAll();
         participationRepo.deleteAll();
+        solutionProgrammingExerciseParticipationRepo.deleteAll();
+        templateProgrammingExerciseParticipationRepo.deleteAll();
+        programmingExerciseRepository.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
@@ -178,11 +180,12 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
     }
 
+    @Transactional
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
-        Optional<ProgrammingExerciseStudentParticipation> storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(),
+        Optional<ProgrammingExerciseStudentParticipation> existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(),
                 login);
-        if (storedParticipation.isPresent()) {
-            return storedParticipation.get();
+        if (existingParticipation.isPresent()) {
+            return existingParticipation.get();
         }
         User user = getUserByLogin(login);
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
@@ -190,32 +193,29 @@ public class DatabaseUtilService {
         participation.setExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-" + login.toUpperCase());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipationRepo.save(participation);
-        storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
-        assertThat(storedParticipation).isPresent();
-        exercise.addParticipation((StudentParticipation) storedParticipation.get());
-        programmingExerciseRepository.save(exercise);
-        return programmingExerciseStudentParticipationRepo.findById(storedParticipation.get().getId()).get();
+        return studentParticipationRepo.save(participation);
     }
 
-    public TemplateProgrammingExerciseParticipation addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+    @Transactional
+    public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
         participation.setInitializationState(InitializationState.INITIALIZED);
-        exercise.setTemplateParticipation(participation);
         templateProgrammingExerciseParticipationRepo.save(participation);
-        programmingExerciseRepository.save(exercise);
-        return participation;
+        exercise.setTemplateParticipation(participation);
+        return programmingExerciseRepository.save(exercise);
     }
 
-    public SolutionProgrammingExerciseParticipation addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+    @Transactional
+    public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
         participation.setInitializationState(InitializationState.INITIALIZED);
-        exercise.setSolutionParticipation(participation);
         solutionProgrammingExerciseParticipationRepo.save(participation);
-        programmingExerciseRepository.save(exercise);
-        return participation;
+        exercise.setSolutionParticipation(participation);
+        return programmingExerciseRepository.save(exercise);
     }
 
     public Result addResultToParticipation(Participation participation) {
@@ -313,11 +313,13 @@ public class DatabaseUtilService {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2).active(false).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise).afterDueDate(true));
         testCaseRepository.saveAll(testCases);
 
         assertThat(programmingExerciseRepository.findAll()).as("programming exercise is initialized").hasSize(1);

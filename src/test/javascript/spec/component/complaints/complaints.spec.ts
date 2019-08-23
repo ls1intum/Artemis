@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed, async, tick, fakeAsync } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
-import { By, BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
@@ -20,7 +20,7 @@ describe('ComplaintsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, HttpClientModule],
+            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule],
             declarations: [ComplaintsComponent],
             providers: [
                 {

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +69,6 @@ public class AutomaticSubmissionServiceIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(2, 0, 0);
         database.addCourseWithOneModelingAndOneTextExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
@@ -94,6 +94,11 @@ public class AutomaticSubmissionServiceIntegrationTest {
 
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(null);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

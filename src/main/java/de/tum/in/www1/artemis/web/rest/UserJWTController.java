@@ -39,6 +39,12 @@ public class UserJWTController {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
     }
 
+    /**
+     * Authorizes an User
+     * @param loginVM user credentials View Mode
+     * @param userAgent User Agent
+     * @return a JWT Token if the authorization is successful
+     */
     @PostMapping("/authenticate")
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent) {
 

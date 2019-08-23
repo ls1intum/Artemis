@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,7 +75,6 @@ public class ModelingSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(3, 1, 0);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
@@ -85,6 +85,11 @@ public class ModelingSubmissionIntegrationTest {
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

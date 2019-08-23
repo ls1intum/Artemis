@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,12 +64,16 @@ public class ParticipationIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.resetDatabase();
         database.addUsers(2, 2, 2);
         database.addCourseWithModelingAndTextExercise();
         course = courseRepo.findAll().get(0);
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         textExercise = (TextExercise) exerciseRepo.findAll().get(1);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

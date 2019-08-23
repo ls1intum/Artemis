@@ -10,7 +10,7 @@ title: '🛑 Do not file questions or support requests on the GitHub issues trac
 
 Please do not file questions or support requests on the GitHub issues tracker.
 
-Please contact the ArTEMiS Team using Email at artemis.ase@in.tum.de
+Please contact the Artemis Team using Email at artemis.ase@in.tum.de
 
 Thank you!
 

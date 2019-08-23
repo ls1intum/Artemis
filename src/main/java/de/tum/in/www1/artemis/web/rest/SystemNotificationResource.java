@@ -34,7 +34,7 @@ public class SystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
 
-    private static final String ENTITY_NAME = "systemNotification";
+    private static final String ENTITY_NAME = "notificationManagement";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -91,6 +91,7 @@ public class SystemNotificationResource {
     /**
      * GET /system-notifications : get all system notifications for administration purposes.
      *
+     * @param pageable instance of the pageable interface to enable paging
      * @return the list of system notifications
      */
     @GetMapping("/system-notifications")
@@ -134,7 +135,6 @@ public class SystemNotificationResource {
     /**
      * GET /system-notifications/:id : get the "id" system notification.
      *
-     * @param id the id of the system notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/system-notifications/active-notification")

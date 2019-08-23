@@ -1,13 +1,11 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { ExerciseResultService } from 'app/entities/exercise-result/exercise-result.service';
-import { IExerciseResult, ExerciseResult, AssessmentType } from 'app/shared/model/exercise-result.model';
+import { AssessmentType, ExerciseResult, IExerciseResult } from 'app/shared/model/exercise-result.model';
 
 describe('Service Tests', () => {
     describe('ExerciseResult Service', () => {

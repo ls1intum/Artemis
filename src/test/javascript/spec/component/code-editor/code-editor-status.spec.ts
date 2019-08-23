@@ -1,10 +1,9 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
-import { CodeEditorStatusComponent } from 'app/code-editor';
-import { CommitState, EditorState } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { CodeEditorStatusComponent, CommitState, EditorState } from 'app/code-editor';
+import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 
@@ -16,7 +15,7 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
             declarations: [CodeEditorStatusComponent],
         })
             .compileComponents()

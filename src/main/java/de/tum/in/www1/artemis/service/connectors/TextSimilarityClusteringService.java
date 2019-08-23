@@ -49,6 +49,14 @@ public class TextSimilarityClusteringService {
         return clusterTextBlocks(embeddings, 1);
     }
 
+    /**
+     * Calls the remote Clusteringservice to cluster TextBlocks based on their TextEmbeddings
+     *
+     * @param embeddings the Embeddings corresponding to the TextBlocks, that should be clustered
+     * @param maxRetries number of retries before the request will be canceled
+     * @return a Map of ClusterIDs and Clusters
+     * @throws NetworkingError if the request isn't successful
+     */
     public Map<Integer, TextCluster> clusterTextBlocks(List<TextEmbedding> embeddings, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to cluster student text answers.");
         final Request request = new Request(embeddings);

@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,13 +76,17 @@ public class AssessmentComplaintIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(1, 2, 1);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

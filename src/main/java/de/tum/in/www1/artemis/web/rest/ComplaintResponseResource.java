@@ -80,6 +80,7 @@ public class ComplaintResponseResource {
      * GET /complaint-responses/:id : get the "id" complaint response.
      *
      * @param id the id of the complaint response to retrieve
+     * @param principal the user who called the method
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
     @GetMapping("/complaint-responses/{id}")
@@ -112,6 +113,7 @@ public class ComplaintResponseResource {
      * Get /complaint-responses/complaint/:id get a complaint response associated with the complaint "id"
      *
      * @param complaintId the id of the complaint for which we want to find a linked response
+     * @param principal the user who called the method
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
     @GetMapping("/complaint-responses/complaint/{complaintId}")

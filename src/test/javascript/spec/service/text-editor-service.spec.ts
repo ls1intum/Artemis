@@ -1,8 +1,6 @@
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 
-import { HttpClient } from '@angular/common/http';
-
-import { HttpHandler, HttpRequest, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Language } from 'app/entities/tutor-group';
 

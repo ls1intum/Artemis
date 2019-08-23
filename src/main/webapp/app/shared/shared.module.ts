@@ -1,9 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import {
-    ArTEMiSSharedCommonModule,
-    ArTEMiSSharedLibsModule,
+    ArtemisSharedCommonModule,
+    ArtemisSharedLibsModule,
     HasAnyAuthorityDirective,
     RemoveKeysPipe,
     SafeHtmlPipe,
@@ -23,7 +23,7 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
 import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 
 @NgModule({
-    imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule],
     declarations: [
         HasAnyAuthorityDirective,
         SafeHtmlPipe,
@@ -41,7 +41,7 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService],
     entryComponents: [],
     exports: [
-        ArTEMiSSharedCommonModule,
+        ArtemisSharedCommonModule,
         HasAnyAuthorityDirective,
         DatePipe,
         SafeHtmlPipe,
@@ -56,12 +56,11 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
         SanitizeHtmlPipe,
         SecuredImageComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSSharedModule {
+export class ArtemisSharedModule {
     static forRoot() {
         return {
-            ngModule: ArTEMiSSharedModule,
+            ngModule: ArtemisSharedModule,
         };
     }
 }

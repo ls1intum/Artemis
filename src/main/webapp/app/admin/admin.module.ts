@@ -1,8 +1,8 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     adminState,
     AuditsComponent,
@@ -12,14 +12,14 @@ import {
     JhiMetricsMonitoringComponent,
     JhiTrackerComponent,
     LogsComponent,
-    UserMgmtComponent,
-    UserMgmtDeleteDialogComponent,
-    UserMgmtDetailComponent,
-    UserMgmtUpdateComponent,
     NotificationMgmtComponent,
+    NotificationMgmtDeleteDialogComponent,
     NotificationMgmtDetailComponent,
     NotificationMgmtUpdateComponent,
-    NotificationMgmtDeleteDialogComponent,
+    UserManagementComponent,
+    UserManagementDeleteDialogComponent,
+    UserManagementDetailComponent,
+    UserManagementUpdateComponent,
 } from './';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
@@ -27,17 +27,17 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
+        ArtemisSharedModule,
         RouterModule.forChild(adminState),
         FormDateTimePickerModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
         AuditsComponent,
-        UserMgmtComponent,
-        UserMgmtDetailComponent,
-        UserMgmtUpdateComponent,
-        UserMgmtDeleteDialogComponent,
+        UserManagementComponent,
+        UserManagementDetailComponent,
+        UserManagementUpdateComponent,
+        UserManagementDeleteDialogComponent,
         NotificationMgmtComponent,
         NotificationMgmtDetailComponent,
         NotificationMgmtDeleteDialogComponent,
@@ -50,10 +50,9 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
         JhiMetricsMonitoringComponent,
     ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    entryComponents: [UserMgmtDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    entryComponents: [UserManagementDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
 })
-export class ArTEMiSAdminModule {
+export class ArtemisAdminModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey) {

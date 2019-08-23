@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
