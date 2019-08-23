@@ -39,6 +39,7 @@ import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -51,6 +52,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArtemisResultModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
         TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
     ],

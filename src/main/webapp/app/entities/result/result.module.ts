@@ -6,7 +6,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
-import { ArtemisProgrammingSubmissionModule } from 'app/submission/submission.module';
+import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingSubmissionModule],

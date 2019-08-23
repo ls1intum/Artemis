@@ -1,7 +1,6 @@
 export * from './programming-exercise-participation.model';
 export * from './programming-exercise.model';
 export * from './services';
-export * from './actions';
 export * from './programming-exercise-popup.service';
 export * from './programming-exercise-dialog.component';
 export * from './programming-exercise-delete-dialog.component';

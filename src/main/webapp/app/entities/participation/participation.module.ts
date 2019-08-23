@@ -18,11 +18,12 @@ import {
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule, ArtemisProgrammingExerciseActionsModule],
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,

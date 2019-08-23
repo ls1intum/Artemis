@@ -48,7 +48,11 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import {
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+    ProgrammingSubmissionWebsocketService,
+} from 'app/programming-submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 

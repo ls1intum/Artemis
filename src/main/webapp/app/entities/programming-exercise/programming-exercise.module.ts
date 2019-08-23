@@ -15,7 +15,6 @@ import {
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseInstructorTriggerBuildButtonComponent,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
@@ -23,7 +22,6 @@ import {
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
-    ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
 } from './';
@@ -36,22 +34,27 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({
     imports: [
+        // Shared modules.
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
+        NgxDatatableModule,
         SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
+        ArtemisTableModule,
+        // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
+        // Other entity modules.
         ArtemisResultModule,
-        ArtemisTableModule,
-        NgxDatatableModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -66,8 +69,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseManageTestCasesComponent,
-        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-        ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -82,12 +83,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupPopupComponent,
         FaIconComponent,
     ],
-    exports: [
-        ProgrammingExerciseComponent,
-        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-        ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ArtemisProgrammingExerciseInstructionsEditorModule,
-    ],
+    exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
     providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {
