@@ -20,6 +20,10 @@ import { ParticipationSubmissionComponent } from 'app/entities/participation-sub
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArtemisResultModule } from 'app/entities/result';
+import {
+    ParticipationSubmissionDeleteDialogComponent,
+    ParticipationSubmissionDeletePopupComponent,
+} from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
@@ -29,6 +33,8 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
+        ParticipationSubmissionDeleteDialogComponent,
+        ParticipationSubmissionDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
         ParticipationSubmissionComponent,
