@@ -1,21 +1,33 @@
-<p>participation-submission works!</p>
-<!-- <div class="table-responsive" *ngIf="submissions">
+<h1>Submissions for Participation with id {{ participationId }}</h1>
+<br />
+<div class="table-responsive" *ngIf="submissions">
     <table class="table table-striped">
         <thead>
-        <tr jhiSort [(predicate)]="'id'" [(ascending)]="true">
-            <th jhiSortBy="id">
-                <span jhiTranslate="global.field.id">ID</span>
-                <fa-icon icon="sort"></fa-icon>
-            </th>
-            <th></th>
-        </tr>
+            <tr>
+                <th>
+                    <span jhiTranslate="global.field.id">ID</span>
+                </th>
+                <th>
+                    Submission Type
+                </th>
+                <th>
+                    Submission Date
+                </th>
+                <th></th>
+            </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let submission of submissions | sortBy: 'id':true;">
-            <td><p> {{ participationId }}}</p></td>
-            <td>123</td>
-
-        </tr>
+            <tr *ngFor="let submission of submissions">
+                <td>{{ submission.id }}</td>
+                <td>{{ submission.type }}</td>
+                <td>{{ submission.submissionDate }}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm mr-1" (click)="deleteSubmission(submission.id)">
+                        <fa-icon icon="times"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                    </button>
+                </td>
+            </tr>
         </tbody>
     </table>
-</div> -->
+</div>
