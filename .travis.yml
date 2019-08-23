@@ -63,4 +63,4 @@ jobs:
         install: yarn install
         script: yarn lint:doc
     allow_failures:
-      - script: yarn lint-doc
+      - script: yarn lint:doc
