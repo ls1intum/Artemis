@@ -384,6 +384,19 @@ public class DatabaseUtilService {
         return submission;
     }
 
+    @Transactional
+    public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        Result result = resultRepo.save(new Result().participation(participation).submission(submission));
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submission.setResult(result);
+        programmingSubmissionRepo.save(submission);
+        participation.addResult(result);
+        participationRepo.save(participation);
+        return submission;
+    }
+
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
