@@ -20,7 +20,7 @@ export const codeEditorRoute: Routes = [
     },
     // TODO: This should probably be moved into a module of the programming exercises as it is an administratory tool. This would also be a good chance to improve the route path.
     {
-        path: 'admin/:exerciseId/:participationId',
+        path: ':exerciseId/admin/:participationId',
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
@@ -33,7 +33,7 @@ export const codeEditorRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'admin/:exerciseId/test',
+        path: ':exerciseId/admin/test',
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
