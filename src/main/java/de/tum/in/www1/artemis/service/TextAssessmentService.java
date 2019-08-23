@@ -78,6 +78,9 @@ public class TextAssessmentService extends AssessmentService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
+        if (textAssessment.stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED).count() > 0) {
+            result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        }
         User user = userService.getUser();
         result.setAssessor(user);
 
@@ -92,7 +95,6 @@ public class TextAssessmentService extends AssessmentService {
         result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
             feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
             result.addFeedback(feedback);
         }
         result.setHasFeedback(false);
