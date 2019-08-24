@@ -1,11 +1,11 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
 import { Submission } from 'app/entities/submission';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { Result } from 'app/entities/result';
 
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
@@ -39,17 +39,4 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.submissions = response.body!;
         });
     }
-
-    /*
-    deleteSubmission(submissionId: number) {
-        console.log(this.submissions);
-
-        this.submissionService.delete(submissionId).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'submissionsModification',
-                content: 'Deleted an submission',
-            });
-        });
-    }
-    */
 }

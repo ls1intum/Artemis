@@ -1,10 +1,8 @@
 import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationSubmissionPopupService {
