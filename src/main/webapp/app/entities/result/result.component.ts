@@ -5,10 +5,11 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService, JhiWebsocketService } from 'app/core';
+import * as moment from 'moment';
 
 const enum ResultTemplateStatus {
     IS_BUILDING = 'is-building',
@@ -115,11 +116,13 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     evaluateTemplateStatus() {
+        const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
+
         if (this.isModelingOrText()) {
             if (this.isSubmissionInDueTime()) {
                 if (this.hasResultAndScore()) {
                     // Prevent that result is shown before assessment due date
-                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isBefore()) {
+                    if (!assessmentDueDate || assessmentDueDate.isBefore()) {
                         this.templateStatus = ResultTemplateStatus.HAS_RESULT;
                     } else {
                         this.templateStatus = ResultTemplateStatus.NO_RESULT;
@@ -130,7 +133,7 @@ export class ResultComponent implements OnInit, OnChanges {
             } else {
                 if (this.hasResultAndScore()) {
                     // Prevent that result is shown before assessment due date
-                    if (!this.participation.exercise.assessmentDueDate || this.participation.exercise.assessmentDueDate.isBefore()) {
+                    if (!assessmentDueDate || assessmentDueDate.isBefore()) {
                         this.templateStatus = ResultTemplateStatus.LATE;
                     } else {
                         this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
@@ -148,6 +151,17 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.templateStatus = ResultTemplateStatus.NO_RESULT;
             }
         }
+    }
+
+    dateAsMoment(date: any) {
+        if (date) {
+            if (moment.isMoment(date)) {
+                return date;
+            } else {
+                return moment(date);
+            }
+        }
+        return null;
     }
 
     isModelingOrText() {
