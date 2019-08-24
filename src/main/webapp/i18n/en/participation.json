@@ -38,6 +38,12 @@
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",
             "participationSubmission": {
+                "submissionType": "Submission Type",
+                "submissionDate": "Submission Date",
+                "result": "Result",
+                "assessor": "Assessor",
+                "submissionsForParticipation": "Submissions for Participation Id: ",
+                "action": "Action",
                 "delete": "Are you sure you want to delete this submission?"
             }
         }
