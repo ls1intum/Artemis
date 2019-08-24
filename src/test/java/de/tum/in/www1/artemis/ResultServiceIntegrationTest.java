@@ -8,25 +8,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -45,17 +48,31 @@ public class ResultServiceIntegrationTest {
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+
+    @Autowired
+    DatabaseUtilService database;
+
     private ProgrammingExercise programmingExercise;
 
-    private Participation participation;
+    private SolutionProgrammingExerciseParticipation participation;
 
-    @Before
+    @BeforeEach
     public void reset() {
         ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
-        participation = new Participation();
-        participation.exercise(programmingExercise).setId(1L);
+        participation = new SolutionProgrammingExerciseParticipation();
+        participation.setProgrammingExercise(programmingExercise);
+        participation.setId(1L);
         programmingExercise.setSolutionParticipation(participation);
+        solutionProgrammingExerciseRepository.save(participation);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
@@ -75,7 +92,7 @@ public class ResultServiceIntegrationTest {
         Object requestDummy = new Object();
 
         when(continuousIntegrationServiceMock.onBuildCompletedNew(participation, requestDummy)).thenReturn(result);
-        resultService.onResultNotifiedNew(participation, requestDummy);
+        resultService.processNewProgrammingExerciseResult(participation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);

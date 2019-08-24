@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService, InitializationState } from 'app/entities/participation';
+import { Participation, ParticipationService, StudentParticipation, InitializationState } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +36,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly MODELING = ExerciseType.MODELING;
 
     @Input() course: Course;
-    @Input() participation: Participation;
+    @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;
@@ -48,6 +48,8 @@ export class ResultComponent implements OnInit, OnChanges {
     resultIconClass: string[];
     resultString: string;
     templateStatus: ResultTemplateStatus;
+
+    resultTooltip: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -96,6 +98,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
+            this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = 'result-gray';
             this.resultIconClass = this.getResultIconClass();
@@ -160,6 +163,12 @@ export class ResultComponent implements OnInit, OnChanges {
             return this.translate.instant('artemisApp.editor.buildFailed');
         }
         return this.result!.resultString;
+    }
+
+    buildResultTooltip() {
+        if (this.result && this.result.resultString.includes('(preliminary)')) {
+            return this.translate.instant('artemisApp.result.preliminary');
+        }
     }
 
     getHasFeedback() {

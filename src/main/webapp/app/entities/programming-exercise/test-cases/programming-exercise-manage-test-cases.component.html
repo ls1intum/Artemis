@@ -1,0 +1,65 @@
+<jhi-alert></jhi-alert>
+<div>
+    <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
+        Manage Test Cases.
+    </h3>
+    <div class="d-flex">
+        <label class="d-flex align-items-center mb-0">
+            <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
+            <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
+        </label>
+        <button
+            id="save-weights-button"
+            class="btn btn-primary ml-2"
+            jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
+            (click)="saveWeights()"
+            [disabled]="isSaving || !changedTestCaseIds.length"
+        ></button>
+        <button class="btn btn-danger ml-auto" (click)="resetWeights()" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"></button>
+    </div>
+    <ngx-datatable
+        id="testCaseTable"
+        class="bootstrap"
+        [headerHeight]="50"
+        [limit]="20"
+        [columnMode]="'force'"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [rows]="filteredTestCases"
+        [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+        [rowClass]="getRowClass"
+    >
+        <ngx-datatable-column name="Id" prop="id">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Test Name" prop="testName">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Weight" prop="weight">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                <jhi-table-editable-field
+                    [value]="value"
+                    [canEdit]="!editing"
+                    [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.WEIGHT"
+                    (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"
+                    (onValueUpdate)="updateEditedField($event)"
+                    (onCancel)="leaveEditingWithoutSaving()"
+                ></jhi-table-editable-field>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="After Due Date" prop="afterDueDate">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                <jhi-table-editable-checkbox [value]="value" (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"></jhi-table-editable-checkbox>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Is Active" prop="active">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+    </ngx-datatable>
+</div>

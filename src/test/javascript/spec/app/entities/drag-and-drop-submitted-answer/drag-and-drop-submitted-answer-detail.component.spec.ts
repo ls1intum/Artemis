@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DragAndDropSubmittedAnswerDetailComponent } from 'app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer-detail.component';
 import { DragAndDropSubmittedAnswer } from 'app/shared/model/drag-and-drop-submitted-answer.model';
 
@@ -15,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DragAndDropSubmittedAnswerDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

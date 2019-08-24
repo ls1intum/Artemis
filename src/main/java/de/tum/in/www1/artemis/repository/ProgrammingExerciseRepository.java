@@ -30,6 +30,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(attributePaths = "testCases")
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithTestCases(@Param("exerciseId") Long id);
+
     // TODO: Investigate - this should return the templateParticipation result including its feedbacks - but for some reason they can't be retrieved.
     // Get an a programmingExercise with template and solution participation, each with the latest result
     @EntityGraph(attributePaths = { "templateParticipation.results.feedbacks", "solutionParticipation.results.feedbacks" })
@@ -39,8 +43,20 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(attributePaths = { "templateParticipation.results.feedbacks", "solutionParticipation.results.feedbacks", "templateParticipation.results.submission",
+            "solutionParticipation.results.submission", "templateParticipation.submissions", "solutionParticipation.submissions" })
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(@Param("exerciseId") Long exerciseId);
+
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
+
+    @EntityGraph(attributePaths = "participations")
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
+
+    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations pep left join fetch pep.submissions")
+    List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
 
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 

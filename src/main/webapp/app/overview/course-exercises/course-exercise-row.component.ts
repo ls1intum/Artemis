@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
@@ -53,7 +53,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             this.exercise.participations = cachedParticipations;
         }
         this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.participations =
                     this.exercise.participations && this.exercise.participations.length > 0

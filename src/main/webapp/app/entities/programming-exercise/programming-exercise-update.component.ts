@@ -2,8 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
@@ -11,7 +10,8 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/entities/result';
+import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -21,16 +21,23 @@ import { ResultService } from 'app/entities/result';
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
+    readonly C = ProgrammingLanguage.C;
 
+    private translationBasePath = 'artemisApp.programmingExercise.';
+
+    hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText: string | null;
+    // This is used to revert the select if the user cancels to override the new selected programming language.
+    private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
-    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    maxScorePattern = MAX_SCORE_PATTERN;
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+    titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     courses: Course[];
@@ -41,9 +48,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
-        private resultService: ResultService,
         private activatedRoute: ActivatedRoute,
+        private translateService: TranslateService,
     ) {}
+
+    /**
+     * Will also trigger loading the corresponding programming exercise language template.
+     *
+     * @param language to change to.
+     */
+    set selectedProgrammingLanguage(language: ProgrammingLanguage) {
+        this.selectedProgrammingLanguageValue = language;
+        this.loadProgrammingLanguageTemplate(language);
+    }
+
+    get selectedProgrammingLanguage() {
+        return this.selectedProgrammingLanguageValue;
+    }
 
     ngOnInit() {
         this.isSaving = false;
@@ -75,28 +96,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.fileService.getTemplateFile('readme').subscribe(
-                file => {
-                    this.programmingExercise.problemStatement = file;
-                    this.problemStatementLoaded = true;
-                },
-                err => {
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                    console.log('Error while getting template instruction file!', err);
-                },
-            );
+            this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
         } else {
             this.problemStatementLoaded = true;
-            this.templateParticipationResultLoaded = false;
-            this.resultService
-                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
-                    catchError(() => of(null)),
-                )
-                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 
@@ -144,5 +146,48 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     trackCourseById(index: number, item: Course) {
         return item.id;
+    }
+
+    /**
+     * When setting the programming language, a change guard is triggered.
+     * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
+     * If the user cancels the language will not be changed.
+     *
+     * @param language to switch to.
+     */
+    onProgrammingLanguageChange(language: ProgrammingLanguage) {
+        // If there are unsaved changes and the user does not confirm, the language doesn't get changed
+        if (this.hashUnsavedChanges) {
+            const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
+            if (!window.confirm(confirmLanguageChangeText)) {
+                return this.selectedProgrammingLanguage;
+            }
+        }
+        this.selectedProgrammingLanguage = language;
+        return language;
+    }
+
+    /**
+     * Change the selected programming language for the current exercise. If there are unsaved changes, the user
+     * will see a confirmation dialog about switching to a new template
+     *
+     * @param language The new programming language
+     */
+    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
+        // Otherwise, just change the language and load the new template
+        this.hashUnsavedChanges = false;
+        this.problemStatementLoaded = false;
+        this.programmingExercise.programmingLanguage = language;
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+            file => {
+                this.programmingExercise.problemStatement = file;
+                this.problemStatementLoaded = true;
+            },
+            err => {
+                this.programmingExercise.problemStatement = '';
+                this.problemStatementLoaded = true;
+                console.log('Error while getting template instruction file!', err);
+            },
+        );
     }
 }

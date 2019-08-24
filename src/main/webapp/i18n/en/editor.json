@@ -22,13 +22,15 @@
             "changesSubmittedTooltip": "All changes submitted.",
             "unsubmittedChanges": "Unsubmitted.",
             "unsubmittedChangesTooltip": "There are unsubmitted changes.",
+            "changesConflict": "Conflict",
+            "changesConflictTooltip": "Your repository is in a conflict state. Resolve the conflict to continue working.",
             "submittingChanges": "Submitting...",
             "submittingChangesTooltip": "Submitting changes.",
             "preparingForSubmit": "Preparing...",
             "preparingForSubmitTooltip": "Preparing for submit.",
             "submit": "Submit",
             "buildOutput": "&nbsp; Build Output",
-            "building": "Building...",
+            "building": "Building and testing...",
             "buildFailed": "Build Failed",
             "noBuildOutput": "No build results available",
             "selectFile": "Select a file to get started!",
@@ -39,6 +41,12 @@
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
             "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
+            "conflict": {
+                "resolveConflict": "Resolve conflict",
+                "conflictExplanationShort": "Resolve the conflict state of your repository.",
+                "conflictExplanationLong": "Your repository is in a conflict state. This can happen when you work both locally and in the Artemis online editor. If you are familiar with git, the state of your repository is a merge or checkout conflict. You can click the button below to reset your repository to the last commit.",
+                "conflictWarning": "This will delete all uncommitted changes (the changes from your last submit in the online editor)!"
+            },
             "fileBrowser": {
                 "fileBrowser": "File browser",
                 "deleteFileTitle": "Delete file",
@@ -71,7 +79,8 @@
                 "participationCouldNotBeCreated": "Participation could not be created.",
                 "couldNotBeRetrieved": "The repository status could not be retrieved.",
                 "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
-                "failedToLoadBuildLogs": "The build logs could not be retrieved."
+                "failedToLoadBuildLogs": "The build logs could not be retrieved.",
+                "repositoryInConflict": "Your repository has entered a conflict state."
             },
             "testStatusLabels": {
                 "noResult": "No results",

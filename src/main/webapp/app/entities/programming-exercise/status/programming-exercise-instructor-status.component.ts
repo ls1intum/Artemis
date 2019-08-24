@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ParticipationType } from '../programming-exercise-participation.model';
+import { ParticipationType } from 'app/entities/programming-exercise';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { Result } from 'app/entities/result';

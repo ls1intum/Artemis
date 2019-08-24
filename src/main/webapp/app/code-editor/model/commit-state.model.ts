@@ -4,4 +4,5 @@ export enum CommitState {
     CLEAN = 'CLEAN',
     UNCOMMITTED_CHANGES = 'UNCOMMITTED_CHANGES',
     COMMITTING = 'COMMITTING',
+    CONFLICT = 'CONFLICT',
 }

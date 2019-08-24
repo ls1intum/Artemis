@@ -1,8 +1,10 @@
 @import 'bootstrap-variables';
 @import 'artemis-variables';
-@import 'quiz';
 @import 'text';
 @import '~ng-pick-datetime/assets/style/picker.min.css';
+// Needed for mathematical formulas in markdown editor
+@import '~katex/dist/katex.css';
+@import '~@swimlane/ngx-datatable/release/themes/bootstrap.css';
 
 /* ==============================================================
 Bootstrap tweaks
@@ -16,7 +18,9 @@ h4 {
     font-weight: 300;
 }
 
-a {
+/* Increase contrast of links to get 100% on Lighthouse Accessability Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
+a,
+a:hover {
     color: $primary;
     font-weight: bold;
 }
@@ -41,6 +45,12 @@ a {
  */
 .btn {
     white-space: nowrap;
+}
+
+.btn-default {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
 }
 
 .footer {
@@ -175,10 +185,12 @@ Generic styles
     }
 }
 
-/* ==========================================================================
-make sure browsers use the pointer cursor for anchors, even with no href
-========================================================================== */
+.no-flex-shrink {
+    flex-shrink: 0;
+}
+
 a:hover {
+    /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
 
@@ -480,16 +492,16 @@ pre {
     border-radius: 4px;
 }
 
-code-error,
-code-warning,
-code-success {
+.code-error,
+.code-warning,
+.code-success {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, Courier New, monospace;
 }
 
-code-success {
+.code-success {
     padding: 2px 4px;
     font-size: 90%;
     color: green;
@@ -498,12 +510,12 @@ code-success {
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-code-error {
+.code-error {
     color: #c7254e;
     background-color: #f9f2f4;
 }
 
-code-warning {
+.code-warning {
     color: #e68a00;
     background-color: #fff5e6;
 }
@@ -621,6 +633,11 @@ displaycolor {
     cursor: not-allowed;
 }
 
+.colon-suffix:after {
+    content: ':';
+    display: inline-flex;
+}
+
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -633,4 +650,56 @@ Course Info Bar
     color: #ffffff;
     flex-direction: column;
     justify-content: center;
+}
+
+/* ==========================================================================
+    Markdown preview
+========================================================================== */
+.markdown-preview {
+    .background-editor-color {
+        background: #f8f9fa;
+    }
+    .red {
+        color: #ca2024;
+    }
+    .green {
+        color: #3ea119;
+    }
+    .white {
+        color: #ffffff;
+    }
+    .black {
+        color: #000000;
+    }
+    .yellow {
+        color: #fffa5c;
+    }
+    .blue {
+        color: #0d3cc2;
+    }
+    .lila {
+        color: #b05db8;
+    }
+    .orange {
+        color: #d86b1f;
+    }
+}
+
+ngb-tooltip-window {
+    padding: 0;
+    width: 200px !important;
+
+    > div {
+        margin: auto !important;
+    }
+}
+
+.warning-modal-window .modal-dialog {
+    width: 50%;
+}
+
+/* additional style to overwrite form-control style from parent components */
+.form-control.ace_editor {
+    font-size: 12px;
+    line-height: normal;
 }

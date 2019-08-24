@@ -12,7 +12,7 @@ import org.eclipse.jgit.lib.BaseRepositoryBuilder;
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
-    private Participation participation;
+    private ProgrammingExerciseParticipation participation;
 
     private Path localPath;
 
@@ -36,8 +36,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
      * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory. Also checks that the ../ operator is not
      * used to traverse up directories on the server.
      *
-     * @param file
-     * @return
+     * @param file for which to check if it is valid.
+     * @return true if the file is valid.
      */
     public boolean isValidFile(java.io.File file) {
 
@@ -50,11 +50,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return isValidFile(file.getParentFile());
     }
 
-    public Participation getParticipation() {
+    public ProgrammingExerciseParticipation getParticipation() {
         return participation;
     }
 
-    public void setParticipation(Participation participation) {
+    public void setParticipation(ProgrammingExerciseParticipation participation) {
         this.participation = participation;
     }
 

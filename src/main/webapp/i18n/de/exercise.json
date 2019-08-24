@@ -45,7 +45,7 @@
             "type": "Typ",
             "mcqType": "Multiple Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "welcome": "<strong>Herzlich Willkommen bei ArTEMiS!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den <i>Aufgabe starten</i> Button um zu starten!",
+            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den <i>Aufgabe starten</i> Button um zu starten!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
             "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in ein paar Sekunden nochmal.</strong>",
             "studentName": "Studenten Name",
@@ -66,6 +66,21 @@
             "notificiationText": "Optional: Mitteilung über die Änderung",
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
+            },
+            "form": {
+                "title": {
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "shortName": {
+                    "pattern": "Der Kurzname darf nur aus Buchstaben und Zahlen bestehen!",
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
+                },
+                "packageName": {
+                    "pattern": "Der Packagename muss mindestens einen Punkt enthalten und darf nicht mit einer Zahl anfangen!"
+                },
+                "maxScore": {
+                    "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"
+                }
             }
         },
         "exerciseLtiConfiguration": {

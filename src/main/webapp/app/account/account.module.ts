@@ -1,7 +1,7 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../shared';
+import { ArtemisSharedModule } from '../shared';
 
 import {
     accountState,
@@ -15,7 +15,7 @@ import {
 } from './';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(accountState)],
+    imports: [ArtemisSharedModule, RouterModule.forChild(accountState)],
     declarations: [
         ActivateComponent,
         RegisterComponent,
@@ -25,6 +25,5 @@ import {
         PasswordResetFinishComponent,
         SettingsComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSAccountModule {}
+export class ArtemisAccountModule {}

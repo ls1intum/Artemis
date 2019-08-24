@@ -80,10 +80,24 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
-    @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
-    Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);
+    /**
+     * Load a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
+     */
+    @EntityGraph(attributePaths = { "submission", "feedbacks" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
+
+    /**
+     * Checks if a result for the given participation exists.
+     *
+     * @param participationId the id of the participation to check.
+     * @return true if a result for the given participation exists, false otherwise.
+     */
+    boolean existsByParticipationId(long participationId);
 }

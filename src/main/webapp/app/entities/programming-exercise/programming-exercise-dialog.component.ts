@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/entities/result';
+import { MAX_SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-dialog',
@@ -25,7 +26,7 @@ import { ResultService } from 'app/entities/result';
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
-    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    maxScorePattern = MAX_SCORE_PATTERN;
 
     courses: Course[];
     exerciseCategories: ExerciseCategory[];
@@ -40,7 +41,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
         private fileService: FileService,
-        private resultService: ResultService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
     ) {}
@@ -63,7 +63,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
-            this.fileService.getTemplateFile('readme').subscribe(
+            this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
                 file => {
                     this.programmingExercise.problemStatement = file;
                     this.problemStatementLoaded = true;
@@ -77,14 +77,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         } else {
             this.problemStatementLoaded = true;
             this.templateParticipationResultLoaded = false;
-            this.resultService
-                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
-                    catchError(() => of(null)),
-                )
-                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 

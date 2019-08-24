@@ -72,6 +72,7 @@ public class ModelIndex {
 
     /**
      * Used for evaluation
+     * @return the nuber of Unique Model Elements
      */
     public int getNumberOfUniqueElements() {
         return this.uniqueModelElementList.size();

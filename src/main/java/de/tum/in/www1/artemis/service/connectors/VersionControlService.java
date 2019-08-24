@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 
 public interface VersionControlService {
 
@@ -22,29 +22,16 @@ public interface VersionControlService {
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
     /**
-     * Add a Bamboo-Service on the VCS-Server
-     *
-     * @param projectKey     The project key
-     * @param repositorySlug The repository slug
-     * @param bambooUrl      The base URL of the Bamboo-Server
-     * @param buildKey       The buildKey (including Project and Build Plan)
-     * @param bambooUsername The Bamboo Username
-     * @param bambooPassword The Bamboo Password
-     */
-    // TODO: we should rename this method, because it's not very clear what it means
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
-
-    /**
      * Deletes the project for the given project key
      *
-     * @param projectKey
+     * @param projectKey of the project that should be deleted
      */
     public void deleteProject(String projectKey);
 
     /**
      * Deletes the repository at the given url
      *
-     * @param repositoryUrl
+     * @param repositoryUrl of the repository that should be deleted
      */
     public void deleteRepository(URL repositoryUrl);
 
@@ -54,7 +41,7 @@ public interface VersionControlService {
      * @param participation a participation of a programming exercise
      * @return the URL of the repository of the participation
      */
-    public URL getRepositoryWebUrl(Participation participation);
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the clone URL used for cloning
@@ -85,7 +72,7 @@ public interface VersionControlService {
     /**
      * Creates a project on the VCS.
      *
-     * @param programmingExercise
+     * @param programmingExercise for which a project should be created
      * @throws Exception if the project could not be created
      */
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws Exception;
@@ -119,8 +106,8 @@ public interface VersionControlService {
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey
-     * @param projectName
+     * @param projectKey to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
     public String checkIfProjectExists(String projectKey, String projectName);

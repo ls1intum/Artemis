@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -63,7 +63,7 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -73,7 +73,7 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ParticipationRepository participationRepository,
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
@@ -83,7 +83,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -150,9 +150,6 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
-        // we only initiate the programming exercises when creating the links
-        programmingExerciseService.initParticipations(programmingExercise);
-
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
 
@@ -205,6 +202,12 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
+        // CHeck if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
+        }
+
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return ResponseEntity.badRequest()
@@ -213,7 +216,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if exercise shortname matches regex
-        Matcher shortNameMatcher = shortNamePattern.matcher(programmingExercise.getShortName());
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
@@ -278,8 +281,9 @@ public class ProgrammingExerciseResource {
      * PUT /programming-exercises : Updates an existing programmingExercise.
      *
      * @param programmingExercise the programmingExercise to update
+     * @param notificationText to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated programmingExercise, or with status 400 (Bad Request) if the programmingExercise is not valid, or
-     *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated
+     *      *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/programming-exercises")
@@ -309,10 +313,10 @@ public class ProgrammingExerciseResource {
         // When updating the participations, we need to make sure that the exercise is attached to each of them.
         // Otherwise we would remove the link between participation and exercise.
         if (programmingExercise.getTemplateParticipation() != null) {
-            programmingExercise.getTemplateParticipation().setExercise(programmingExercise);
+            programmingExercise.getTemplateParticipation().setProgrammingExercise(programmingExercise);
         }
         if (programmingExercise.getSolutionParticipation() != null) {
-            programmingExercise.getSolutionParticipation().setExercise(programmingExercise);
+            programmingExercise.getSolutionParticipation().setProgrammingExercise(programmingExercise);
         }
         programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
         // Only save after checking for errors
@@ -330,6 +334,7 @@ public class ProgrammingExerciseResource {
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
      * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
+     * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -368,6 +373,7 @@ public class ProgrammingExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/programming-exercises")
@@ -381,7 +387,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
-        for (Exercise exercise : exercises) {
+        for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
@@ -427,12 +433,13 @@ public class ProgrammingExerciseResource {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();
 
-            Optional<Participation> assignmentParticipation = participationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
-            Set<Participation> participations = new HashSet<>();
+            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
+                    user.getId());
+            Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
             programmingExercise.setParticipations(participations);
 
-            if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
 
@@ -447,14 +454,16 @@ public class ProgrammingExerciseResource {
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param id the id of the programmingExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
+     * @param deleteBaseReposBuildPlans the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(id);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -474,7 +483,7 @@ public class ProgrammingExerciseResource {
      * Squash all commits into one in the template repository of a given exercise.
      * 
      * @param id of the exercise
-     * @return
+     * @return the ResponseEntity with status 200 (OK) if squash has been successfully executed, with status 403 (Forbidden) if the user is not admin and course instructor or with status 500 (Internal Server Error)
      */
     @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -498,7 +507,7 @@ public class ProgrammingExerciseResource {
             programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
-        catch (IOException | IllegalStateException | InterruptedException | GitAPIException ex) {
+        catch (IllegalStateException | InterruptedException | GitAPIException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

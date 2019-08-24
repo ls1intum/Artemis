@@ -18,6 +18,7 @@ import org.imsglobal.lti.launch.LtiOauthVerifier;
 import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
+import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
@@ -114,10 +114,8 @@ public class LtiService {
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @param exercise      Exercise to launch
-     * @throws ArtemisAuthenticationException
-     * @throws AuthenticationException
      */
-    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws ArtemisAuthenticationException, AuthenticationException {
+    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
 
         // Authenticate the the LTI user
         Optional<Authentication> auth = authenticateLtiUser(launchRequest);
@@ -395,14 +393,12 @@ public class LtiService {
     /**
      * This method is pinged on new build results. It sends an message to the LTI consumer with the new score.
      *
-     * @param participation
+     * @param participation The programming exercise participation for which a new build result is available
      */
-    public void onNewBuildResult(Participation participation) {
-
-        // Get the LTI outcome URL
+    public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
 
         // TODO investigate this call for manual results. Could it be the case that the exercise is not initialized (Hibernate) here?
-
+        // Get the LTI outcome URL
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
             String score = "0.00";
@@ -417,9 +413,10 @@ public class LtiService {
 
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
+                // TODO remove workaround since IMSPOXRequest is fixed
                 log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
                         ltiOutcomeUrl.getSourcedId());
-                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
+                HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);
                 String responseString = new BasicResponseHandler().handleResponse(response);
@@ -437,7 +434,7 @@ public class LtiService {
     /**
      * Handle launch request which was initiated earlier by a LTI consumer
      *
-     * @param sessionId
+     * @param sessionId The ID of the current user's session (JSESSIONID)
      */
     public void handleLaunchRequestForSession(String sessionId) {
         if (launchRequestForSession.containsKey(sessionId)) {

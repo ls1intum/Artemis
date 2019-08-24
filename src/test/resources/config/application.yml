@@ -25,9 +25,13 @@ artemis:
         user-prefix: edx_
         user-group-name: edx
     git:
-        name: ArTEMiS
+        name: Artemis
         email: artemis@in.tum.de
-
+    automatic-text:
+        embedding-url: http://localhost:8000/embed
+        embedding-chunk-size: 50
+        clustering-url: http://localhost:8000/cluster
+        secret: null
 logging:
     level:
         ROOT: INFO
@@ -38,7 +42,7 @@ spring:
     profiles:
         active: bamboo
     application:
-        name: ArTEMiS
+        name: Artemis
     devtools:
         restart:
             enabled: false
@@ -108,7 +112,7 @@ jhipster:
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: ArTEMiS@localhost
+        from: Artemis@localhost
         base-url: http://127.0.0.1:8080
     metrics:
         logs: # Reports metrics in the logs

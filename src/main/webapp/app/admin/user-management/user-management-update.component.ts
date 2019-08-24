@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { JhiLanguageHelper, User, UserService } from 'app/core';
 
 @Component({
-    selector: 'jhi-user-mgmt-update',
+    selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
 })
-export class UserMgmtUpdateComponent implements OnInit {
+export class UserManagementUpdateComponent implements OnInit {
     user: User;
     languages: any[];
     authorities: any[];
     isSaving: boolean;
 
-    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute, private router: Router) {}
+    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.isSaving = false;

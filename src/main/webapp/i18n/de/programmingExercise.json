@@ -18,6 +18,7 @@
             "detail": {
                 "title": "Programmieraufgabe"
             },
+            "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Lösung Repository Url (optional)",
@@ -63,7 +64,23 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfall Probleme.",
                 "ok": "Testfälle ok."
-            }
+            },
+            "manageTestCases": {
+                "title": "Verwalte Testfälle",
+                "hideInactive": "Inaktive Testfälle verbergen",
+                "showInactive": "Inaktive Testfälle anzeigen",
+                "resetWeights": "Gewichtung zurücksetzen",
+                "weightsReset": "Die Gewichtung wurde erfolgreich zurückgesetzt.",
+                "weightsResetFailed": "Die Gewichtung konnte nicht zurückgesetzt werden.",
+                "saveWeights": "Gewichtung speichern",
+                "weightsUpdated": "Die Gewichtung wurde erfolgreich gespeichert.",
+                "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}.",
+                "saveTestCases": "Testfälle speichern",
+                "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
+                "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}."
+            },
+            "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
+            "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen."
         }
     }
 }

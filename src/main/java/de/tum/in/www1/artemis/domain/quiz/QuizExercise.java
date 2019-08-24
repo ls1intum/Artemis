@@ -17,10 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -437,8 +434,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Participation findRelevantParticipation(List<Participation> participations) {
-        for (Participation participation : participations) {
+    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+        for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
@@ -750,6 +747,12 @@ public class QuizExercise extends Exercise implements Serializable {
         }
     }
 
+    /**
+     * Determines the Status of a QuizExercise
+     *
+     * @param quiz the Quiz for which the status should be determined
+     * @return the Status of the given Quiz
+     */
     public static Status statusForQuiz(QuizExercise quiz) {
         if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return Status.INACTIVE;

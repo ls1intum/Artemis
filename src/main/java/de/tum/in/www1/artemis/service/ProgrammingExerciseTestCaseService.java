@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
@@ -10,15 +14,25 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository) {
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final FeedbackRepository feedbackRepository;
+
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
+            FeedbackRepository feedbackRepository) {
         this.testCaseRepository = testCaseRepository;
+        this.programmingExerciseService = programmingExerciseService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -39,6 +53,52 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
         return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+    }
+
+    /**
+     * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
+     *
+     * @param exerciseId            of exercise the test cases belong to.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
+     * @return the updated test cases.
+     * @throws EntityNotFoundException if the programming exercise could not be found.
+     * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    @Transactional
+    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
+            throws EntityNotFoundException, IllegalAccessException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
+        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
+
+        Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
+        for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
+            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
+                    .filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.getId())).findFirst();
+            if (!matchingTestCaseOpt.isPresent())
+                continue;
+
+            ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
+            matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
+            matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
+            updatedTests.add(matchingTestCase);
+        }
+
+        return updatedTests;
+    }
+
+    /**
+     * Reset the weights of all test cases to 1.
+     *
+     * @param exerciseId to find exercise test cases
+     * @return test cases that have been reset
+     */
+    @Transactional
+    public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setWeight(1);
+        }
+        return testCases;
     }
 
     /**
@@ -75,39 +135,132 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Updates an incoming result with the information of the exercises test cases. This update includes: - Checking which test cases were not executed as this is not part of the
-     * bamboo build (not all test cases are executed in an exercise with sequential test runs) - Recalculating the score based based on the successful test cases weight vs the
-     * total weight of all test cases.
+     * Updates an incoming result with the information of the exercises test cases. This update includes:
+     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
+     * - Checking the due date and the afterDueDate flag
+     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     *
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
      *
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
-     * @return
+     * @param isStudentParticipation boolean flag indicating weather the participation of the result is not a solution/template participation.
+     * @return Result with updated feedbacks, score and result string.
      */
-    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
+    @Transactional
+    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
-        // If there are no feedbacks, the build has failed.
-        // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
-        if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
-            Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
-                    .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
-                    .collect(Collectors.toSet());
-            Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCases.stream()
-                    .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
-            List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
-                    .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
-            result.addFeedbacks(feedbacksForNotExecutedTestCases);
+        // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
+        // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
+                .collect(Collectors.toSet());
+        // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
+        if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
+            // Remove feedbacks that the student should not see yet because of the due date.
+            removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
+
+            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
+
+            // Add feedbacks for tests that were not executed ("test was not executed").
+            createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
             // Recalculate the achieved score by including the test cases individual weight.
-            if (successfulTestCases.size() > 0) {
-                long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
-                result.setScore(score);
-            }
+            // The score is always calculated from ALL test cases, regardless of the current date!
+            updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            result.setResultString(successfulTestCases.size() + " of " + testCases.size() + " passed");
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, shouldTestsWithAfterDueDateFlagBeRemoved && testCases.size() > testCasesForCurrentDate.size());
         }
+        // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
+        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
+            removeAllFeedbackAndSetScoreToZero(result);
+        }
+        // Case 3: If there are no feedbacks, the build has failed. In this case we just return the original result without changing it.
         return result;
+    }
+
+    /**
+     * Check if the provided test was found in the result's feedbacks with positive = true.
+     * @param result of the build run.
+     * @return true if there is a positive feedback for a given test.
+     */
+    private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
+        return testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive());
+    }
+
+    /**
+     * Check if the provided test was not found in the result's feedbacks.
+     * @param result of the build run.
+     * @return true if there is no feedback for a given test.
+     */
+    private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
+        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
+    }
+
+    /**
+     * Check which tests were not executed and add a new Feedback for them to the exercise.
+     * @param result of the build run.
+     * @param allTests of the given programming exercise.
+     */
+    private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
+        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+        result.addFeedbacks(feedbacksForNotExecutedTestCases);
+    }
+
+    /**
+     * Check which tests were executed but which result should not be made public to the student yet.
+     * @param result of the build run.
+     * @param testCasesForCurrentDate of the given programming exercise.
+     */
+    private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
+                .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
+        feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
+        feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
+        // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
+        if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
+            result.setHasFeedback(false);
+    }
+
+    /**
+     * Update the score given the postive tests score divided by all tests's score.
+     * @param result of the build run.
+     * @param successfulTestCases test cases with positive feedback.
+     * @param allTests of a given programming exercise.
+     */
+    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
+        if (successfulTestCases.size() > 0) {
+            long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+            long maxTestScore = allTests.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+            long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+            result.setScore(score);
+        }
+    }
+
+    /**
+     * Update the result's result string given the successful tests vs. all tests (x of y passed).
+     * @param result of the build run.
+     * @param successfulTestCases test cases with positive feedback.
+     * @param allTests of the given programming exercise.
+     */
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
+            boolean hasAdditionalTestsAfterDueDate) {
+        // Create a new result string that reflects passed, failed & not executed test cases.
+        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+        newResultString = hasAdditionalTestsAfterDueDate ? newResultString + " (preliminary)" : newResultString;
+        result.setResultString(newResultString);
+    }
+
+    /**
+     * Remove all feedback information from a result and treat it as if it has a score of 0.
+     * @param result
+     */
+    private void removeAllFeedbackAndSetScoreToZero(Result result) {
+        result.setFeedbacks(new ArrayList<>());
+        result.hasFeedback(false);
+        result.setScore(0L);
+        result.setResultString("0 of 0 passed");
     }
 }

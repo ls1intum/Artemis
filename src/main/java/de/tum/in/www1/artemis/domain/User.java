@@ -53,6 +53,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
+    @Size(max = 20)
+    @Column(name = "registration_number", length = 20)
+    private String registrationNumber;
+
     @Email
     @Size(max = 100)
     @Column(length = 100)
@@ -86,6 +90,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
+    /**
+     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
+     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
+     */
+    @Column(name = "`groups`")
     @ElementCollection
     private List<String> groups = new ArrayList<>();
 
@@ -143,6 +152,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    /**
+     * @return UserName as a concatenation of first and last Name
+     */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
             return firstName + " " + lastName;
@@ -262,5 +274,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
     }
 }

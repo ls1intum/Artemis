@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import static java.math.BigDecimal.ROUND_HALF_UP;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -227,7 +227,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
+     * @param hasFeedback explicit flag used only by Programming Exercise
      */
     public void setHasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -238,7 +238,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @return
+     * @return true if the result has feedback, otherwise false
      */
     public Boolean getHasFeedback() {
         return hasFeedback;
@@ -249,8 +249,8 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
-     * @return
+     * @param hasFeedback explicit flag used only by Programming Exercise
+     * @return result with newly set hasFeedback property
      */
     public Result hasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -293,6 +293,22 @@ public class Result implements Serializable {
 
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
+    }
+
+    /**
+     * Sets the result to rated if:
+     * - It was created by an instructor (SubmissionType)
+     * - OR if the submissionDate is <= the exerciseDueDate.
+     * @param exerciseDueDate date after which no normal submission is considered rated.
+     * @param submission to which the result belongs.
+     */
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
+        if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
+            this.rated = true;
+        }
+        else {
+            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+        }
     }
 
     public Submission getSubmission() {
@@ -437,6 +453,7 @@ public class Result implements Serializable {
 
     /**
      * `hasComplaint` could be null in the database
+     * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
         return Optional.ofNullable(hasComplaint);
@@ -473,7 +490,8 @@ public class Result implements Serializable {
         if (submission instanceof QuizSubmission) {
             QuizSubmission quizSubmission = (QuizSubmission) submission;
             // get the exercise this result belongs to
-            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
+            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
@@ -486,6 +504,14 @@ public class Result implements Serializable {
         double totalScore = calculateTotalScore(maxScore);
         setScore(totalScore, maxScore);
         setResultString(totalScore, maxScore);
+    }
+
+    /**
+     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
+     * their assessor.
+     */
+    public void filterSensitiveInformation() {
+        setAssessor(null);
     }
 
     @Override
@@ -526,6 +552,6 @@ public class Result implements Serializable {
         }
         // limit total score to be between 0 and maxScore
         totalScore = Math.max(Math.min(totalScore, maxScore), 0);
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_UP).doubleValue();
+        return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }

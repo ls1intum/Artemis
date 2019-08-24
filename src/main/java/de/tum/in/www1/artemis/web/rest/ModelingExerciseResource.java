@@ -26,9 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -119,6 +117,7 @@ public class ModelingExerciseResource {
      * PUT /modeling-exercises : Updates an existing modelingExercise.
      *
      * @param modelingExercise the modelingExercise to update
+     * @param notificationText the text shown to students
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -152,6 +151,7 @@ public class ModelingExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/modeling-exercises")

@@ -15,9 +15,7 @@ if (OperatingSystem.current().isWindows()) {
 
         doFirst {
             manifest {
-                attributes 'Class-Path':
-                sourceSets.main.runtimeClasspath.plus(configurations.liquibase)
-                    .collect {
+                attributes 'Class-Path': sourceSets.main.runtimeClasspath.plus(configurations.liquibase).collect {
                     it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
                 }.join(' ')
             }
@@ -43,10 +41,10 @@ def liquibaseCommand(command) {
         main = "liquibase.integration.commandline.Main"
 
         args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
-        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
+        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
         args "--username=root"
         args "--password="
-        args "--url=jdbc:mysql://localhost:3306/ArTEMiS"
+        args "--url=jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
         args "--driver=com.mysql.jdbc.Driver"
         args command
     }

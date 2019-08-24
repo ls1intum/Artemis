@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -20,6 +21,7 @@ import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -44,6 +46,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     numberOfAssessments = 0;
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
+    numberOfMoreFeedbackRequests = 0;
+    numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
@@ -56,11 +60,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[];
+    moreFeedbackRequests: Complaint[];
     submissionLockLimitReached = false;
 
-    formattedGradingInstructions: string | null;
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
+    formattedGradingInstructions: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
@@ -86,6 +91,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
@@ -153,8 +159,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
 
         this.complaintService
-            .getForTutor(this.exerciseId)
+            .getComplaintsForTutor(this.exerciseId)
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService
+            .getMoreFeedbackRequestsForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -162,13 +171,16 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                     this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
+                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfNotAnsweredMoreFeedbackRequests;
                 } else {
                     this.numberOfTutorAssessments = 0;
                     this.numberOfTutorComplaints = 0;
+                    this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
                 if (this.numberOfSubmissions > 0) {
@@ -311,13 +323,5 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
-    }
-
-    calculateComplaintStatus(accepted?: boolean) {
-        if (accepted !== undefined) {
-            return 'The complaint has already been evaluated';
-        }
-        // in the case of 'undefined' the complaint is not yet handled
-        return 'The complaint still needs to be evaluated';
     }
 }

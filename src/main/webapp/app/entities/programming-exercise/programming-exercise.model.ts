@@ -1,15 +1,17 @@
 import { Course } from '../course';
 import { Exercise, ExerciseType } from '../exercise';
-import { Participation } from 'app/entities/participation';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
+    C = 'C',
 }
 
 export class ProgrammingExercise extends Exercise {
-    public templateParticipation: Participation;
-    public solutionParticipation: Participation;
+    public templateParticipation: TemplateProgrammingExerciseParticipation;
+    public solutionParticipation: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl: string;
     public publishBuildPlanUrl = false; // default value
     public allowOnlineEditor = false; // default value
@@ -21,7 +23,7 @@ export class ProgrammingExercise extends Exercise {
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
         this.course = course || null;
-        this.templateParticipation = new Participation();
-        this.solutionParticipation = new Participation();
+        this.templateParticipation = new TemplateProgrammingExerciseParticipation();
+        this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
     }
 }

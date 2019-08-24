@@ -32,17 +32,20 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'exercise-submitted'">
-                    <jhi-updating-result [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
+                <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
+                    <jhi-programming-exercise-student-trigger-build-button [participation]="exercise.participations[0]"></jhi-programming-exercise-student-trigger-build-button>
+                </ng-container>
             </div>
         </div>
         <div class="row">

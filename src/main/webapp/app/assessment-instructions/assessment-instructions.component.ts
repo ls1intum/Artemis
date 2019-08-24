@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { Exercise } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import interact from 'interactjs';
@@ -12,8 +13,8 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
 
-    formattedProblemStatement: string | null;
-    formattedGradingCriteria: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedGradingCriteria: SafeHtml | null;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 

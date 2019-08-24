@@ -13,3 +13,4 @@ export { UnorderedListCommand } from './unorderedListCommand';
 export { AttachmentCommand } from './attachmentCommand';
 export { ColorPickerCommand } from './colorPicker.command';
 export { FullscreenCommand } from './fullscreen.command';
+export { KatexCommand } from './katex.command';

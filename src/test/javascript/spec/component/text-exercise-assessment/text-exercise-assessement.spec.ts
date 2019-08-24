@@ -5,11 +5,11 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks';
 import { UpdatingResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseType } from 'app/entities/exercise';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -29,6 +29,8 @@ import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { MockComplaintService } from '../../mocks/mock-complaint.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +48,7 @@ describe('TextAssessmentComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
             declarations: [
                 TextAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
@@ -61,6 +63,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
             .compileComponents()
@@ -108,7 +111,7 @@ describe('TextAssessmentComponent', () => {
                 hasFeedback: false,
                 submission: comp.submission,
             };
-            comp.isAuthorized = true;
+            comp.isAssessor = true;
             comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
             const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };

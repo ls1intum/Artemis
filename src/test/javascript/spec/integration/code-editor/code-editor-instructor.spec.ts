@@ -1,18 +1,17 @@
-import { ComponentFixture, fakeAsync, discardPeriodicTasks, tick, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, throwError, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
-    ArTEMiSCodeEditorModule,
+    ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
     CodeEditorFileService,
     CodeEditorInstructorContainerComponent,
@@ -22,8 +21,9 @@ import {
     DomainService,
     DomainType,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import {
+    MockActivatedRoute,
     MockCodeEditorBuildLogService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
@@ -34,17 +34,16 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService, UpdatingResultComponent } from 'app/entities/result';
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { getLatestResult, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
-import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';
-import { BuildLogEntryArray } from 'app/entities/build-log';
 import { problemStatement } from '../../sample/problemStatement.json';
+import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,6 +56,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let buildLogService: CodeEditorBuildLogService;
     let participationService: ParticipationService;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -86,13 +86,13 @@ describe('CodeEditorInstructorIntegration', () => {
         return TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot(),
-                ArTEMiSTestModule,
+                ArtemisTestModule,
                 AceEditorModule,
                 TreeviewModule.forRoot(),
-                ArTEMiSSharedModule,
-                ArTEMiSProgrammingExerciseModule,
-                ArTEMiSResultModule,
-                ArTEMiSCodeEditorModule,
+                ArtemisSharedModule,
+                ArtemisProgrammingExerciseModule,
+                ArtemisResultModule,
+                ArtemisCodeEditorModule,
             ],
             declarations: [],
             providers: [
@@ -113,6 +113,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
             ],
         })
@@ -128,6 +129,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 resultService = containerDebugElement.injector.get(ResultService);
                 buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
                 participationService = containerDebugElement.injector.get(ParticipationService);
+                programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
@@ -142,11 +144,11 @@ describe('CodeEditorInstructorIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
 
-                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'isClean');
+                checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
-                getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks').returns(throwError('no result'));
+                getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback').returns(throwError('no result'));
                 getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
                 getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
@@ -198,16 +200,12 @@ describe('CodeEditorInstructorIntegration', () => {
             id: 1,
             problemStatement,
             participations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2' },
+            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
         exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
         exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
-
-        const templateParticipationResult = { id: 9, successful: true };
-
-        getLatestResultWithFeedbacksStub.returns(of({ body: templateParticipationResult }));
 
         getFeedbackDetailsForResultStub.returns(of([]));
         const setDomainSpy = spy(domainService, 'setDomain');
@@ -222,10 +220,10 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
         expect(setDomainSpy).to.have.been.calledOnce;
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, { ...exercise.templateParticipation, results: [templateParticipationResult] }]);
-        expect(container.exercise).to.deep.equal({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [templateParticipationResult] } });
+        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.templateParticipation]);
+        expect(container.exercise).to.deep.equal(exercise);
         expect(container.selectedRepository).to.equal(container.REPOSITORY.TEMPLATE);
         expect(container.selectedParticipation).to.deep.equal(container.selectedParticipation);
         expect(container.loadingState).to.equal(container.LOADING_STATE.CLEAR);

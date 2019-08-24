@@ -4,11 +4,11 @@ import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { LANGUAGES } from 'app/core';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
-    renderer: Renderer2;
+    private renderer: Renderer2;
     private _language: BehaviorSubject<string>;
 
     constructor(private translateService: TranslateService, private titleService: Title, private router: Router, rootRenderer: RendererFactory2) {

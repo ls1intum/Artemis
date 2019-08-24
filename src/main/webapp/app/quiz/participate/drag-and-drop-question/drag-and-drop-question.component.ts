@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -6,7 +6,8 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 // options are optional ;)
 polyfill({
@@ -26,6 +27,8 @@ window.addEventListener('touchmove', function() {}, { passive: false });
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../quiz-question.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     /** needed to trigger a manual reload of the drag and drop background picture */
@@ -80,7 +83,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     @HostListener('window:resize') onResize() {
-        this.resizeImage();
+        resizeImage();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -90,9 +93,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
     watchCollection() {
         // update html for text, hint and explanation for the question
         this.rendered = new DragAndDropQuestion();
-        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
     }
 
     /**
@@ -116,7 +119,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     changeLoading(value: string) {
         this.loadingState = value;
         if (this.loadingState === 'success') {
-            this.resizeImage();
+            resizeImage();
         }
     }
 
@@ -293,14 +296,5 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
-    }
-
-    resizeImage() {
-        setTimeout(() => {
-            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
-            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
-            clickLayer.style.width = image.width + 'px';
-            clickLayer.style.height = image.height + 'px';
-        }, 300);
     }
 }

@@ -1,15 +1,15 @@
-import { ApollonEditor, Element, ElementType, SVG, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
 import * as moment from 'moment';
-import { Course } from '../../entities/course';
-import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { DragItem } from '../../entities/drag-item';
-import { DropLocation } from '../../entities/drop-location';
-import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
-import { ScoringType } from '../../entities/quiz-question';
-import { generate } from '../../quiz/edit/temp-id';
-import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { Course } from 'app/entities/course';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { DragItem } from 'app/entities/drag-item';
+import { DropLocation } from 'app/entities/drop-location';
+import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
+import { ScoringType } from 'app/entities/quiz-question';
+import { generate } from 'app/quiz/edit/temp-id';
 import { convertRenderedSVGToPNG } from './svg-renderer';
+import { FileUploaderService } from 'app/shared';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;
@@ -124,17 +124,17 @@ function createDragAndDropQuestion(
  *
  * For each image based drag item the image needs to be uploaded first, therefore the result is returned asynchronously.
  *
- * @param {Element} element A particular element of the UML model.
+ * @param {UMLModelElement} element A particular element of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItem(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
-    const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
+async function generateDragAndDropItem(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     if (element.type in UMLRelationshipType) {
         return generateDragAndDropItemForRelationship(element, model, fileUploaderService);
-    } else if (textualElementTypes.includes(element.type)) {
+    } else if (textualElementTypes.includes(element.type as UMLElementType)) {
         return generateDragAndDropItemForText(element, model);
     } else {
         return generateDragAndDropItemForElement(element, model, fileUploaderService);
@@ -144,13 +144,13 @@ async function generateDragAndDropItem(element: Element, model: UMLModel, fileUp
 /**
  * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLElement`.
  *
- * @param {Element} element An element of the UML model.
+ * @param {UMLModelElement} element An element of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForElement(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForElement(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
     const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
@@ -166,12 +166,12 @@ async function generateDragAndDropItemForElement(element: Element, model: UMLMod
 /**
  * Create a mapping of a `DragItem` and a `DropLocation` for a textual based `UMLElement`.
  *
- * @param {Element} element A textual based element of the UML model.
+ * @param {UMLModelElement} element A textual based element of the UML model.
  * @param {UMLModel} model The complete UML model.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForText(element: Element, model: UMLModel): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel): Promise<DragAndDropMapping> {
     const dragItem = new DragItem();
     dragItem.tempID = generate();
     dragItem.text = element.name;
@@ -183,13 +183,13 @@ async function generateDragAndDropItemForText(element: Element, model: UMLModel)
 /**
  * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLRelationship`.
  *
- * @param {Element} element A relationship of the UML model.
+ * @param {UMLModelElement} element A relationship of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForRelationship(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForRelationship(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
     const MIN_SIZE = 30;
 
     let margin = {};
@@ -245,7 +245,7 @@ function computeDropLocation(elementLocation: { x: number; y: number; width: num
  * @return {DragAndDropMapping} A list of all possible `DragAndDropMapping`s.
  */
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
-    const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
+    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     const mappings = new Map<string, DragAndDropMapping[]>();
     const textualElements = model.elements.filter(element => textualElementTypes.includes(element.type));
 

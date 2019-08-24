@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -9,6 +9,8 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
+    styleUrls: ['./short-answer-question.component.scss', '../quiz-question.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;
@@ -72,9 +74,9 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
-        this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
     }
 
     /**

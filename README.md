@@ -1,18 +1,18 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
-![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)
+![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/Artemis/develop.svg?style=flat-square)
+![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat-square)
 
-This application was generated using JHipster 6.1.2, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.1.2](http://www.jhipster.tech/documentation-archive/v6.1.2).
+This application was generated using JHipster 6.2.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.2.0](http://www.jhipster.tech/documentation-archive/v6.2.0).
 
-**Current version:** 3.4.0
+**Current version:** 3.5.0
 
 ## Main features
 Artemis supports the following exercises:
 1. **[Programming exercises](/doc/exerciseTypes/programmingExercise/PROGRAMMING_EXERCISE.md)** with version control and automatic assessment with test cases and continuous integration
 2. **Quiz exercises** with multiple choice, drag and drop and short answer quiz questions 
 3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
-4. **Text exercises** with manual assessment
+4. **Text exercises** with manual (and experimental semi-automatic) assessment
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
@@ -22,7 +22,7 @@ Find here a guide on [how to set up your local development environment](/doc/set
 
 ## Contributing 
 
-Find here a guide on [how to contribute](/doc/contribute/CONTRIBUTE.md) to Artemis.
+Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 ## Top-Level Design
 
@@ -47,8 +47,10 @@ To optimize the Artemis application for production, run:
 This will compile the TypeScript into JavaScript files, concatenate and minify them and the CSS files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:
 
 ```
-java -jar build/libs/*.war
+java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
+
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](/doc/setup/SETUP.md))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -60,7 +62,7 @@ The following UML deployment diagram shows a typical deployment of Artemis appli
 
 The Continuous Integration Server typically delegates the build jobs to local build agents within the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
 
-![Deployment Overview](doc/DeploymentOverview.png "Deployment Overview")
+![Deployment Overview](doc/DeploymentOverview.svg "Deployment Overview")
 
 
 ## Data Model
@@ -68,7 +70,7 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 The Artemis application server used the following data model in the MySQL database.  It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
 The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
-![Data Model](doc/DataModel.png "Data Model")
+![Data Model](doc/DataModel.svg "Data Model")
 
 
 ## Server Architecture

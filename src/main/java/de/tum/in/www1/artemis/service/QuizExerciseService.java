@@ -267,7 +267,8 @@ public class QuizExerciseService {
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise);
             // update Successful-Flag in Result
-            result.getParticipation().setExercise(quizExercise);
+            StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+            studentParticipation.setExercise(quizExercise);
             result.setSubmission(quizSubmission);
             result.evaluateSubmission();
 
@@ -276,6 +277,10 @@ public class QuizExerciseService {
         }
     }
 
+    /**
+     * Sends a QuizExercise to all subscribed clients
+     * @param quizExercise the QuizExercise which will be sent
+     */
     @Transactional(readOnly = true)
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
         try {

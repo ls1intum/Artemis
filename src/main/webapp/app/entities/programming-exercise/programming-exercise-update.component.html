@@ -17,7 +17,21 @@
 
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                    <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="programmingExercise.title" />
+                    <input
+                        required
+                        type="text"
+                        class="form-control"
+                        name="title"
+                        id="field_title"
+                        [pattern]="titleNamePattern"
+                        [(ngModel)]="programmingExercise.title"
+                        #title="ngModel"
+                    />
+                    <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys: ['required']">
+                        <div *ngIf="title.invalid && (title.dirty || title.touched)" class="alert alert-danger">
+                            <div [jhiTranslate]="'artemisApp.exercise.form.title' + '.' + e.key"></div>
+                        </div>
+                    </ng-container>
                 </div>
 
                 <div class="form-group-narrow">
@@ -32,7 +46,13 @@
                         [pattern]="shortNamePattern"
                         [(ngModel)]="programmingExercise.shortName"
                         [readonly]="programmingExercise.id"
+                        #shortName="ngModel"
                     />
+                    <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                        <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
+                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + e.key"></div>
+                        </div>
+                    </ng-container>
                 </div>
                 <div class="form-group-narrow position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
@@ -51,15 +71,18 @@
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select
+                        #select
                         required
                         class="form-control"
-                        [(ngModel)]="programmingExercise.programmingLanguage"
+                        [ngModel]="selectedProgrammingLanguage"
+                        (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
                         [disabled]="programmingExercise.id"
                     >
                         <option value="JAVA">Java</option>
                         <option value="PYTHON">Python</option>
+                        <option value="C">C</option>
                     </select>
                 </div>
 
@@ -74,7 +97,13 @@
                         id="field_packageName"
                         [(ngModel)]="programmingExercise.packageName"
                         [readonly]="programmingExercise.id"
+                        #packageName="ngModel"
                     />
+                    <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
+                        <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key"></div>
+                        </div>
+                    </ng-container>
                 </div>
                 <div class="d-flex">
                     <div class="form-group-narrow flex-grow-1">
@@ -100,12 +129,18 @@
                         type="number"
                         [pattern]="maxScorePattern"
                         class="form-control"
-                        min="0"
+                        min="1"
                         max="9999"
                         name="maxScore"
                         id="field_maxScore"
                         [(ngModel)]="programmingExercise.maxScore"
+                        #maxScore="ngModel"
                     />
+                    <ng-container *ngFor="let e of maxScore.errors! | keyvalue | removekeys: ['required']">
+                        <div *ngIf="maxScore.invalid && (maxScore.dirty || maxScore.touched)" class="alert alert-danger">
+                            <div [jhiTranslate]="'artemisApp.exercise.form.maxScore' + '.' + e.key"></div>
+                        </div>
+                    </ng-container>
                 </div>
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
@@ -125,7 +160,8 @@
                         [participation]="programmingExercise.templateParticipation"
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
-                        [enableSave]="programmingExercise?.id"
+                        [editMode]="programmingExercise?.id"
+                        (hasUnsavedChanges)="hashUnsavedChanges = $event"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

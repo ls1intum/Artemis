@@ -2,9 +2,9 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
-import { Participation, ParticipationWebsocketService } from '../entities/participation';
+import { Participation, ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { DiagramType, ElementType, Selection, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -18,6 +18,8 @@ import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintType } from 'app/entities/complaint';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -32,7 +34,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
 
-    participation: Participation;
+    participation: StudentParticipation;
     modelingExercise: ModelingExercise;
     result: Result | null;
 
@@ -57,8 +59,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     automaticSubmissionWebsocketChannel: string;
 
     showComplaintForm = false;
+    showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
     hasComplaint: boolean;
+    // indicates if there is a more feedback request for the result of the submission
+    hasRequestMoreFeedback: boolean;
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled.
@@ -66,6 +71,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
+    ComplaintType = ComplaintType;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -98,7 +104,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (modelingSubmission.result) {
                             modelingSubmission.participation.results = [modelingSubmission.result];
                         }
-                        this.participation = modelingSubmission.participation;
+                        this.participation = modelingSubmission.participation as StudentParticipation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         if (this.modelingExercise.course) {
                             this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
@@ -106,7 +112,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             });
                         }
                         if (this.modelingExercise.diagramType == null) {
-                            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+                            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
                         this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
@@ -125,9 +131,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 this.assessmentResult = assessmentResult;
                                 this.prepareAssessmentData();
                             });
-                            this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                                this.hasComplaint = !!res.body;
-                            });
+                            this.complaintService
+                                .findByResultId(this.result.id)
+                                .pipe(filter(res => !!res.body))
+                                .subscribe(res => {
+                                    if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
+                                        this.hasRequestMoreFeedback = true;
+                                    } else {
+                                        this.hasComplaint = true;
+                                    }
+                                });
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;
@@ -420,9 +433,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    // function to check whether there are pending changes
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
+     */
     canDeactivate(): Observable<boolean> | boolean {
-        if (this.submission && this.submission.submitted) {
+        if (!this.modelingEditor || (this.submission && this.submission.submitted)) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
@@ -468,5 +483,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return umlModel.elements.length + umlModel.relationships.length;
         }
         return 0;
+    }
+
+    toggleComplaintForm() {
+        this.showRequestMoreFeedbackForm = false;
+        this.showComplaintForm = !this.showComplaintForm;
+    }
+
+    toggleRequestMoreFeedbackForm() {
+        this.showComplaintForm = false;
+        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }

@@ -29,23 +29,30 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * The generator uses separate data structures that contain the elements of these diffs and then creates JSON representations of them.
  *
  * The generator currently deals with the following structural elements:
- * - Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.
- * - Attributes: name, type and visibility modifier.
- * - Constructor: parameter types and visibility modifier.
- * - Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated into types and their children classes.
- * - Types: class hierarchy and methods.
- * - Interfaces: the elements in the types.
- * - Classes: the elements in the types as well as attributes and constructors.
- * - Enums: the elements in the classes as well as enum values.
+ * <ul>
+ *     <li>Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.</li>
+ *     <li>Attributes: name, type and visibility modifier.</li>
+ *     <li>Constructor: parameter types and visibility modifier.</li>
+ *     <li>Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated
+ *          into types and their children classes.</li>
+ *     <li>Types: class hierarchy and methods.</li>
+ *     <li>Interfaces: the elements in the types.</li>
+ *     <li>Classes: the elements in the types as well as attributes and constructors.</li>
+ *     <li>Enums: the elements in the classes as well as enum values.</li>
+ * </ul>
  *
  * The steps the oracle generator takes are the following:
- * 1. Feed the Spoon Framework the path to the projects of the solution and template projects and also the path where the oracle file needs to be saved.
- * 2. Extract all the types (and classes, enums, interfaces) from the meta models of the projects using the Spoon Framework.
- * 3. Create pairs of homologous types from the types in the solution and their corresponding counterparts in the template.
- * 4. Compute the diff for each pair of types and for each structural element contained in the types, e.g. for each of the structural elements described above check here
- *    which ones are present in the solution code and not in the template code.
- * 5. Generate the JSON representation for each diff.
- * 6. Assemble the JSON objects into a JSON array of all the types of the structure diff.
+ * <ol>
+ *     <li>Feed the Spoon Framework the path to the projects of the solution and template projects and also the path
+ *          where the oracle file needs to be saved.</li>
+ *     <li>Extract all the types (and classes, enums, interfaces) from the meta models of the projects using the Spoon Framework.</li>
+ *     <li>Create pairs of homologous types from the types in the solution and their corresponding counterparts in the template.</li>
+ *     <li>Compute the diff for each pair of types and for each structural element contained in the types,
+ *          e.g. for each of the structural elements described above check here which ones are present in the solution
+ *          code and not in the template code.</li>
+ *    <li>Generate the JSON representation for each diff.</li>
+ *    <li>Assemble the JSON objects into a JSON array of all the types of the structure diff.</li>
+ * </ol>
  */
 public class OracleGeneratorClient {
 
@@ -54,8 +61,8 @@ public class OracleGeneratorClient {
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
      * 
-     * @param solutionProjectPath: The path to the project of the solution of a programming exercise.
-     * @param templateProjectPath: The path to the project of the template of a programming exercise.
+     * @param solutionProjectPath The path to the project of the solution of a programming exercise.
+     * @param templateProjectPath The path to the project of the template of a programming exercise.
      * @return The string of the JSON representation of the structure oracle.
      */
     public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
@@ -134,9 +141,9 @@ public class OracleGeneratorClient {
      * corresponding types are declared in the template. For this, a null type is inserted instead and handled accordingly in the diffs. Also, if the type in the template is the
      * same to the one in the solution, then they get ignored and do not get added to the structure oracle.
      * 
-     * @param solutionProjectPath: The path to the solution project.
-     * @param templateProjectPath: The path to the template project.
-     * @return: A hash map containing the type pairs of the solution types and their respective counterparts in the template.
+     * @param solutionProjectPath The path to the solution project.
+     * @param templateProjectPath The path to the template project.
+     * @return A hash map containing the type pairs of the solution types and their respective counterparts in the template.
      */
     private static Map<JavaClass, JavaClass> generateSolutionToTemplateMapping(Path solutionProjectPath, Path templateProjectPath) {
         List<File> templateFiles = retrieveJavaSourceFiles(templateProjectPath);

@@ -41,7 +41,7 @@ Code-Editor Layout Styles
                 display: flex;
                 width: 310px;
 
-                ::ng-deep > *:first-child {
+                > *:first-child {
                     flex: 1 1 auto;
                     width: 90%;
                 }
@@ -61,7 +61,7 @@ Code-Editor Layout Styles
             flex-flow: row nowrap;
             width: 500px;
 
-            ::ng-deep > *:last-child {
+            > *:last-child {
                 flex: 1 1 auto;
                 width: 90%;
             }
@@ -78,12 +78,12 @@ Code-Editor Layout Styles
         .rg-bottom-bottom {
             display: none;
         }
-        ::ng-deep > * + .rg-bottom-bottom {
+        > * + .rg-bottom-bottom {
             display: inherit !important;
         }
 
-        ::ng-deep > * {
-            height: 100%;
+        > * {
+            height: inherit;
         }
     }
 }
@@ -94,7 +94,7 @@ Collapsable styling
 
 // File browser
 .editor-sidebar-left.collapsed--horizontal {
-    ::ng-deep > * {
+    > * {
         flex: none !important;
 
         .card-header {
@@ -117,7 +117,7 @@ Collapsable styling
 }
 
 .editor-sidebar-left:not(.collapsed--horizontal) {
-    ::ng-deep .code-editor-status {
+    .code-editor-status {
         display: grid;
         grid-template-columns: repeat(2, minmax(max-content, 1fr));
         grid-column-gap: 10px;
@@ -130,7 +130,7 @@ Collapsable styling
 }
 
 .editor-sidebar-left.collapsed--horizontal {
-    ::ng-deep .code-editor-status {
+    .code-editor-status {
         > :not(:last-child) {
             padding-bottom: 5px;
         }
@@ -145,7 +145,7 @@ Collapsable styling
 }
 
 // Instructions
-.editor-sidebar-right.collapsed--horizontal ::ng-deep {
+.editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
 
     .card-header {
@@ -177,7 +177,7 @@ Collapsable styling
 }
 
 .editor-sidebar-right:not(.collapsed--horizontal) {
-    ::ng-deep .editable-instruction-container__status {
+    .editable-instruction-container__status {
         display: grid;
         grid-template-columns: repeat(2, minmax(max-content, 1fr));
         grid-column-gap: 10px;
@@ -190,10 +190,10 @@ Collapsable styling
 }
 
 .editor-sidebar-right.collapsed--horizontal {
-    ::ng-deep .instructions__content {
+    .instructions__content {
         height: auto;
     }
-    ::ng-deep .editable-instruction-container__status {
+    .editable-instruction-container__status {
         display: flex;
         flex-flow: column;
 
@@ -221,7 +221,7 @@ Collapsable styling
 
 // build-output
 .editor-bottom.collapsed--vertical {
-    ::ng-deep .card-body {
+    .card-body {
         display: none;
     }
 }

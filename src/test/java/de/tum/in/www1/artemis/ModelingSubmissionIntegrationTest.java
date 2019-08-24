@@ -6,8 +6,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,17 +17,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
@@ -72,9 +73,8 @@ public class ModelingSubmissionIntegrationTest {
 
     private String validModel;
 
-    @Before
+    @BeforeEach
     public void initTestCase() throws Exception {
-        database.resetDatabase();
         database.addUsers(3, 1, 0);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
@@ -85,6 +85,11 @@ public class ModelingSubmissionIntegrationTest {
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
@@ -193,7 +198,7 @@ public class ModelingSubmissionIntegrationTest {
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
-        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission2 });
+        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
     }
 
     @Test
@@ -216,7 +221,7 @@ public class ModelingSubmissionIntegrationTest {
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
                 ModelingSubmission.class);
 
-        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission3 });
+        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(submission1, submission3);
     }
 
     @Test
@@ -280,10 +285,7 @@ public class ModelingSubmissionIntegrationTest {
         // set date to UTC for comparison as dates coming from the database are in UTC
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
-        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessmentType()).as("type of result is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
-        assertThat(storedSubmission.getResult().getCompletionDate()).as("completion date is not set").isNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is not set").isNull();
+        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -378,6 +380,21 @@ public class ModelingSubmissionIntegrationTest {
         database.addModelingSubmission(useCaseExercise, submission, "student2");
 
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getModelSubmissionForModelingEditor() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
+
+        // set date to UTC for comparison as dates coming from the database are in UTC
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

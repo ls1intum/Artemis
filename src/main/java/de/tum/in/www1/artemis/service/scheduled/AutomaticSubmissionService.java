@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 
@@ -28,7 +29,7 @@ public class AutomaticSubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticSubmissionService.class);
 
-    // TODO Rework this service to manipulate unsubmitted submission objects for text and modeling exercises in the database directly without the use of hash maps
+    // This service manipulates unsubmitted submission objects for text and modeling exercises in the database directly without the use of hash maps
     // 1) using a cron job, we get all text submissions and modeling submissions from the database with submitted = false
     // 2) we check for each submission whether the corresponding exercise has finished (i.e. due date < now)
     // 3a) if yes, we set the submission to submitted = true (without changing the submission date). We also set submissionType to TIMEOUT
@@ -53,8 +54,10 @@ public class AutomaticSubmissionService {
 
     /**
      * Check for every un-submitted modeling and text submission if the corresponding exercise has finished (i.e. due date < now) and the submission was saved before the exercise
-     * due date. - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
-     * of the corresponding participation to FINISHED. - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
+     * due date.
+     * - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the
+     * corresponding participation to FINISHED.
+     * - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
@@ -84,7 +87,8 @@ public class AutomaticSubmissionService {
                     notifyCompassAboutNewModelingSubmission((ModelingSubmission) unsubmittedSubmission, (ModelingExercise) exercise);
                 }
 
-                String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
+                StudentParticipation studentParticipation = (StudentParticipation) unsubmittedSubmission.getParticipation();
+                String username = studentParticipation.getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
                     messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
                 }
@@ -113,15 +117,15 @@ public class AutomaticSubmissionService {
      */
     private Submission updateParticipation(Submission submission) {
         if (submission != null) {
-            Participation participation = submission.getParticipation();
-            if (participation == null) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            if (studentParticipation == null) {
                 log.error("The submission {} has no participation.", submission);
                 return null;
             }
 
-            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipation.setInitializationState(InitializationState.FINISHED);
 
-            participationService.save(participation);
+            participationService.save(studentParticipation);
 
             return submission;
         }
@@ -136,6 +140,8 @@ public class AutomaticSubmissionService {
      */
     private void notifyCompassAboutNewModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         try {
+            // set Authentication object to prevent authentication error "Authentication object cannot be null" - see JavaDoc of setAuthorizationObject method for further details
+            SecurityUtils.setAuthorizationObject();
             modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
         }
         catch (Exception ex) {

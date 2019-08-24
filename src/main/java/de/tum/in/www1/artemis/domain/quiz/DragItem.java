@@ -168,6 +168,10 @@ public class DragItem implements Serializable {
      * the file in the permanent location is deleted => This happens in @PostRemove NOTE: Number 3 and 4 are not possible for drag items with the current UI, but might be possible
      * in the future and are implemented here to prevent unexpected behaviour when UI changes and to keep code similar to DragAndDropQuestion.java
      */
+
+    /**
+     *Initialisation of the DragItem on Server start
+     */
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)

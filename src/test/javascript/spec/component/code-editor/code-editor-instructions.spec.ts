@@ -9,10 +9,10 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorGridService, CodeEditorInstructionsComponent, CodeEditorRepositoryFileService } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorRepositoryFileService } from '../../mocks';
 import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { MockCodeEditorGridService } from '../../mocks/mock-code-editor-grid.service';
 
 chai.use(sinonChai);
@@ -25,7 +25,7 @@ describe('CodeEditorInstructionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AceEditorModule, ArTEMiSMarkdownEditorModule, ArTEMiSTestModule, NgbModule],
+            imports: [TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule, ArtemisTestModule, NgbModule],
             declarations: [CodeEditorInstructionsComponent, MockComponent(ProgrammingExerciseInstructionComponent), MockComponent(ProgrammingExerciseEditableInstructionComponent)],
             providers: [
                 WindowRef,

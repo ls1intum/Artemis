@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
@@ -90,45 +91,18 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all exercises for the given course
-     *
-     * @param courseId the course for which to retrieve all exercises
-     * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
-     */
-    @GetMapping(value = "/courses/{courseId}/exercises")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get Exercises for Course : {}", courseId);
-
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
-                && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
-        List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
-        // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            result.forEach(Exercise::filterSensitiveInformation);
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    /**
      * GET /exercises/:id : get the "id" exercise.
      *
-     * @param id the id of the exercise to retrieve
+     * @param exerciseId the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{id}")
+    @GetMapping("/exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
-        log.debug("REST request to get Exercise : {}", id);
+    public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get Exercise : {}", exerciseId);
 
         User student = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
         if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
@@ -195,8 +169,8 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
-     * instructor dashboard
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
      * @return a object node with the stats
@@ -212,7 +186,10 @@ public class ExerciseResource {
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
@@ -238,8 +215,11 @@ public class ExerciseResource {
         }
 
         StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
-        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
+
+        long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfOpenMoreFeedbackRequests);
 
         return ResponseEntity.ok(stats);
     }
@@ -289,7 +269,7 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
+    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
@@ -304,6 +284,7 @@ public class ExerciseResource {
      *
      * @param id the id of the exercise to delete and archive the repositories
      * @return ResponseEntity with status
+     * @throws IOException if repositories can't be archived
      */
     @GetMapping(value = "/exercises/{id}/archive")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -329,12 +310,17 @@ public class ExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zipped
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
         studentIds = studentIds.replaceAll(" ", "");
         Exercise exercise = exerciseService.findOne(exerciseId);
+
+        // TODO: allow multiple options:
+        // - one boolean flag per stager task (see exportParticipations)
+        // - one boolean flag that all student submissions should be downloaded
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
@@ -363,7 +349,7 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
+    public ResponseEntity<Exercise> getResultsForCurrentUser(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
         log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
@@ -375,13 +361,17 @@ public class ExerciseResource {
         }
 
         if (exercise != null) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
             exercise.setParticipations(new HashSet<>());
 
-            for (Participation participation : participations) {
+            for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
+                // By filtering the results available yet, they can become null for the exercise.
+                if (participation.getResults() != null) {
+                    participation.getResults().forEach(r -> r.setAssessor(null));
+                }
                 exercise.addParticipation(participation);
             }
 
@@ -392,7 +382,7 @@ public class ExerciseResource {
             }
         }
 
-        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("getResultsForCurrentUser took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
