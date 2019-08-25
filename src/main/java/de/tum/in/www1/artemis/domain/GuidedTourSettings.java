@@ -13,11 +13,18 @@ import javax.persistence.Table;
 @Table(name = "guided_tour_settings")
 public class GuidedTourSettings implements Serializable {
 
+    public enum Status {
+        STARTED, FINISHED
+    }
+
     @Column(name = "guided_tour_key")
     private String guidedTourKey = null;
 
     @Column(name = "guided_tour_step")
     private Integer guidedTourStep = 0;
+
+    @Column(name = "guided_tour_state")
+    private Status guidedTourState = null;
 
     public GuidedTourSettings() {
     }
@@ -36,6 +43,14 @@ public class GuidedTourSettings implements Serializable {
 
     public void setGuidedTourStep(Integer guidedTourStep) {
         this.guidedTourStep = guidedTourStep;
+    }
+
+    public Status getGuidedTourState() {
+        return guidedTourState;
+    }
+
+    public void setGuidedTourState(Status guidedTourState) {
+        this.guidedTourState = guidedTourState;
     }
 
     public GuidedTourSettings guidedTourKey(String guidedTourKey) {

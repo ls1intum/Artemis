@@ -7,6 +7,7 @@
             </column>
             <column name="guided_tour_key" type="VARCHAR(255)"/>
             <column name="guided_tour_step" type="INT"/>
+            <column name="guided_tour_state" type="INT"/>
         </createTable>
     </changeSet>
     <changeSet author="phuong.anh.montag" id="1566406520708-2">

@@ -44,7 +44,7 @@ public class GuidedTourSettingsResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<GuidedTourSettings>> getGuidedTourSettings() {
-        log.debug("REST request to get the guided tour settings for the given guided-tour-key of the current user");
+        log.debug("REST request to get all guided tour settings of the current user");
         User currentUser = userService.getUser();
         return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
     }
