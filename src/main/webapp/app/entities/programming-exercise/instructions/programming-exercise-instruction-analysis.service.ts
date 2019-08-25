@@ -27,6 +27,15 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
     constructor(private translateService: TranslateService) {}
 
+    /**
+     * Given a programming exercise's problem statement, analyze the test cases and hints contained (or not contained!) in it.
+     * Will give out a mixed object that contains singular anlysis for test cases / hints and a accumulated analysis object.
+     *
+     * @param problemStatement  multiline string.
+     * @param taskRegex         identifies tasks in a problem statement.
+     * @param exerciseTestCases used to check if a test case is valid / missing.
+     * @param exerciseHints     used to check if a hint is valid.
+     */
     public analyzeProblemStatement = (problemStatement: string, taskRegex: RegExp, exerciseTestCases: string[], exerciseHints: ExerciseHint[]) => {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
@@ -45,9 +54,10 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * Will also set the invalidTestCases & missingTestCases attributes of the component.
      *
-     * @param tasksFromProblemStatement to check if they contain test cases.
+     * @param tasksFromProblemStatement to analyze.
+     * @param exerciseTestCases to double check the test cases found in the problem statement.
      */
-    public analyzeTestCases = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseTestCases: string[]) => {
+    private analyzeTestCases = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseTestCases: string[]) => {
         // Extract the testCase list from the task matches.
         const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.TEST_CASE_REGEX);
         // Look for test cases that are not part of the test repository. Could e.g. be typos.
@@ -75,8 +85,9 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * Will also set the invalidHints attribute of the component.
      *
      * @param tasksFromProblemStatement to check if they contain hints.
+     * @param exerciseHints to double check the exercise hints found in the problem statement.
      */
-    public analyzeHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
+    private analyzeHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
         const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.HINT_REGEX);
         const invalidHintAnalysis = hintsInMarkdown
             .map(
@@ -101,7 +112,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
-    public mergeAnalysis = (...analysis: Array<AnalysisItem[]>) => {
+    private mergeAnalysis = (...analysis: Array<AnalysisItem[]>) => {
         return compose(
             reduce((acc, [lineNumber, values, issueType]) => {
                 const lineNumberValues = acc[lineNumber];
@@ -133,6 +144,13 @@ export class ProgrammingExerciseInstructionAnalysisService {
         }
     };
 
+    /**
+     * Extracts the given regex from the task.
+     * Value will be null if no match is found!
+     *
+     * @param tasks that contain the given regex.
+     * @param regex to search for in the tasks.
+     */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
         return compose(
             map(([lineNumber, match]) => {
