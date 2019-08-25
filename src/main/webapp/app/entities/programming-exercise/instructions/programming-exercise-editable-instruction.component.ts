@@ -5,8 +5,7 @@ import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
-import { compose, filter, map, sortBy } from 'lodash/fp';
-import { flatten as _flatten } from 'lodash';
+import { compose, entries, flatten, filter, fromPairs, toPairs, map, sortBy, values } from 'lodash/fp';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
@@ -137,6 +136,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
     }
 
+    /**
+     * Load the exercise hints and assign them to the task hint command.
+     *
+     * @param exerciseId for which to load the exercise hints.
+     */
     loadExerciseHints(exerciseId: number) {
         this.exerciseHintService
             .findByExerciseId(exerciseId)
@@ -147,9 +151,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
     }
 
-    /* Save the problem statement on the server.
+    /** Save the problem statement on the server.
      * @param $event
-     */
+     **/
     saveInstructions($event: any) {
         $event.stopPropagation();
         this.savingInstructions = true;
@@ -238,17 +242,30 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         );
     };
 
+    /**
+     * On every update of the problem statement analysis, update the appropriate line numbers of the editor with the resuls of the analysis.
+     * Will show warning symbols for every item.
+     *
+     * @param analysis that contains the resulting issues of the problem statement.
+     */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
-        const lineWarnings = _flatten(
-            (Object.entries(analysis) as [string, any][]).map(([lineNumber, issues]) =>
-                Object.values(issues).map((issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' })),
-            ),
-        );
+        const mapIssuesToAnnotations = ([lineNumber, issues]: [number, { [issueType: string]: string[] }]) =>
+            compose(
+                map((analysisIssues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + analysisIssues.join('\n - '), type: 'warning' })),
+                values,
+            )(issues);
+
+        const lineWarnings = compose(
+            flatten,
+            map(mapIssuesToAnnotations),
+            toPairs,
+        )(analysis);
 
         this.markdownEditor.aceEditorContainer
             .getEditor()
             .getSession()
             .clearAnnotations();
+        // We need to wait for the annotations to be removed before we can set the new annotations. Otherwise changes in the editor will trigger the update of the existing annotations.
         setTimeout(() => {
             this.markdownEditor.aceEditorContainer
                 .getEditor()

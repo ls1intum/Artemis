@@ -65,7 +65,7 @@
                 "missingTestCases": "There are {{number}} test cases that are valid test cases in your test repository but were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
-                "invalidTestCase": "The test case '{{name}}' could not be found in the test repository."
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
             },
             "hintsAnalysis": {
                 "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but can't be found in the database or are not assigned to this programming exercise:",

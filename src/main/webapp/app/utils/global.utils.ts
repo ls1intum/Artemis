@@ -45,3 +45,21 @@ export const getStringSegmentPositions = (stringToSegment: string, delimiter: st
     const restString = stringToSegment.slice(nextComma + delimiter.length);
     return getStringSegmentPositions(restString, delimiter, newResult);
 };
+
+export type RegExpLineNumberMatchArray = Array<[number, string]>;
+/**
+ * Executes a regex on a multi line text ("text \n more text") and returns the [lineNumber of the match, matched object] in a tuple.
+ *
+ * @param multiLineText in which to search for matches of the regex.
+ * @param regex RegExp object.
+ */
+export const matchRegexWithLineNumbers = (multiLineText: string, regex: RegExp): RegExpLineNumberMatchArray => {
+    const result: RegExpLineNumberMatchArray = [];
+    let match = regex.exec(multiLineText);
+    while (match) {
+        const lineNumber = multiLineText.substring(0, match.index + match[1].length + 1).split('\n').length - 1;
+        result.push([lineNumber, match[1]]);
+        match = regex.exec(multiLineText);
+    }
+    return result;
+};
