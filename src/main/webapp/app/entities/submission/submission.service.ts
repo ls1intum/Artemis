@@ -30,8 +30,6 @@ export class SubmissionService {
     }
 
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
-        console.log('enter rest call');
-
         return this.http
             .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}`, { observe: 'response' })
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
