@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsu
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { ContentType, LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -31,7 +31,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly ContentType = ContentType;
     readonly LinkType = LinkType;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}

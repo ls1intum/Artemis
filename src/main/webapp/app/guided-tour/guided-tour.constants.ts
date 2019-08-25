@@ -18,13 +18,6 @@ export enum Orientation {
     TOPRIGHT = 'top-right',
 }
 
-/* Content type of tour step content */
-export enum ContentType {
-    TEXT,
-    IMAGE,
-    VIDEO,
-}
-
 /* Link type of the link within the tour step content */
 export enum LinkType {
     LINK,

@@ -9,7 +9,7 @@ import { debounceTime } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { ContentType, GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
+import { GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -47,7 +47,6 @@ export class GuidedTourService {
                         this.guidedTourCurrentStepSubject.next(
                             new TextTourStep({
                                 headlineTranslateKey: 'tour.resize.headline',
-                                contentType: ContentType.TEXT,
                                 contentTranslateKey: 'tour.resize.content',
                             }),
                         );

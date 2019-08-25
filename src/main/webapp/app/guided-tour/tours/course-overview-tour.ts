@@ -1,4 +1,4 @@
-import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 
