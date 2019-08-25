@@ -47,6 +47,7 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -124,6 +125,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionService,
         ProgrammingExercisePlantUmlService,
         ProgrammingExerciseParticipationService,
+        ProgrammingExerciseInstructionAnalysisService,
     ],
 })
 export class ArtemisProgrammingExerciseModule {

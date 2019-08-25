@@ -14,6 +14,7 @@ import { SinonStub, stub } from 'sinon';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
 
 const expect = chai.expect;
 
@@ -41,9 +42,9 @@ describe('ProgrammingExerciseInstructionInstructionAnalysis', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionInstructorAnalysisComponent],
-            providers: [{ provide: ExerciseHintService, useClass: MockExerciseHintService }],
+            providers: [{ provide: ExerciseHintService, useClass: MockExerciseHintService }, ProgrammingExerciseInstructionAnalysisService],
         })
             .compileComponents()
             .then(() => {
