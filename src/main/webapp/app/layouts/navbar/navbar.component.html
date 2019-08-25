@@ -154,6 +154,19 @@
                             language | findLanguageFromKey
                         }}</a>
                     </li>
+                    <!-- only display guided tour to ADMIN for now -->
+                    <ng-template [ngIf]="isTourAvailable">
+                        <div *jhiHasAnyAuthority="['ROLE_ADMIN']" class="dropdown-divider"></div>
+                        <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                            <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTour">Guided Tour</h6>
+                        </li>
+                        <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                            <a class="dropdown-item guided-tour" jhiTranslate="global.menu.startTour" (click)="this.guidedTourService.startGuidedTourForCurrentRoute()"
+                                >Start tour</a
+                            >
+                        </li>
+                    </ng-template>
+                    <!-- only display guided tour to ADMIN for now -->
                     <div class="dropdown-divider"></div>
                     <li>
                         <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
@@ -166,3 +179,4 @@
         </ul>
     </div>
 </nav>
+<jhi-guided-tour></jhi-guided-tour>

@@ -1,0 +1,14 @@
+{
+    "tour": {
+        "navigation": {
+            "back": "Zurück",
+            "next": "Weiter",
+            "done": "Beenden",
+            "close": "Schließen"
+        },
+        "resize": {
+            "headline": "Zu kleine Bildschirmgröße",
+            "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
+        }
+    }
+}
