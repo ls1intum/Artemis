@@ -29,7 +29,6 @@ export class ParticipationSubmissionDeleteDialogComponent implements OnInit {
     }
 
     confirmDelete(id: number) {
-        console.log('delete with modal success: ' + id);
         this.submissionService.delete(id).subscribe(() => {
             this.eventManager.broadcast({
                 name: 'submissionsModification',
