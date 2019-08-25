@@ -9,7 +9,12 @@
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "detail": {
                 "scoreFor": "Bewertung für das Teil {{ index }}"
-            }
+            },
+            "submissionFile": "Submission Datei",
+            "notFound": "Wir haben keine neue Datei Upload Submission ohne Bewertung gefunden, bitte gehe zurück.",
+            "addFeedback": "Neues Feedback hinzufügen",
+            "assessInstruction": "Bitte klickst du auf \"Neues Feedback hinzufügen\".",
+            "deleteAssessment": "Bewertung {{ index }} löschen ?"
         }
     }
 }

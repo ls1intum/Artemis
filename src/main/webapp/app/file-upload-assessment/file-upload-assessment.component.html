@@ -64,7 +64,7 @@
 </div>
 
 <div *ngIf="notFound" class="alert alert-warning text-center mt-4" role="alert">
-    <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+    <p>{{ 'artemisApp.fileUploadAssessment.notFound' | translate }}</p>
 </div>
 
 <div class="row justify-content-end mt-4">
@@ -94,12 +94,12 @@
             </div>
             <div class="card-body">
                 <div class="card-text">
-                    <a [href]="submission.filePath" target="_blank">Open</a>
+                    <a [href]="submission.filePath" target="_blank">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
                     <span class="ml-1 badge badge-info">
                         {{ attachmentExtension(submission.filePath) | uppercase }}
                     </span>
                 </div>
-                <button class="btn btn-success" (click)="addReferencedFeedback()">Add new Feedback</button>
+                <button class="btn btn-success" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
             </div>
         </div>
 
@@ -123,7 +123,7 @@
         <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
         <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
             <div class="alert alert-secondary text-center" role="alert">
-                <p jhiTranslate="artemisApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+                <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
             </div>
         </div>
         <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">

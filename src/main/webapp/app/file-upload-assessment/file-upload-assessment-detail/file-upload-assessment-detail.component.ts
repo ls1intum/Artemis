@@ -1,5 +1,11 @@
+/* angular */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+/* application */
 import { Feedback } from 'app/entities/feedback';
+
+/* 3rd party */
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-file-upload-assessment-detail',
@@ -13,12 +19,13 @@ export class FileUploadAssessmentDetailComponent {
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
 
+    constructor(private translateService: TranslateService) {}
     public emitChanges(): void {
         this.assessmentChange.emit(this.assessment);
     }
 
     public delete() {
-        const confirmation = confirm(`Delete Assessment "${this.assessment.id}"?`);
+        const confirmation = confirm(this.translateService.instant('artemisApp.fileUploadAssessment.deleteAssessment', { index: this.assessment.id }));
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);
         }
