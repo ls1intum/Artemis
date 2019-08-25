@@ -10,13 +10,11 @@ import { MockSyncStorage } from '../../mocks';
 import { ArtemisResultModule, UpdatingResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
-import { ExerciseType } from 'app/entities/exercise';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { TextExercise } from 'app/entities/text-exercise';
+import { TextSubmission } from 'app/entities/text-submission';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { TextAssessmentDetailComponent } from 'app/text-assessment/text-assessment-detail/text-assessment-detail.component';
@@ -25,7 +23,6 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
-import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
@@ -84,51 +81,30 @@ describe('ParticipationSubmissionComponent', () => {
         findAllSubmissionsOfParticipationStub.restore();
     });
 
-    it(
-        'AssessNextButton should be visible, the method assessNextOptimal should be invoked ' + 'and the url should change after clicking on the button',
-        fakeAsync(() => {
-            // set all attributes for comp
-            const submissions = [
-                {
-                    submissionExerciseType: SubmissionExerciseType.TEXT,
-                    id: 2278,
-                    submitted: true,
-                    type: SubmissionType.MANUAL,
-                    submissionDate: moment('2019-07-09T10:47:33.244Z'),
-                    text: 'asdfasdfasdfasdf',
-                },
-            ] as TextSubmission[];
+    it('Submissions are correctly loaded from server', fakeAsync(() => {
+        // set all attributes for comp
+        const submissions = [
+            {
+                submissionExerciseType: SubmissionExerciseType.TEXT,
+                id: 2278,
+                submitted: true,
+                type: SubmissionType.MANUAL,
+                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                text: 'asdfasdfasdfasdf',
+                participation: { id: 1 },
+            },
+        ] as TextSubmission[];
 
-            const result = {
-                id: 2374,
-                resultString: '1 of 12 points',
-                completionDate: moment('2019-07-09T11:51:23.251Z'),
-                successful: false,
-                score: 8,
-                rated: true,
-                hasFeedback: false,
-                submission: submissions[0],
-            };
+        // check if findAllSubmissionsOfParticipationStub() is called and works
+        findAllSubmissionsOfParticipationStub.returns(of({ body: submissions }));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        tick();
+        expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
+        expect(comp.submissions).to.be.deep.equal(submissions);
 
-            //fixture.detectChanges();
-
-            // check if findAllSubmissionsOfParticipationStub() is called and works
-            findAllSubmissionsOfParticipationStub.returns(of(submissions));
-            comp.setupPage();
-            tick();
-            expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
-            expect(comp.submissions).to.be.deep.equal(submissions);
-
-            // check if deleteButton is available
-            const deleteButton = debugElement.query(By.css('#deleteButton'));
-            expect(deleteButton).to.exist;
-
-            // check if the url changes when you clicked on assessNextAssessmentButton
-            tick();
-            // expect(location.path()).to.be.equal('/text/' + comp.exercise.id + '/assessment/' + comp.unassessedSubmission.id);
-
-            fixture.destroy();
-            flush();
-        }),
-    );
+        // check if delete button is available
+        const deleteButton = debugElement.query(By.css('#deleteButton'));
+        expect(deleteButton).to.exist;
+    }));
 });
