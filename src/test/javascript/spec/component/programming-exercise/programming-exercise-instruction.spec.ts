@@ -8,7 +8,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
-import { of, Subject, Subscription, throwError } from 'rxjs';
+import { of, Subject, Subscription, throwError, Observable } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
@@ -25,7 +25,7 @@ import {
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
-import { MockParticipationWebsocketService } from '../../mocks';
+import { MockExerciseHintService, MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
@@ -33,6 +33,9 @@ import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programmin
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,11 +47,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let exerciseHintService: IExerciseHintService;
     let modalService: NgbModal;
+
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFileStub: SinonStub;
     let openModalStub: SinonStub;
     let getLatestResultWithFeedbacks: SinonStub;
+    let getHintsForExerciseStub: SinonStub;
+
+    const exerciseHints = [{ id: 1 }, { id: 2 }];
+    const exercise = { id: 1 };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -63,6 +72,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
@@ -74,11 +84,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
+                exerciseHintService = debugElement.injector.get(ExerciseHintService);
                 modalService = debugElement.injector.get(NgbModal);
+
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = stub(modalService, 'open');
                 getFileStub = stub(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
     });
 
@@ -95,6 +108,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const participation = { id: 2, results: [result] } as Participation;
         const oldSubscription = new Subscription();
         subscribeForLatestResultOfParticipationStub.returns(of());
+        comp.exercise = exercise;
         comp.participation = participation;
         comp.participationSubscription = oldSubscription;
         const changes: SimpleChanges = {
@@ -106,6 +120,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
         expect(comp.participationSubscription).not.to.equal(oldSubscription);
         expect(comp.isInitial).to.be.true;
+        expect(getHintsForExerciseStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(comp.exerciseHints).to.deep.equal(exerciseHints);
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
@@ -283,8 +299,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.updateMarkdown();
 
         expect(comp.tasks).to.have.lengthOf(2);
-        expect(comp.tasks[0]).to.deep.equal({ completeString: '[task][Implement Bubble Sort](testBubbleSort)', taskName: 'Implement Bubble Sort', tests: ['testBubbleSort'] });
-        expect(comp.tasks[1]).to.deep.equal({ completeString: '[task][Implement Merge Sort](testMergeSort)', taskName: 'Implement Merge Sort', tests: ['testMergeSort'] });
+        expect(comp.tasks[0]).to.deep.equal({
+            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            taskName: 'Implement Bubble Sort',
+            tests: ['testBubbleSort'],
+            hints: [],
+        });
+        expect(comp.tasks[1]).to.deep.equal({
+            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            taskName: 'Implement Merge Sort',
+            tests: ['testMergeSort'],
+            hints: [],
+        });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;
@@ -321,8 +347,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.updateMarkdown();
 
         expect(comp.tasks).to.have.lengthOf(2);
-        expect(comp.tasks[0]).to.deep.equal({ completeString: '[task][Implement Bubble Sort](testBubbleSort)', taskName: 'Implement Bubble Sort', tests: ['testBubbleSort'] });
-        expect(comp.tasks[1]).to.deep.equal({ completeString: '[task][Implement Merge Sort](testMergeSort)', taskName: 'Implement Merge Sort', tests: ['testMergeSort'] });
+        expect(comp.tasks[0]).to.deep.equal({
+            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            taskName: 'Implement Bubble Sort',
+            tests: ['testBubbleSort'],
+            hints: [],
+        });
+        expect(comp.tasks[1]).to.deep.equal({
+            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            taskName: 'Implement Merge Sort',
+            tests: ['testMergeSort'],
+            hints: [],
+        });
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;
