@@ -44,6 +44,14 @@ In this case the reviewer or PR maintainer needs to make sure to create an issue
 
 Find here [a guide](doc/setup/SETUP.md) on how to setup your local development environment.
 
+## Route Naming Conventions
+
+- Always use **kebab-case** (e.g. 'exampleAssessment' → 'example-assessment')
+- Before id there should always be the name of the entity to which this id relates to
+- Use **plural for API endpoint's** entities and **singular for client route's** entities
+- Key entity at the end of the route(e.g. text-editor/participations/{participationId} → participations/{participationId}/text-editor)
+- Never specify id that is used only for consistency and not used in the code
+
 ## CSS Guidelines
 
 We are using [Scss](https://sass-lang.com) to write modular, reusable css.
