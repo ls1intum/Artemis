@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,6 +117,11 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingSubmission submission;
         try {
             submission = submissionService.getLatestPendingSubmission(participationId);
+            // Remove unnecessary data to make response smaller (exercise, student of participation).
+            if (submission.getParticipation() instanceof StudentParticipation) {
+                ((StudentParticipation) submission.getParticipation()).setStudent(null);
+            }
+            submission.getParticipation().setExercise(null);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
@@ -146,6 +152,15 @@ public class ProgrammingExerciseParticipationResource {
             return forbidden();
         }
         Map<Long, ProgrammingSubmission> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
+        // Remove unnecessary data to make response smaller (exercise, student of participation).
+        pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+            ProgrammingSubmission submission = entry.getValue();
+            if (submission.getParticipation() instanceof StudentParticipation) {
+                ((StudentParticipation) submission.getParticipation()).setStudent(null);
+            }
+            submission.getParticipation().setExercise(null);
+            return submission;
+        }));
         return ResponseEntity.ok(pendingSubmissions);
     }
 
