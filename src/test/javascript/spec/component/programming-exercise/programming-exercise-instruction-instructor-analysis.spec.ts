@@ -2,20 +2,29 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionInstructorAnalysisComponent } from '../../../../../main/webapp/app/entities/programming-exercise';
 import { TaskCommand } from '../../../../../main/webapp/app/markdown-editor/domainCommands/programming-exercise/task.command';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
+import { MockExerciseHintService } from '../../mocks';
+import { SinonStub, stub } from 'sinon';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { Observable, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 const expect = chai.expect;
 
-describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
-    let comp: ProgrammingExerciseInstructorStatusComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseInstructorStatusComponent>;
+describe('ProgrammingExerciseInstructionInstructionAnalysis', () => {
+    let comp: ProgrammingExerciseInstructionInstructorAnalysisComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseInstructionInstructorAnalysisComponent>;
     let debugElement: DebugElement;
+
+    let exerciseHintService: IExerciseHintService;
+
+    let getHintsForExerciseStub: SinonStub;
 
     const taskCommand = new TaskCommand();
     const taskRegex = taskCommand.getTagRegex('g');
@@ -28,16 +37,23 @@ describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
     const missingTestCases = ['test6', 'test7'];
     const invalidTestCases = ['test3', 'test4'];
 
+    const exerciseHints = [{ id: 1 }, { id: 2 }] as ExerciseHint[];
+
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionInstructorAnalysisComponent],
+            providers: [{ provide: ExerciseHintService, useClass: MockExerciseHintService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionInstructorAnalysisComponent);
                 debugElement = fixture.debugElement;
                 comp = fixture.componentInstance as ProgrammingExerciseInstructionInstructorAnalysisComponent;
+
+                exerciseHintService = debugElement.injector.get(ExerciseHintService);
+
+                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
     }));
 
@@ -57,6 +73,7 @@ describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
         comp.problemStatement = problemStatement;
         comp.taskRegex = taskRegex;
         comp.exerciseTestCases = exerciseTestCases;
+        comp.exerciseHints = exerciseHints;
         const changes = { problemStatement: new SimpleChange(undefined, problemStatement, false), exerciseTestCases: new SimpleChange(undefined, exerciseTestCases, false) };
         comp.ngOnChanges(changes);
         fixture.detectChanges();

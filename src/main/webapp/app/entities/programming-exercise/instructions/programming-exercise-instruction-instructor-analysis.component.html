@@ -28,7 +28,7 @@
     <ng-template #testCasesTooltipContent>
         <div class="text-left w-100">
             <div *ngIf="invalidTestCases.length">
-                <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases" [translateValues]="{ number: invalidTestCases.length }"
+                <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | translate: { number: invalidTestCases.length }"
                     >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
                 >
                 <ul>
@@ -47,7 +47,7 @@
     <ng-template #hintsTooltipContent>
         <div class="text-left w-100">
             <div *ngIf="invalidHints.length">
-                <span jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.invalidHints" [translateValues]="{ number: invalidHints.length }"
+                <span [innerHTML]="'artemisApp.programmingExercise.hintsAnalysis.invalidHints' | translate: { number: invalidHints.length }"
                     >There are {{ invalidHints.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
                 >
                 <ul>
