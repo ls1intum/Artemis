@@ -28,7 +28,11 @@
                 </td>
                 <td>{{ submission.result ? (submission.result.assessor ? submission.result.assessor.firstName : 'n.a') : 'n.a' }}</td>
                 <td>
-                    <button class="btn btn-danger btn-sm mr-1" [routerLink]="['/', { outlets: { popup: 'participationSubmission/' + submission.id + '/delete' } }]">
+                    <button
+                        id="deleteButton"
+                        class="btn btn-danger btn-sm mr-1"
+                        [routerLink]="['/', { outlets: { popup: 'participationSubmission/' + submission.id + '/delete' } }]"
+                    >
                         <fa-icon icon="times"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                     </button>
