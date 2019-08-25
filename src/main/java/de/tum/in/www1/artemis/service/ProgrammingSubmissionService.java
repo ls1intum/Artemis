@@ -123,7 +123,8 @@ public class ProgrammingSubmissionService {
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      * @throws IllegalAccessException if the user does not have access to the given participation.
      */
-    public ProgrammingSubmission getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
+    @Transactional(readOnly = true)
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
@@ -138,9 +139,9 @@ public class ProgrammingSubmissionService {
         Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
-            return null;
+            return Optional.empty();
         }
-        return submissionOpt.get();
+        return submissionOpt;
     }
 
     /**
@@ -150,17 +151,17 @@ public class ProgrammingSubmissionService {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     @Transactional(readOnly = true)
-    public Map<Long, ProgrammingSubmission> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        Map<Long, ProgrammingSubmission> pendingSubmissions = new HashMap<>();
+    public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+        Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = new HashMap<>();
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
         for (ProgrammingExerciseStudentParticipation participation : participations) {
             Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
             if (submissionOpt.isPresent() && submissionOpt.get().getResult() == null) {
-                pendingSubmissions.put(participation.getId(), submissionOpt.get());
+                pendingSubmissions.put(participation.getId(), submissionOpt);
             }
             else {
                 // This means that there is no pending submission.
-                pendingSubmissions.put(participation.getId(), null);
+                pendingSubmissions.put(participation.getId(), Optional.empty());
             }
         }
         return pendingSubmissions;

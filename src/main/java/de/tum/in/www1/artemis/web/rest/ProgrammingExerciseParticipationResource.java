@@ -114,14 +114,9 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
-        ProgrammingSubmission submission;
+        Optional<ProgrammingSubmission> submissionOpt;
         try {
-            submission = submissionService.getLatestPendingSubmission(participationId);
-            // Remove unnecessary data to make response smaller (exercise, student of participation).
-            if (submission.getParticipation() instanceof StudentParticipation) {
-                ((StudentParticipation) submission.getParticipation()).setStudent(null);
-            }
-            submission.getParticipation().setExercise(null);
+            submissionOpt = submissionService.getLatestPendingSubmission(participationId);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
@@ -129,7 +124,12 @@ public class ProgrammingExerciseParticipationResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
-        return ResponseEntity.ok(submission);
+        if (submissionOpt.isPresent()) {
+            ProgrammingSubmission submission = submissionOpt.get();
+            removeExerciseAndStudentFromSubmissionsParticipation(submission);
+            return ResponseEntity.ok(submission);
+        }
+        return ResponseEntity.ok(null);
     }
 
     /**
@@ -140,7 +140,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Map<Long, ProgrammingSubmission>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+    public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {
             programmingExercise = programmingExerciseService.findById(exerciseId);
@@ -151,17 +151,26 @@ public class ProgrammingExerciseParticipationResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
-        Map<Long, ProgrammingSubmission> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
+        Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
         // Remove unnecessary data to make response smaller (exercise, student of participation).
         pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            ProgrammingSubmission submission = entry.getValue();
-            if (submission.getParticipation() instanceof StudentParticipation) {
-                ((StudentParticipation) submission.getParticipation()).setStudent(null);
+            Optional<ProgrammingSubmission> submissionOpt = entry.getValue();
+            if (submissionOpt.isPresent()) {
+                ProgrammingSubmission submission = submissionOpt.get();
+                removeExerciseAndStudentFromSubmissionsParticipation(submission);
             }
-            submission.getParticipation().setExercise(null);
-            return submission;
+            return submissionOpt;
         }));
         return ResponseEntity.ok(pendingSubmissions);
+    }
+
+    private ProgrammingSubmission removeExerciseAndStudentFromSubmissionsParticipation(ProgrammingSubmission submission) {
+        // Remove unnecessary data to make response smaller (exercise, student of participation).
+        if (submission.getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) submission.getParticipation()).setStudent(null);
+        }
+        submission.getParticipation().setExercise(null);
+        return submission;
     }
 
     /**
