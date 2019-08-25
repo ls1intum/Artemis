@@ -126,7 +126,8 @@ public class ProgrammingExerciseParticipationResource {
         }
         if (submissionOpt.isPresent()) {
             ProgrammingSubmission submission = submissionOpt.get();
-            removeExerciseAndStudentFromSubmissionsParticipation(submission);
+            // Remove participation, is not needed in the response.
+            submission.setParticipation(null);
             return ResponseEntity.ok(submission);
         }
         return ResponseEntity.ok(null);
@@ -157,20 +158,12 @@ public class ProgrammingExerciseParticipationResource {
             Optional<ProgrammingSubmission> submissionOpt = entry.getValue();
             if (submissionOpt.isPresent()) {
                 ProgrammingSubmission submission = submissionOpt.get();
-                removeExerciseAndStudentFromSubmissionsParticipation(submission);
+                // Remove participation, is not needed in the response.
+                submission.setParticipation(null);
             }
             return submissionOpt;
         }));
         return ResponseEntity.ok(pendingSubmissions);
-    }
-
-    private ProgrammingSubmission removeExerciseAndStudentFromSubmissionsParticipation(ProgrammingSubmission submission) {
-        // Remove unnecessary data to make response smaller (exercise, student of participation).
-        if (submission.getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) submission.getParticipation()).setStudent(null);
-        }
-        submission.getParticipation().setExercise(null);
-        return submission;
     }
 
     /**
