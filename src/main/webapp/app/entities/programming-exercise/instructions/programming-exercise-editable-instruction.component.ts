@@ -19,7 +19,7 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
 import { ExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ProblemStatementAnalysis } from 'app/entities/programming-exercise';
+import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
