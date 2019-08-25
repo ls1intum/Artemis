@@ -1,11 +1,13 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
+import * as moment from 'moment';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -25,6 +27,7 @@ import {
     EditorState,
     GitConflictState,
 } from 'app/code-editor';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { ArtemisTestModule } from '../../test.module';
 import {
     MockActivatedRoute,
@@ -32,6 +35,7 @@ import {
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
+    MockExerciseHintService,
     MockParticipationWebsocketService,
     MockResultService,
     MockSyncStorage,
@@ -51,6 +55,8 @@ import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-pr
 import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,6 +74,7 @@ describe('CodeEditorStudentIntegration', () => {
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
     let submissionService: ProgrammingSubmissionWebsocketService;
+    let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -80,10 +87,14 @@ describe('CodeEditorStudentIntegration', () => {
     let commitStub: SinonStub;
     let getStudentParticipationWithLatestResultStub: SinonStub;
     let getLatestPendingSubmissionStub: SinonStub;
+    let getHintsForExerciseStub: SinonStub;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let routeSubject: Subject<Params>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+
+    const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
+    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -116,6 +127,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .compileComponents()
@@ -134,6 +146,7 @@ describe('CodeEditorStudentIntegration', () => {
                 conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 submissionService = containerDebugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
 
@@ -155,6 +168,7 @@ describe('CodeEditorStudentIntegration', () => {
                 commitStub = stub(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
     });
 
@@ -182,7 +196,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [{ id: 3, successful: false }] } as Participation;
+        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as Participation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
@@ -243,10 +257,15 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
+        expect(container.instructions.readOnlyInstructions.exerciseHints).to.deep.equal(exerciseHints);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
         expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
+
+        // called once each by instructions and exercise hint component in status bar.
+        expect(getHintsForExerciseStub).to.have.been.calledTwice;
+        expect(getHintsForExerciseStub).to.have.been.calledWithExactly(exercise.id);
     };
 
     const loadFile = (fileName: string, fileContent: string) => {
@@ -264,7 +283,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as StudentParticipation;
+        const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -456,7 +475,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should first save unsaved files before triggering commit', () => {
         cleanInitialize();
-        const result = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
+        const succesfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
@@ -484,7 +503,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(commitStub).to.have.been.calledOnce;
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.editorState).to.equal(EditorState.CLEAN);
-        subscribeForLatestResultOfParticipationSubject.next(result);
+        subscribeForLatestResultOfParticipationSubject.next(succesfulResult);
         getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, {} as ProgrammingSubmission]);
         commitSubject.next(null);
         containerFixture.detectChanges();
@@ -503,7 +522,6 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
         container.ngOnInit();
-        const result = { id: 3, successful: false };
         const participation = { id: 1, results: [result] } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
@@ -544,8 +562,8 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         container.ngOnInit();
-        const result = { id: 3, successful: false };
-        const participation = { id: 1, results: [result] } as Participation;
+        const exercise = { id: 1, problemStatement };
+        const participation = { id: 1, exercise, results: [result] } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();

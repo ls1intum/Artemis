@@ -28,7 +28,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
-    @Input() private exerciseHints: ExerciseHint[];
+    @Input() public exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
