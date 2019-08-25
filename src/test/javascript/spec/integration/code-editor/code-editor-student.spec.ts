@@ -55,7 +55,6 @@ import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-pr
 import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 chai.use(sinonChai);
