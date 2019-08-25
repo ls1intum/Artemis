@@ -55,7 +55,13 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.exerciseHints && this.problemStatement && this.taskRegex) {
+        if (
+            (changes.problemStatement || changes.exerciseTestCases || changes.exerciseHints) &&
+            this.exerciseTestCases &&
+            this.exerciseHints &&
+            this.problemStatement &&
+            this.taskRegex
+        ) {
             this.analyzeTasks();
         }
     }
