@@ -45,16 +45,22 @@ jobs:
         install: skip
         script: ./gradlew checkstyleMain -x yarn_install -x webpackBuildDev -x webpack
       - stage: Lint
-        name: "TypeScript Code Style"
+        name: "TypeScript Formatting"
         language: node_js
         node_js: 12.8.0
         install: yarn install
         script: yarn prettier:check
       - stage: Lint
-        name: "TypeScript Documentation"
+        name: "TypeScript Code Style"
         language: node_js
         node_js: 12.8.0
         install: yarn install
         script: yarn lint
+      - stage: Lint
+        name: "TypeScript Documentation"
+        language: node_js
+        node_js: 12.8.0
+        install: yarn install
+        script: yarn lint:doc
     allow_failures:
-      - script: yarn lint
+      - script: yarn lint:doc

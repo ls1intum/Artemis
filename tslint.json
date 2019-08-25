@@ -25,12 +25,6 @@
             250
         ],
         "member-access": false,
-        "member-ordering": [
-            true,
-            {
-                "order": "fields-first"
-            }
-        ],
         "no-arg": true,
         "no-bitwise": true,
         "no-console": [
@@ -109,7 +103,6 @@
             "method": "never",
             "named": "never"
         }],
-
         "directive-selector": [true, "attribute", "jhi", "camelCase"],
         "component-selector": [true, "element", "jhi", "kebab-case"],
         "no-inputs-metadata-property": true,
@@ -120,15 +113,6 @@
         "use-lifecycle-interface": true,
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
-        "directive-class-suffix": true,
-        "completed-docs": [
-            true,
-            {
-                "properties": { "privacies": "public" },
-                "enums": { "visibilities": "all" },
-                "functions": { "visibilities": "all" },
-                "methods": { "privacies": "public"}
-            }
-        ]
+        "directive-class-suffix": true
     }
 }
