@@ -1,6 +1,6 @@
 <h1>Submissions for Participation with id {{ participationId }}</h1>
 <br />
-<div class="table-responsive" *ngIf="submissions">
+<div class="table-responsive" [hidden]="isLoading" *ngIf="submissions">
     <table class="table table-striped">
         <thead>
             <tr>
