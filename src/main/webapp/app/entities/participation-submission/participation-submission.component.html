@@ -1,43 +1,45 @@
 <h1>Submissions for Participation with id {{ participationId }}</h1>
 <br />
 <div class="table-responsive" *ngIf="submissions">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>
-                    <span jhiTranslate="global.field.id">ID</span>
-                </th>
-                <th>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.submissionType">Submission Type</span>
-                </th>
-                <th>
-                    <span jhiTranslate="artemisApp.participation.participationSubmission.submissionDate">Submission Date</span>
-                </th>
-                <th><span jhiTranslate="artemisApp.participation.participationSubmission.result">Result</span></th>
-                <th><span jhiTranslate="artemisApp.participation.participationSubmission.assessor">Assessor</span></th>
-                <th><span jhiTranslate="artemisApp.participation.participationSubmission.action">Action</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let submission of submissions; let i = index" id="row-{{ i }}">
-                <td>{{ submission.id }}</td>
-                <td>{{ submission.type }}</td>
-                <td>{{ submission.submissionDate }}</td>
-                <td>
-                    <jhi-result [result]="submission.result ? submission.result : null"></jhi-result>
-                </td>
-                <td>{{ submission.result ? (submission.result.assessor ? submission.result.assessor.firstName : 'n.a') : 'n.a' }}</td>
-                <td>
-                    <button
-                        id="deleteButton"
-                        class="btn btn-danger btn-sm mr-1"
-                        [routerLink]="['/', { outlets: { popup: 'participationSubmission/' + submission.id + '/delete' } }]"
-                    >
-                        <fa-icon icon="times"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <ngx-datatable
+        id="participationSubmissionTable"
+        class="bootstrap"
+        [headerHeight]="50"
+        [limit]="20"
+        [columnMode]="'force'"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [rows]="submissions"
+        [sorts]="[{ prop: 'id', dir: 'asc' }]"
+        [rowClass]=""
+    >
+        <ngx-datatable-column name="Id" prop="id">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Submission Type" prop="type">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Submission Date" prop="submissionDate">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value }}
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Result" prop="result">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                <jhi-result [result]="value"></jhi-result>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Action" prop="id">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                <button class="btn btn-danger btn-sm mr-1" id="deleteButton" [routerLink]="['/', { outlets: { popup: 'participationSubmission/' + value + '/delete' } }]">
+                    <fa-icon icon="times"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                </button>
+            </ng-template>
+        </ngx-datatable-column>
+    </ngx-datatable>
 </div>

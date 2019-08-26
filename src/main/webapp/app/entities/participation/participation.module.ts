@@ -26,11 +26,20 @@ import {
 } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule, ArtemisProgrammingExerciseActionsModule, ArtemisResultModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArtemisExerciseScoresModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisResultModule,
+        NgxDatatableModule,
+    ],
 
     declarations: [
         ParticipationComponent,

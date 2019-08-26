@@ -30,6 +30,7 @@ import { ParticipationSubmissionComponent } from 'app/entities/participation-sub
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { participationRoute } from 'app/entities/participation';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,7 +46,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisResultModule, ArtemisSharedModule, RouterTestingModule.withRoutes([participationRoute[2]])],
+            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, RouterTestingModule.withRoutes([participationRoute[2]])],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
@@ -108,7 +109,10 @@ describe('ParticipationSubmissionComponent', () => {
         expect(deleteButton).to.exist;
 
         // check if the right amount of rows is visible
-        const row = debugElement.query(By.css('#row-0'));
-        expect(row).to.exist;
+        const row = debugElement.query(By.css('#participationSubmissionTable'));
+        expect(row.childNodes.length).to.equal(1);
+
+        fixture.destroy();
+        flush();
     }));
 });
