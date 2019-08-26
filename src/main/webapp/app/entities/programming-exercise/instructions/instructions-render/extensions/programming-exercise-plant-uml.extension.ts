@@ -4,8 +4,11 @@ import { tap } from 'rxjs/operators';
 import * as showdown from 'showdown';
 import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
+import {
+    ProgrammingExerciseInstructionService,
+    TestCaseState,
+} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 
 @Injectable()

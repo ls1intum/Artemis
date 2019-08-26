@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService } from 'app/programming-submission/programming-submission-websocket.service';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
