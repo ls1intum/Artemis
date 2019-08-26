@@ -1,14 +1,12 @@
 import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { DatePipe } from '@angular/common';
-import { ParticipationService } from 'app/entities/participation';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationSubmissionPopupService {
     private ngbModalRef: NgbModalRef | null;
 
-    constructor(private datePipe: DatePipe, private modalService: NgbModal, private router: Router, private participationService: ParticipationService) {
+    constructor(private modalService: NgbModal, private router: Router) {
         this.ngbModalRef = null;
     }
 
