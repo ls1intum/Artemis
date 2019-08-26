@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
 
 chai.use(sinonChai);
@@ -27,7 +27,7 @@ describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
-    let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
+    let submissionService: ProgrammingSubmissionService;
 
     let getLatestPendingSubmissionStub: SinonStub;
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
@@ -65,12 +65,12 @@ describe('TriggerBuildButtonSpec', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                submissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
 
-                triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
+                triggerBuildStub = stub(submissionService, 'triggerBuild').returns(of());
             });
     });
 

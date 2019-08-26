@@ -9,7 +9,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
 import { ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -34,7 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: ProgrammingSubmissionWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
@@ -89,7 +89,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
-        this.submissionSubscription = this.submissionWebsocketService
+        this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id)
             .pipe(tap(([, pendingSubmission]) => (this.isBuilding = !!pendingSubmission)))
             .subscribe();

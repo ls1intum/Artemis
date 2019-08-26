@@ -48,8 +48,8 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from '../../mocks/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 chai.use(sinonChai);
@@ -67,7 +67,7 @@ describe('CodeEditorStudentIntegration', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
-    let submissionService: ProgrammingSubmissionWebsocketService;
+    let submissionService: ProgrammingSubmissionService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -115,7 +115,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ProgrammingSubmissionService, useClass: ProgrammingSubmissionService },
             ],
         })
             .compileComponents()
@@ -133,7 +133,7 @@ describe('CodeEditorStudentIntegration', () => {
                 route = containerDebugElement.injector.get(ActivatedRoute);
                 conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
                 domainService = containerDebugElement.injector.get(DomainService);
-                submissionService = containerDebugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
 

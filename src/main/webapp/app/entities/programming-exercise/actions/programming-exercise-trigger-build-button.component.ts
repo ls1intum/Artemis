@@ -1,7 +1,7 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 
 export enum ButtonSize {
@@ -30,7 +30,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionWebsocketService) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.

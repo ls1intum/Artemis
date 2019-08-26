@@ -3,7 +3,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { of, Subject, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 
@@ -16,7 +16,7 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionWebsocketService, private alertService: JhiAlertService) {
+    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: JhiAlertService) {
         super(domainService);
         this.initDomainSubscription();
     }

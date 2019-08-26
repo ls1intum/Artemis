@@ -9,7 +9,7 @@ import { Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 @Component({
     selector: 'jhi-participation',
@@ -36,7 +36,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
-        private programmingSubmissionService: ProgrammingSubmissionWebsocketService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {
         this.reverse = true;
         this.predicate = 'id';

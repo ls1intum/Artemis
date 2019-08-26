@@ -20,7 +20,7 @@ export enum ProgrammingSubmissionState {
 
 export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, Submission | null];
 
-export interface ISubmissionWebsocketService {
+export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number) => Observable<ProgrammingSubmissionStateObj>;
     preloadLatestPendingSubmissionsForExercise: (exerciseId: number) => Observable<null>;
     triggerBuild: (participationId: number) => Observable<Object>;
@@ -28,7 +28,7 @@ export interface ISubmissionWebsocketService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsocketService, OnDestroy {
+export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
     public RESOURCE_URL = SERVER_API_URL + 'api/programming-submissions/';
     // Current value: 2 minutes.
     private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
@@ -209,6 +209,8 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * - A null value when there is no pending submission.
      * - A null value when no result arrived in time for the submission.
      *
+     * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
+     *
      * @param participationId
      */
     public getLatestPendingSubmissionByParticipationId = (participationId: number) => {
@@ -234,8 +236,9 @@ export class ProgrammingSubmissionWebsocketService implements ISubmissionWebsock
      * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server for every participation.
      *
      * Will emit once at the end so the subscriber knows that the loading & setup process is done.
-     *
      * If the user is not an instructor, this method will not be able to retrieve any pending submission.
+     *
+     * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
      *
      * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
      */

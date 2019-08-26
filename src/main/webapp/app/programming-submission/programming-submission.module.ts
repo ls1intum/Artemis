@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    providers: [ProgrammingSubmissionWebsocketService],
+    providers: [ProgrammingSubmissionService],
 })
 export class ArtemisProgrammingSubmissionModule {}
