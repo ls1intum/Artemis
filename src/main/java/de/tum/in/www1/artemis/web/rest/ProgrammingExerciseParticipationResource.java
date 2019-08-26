@@ -139,7 +139,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param exerciseId for which to search pending submissions.
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submission")
+    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;

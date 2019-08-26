@@ -225,7 +225,7 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         submissions.put(submission.getParticipation().getId(), submission);
         submissions.put(submission2.getParticipation().getId(), submission2);
         submissions.put(notPendingSubmission.getParticipation().getId(), null);
-        Map<Long, ProgrammingSubmission> returnedSubmissions = request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submission", HttpStatus.OK,
+        Map<Long, ProgrammingSubmission> returnedSubmissions = request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
                 Long.class, ProgrammingSubmission.class);
         assertThat(returnedSubmissions).isEqualTo(submissions);
     }
@@ -233,13 +233,13 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestSubmissionsForExercise_studentForbidden() throws Exception {
-        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submission", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
+        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getLatestSubmissionsForExercise_tutorForbidden() throws Exception {
-        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submission", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
+        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 
     private void addStudentParticipation() {
