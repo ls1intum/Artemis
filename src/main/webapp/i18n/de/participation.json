@@ -36,7 +36,16 @@
             "student": "Student",
             "exercise": "Übung",
             "deleteRepository": "Repository löschen",
-            "deleteBuildPlan": "Build Plan löschen"
+            "deleteBuildPlan": "Build Plan löschen",
+            "participationSubmission": {
+                "submissionType": "Abgabe Typ",
+                "submissionDate": "Abgabe Datum",
+                "result": "Ergebnis",
+                "assessor": "Bewerter",
+                "submissionsForParticipation": "Abgaben der Participation ID: ",
+                "action": "Aktion",
+                "delete": "Soll diese Abgabe wirklich gelöscht werden?"
+            }
         }
     }
 }
