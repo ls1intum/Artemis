@@ -1,7 +1,7 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/programming-submission/programming-submission-websocket.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 
 export enum ButtonSize {

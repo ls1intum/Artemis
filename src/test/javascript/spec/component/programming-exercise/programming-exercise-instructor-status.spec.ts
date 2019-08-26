@@ -5,7 +5,7 @@ import { CookieService } from 'ngx-cookie';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { Subject } from 'rxjs';
-import { ParticipationType, ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
+import { ParticipationType } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -14,6 +14,7 @@ import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result';
 import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise/status';
 
 const expect = chai.expect;
 

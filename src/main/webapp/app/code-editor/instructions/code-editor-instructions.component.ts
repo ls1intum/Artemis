@@ -6,8 +6,10 @@ import { Subscription } from 'rxjs';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Participation } from '../../entities/participation';
 import { WindowRef } from '../../core/websocket/window.service';
-import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
+import { ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
