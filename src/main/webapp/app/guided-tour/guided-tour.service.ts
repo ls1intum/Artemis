@@ -357,13 +357,13 @@ export class GuidedTourService {
                 if (guidedTourSettings.body) {
                     this.guidedTourSettings = guidedTourSettings.body;
                 }
-                this.resetTour();
             },
             error => {
                 this.resetTour();
                 throw new Error('Updating the guided tour settings has failed ' + error.status);
             },
         );
+        this.resetTour();
     }
 
     /**
