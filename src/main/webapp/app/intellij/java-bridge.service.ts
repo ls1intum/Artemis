@@ -36,7 +36,7 @@ export class JavaBridgeService implements JavaDowncallBridge {
         this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
     }
 
-    get state(): BehaviorSubject<IntelliJState> {
+    get state(): Observable<IntelliJState> {
         if (!this.intellijState) {
             this.setupDefaultState();
         }
