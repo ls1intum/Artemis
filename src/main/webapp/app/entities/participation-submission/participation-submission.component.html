@@ -33,6 +33,11 @@
                 <jhi-result [result]="value"></jhi-result>
             </ng-template>
         </ngx-datatable-column>
+        <ngx-datatable-column name="Assessor" prop="result">
+            <ng-template ngx-datatable-cell-template let-value="value">
+                {{ value ? value.assessor.firstName : 'n.a' }}
+            </ng-template>
+        </ngx-datatable-column>
         <ngx-datatable-column name="Action" prop="id">
             <ng-template ngx-datatable-cell-template let-value="value">
                 <button class="btn btn-danger btn-sm mr-1" id="deleteButton" [routerLink]="['/', { outlets: { popup: 'participationSubmission/' + value + '/delete' } }]">
