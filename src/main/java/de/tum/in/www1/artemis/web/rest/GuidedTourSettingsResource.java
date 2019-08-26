@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,7 @@ public class GuidedTourSettingsResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<GuidedTourSettings>> getGuidedTourSettings() {
         log.debug("REST request to get all guided tour settings of the current user");
+        Hibernate.initialize(userService.getGuidedTourSettings());
         return new ResponseEntity<>(userService.getGuidedTourSettings(), null, HttpStatus.OK);
     }
 
@@ -54,6 +56,7 @@ public class GuidedTourSettingsResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<GuidedTourSettings>> updateGuidedTourSettings(@RequestBody List<GuidedTourSettings> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSettings : {}", guidedTourSettings);
+        Hibernate.initialize(userService.getGuidedTourSettings());
         return new ResponseEntity<>(userService.updateGuidedTourSettings(guidedTourSettings), null, HttpStatus.OK);
     }
 }
