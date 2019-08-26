@@ -552,10 +552,26 @@ public class UserService {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }
 
-    public User updateGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+    /**
+     * Get all guided tour settings of the current user as a list
+     *
+     * @return the guided tour settings of the current user
+     */
+    public List<GuidedTourSettings> getGuidedTourSettings() {
+        User loggedInUser = getUserWithGroupsAndAuthorities();
+        return loggedInUser.getGuidedTourSettings();
+    }
+
+    /**
+     * Update all guided tour settings of the current user
+     *
+     * @param guidedTourSettings new list of guided tour settings
+     * @return updated guided tour settings list
+     */
+    public List<GuidedTourSettings> updateGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAndAuthorities();
         loggedInUser.setGuidedTourSettings(guidedTourSettings);
         userRepository.save(loggedInUser);
-        return loggedInUser;
+        return loggedInUser.getGuidedTourSettings();
     }
 }

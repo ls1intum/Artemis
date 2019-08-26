@@ -8,11 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSettings;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.UserService;
 
 /**
@@ -42,11 +40,9 @@ public class GuidedTourSettingsResource {
      */
     @GetMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<GuidedTourSettings>> getGuidedTourSettings() {
         log.debug("REST request to get all guided tour settings of the current user");
-        User currentUser = userService.getUser();
-        return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
+        return new ResponseEntity<>(userService.getGuidedTourSettings(), null, HttpStatus.OK);
     }
 
     /**
@@ -56,10 +52,8 @@ public class GuidedTourSettingsResource {
      */
     @PutMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<List<GuidedTourSettings>> updateGuidedTourSettings(@RequestBody List<GuidedTourSettings> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSettings : {}", guidedTourSettings);
-        User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
-        return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
+        return new ResponseEntity<>(userService.updateGuidedTourSettings(guidedTourSettings), null, HttpStatus.OK);
     }
 }
