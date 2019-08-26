@@ -28,6 +28,7 @@
                     </span>
                 </a>
             </li>
+
             <li
                 *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"
                 ngbDropdown
@@ -42,6 +43,7 @@
                     </span>
                 </a>
             </li>
+
             <li
                 *jhiHasAnyAuthority="'ROLE_ADMIN'"
                 ngbDropdown
@@ -124,7 +126,9 @@
                     </li>
                 </ul>
             </li>
+
             <jhi-notification-container [ngClass]="'nav-item'" *ngIf="currAccount"></jhi-notification-container>
+
             <li
                 *ngSwitchCase="true"
                 ngbDropdown
