@@ -44,7 +44,7 @@
                 <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a routerLink="/participant/{{ participation.id }}/submissions">{{ participation.id }}</a>
+                            <a routerLink="/participation/{{ participation.id }}/submissions">{{ participation.id }}</a>
                         </div>
                         <ng-template #displayId>
                             {{ participation.id }}
