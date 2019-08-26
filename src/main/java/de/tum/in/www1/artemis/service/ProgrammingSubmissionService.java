@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -136,12 +137,7 @@ public class ProgrammingSubmissionService {
             throw new IllegalAccessException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
-        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
-            // This is not an error case, it is very likely that there is no pending submission for a participation.
-            return Optional.empty();
-        }
-        return submissionOpt;
+        return findLatestPendingSubmissionForParticipation(participationId);
     }
 
     /**
@@ -152,19 +148,18 @@ public class ProgrammingSubmissionService {
      */
     @Transactional(readOnly = true)
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = new HashMap<>();
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
-        for (ProgrammingExerciseStudentParticipation participation : participations) {
-            Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
-            if (submissionOpt.isPresent() && submissionOpt.get().getResult() == null) {
-                pendingSubmissions.put(participation.getId(), submissionOpt);
-            }
-            else {
-                // This means that there is no pending submission.
-                pendingSubmissions.put(participation.getId(), Optional.empty());
-            }
+        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
+    }
+
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
+        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
+            // This is not an error case, it is very likely that there is no pending submission for a participation.
+            return Optional.empty();
         }
-        return pendingSubmissions;
+
+        return submissionOpt;
     }
 
     /**

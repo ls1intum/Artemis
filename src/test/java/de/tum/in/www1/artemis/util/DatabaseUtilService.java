@@ -384,6 +384,15 @@ public class DatabaseUtilService {
         return submission;
     }
 
+    /**
+     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or create a new participation).
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param exercise for which to create the submission/participation/result combination.
+     * @param submission to use for adding to the exercise/participation/result.
+     * @param login of the user to identify the corresponding student participation.
+     * @return the updated programming submission that is linked to all related entities.
+     */
     @Transactional
     public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);

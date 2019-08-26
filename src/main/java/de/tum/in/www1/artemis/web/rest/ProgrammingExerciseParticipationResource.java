@@ -124,13 +124,9 @@ public class ProgrammingExerciseParticipationResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
-        if (submissionOpt.isPresent()) {
-            ProgrammingSubmission submission = submissionOpt.get();
-            // Remove participation, is not needed in the response.
-            submission.setParticipation(null);
-            return ResponseEntity.ok(submission);
-        }
-        return ResponseEntity.ok(null);
+        // Remove participation, is not needed in the response.
+        submissionOpt.ifPresent(submission -> submission.setParticipation(null));
+        return ResponseEntity.ok(submissionOpt.orElse(null));
     }
 
     /**
@@ -156,11 +152,8 @@ public class ProgrammingExerciseParticipationResource {
         // Remove unnecessary data to make response smaller (exercise, student of participation).
         pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
             Optional<ProgrammingSubmission> submissionOpt = entry.getValue();
-            if (submissionOpt.isPresent()) {
-                ProgrammingSubmission submission = submissionOpt.get();
-                // Remove participation, is not needed in the response.
-                submission.setParticipation(null);
-            }
+            // Remove participation, is not needed in the response.
+            submissionOpt.ifPresent(submission -> submission.setParticipation(null));
             return submissionOpt;
         }));
         return ResponseEntity.ok(pendingSubmissions);
