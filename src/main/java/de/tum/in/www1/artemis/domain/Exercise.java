@@ -566,6 +566,7 @@ public abstract class Exercise implements Serializable {
         }
 
         // add results to participation
+        // TODO: change: we now want to take into account the submissions and their result
         if (participation != null) {
 
             // only transmit the relevant result

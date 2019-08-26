@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -253,7 +250,7 @@ public class ParticipationService {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
 
-            if (participation.getId() == null || !submissionRepository.existsByParticipationId(participation.getId())) {
+            if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
                 initializeSubmission(participation, exercise);
             }
@@ -955,5 +952,20 @@ public class ParticipationService {
      */
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
         return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    }
+
+    /**
+     * Get all participations for the given student including all results
+     *
+     * @param studentId the user id of the student
+     * @return the list of participations of the given student including all results
+     */
+    @Transactional(readOnly = true)
+    public List<StudentParticipation> findWithResultsByStudentId(Long studentId, Set<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(studentId, exercises);
+    }
+
+    public List<StudentParticipation> findWithSubmissionsWithResultByStudentId(Long studentId, Set<Exercise> exercises) {
+        return studentParticipationRepository.findAllByStudentIdWithSubmissionsWithResult(studentId, exercises);
     }
 }

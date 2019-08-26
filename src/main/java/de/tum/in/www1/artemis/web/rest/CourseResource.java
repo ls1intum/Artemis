@@ -17,12 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -73,8 +70,6 @@ public class CourseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ObjectMapper objectMapper;
-
     private final LectureService lectureService;
 
     private final ComplaintRepository complaintRepository;
@@ -95,10 +90,9 @@ public class CourseResource {
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
-            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -108,7 +102,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
@@ -296,8 +289,6 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // get all participations of this user
-        // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
@@ -318,7 +309,19 @@ public class CourseResource {
             participation.setSubmissions((new HashSet<Submission>()));
         }
 
-        long exerciseCount = 0;
+        // TODO: use the call 'participationService.findWithSubmissionsWithResultByStudentId' in the future and filter for the right submission + result depending on the exercise
+        // type
+        Set<Exercise> activeExercises = courses.stream().flatMap(c -> c.getExercises().stream()).collect(Collectors.toSet());
+
+        long startFirstCall = System.currentTimeMillis();
+        List<StudentParticipation> participationWithResults = participationService.findWithResultsByStudentId(user.getId(), activeExercises);
+        log.info("1st participations call took " + (System.currentTimeMillis() - startFirstCall) + "ms for " + participationWithResults.size() + " participations with "
+                + participationWithResults.stream().mapToLong(p -> p.getResults().size()).sum() + " results");
+
+        long startSecondCall = System.currentTimeMillis();
+        List<StudentParticipation> participationsWithSubmissionsAndResults = participationService.findWithSubmissionsWithResultByStudentId(user.getId(), activeExercises);
+        log.info("2nd participations call took " + (System.currentTimeMillis() - startSecondCall) + "ms for " + participationsWithSubmissionsAndResults.size()
+                + " participations with " + participationsWithSubmissionsAndResults.stream().mapToLong(p -> p.getSubmissions().size()).sum() + " submissions and results.");
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -331,11 +334,10 @@ public class CourseResource {
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
-                exerciseCount++;
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
+                + " exercises for user " + principal.getName());
 
         return courses;
     }
