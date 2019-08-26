@@ -9,7 +9,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
 import { ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionWebsocketService } from 'app/programming-submission/programming-submission-websocket.service';
 
 @Component({
     selector: 'jhi-updating-result',

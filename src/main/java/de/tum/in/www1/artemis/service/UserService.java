@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GuidedTourSettings;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -549,5 +550,12 @@ public class UserService {
      */
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+    }
+
+    public User updateGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+        User loggedInUser = getUserWithGroupsAndAuthorities();
+        loggedInUser.setGuidedTourSettings(guidedTourSettings);
+        userRepository.save(loggedInUser);
+        return loggedInUser;
     }
 }
