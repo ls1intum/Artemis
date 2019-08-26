@@ -4,7 +4,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
-import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
+import { AccountService, WindowRef } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
@@ -18,7 +19,8 @@ import { InitializationState, ParticipationWebsocketService } from 'app/entities
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,8 +49,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
-            declarations: [ProgrammingExerciseStudentTriggerBuildButtonComponent],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingExerciseActionsModule],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,

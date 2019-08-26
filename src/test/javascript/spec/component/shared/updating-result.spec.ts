@@ -28,7 +28,7 @@ describe('UpdatingResultComponent', () => {
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let programmingSubmissionService: MockProgrammingSubmissionService;
+    let programmingSubmissionService: ProgrammingSubmissionService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
@@ -61,7 +61,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: MockProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
             .compileComponents()
@@ -71,7 +71,7 @@ describe('UpdatingResultComponent', () => {
                 debugElement = fixture.debugElement;
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                programmingSubmissionService = debugElement.injector.get(MockProgrammingSubmissionService);
+                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
