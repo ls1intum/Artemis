@@ -12,8 +12,7 @@ import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
-import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
-import { CodeEditorSubmissionService } from 'app/code-editor/service';
+import { CodeEditorBuildLogService, CodeEditorSubmissionService } from 'app/code-editor/service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
