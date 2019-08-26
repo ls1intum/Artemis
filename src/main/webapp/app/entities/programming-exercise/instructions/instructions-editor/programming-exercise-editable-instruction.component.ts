@@ -7,7 +7,7 @@ import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
-import { ProgrammingExercise } from '../programming-exercise.model';
+import { ProgrammingExercise } from '../../programming-exercise.model';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';

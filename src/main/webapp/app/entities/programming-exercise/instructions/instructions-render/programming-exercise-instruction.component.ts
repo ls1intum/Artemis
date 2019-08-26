@@ -5,16 +5,16 @@ import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
-import { ProgrammingExercise } from '../programming-exercise.model';
+import { ProgrammingExercise } from '../../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { merge, Observable, Subscriber, Subscription } from 'rxjs';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 
 @Component({

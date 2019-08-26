@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -67,6 +68,10 @@ public class ProgrammingExerciseParticipationService {
         if (!participation.isPresent())
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exerciseId + " and user " + username);
         return participation.get();
+    }
+
+    public List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {

@@ -2,12 +2,11 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { PendingChangesGuard } from 'app/shared';
-import { CodeEditorInstructorContainerComponent } from './code-editor-instructor-container.component';
-import { CodeEditorStudentContainerComponent } from './code-editor-student-container.component';
+import { CodeEditorStudentContainerComponent, CodeEditorInstructorContainerComponent } from './';
 
 export const codeEditorRoute: Routes = [
     {
-        path: 'code-editor/:participationId',
+        path: ':participationId',
         component: CodeEditorStudentContainerComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -19,8 +18,9 @@ export const codeEditorRoute: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
     },
+    // TODO: This should probably be moved into a module of the programming exercises as it is an administratory tool. This would also be a good chance to improve the route path.
     {
-        path: 'code-editor-admin/:exerciseId/:participationId',
+        path: ':exerciseId/admin/:participationId',
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
@@ -33,7 +33,7 @@ export const codeEditorRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'code-editor-admin/:exerciseId/test',
+        path: ':exerciseId/admin/test',
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
