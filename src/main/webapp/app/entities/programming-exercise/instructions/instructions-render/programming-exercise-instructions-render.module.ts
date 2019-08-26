@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import {
@@ -25,7 +25,6 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
     entryComponents: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionResultDetailComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
     providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper, ProgrammingExerciseInstructionService, ProgrammingExercisePlantUmlService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisProgrammingExerciseInstructionsRenderModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

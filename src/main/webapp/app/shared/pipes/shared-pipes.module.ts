@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { HtmlForMarkdownPipe, KeysPipe, RemoveKeysPipe, RemovePositiveAutomaticFeedbackPipe, SafeHtmlPipe, SafeUrlPipe, SanitizeHtmlPipe, TruncatePipe, TypeCheckPipe } from './';
 import { ExerciseTypePipe } from 'app/entities/exercise';
 
@@ -27,6 +27,5 @@ import { ExerciseTypePipe } from 'app/entities/exercise';
         TruncatePipe,
         SanitizeHtmlPipe,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisSharedPipesModule {}
