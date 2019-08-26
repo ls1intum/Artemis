@@ -4,7 +4,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
-import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
+import { AccountService, WindowRef } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
@@ -17,11 +18,8 @@ import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import {
-    ProgrammingSubmissionState,
-    ProgrammingSubmissionStateObj,
-    ProgrammingSubmissionWebsocketService,
-} from 'app/programming-submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
 
 chai.use(sinonChai);
@@ -31,7 +29,7 @@ describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
-    let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
+    let submissionService: ProgrammingSubmissionService;
 
     let getLatestPendingSubmissionStub: SinonStub;
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
@@ -51,8 +49,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
-            declarations: [ProgrammingExerciseStudentTriggerBuildButtonComponent],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingExerciseActionsModule],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
@@ -69,12 +66,12 @@ describe('TriggerBuildButtonSpec', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                submissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
 
-                triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
+                triggerBuildStub = stub(submissionService, 'triggerBuild').returns(of());
             });
     });
 
