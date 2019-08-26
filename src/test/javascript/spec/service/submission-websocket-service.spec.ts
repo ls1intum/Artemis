@@ -6,7 +6,11 @@ import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
 import { MockHttpService } from '../mocks/mock-http.service';
-import { ISubmissionWebsocketService, ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import {
+    ISubmissionWebsocketService,
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionWebsocketService,
+} from 'app/programming-submission/programming-submission-websocket.service';
 import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Submission } from 'app/entities/submission';

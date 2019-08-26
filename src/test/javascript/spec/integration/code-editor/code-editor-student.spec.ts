@@ -52,7 +52,11 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
+import {
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+    ProgrammingSubmissionWebsocketService,
+} from 'app/programming-submission/programming-submission-websocket.service';
 import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
@@ -97,21 +101,11 @@ describe('CodeEditorStudentIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                AceEditorModule,
-                TreeviewModule.forRoot(),
-                ArtemisSharedModule,
-                ArtemisProgrammingExerciseModule,
-                ArtemisResultModule,
-                ArtemisCodeEditorModule,
-            ],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
-                CodeEditorFileService,
                 ChangeDetectorRef,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },

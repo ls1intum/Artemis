@@ -1,12 +1,10 @@
 import { DebugElement, SimpleChange } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseInstructionInstructorAnalysisComponent } from '../../../../../main/webapp/app/entities/programming-exercise';
 import { TaskCommand } from '../../../../../main/webapp/app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { MockExerciseHintService } from '../../mocks';
@@ -14,7 +12,8 @@ import { SinonStub, stub } from 'sinon';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionInstructorAnalysisComponent } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 const expect = chai.expect;
 

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 @Component({
     selector: 'jhi-home',
@@ -33,6 +34,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private elementRef: ElementRef,
         private renderer: Renderer,
         private eventManager: JhiEventManager,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {

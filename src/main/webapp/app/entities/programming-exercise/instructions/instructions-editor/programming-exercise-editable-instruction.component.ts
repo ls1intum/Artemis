@@ -5,8 +5,7 @@ import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
-import { compose, entries, flatten, filter, fromPairs, toPairs, map, sortBy, values } from 'lodash/fp';
-import { ProgrammingExercise } from '../programming-exercise.model';
+import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
@@ -19,7 +18,8 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
 import { ExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
+import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',

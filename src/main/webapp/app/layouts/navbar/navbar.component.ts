@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, Event, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -8,6 +8,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
 import { AccountService, JhiLanguageHelper, LoginService, User } from 'app/core';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
@@ -21,6 +22,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
 export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
+    isTourAvailable: boolean;
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
@@ -37,6 +39,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private router: Router,
+        public guidedTourService: GuidedTourService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -56,6 +59,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             reason => {},
         );
 
+        this.subscribeForGuidedTourAvailability();
+
         // The current user is needed to hide menu items for not logged in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
@@ -67,6 +72,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.authStateSubscription) {
             this.authStateSubscription.unsubscribe();
         }
+    }
+
+    /**
+     * Check if a guided tour is available for the current route to display the start tour button in the account menu
+     */
+    subscribeForGuidedTourAvailability(): void {
+        this.router.events.subscribe((event: Event) => {
+            if (event instanceof NavigationEnd) {
+                this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
+            }
+        });
+        // Check availability after first subscribe call since the router event been triggered already
+        this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
     }
 
     changeLanguage(languageKey: string) {

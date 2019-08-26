@@ -17,8 +17,12 @@ import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
+import {
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+    ProgrammingSubmissionWebsocketService,
+} from 'app/programming-submission/programming-submission-websocket.service';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
 
 chai.use(sinonChai);
 const expect = chai.expect;

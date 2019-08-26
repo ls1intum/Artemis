@@ -6,16 +6,13 @@ import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, Subject, throwError, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
 import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import {
     ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
-    CodeEditorFileService,
     CodeEditorInstructorContainerComponent,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
@@ -30,16 +27,14 @@ import {
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
+    MockExerciseHintService,
     MockParticipationService,
     MockParticipationWebsocketService,
     MockProgrammingExerciseService,
     MockResultService,
     MockSyncStorage,
-    MockExerciseHintService,
 } from '../../mocks';
-import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { Result, ResultService } from 'app/entities/result';
 import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
@@ -92,21 +87,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                AceEditorModule,
-                TreeviewModule.forRoot(),
-                ArtemisSharedModule,
-                ArtemisProgrammingExerciseModule,
-                ArtemisResultModule,
-                ArtemisCodeEditorModule,
-            ],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
-                CodeEditorFileService,
                 ChangeDetectorRef,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },

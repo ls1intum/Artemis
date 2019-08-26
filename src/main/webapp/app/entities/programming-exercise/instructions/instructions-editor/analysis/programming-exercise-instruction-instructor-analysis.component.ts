@@ -8,7 +8,7 @@ import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils
 import {
     ProblemStatementAnalysis,
     ProgrammingExerciseInstructionAnalysisService,
-} from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-analysis.service';
+} from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
