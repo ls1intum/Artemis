@@ -302,10 +302,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
-            hints: [],
+            hints: ['33', '44'],
         });
         fixture.detectChanges();
 
@@ -350,10 +350,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             hints: [],
         });
         expect(comp.tasks[1]).to.deep.equal({
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
-            hints: [],
+            hints: ['33', '44'],
         });
         fixture.detectChanges();
 
