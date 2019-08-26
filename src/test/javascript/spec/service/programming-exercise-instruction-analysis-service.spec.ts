@@ -28,8 +28,6 @@ describe('ProgrammingExerciseInstructionAnalysisService', () => {
             exerciseHints,
         );
 
-        console.log({ invalidHints }, { invalidTestCases }, { missingTestCases }, { completeAnalysis });
-
         expect(invalidHints).to.be.empty;
         expect(invalidTestCases).to.be.empty;
         expect(missingTestCases).to.be.empty;
