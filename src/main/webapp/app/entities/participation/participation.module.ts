@@ -30,15 +30,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programmin
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [
-        ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArtemisExerciseScoresModule,
-        ArtemisProgrammingExerciseActionsModule,
-        ArtemisProgrammingExerciseModule,
-        ArtemisResultModule,
-    ],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule, ArtemisProgrammingExerciseActionsModule, ArtemisResultModule],
 
     declarations: [
         ParticipationComponent,
