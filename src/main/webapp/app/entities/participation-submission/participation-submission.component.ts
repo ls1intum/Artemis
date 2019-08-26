@@ -1,12 +1,13 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ParticipationService } from 'app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
-import { Submission } from 'app/entities/submission';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { Result } from 'app/entities/result';
 
 import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -14,9 +15,10 @@ import { Subscription } from 'rxjs/Subscription';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    submissions: Submission[];
+    submissions: any;
     eventSubscriber: Subscription;
     result: Result;
+    isLoading = true;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,8 +37,15 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.participationId = +params['participationId'];
         });
 
-        this.submissionService.findAllSubmissionsOfParticipation(this.participationId).subscribe(response => {
-            this.submissions = response.body!;
-        });
+        this.submissionService
+            .findAllSubmissionsOfParticipation(this.participationId)
+            .pipe(
+                map(({ body }) => body),
+                catchError(() => of([])),
+            )
+            .subscribe(submissions => {
+                this.submissions = submissions;
+                this.isLoading = false;
+            });
     }
 }
