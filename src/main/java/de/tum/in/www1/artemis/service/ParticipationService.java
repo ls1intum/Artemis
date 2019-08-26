@@ -385,7 +385,7 @@ public class ParticipationService {
      * @return List<submission>
      */
     public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.getAllSubmissionsByParticipation(participationId);
+        return submissionRepository.findAllByParticipationId(participationId);
     }
 
     /**
