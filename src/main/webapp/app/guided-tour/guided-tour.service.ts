@@ -151,12 +151,7 @@ export class GuidedTourService {
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.FINISHED).subscribe(guidedTourSettings => {
-            if (guidedTourSettings.body) {
-                this.guidedTourSettings = guidedTourSettings.body;
-            }
-        });
-        this.resetTour();
+        this.subscribeToAndUpdateGuidedTourSettings(true);
     }
 
     /**
@@ -167,12 +162,7 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
-            this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.STARTED).subscribe(guidedTourSettings => {
-                if (guidedTourSettings.body) {
-                    this.guidedTourSettings = guidedTourSettings.body;
-                }
-            });
-            this.resetTour();
+            this.subscribeToAndUpdateGuidedTourSettings(false);
         }
     }
 
@@ -344,15 +334,41 @@ export class GuidedTourService {
      * Subscribe to guided tour settings GET request and store response value in service class variable
      */
     public getGuidedTourSettings() {
-        this.fetchGuidedTourSettings().subscribe(guidedTourSettings => {
-            if (guidedTourSettings) {
-                this.guidedTourSettings = guidedTourSettings;
-            }
-        });
+        this.fetchGuidedTourSettings().subscribe(
+            guidedTourSettings => {
+                if (guidedTourSettings) {
+                    this.guidedTourSettings = guidedTourSettings;
+                }
+            },
+            error => {
+                throw new Error('Fetching the guided tour settings has failed ' + error.status);
+            },
+        );
+    }
+
+    public subscribeToAndUpdateGuidedTourSettings(tourFinished: boolean) {
+        if (!this.currentTour) {
+            return;
+        }
+
+        const guidedTourState = tourFinished ? GuidedTourState.FINISHED : GuidedTourState.STARTED;
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState).subscribe(
+            guidedTourSettings => {
+                if (guidedTourSettings.body) {
+                    this.guidedTourSettings = guidedTourSettings.body;
+                }
+                this.resetTour();
+            },
+            error => {
+                this.resetTour();
+                throw new Error('Updating the guided tour settings has failed ' + error.status);
+            },
+        );
     }
 
     /**
      * Send a GET request for the guided tour settings of the current user
+     *
      * @return {Observable GuidedTourSetting[] } guided tour settings
      */
     private fetchGuidedTourSettings(): Observable<GuidedTourSetting[]> {
@@ -366,6 +382,7 @@ export class GuidedTourService {
 
     /**
      * Send a PUT request to update the guided tour settings of the current user
+     *
      * @param guidedTourKey the guided_tour_key that will be stored in the database
      * @param guidedTourStep the last tour step the user visited before finishing / skipping the tour
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
