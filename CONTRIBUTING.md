@@ -49,7 +49,7 @@ Find here [a guide](doc/setup/SETUP.md) on how to setup your local development e
 - Always use **kebab-case** (e.g. 'exampleAssessment' → 'example-assessment')
 - The routes should follow the general structure entity > entityId > subentity ... (e.g. '/exercises/{exerciseId}/participations')
 - Use **plural for server route's** entities and **singular for client route's** entities
-- Key entity at the end of the route (e.g. text-editor/participations/{participationId} → participations/{participationId}/text-editor)
+- Specifiy the key entity at the end of the route (e.g. text-editor/participations/{participationId} → participations/{participationId}/text-editor)
 - Never specify id that is used only for consistency and not used in the code
 
 ## CSS Guidelines
