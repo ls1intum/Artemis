@@ -142,9 +142,8 @@ export class GuidedTourService {
     /**
      * Trigger callback method if there is one and finish the current guided tour by updating the guided tour settings in the database
      * and calling the reset tour method to remove current tour elements
-     *
      */
-    private finishGuidedTour() {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -164,6 +163,30 @@ export class GuidedTourService {
             }
             this.subscribeToAndUpdateGuidedTourSettings(false);
         }
+    }
+
+    /**
+     * Subscribe to the update method call
+     * @param tourFinished: true if the user finishes the guided tour with all steps
+     */
+    public subscribeToAndUpdateGuidedTourSettings(tourFinished: boolean) {
+        if (!this.currentTour) {
+            return;
+        }
+
+        const guidedTourState = tourFinished ? GuidedTourState.FINISHED : GuidedTourState.STARTED;
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState).subscribe(
+            guidedTourSettings => {
+                if (guidedTourSettings.body) {
+                    this.guidedTourSettings = guidedTourSettings.body;
+                }
+            },
+            error => {
+                this.resetTour();
+                throw new Error('Updating the guided tour settings has failed ' + error.status);
+            },
+        );
+        this.resetTour();
     }
 
     /**
@@ -204,7 +227,7 @@ export class GuidedTourService {
 
     /**
      * Checks if the current window size is supposed display the guided tour
-     * @return {boolean} returns true if the minimum screen size is not defined or greater than the current window.innerWidth
+     * @return returns true if the minimum screen size is not defined or greater than the current window.innerWidth
      */
     public tourAllowedForWindowSize(): boolean {
         if (this.currentTour) {
@@ -214,7 +237,7 @@ export class GuidedTourService {
     }
 
     /**
-     *  @return {boolean} if highlighted element is available
+     *  @return true if highlighted element is available, otherwise false
      */
     public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
@@ -238,7 +261,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the current step is the last tour step
+     * @return true if the current step is the last tour step, otherwise false
      */
     public get isOnLastStep(): boolean {
         if (!this.currentTour) {
@@ -289,7 +312,7 @@ export class GuidedTourService {
 
     /**
      * Get the tour step with defined orientation
-     * @param index current tour step index
+     * @param index: current tour step index
      * @return prepared current tour step or null
      */
     private getPreparedTourStep(index: number): TourStep | null {
@@ -302,7 +325,7 @@ export class GuidedTourService {
 
     /**
      * Set orientation of the passed on tour step
-     * @param {step} passed on tour step of a guided tour
+     * @param step: passed on tour step of a guided tour
      * @return guided tour step with defined orientation
      */
     private setTourOrientation(step: TourStep): TourStep {
@@ -346,30 +369,10 @@ export class GuidedTourService {
         );
     }
 
-    public subscribeToAndUpdateGuidedTourSettings(tourFinished: boolean) {
-        if (!this.currentTour) {
-            return;
-        }
-
-        const guidedTourState = tourFinished ? GuidedTourState.FINISHED : GuidedTourState.STARTED;
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState).subscribe(
-            guidedTourSettings => {
-                if (guidedTourSettings.body) {
-                    this.guidedTourSettings = guidedTourSettings.body;
-                }
-            },
-            error => {
-                this.resetTour();
-                throw new Error('Updating the guided tour settings has failed ' + error.status);
-            },
-        );
-        this.resetTour();
-    }
-
     /**
      * Send a GET request for the guided tour settings of the current user
      *
-     * @return {Observable GuidedTourSetting[] } guided tour settings
+     * @return Observable GuidedTourSetting[]: guided tour settings
      */
     private fetchGuidedTourSettings(): Observable<GuidedTourSetting[]> {
         return this.http.get<GuidedTourSetting[]>(this.resourceUrl, { observe: 'response' }).map(res => {

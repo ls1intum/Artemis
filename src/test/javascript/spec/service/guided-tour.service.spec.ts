@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
@@ -123,11 +123,15 @@ describe('Service Tests', () => {
                     });
 
                     // Start course overview tour
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourService.checkGuidedTourAvailabilityForCurrentRoute()).to.be.true;
                     guidedTourService.startGuidedTourForCurrentRoute();
                     guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourService.isOnFirstStep).to.be.true;
                     expect(guidedTourService.currentTourStepDisplay).to.equal(1);
                     expect(guidedTourService.currentTourStepCount).to.equal(2);
@@ -136,29 +140,52 @@ describe('Service Tests', () => {
                 it('should start and finish the course overview guided tour', () => {
                     // Navigate to next tour step
                     const nextButton = guidedTourComponentFixture.debugElement.query(By.css('.next-button'));
+                    // tslint:disable-next-line:no-unused-expression
                     expect(nextButton).to.exist;
                     nextButton.nativeElement.click();
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourService.isOnLastStep).to.be.true;
 
                     // Finish guided tour
                     nextButton.nativeElement.click();
                     guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                });
+
+                it('should be able to skip the tour even if the REST call is failing', () => {
+                    guidedTourService.updateGuidedTourSettings = jasmine.createSpy().and.returnValue(Observable.throwError(500));
+                    guidedTourService.finishGuidedTour();
+                    guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                 });
 
                 it('should start and skip the tour', () => {
                     const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.close'));
+                    // tslint:disable-next-line:no-unused-expression
                     expect(skipButton).to.exist;
                     skipButton.nativeElement.click();
                     guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
+                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                });
+
+                it('should be able to skip the tour even if the REST call is failing', () => {
+                    guidedTourService.updateGuidedTourSettings = jasmine.createSpy().and.returnValue(Observable.throwError(500));
+                    guidedTourService.skipTour();
+                    guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                 });
 
                 it('should prevent backdrop from advancing', () => {
                     const backdrop = guidedTourComponentFixture.debugElement.query(By.css('.guided-tour-user-input-mask'));
+                    // tslint:disable-next-line:no-unused-expression
                     expect(backdrop).to.exist;
                     backdrop.nativeElement.click();
                     guidedTourComponentFixture.detectChanges();
+                    // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourService.isOnFirstStep).to.be.true;
                 });
             });
