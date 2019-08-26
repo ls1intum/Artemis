@@ -16,7 +16,7 @@ export type EntityArrayResponseType = HttpResponse<Submission[]>;
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
-    public resourceUrlParticipation = SERVER_API_URL + 'api/participation-submission';
+    public resourceUrlParticipation = SERVER_API_URL + 'api/participant';
 
     constructor(private http: HttpClient) {}
 
@@ -31,7 +31,7 @@ export class SubmissionService {
 
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}`, { observe: 'response' })
+            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 

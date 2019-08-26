@@ -28,7 +28,7 @@ export const participationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participation-submission/:participationId',
+        path: 'participant/:participationId/submissions',
         component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -70,7 +70,7 @@ export const participationPopupRoute: Routes = [
         outlet: 'popup',
     },
     {
-        path: 'participationSubmission/:id/delete',
+        path: 'participant/submission/:id/delete',
         component: ParticipationSubmissionDeletePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
