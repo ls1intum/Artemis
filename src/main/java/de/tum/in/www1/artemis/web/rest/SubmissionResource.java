@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -33,8 +34,11 @@ public class SubmissionResource {
 
     private SubmissionRepository submissionRepository;
 
-    public SubmissionResource(SubmissionRepository submissionRepository) {
+    private ResultRepository resultRepository;
+
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -106,6 +110,12 @@ public class SubmissionResource {
     @DeleteMapping("/submissions/{id}")
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
+
+        Submission submission = submissionRepository.findById(id).get();
+        if (submission.getResult() != null) {
+            resultRepository.delete(submission.getResult());
+        }
+
         submissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }

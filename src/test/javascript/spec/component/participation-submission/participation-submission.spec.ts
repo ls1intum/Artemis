@@ -106,5 +106,9 @@ describe('ParticipationSubmissionComponent', () => {
         // check if delete button is available
         const deleteButton = debugElement.query(By.css('#deleteButton'));
         expect(deleteButton).to.exist;
+
+        // check if the right amount of rows is visible
+        const row = debugElement.query(By.css('#row-0'));
+        expect(row).to.exist;
     }));
 });
