@@ -10,7 +10,6 @@ import { ArtemisSharedModule } from 'app/shared';
     declarations: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisProgrammingExerciseStatusModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
