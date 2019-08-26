@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let submission of submissions">
+            <tr *ngFor="let submission of submissions; let i = index" id="row-{{ i }}">
                 <td>{{ submission.id }}</td>
                 <td>{{ submission.type }}</td>
                 <td>{{ submission.submissionDate }}</td>
