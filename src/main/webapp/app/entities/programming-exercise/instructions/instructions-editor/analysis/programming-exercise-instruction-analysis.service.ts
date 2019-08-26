@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
-import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
 
 export type ProblemStatementAnalysis = Array<{
     lineNumber: number;
@@ -20,10 +20,10 @@ export type AnalysisItem = [number, string[], ProblemStatementIssue];
 
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    TEST_CASE_REGEX = new RegExp('.*\\((.*)\\)');
-    HINT_REGEX = new RegExp('.*{(.*)}');
-    INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
-    INVALID_HINT_TRANSLATION = 'artemisApp.programmingExercise.hintsAnalysis.invalidHint';
+    private readonly TEST_CASE_REGEX = new RegExp('.*\\((.*)\\)');
+    private readonly HINT_REGEX = new RegExp('.*{(.*)}');
+    private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
+    private readonly INVALID_HINT_TRANSLATION = 'artemisApp.programmingExercise.hintsAnalysis.invalidHint';
 
     constructor(private translateService: TranslateService) {}
 
