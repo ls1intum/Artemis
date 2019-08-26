@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
@@ -20,7 +19,4 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @EntityGraph(attributePaths = { "submissions", "results.submission" })
     @Query("select pe from Participation pe")
     List<Participation> getAllWithEagerSubmissionsAndResults();
-
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch participation.results where participation.student.login = :#{#username}")
-    List<StudentParticipation> findByStudentUsernameWithEagerSubmissionsWithEagerResults(@Param("username") String username);
 }

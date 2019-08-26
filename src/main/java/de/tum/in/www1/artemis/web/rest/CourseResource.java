@@ -293,21 +293,8 @@ public class CourseResource {
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
 
-        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultsByStudentUsername(principal.getName());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
         log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
-
-        // Add the latestSubmissionDate to every participation that relates to a modeling or a text exercise
-        for (Participation participation : participations) {
-            if (participation.getExercise() instanceof ModelingExercise) {
-                participation.setLatestSubmissionDate();
-            }
-            else if (participation.getExercise() instanceof TextExercise) {
-                participation.setLatestSubmissionDate();
-            }
-
-            // We just needed the submissions to evaluate the latestSubmissionDate. No need to transfer it over the network
-            participation.setSubmissions((new HashSet<Submission>()));
-        }
 
         // TODO: use the call 'participationService.findWithSubmissionsWithResultByStudentId' in the future and filter for the right submission + result depending on the exercise
         // type

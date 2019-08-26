@@ -82,9 +82,6 @@ public abstract class Participation implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 
-    @Transient
-    private ZonedDateTime latestSubmissionDate;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -122,14 +119,14 @@ public abstract class Participation implements Serializable {
 
     /**
      * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
-     * 
+     *
      * @return exrcise object
      */
     public abstract Exercise getExercise();
 
     /**
      * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
-     * 
+     *
      * @param exercise that will be set
      */
     public abstract void setExercise(Exercise exercise);
@@ -182,14 +179,7 @@ public abstract class Participation implements Serializable {
         this.submissions = submissions;
     }
 
-    @JsonProperty("latestSubmissionDate")
-    public ZonedDateTime getLatestSubmissionDate() {
-        return this.latestSubmissionDate;
-    }
-
-    public void setLatestSubmissionDate() {
-        this.findLatestSubmission().ifPresent(s -> this.latestSubmissionDate = s.getSubmissionDate());
-    }
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Finds the latest result for the participation. Checks if the participation has any results. If there are no results, return null. Otherwise sort the results by completion
