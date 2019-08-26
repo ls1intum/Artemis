@@ -53,6 +53,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseActionsModule,
+        ArtemisProgrammingExerciseStatusModule,
         // Other entity modules.
         ArtemisResultModule,
     ],
