@@ -66,6 +66,8 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArtemisConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
@@ -76,6 +78,7 @@ import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/p
         ArtemisAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
+        GuidedTourModule.forRoot(),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
@@ -144,6 +147,7 @@ import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/p
             provide: ErrorHandler,
             useClass: SentryErrorHandler,
         },
+        GuidedTourService,
         ProfileService,
         RepositoryService,
         PaginationConfig,
