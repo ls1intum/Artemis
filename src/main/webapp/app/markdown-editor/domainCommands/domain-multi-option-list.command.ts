@@ -13,7 +13,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
     setEditor(aceEditorContainer: AceEditorComponent) {
         super.setEditor(aceEditorContainer);
 
-        const testCaseCompleter = {
+        const autoCompleter = {
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
                 callback(
                     null,
@@ -28,63 +28,77 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
             },
         };
 
-        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, testCaseCompleter];
+        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, autoCompleter];
     }
 
     /**
-     * There are two base cases for this command:
-     * a) The cursor is within the brackets -> add/replace test case in test case list.
-     * b) The cursor is NOT within the brackets -> just paste in a new test case command.
+     * Update the list of values in the multi option list. Makes sure to not add duplicates into the brackets.
+     *
      * @function execute
-     * @desc insert selected testCase value into text
+     * @desc insert selected value into text
      */
-    execute(value: string): void {
-        const { row, column } = this.getCursorPosition();
-        const matchInTag = this.isCursorWithinTag()!;
-
-        const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
-            // Check if the cursor is within the tag - if so, add the test to the list.
-            // Also don't add a test case again that is already included.
-            if (match && !match.innerTagContent.includes(value)) {
-                const currentValues = matchInTag.innerTagContent.split(',');
-                const stringPositions = getStringSegmentPositions(match.innerTagContent, ',');
-                const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
-                if (wordUnderCursor) {
-                    // Case 1: Replace test.
-                    return currentValues.map(test => (test === wordUnderCursor.word ? value : test));
-                } else if (column >= match.matchEnd - 1) {
-                    // Case 2: Add test on left side.
-                    return [...currentValues, value];
-                } else if (column <= match.matchStart + 1) {
-                    // Case 3: Add test on right side.
-                    return [value, ...currentValues];
-                } else {
-                    // Case 4: Fallback - replace current.
-                    return [value];
-                }
-            } else if (match && match.innerTagContent.includes(value)) {
-                // Case 5: The test case is already included, do nothing.
-                return matchInTag.innerTagContent.split(',');
-            } else {
-                // Case 6: There is no content yet, just paste the current value in.
-                return [value];
-            }
-        };
+    execute(valueToAdd: string): void {
+        const cursorPosition = this.getCursorPosition();
+        const matchInTag = this.isCursorWithinTag();
 
         this.clearSelection();
-        const newTestCases = generateTestCases(matchInTag);
-        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCases.join(',')}${this.getClosingIdentifier()}`;
+
+        const newValuesList = this.generateValueList(matchInTag, valueToAdd, cursorPosition);
+        const newValuesStringified = `${this.getOpeningIdentifier()}${newValuesList.join(',')}${this.getClosingIdentifier()}`;
         if (matchInTag) {
             ArtemisMarkdown.removeTextRange(
-                { col: matchInTag.matchStart, row },
+                { col: matchInTag.matchStart, row: cursorPosition.row },
                 {
                     col: matchInTag.matchEnd,
-                    row,
+                    row: cursorPosition.row,
                 },
                 this.aceEditorContainer,
             );
         }
-        this.insertText(newTestCasesStringified);
+        this.insertText(newValuesStringified);
         this.focus();
     }
+
+    /**
+     * Given a match, the new value to add and the cursor position, determine and return the updated value list.
+     * a) The cursor is within the brackets -> add/replace value in list.
+     * b) The cursor is NOT within the brackets -> just paste in a new value.
+     *
+     * @param match
+     * @param valueToAdd
+     * @param cursorPosition
+     */
+    private generateValueList = (
+        match: { matchStart: number; matchEnd: number; innerTagContent: string } | null,
+        valueToAdd: string,
+        cursorPosition: { row: number; column: number },
+    ): string[] => {
+        const { column } = cursorPosition;
+        // Check if the cursor is within the tag - if so, add the value to the list.
+        // Also don't add a value again that is already included.
+        if (match && !match.innerTagContent.includes(valueToAdd)) {
+            const currentValues = match.innerTagContent.split(',');
+            const stringPositions = getStringSegmentPositions(match.innerTagContent, ',');
+            const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
+            if (wordUnderCursor) {
+                // Case 1: Replace value.
+                return currentValues.map(val => (val === wordUnderCursor.word ? valueToAdd : val));
+            } else if (column >= match.matchEnd - 1) {
+                // Case 2: Add value on left side.
+                return [...currentValues, valueToAdd];
+            } else if (column <= match.matchStart + 1) {
+                // Case 3: Add value on right side.
+                return [valueToAdd, ...currentValues];
+            } else {
+                // Case 4: Fallback - replace current.
+                return [valueToAdd];
+            }
+        } else if (match && match.innerTagContent.includes(valueToAdd)) {
+            // Case 5: The value is already included, do nothing.
+            return match.innerTagContent.split(',');
+        } else {
+            // Case 6: There is no content yet, just paste the current value in.
+            return [valueToAdd];
+        }
+    };
 }
