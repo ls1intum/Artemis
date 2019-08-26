@@ -19,7 +19,6 @@ import {
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 

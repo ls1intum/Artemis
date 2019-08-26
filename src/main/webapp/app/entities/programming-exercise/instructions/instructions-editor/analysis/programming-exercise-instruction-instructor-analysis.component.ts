@@ -5,10 +5,8 @@ import { debounceTime, tap } from 'rxjs/operators';
 import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
-import {
-    ProblemStatementAnalysis,
-    ProgrammingExerciseInstructionAnalysisService,
-} from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',

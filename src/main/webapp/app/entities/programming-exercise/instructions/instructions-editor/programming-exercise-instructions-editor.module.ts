@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionInstructorAnalysisComponent } from './';
+import { ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisService, ProgrammingExerciseInstructionInstructorAnalysisComponent } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
@@ -11,7 +11,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisMarkdownEditorModule, ArtemisProgrammingExerciseStatusModule],
     declarations: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionInstructorAnalysisComponent],
     entryComponents: [ProgrammingExerciseEditableInstructionComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }, ProgrammingExerciseInstructionAnalysisService],
     exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent],
 })
 export class ArtemisProgrammingExerciseInstructionsEditorModule {

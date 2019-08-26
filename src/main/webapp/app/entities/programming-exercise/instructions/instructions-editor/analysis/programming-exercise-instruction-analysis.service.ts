@@ -1,23 +1,17 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
+import {
+    AnalysisItem,
+    ProblemStatementAnalysis,
+    ProblemStatementIssue,
+} from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
-export type ProblemStatementAnalysis = Array<{
-    lineNumber: number;
-    invalidTestCases?: string[];
-    invalidHints?: string[];
-}>;
-
-export enum ProblemStatementIssue {
-    INVALID_TEST_CASES = 'invalidTestCases',
-    INVALID_HINTS = 'invalidHints',
-}
-
-export type AnalysisItem = [number, string[], ProblemStatementIssue];
-
+/**
+ * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
+ */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
     private readonly TEST_CASE_REGEX = new RegExp('.*\\((.*)\\)');

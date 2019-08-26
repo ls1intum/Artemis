@@ -32,7 +32,6 @@ import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArtemisResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTableModule } from 'app/components/table/table.module';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
@@ -52,8 +51,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisTableModule,
         // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
-        ArtemisProgrammingExerciseActionsModule,
         ArtemisProgrammingExerciseStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
         // Other entity modules.
         ArtemisResultModule,
     ],

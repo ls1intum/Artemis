@@ -8,7 +8,7 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/prog
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }, ProgrammingExerciseInstructionAnalysisService],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
 })
 export class ArtemisProgrammingExerciseStatusModule {
