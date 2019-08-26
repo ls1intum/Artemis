@@ -68,7 +68,6 @@ import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
 @NgModule({
@@ -97,7 +96,6 @@ import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/p
         ArtemisSharedModule.forRoot(),
         ArtemisCoreModule,
         ArtemisHomeModule,
-        ArtemisAdminModule,
         ArtemisLegalModule,
         ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
