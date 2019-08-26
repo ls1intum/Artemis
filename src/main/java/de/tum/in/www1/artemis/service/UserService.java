@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -559,6 +560,7 @@ public class UserService {
      */
     public List<GuidedTourSettings> getGuidedTourSettings() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
+        Hibernate.initialize(loggedInUser.getGuidedTourSettings());
         return loggedInUser.getGuidedTourSettings();
     }
 
@@ -572,6 +574,7 @@ public class UserService {
         User loggedInUser = getUserWithGroupsAndAuthorities();
         loggedInUser.setGuidedTourSettings(guidedTourSettings);
         userRepository.save(loggedInUser);
+        Hibernate.initialize(loggedInUser.getGuidedTourSettings());
         return loggedInUser.getGuidedTourSettings();
     }
 }
