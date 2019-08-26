@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
@@ -24,11 +24,22 @@ import {
     ParticipationSubmissionDeleteDialogComponent,
     ParticipationSubmissionDeletePopupComponent,
 } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
+import { ArtemisExerciseScoresModule } from 'app/scores';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisProgrammingExerciseModule, ArtemisResultModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArtemisExerciseScoresModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisProgrammingExerciseModule,
+        ArtemisResultModule,
+    ],
+
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,

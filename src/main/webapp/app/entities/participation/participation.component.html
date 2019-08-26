@@ -110,11 +110,16 @@
                                 <fa-icon icon="file-powerpoint"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
-                            <jhi-programming-exercise-instructor-trigger-build-button
-                                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                                [participation]="participation"
-                                [showProgress]="true"
-                            ></jhi-programming-exercise-instructor-trigger-build-button>
+                            <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
+                                <jhi-programming-exercise-instructor-trigger-build-button
+                                    *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
+                                    [participation]="participation"
+                                    [showProgress]="true"
+                                ></jhi-programming-exercise-instructor-trigger-build-button>
+                                <ng-template #triggerLoading>
+                                    <fa-icon icon="circle-notch" [spin]="true" class="text-secondary"></fa-icon>
+                                </ng-template>
+                            </ng-container>
                         </div>
                     </td>
                 </tr>
