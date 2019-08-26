@@ -10,13 +10,10 @@ import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
 import {
     ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
     CodeEditorConflictStateService,
-    CodeEditorFileService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
     CodeEditorSessionService,
@@ -40,9 +37,7 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { Result, ResultService } from 'app/entities/result';
 import { Participation, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
@@ -52,12 +47,8 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import {
-    ProgrammingSubmissionState,
-    ProgrammingSubmissionStateObj,
-    ProgrammingSubmissionWebsocketService,
-} from 'app/programming-submission/programming-submission-websocket.service';
-import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
+import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
@@ -76,7 +67,7 @@ describe('CodeEditorStudentIntegration', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
-    let submissionService: ProgrammingSubmissionWebsocketService;
+    let submissionService: ProgrammingSubmissionService;
     let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
 
@@ -119,7 +110,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
@@ -138,7 +129,7 @@ describe('CodeEditorStudentIntegration', () => {
                 route = containerDebugElement.injector.get(ActivatedRoute);
                 conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
                 domainService = containerDebugElement.injector.get(DomainService);
-                submissionService = containerDebugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
                 exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
@@ -160,7 +151,7 @@ describe('CodeEditorStudentIntegration', () => {
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
     });
