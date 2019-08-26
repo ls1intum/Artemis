@@ -47,7 +47,7 @@ Find here [a guide](doc/setup/SETUP.md) on how to setup your local development e
 ## Route Naming Conventions
 
 - Always use **kebab-case** (e.g. 'exampleAssessment' → 'example-assessment')
-- Before id there should always be the name of the entity to which this id relates to
+- The routes should follow the general structure entity > entityId > subentity ... (e.g. '/exercises/{exerciseId}/participations')
 - Use **plural for server route's** entities and **singular for client route's** entities
 - Key entity at the end of the route (e.g. text-editor/participations/{participationId} → participations/{participationId}/text-editor)
 - Never specify id that is used only for consistency and not used in the code
