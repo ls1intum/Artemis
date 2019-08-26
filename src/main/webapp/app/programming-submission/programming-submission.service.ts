@@ -58,6 +58,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * - Submission does not have a result (yet)
      * - Submission is not older than EXPECTED_RESULT_CREATION_TIME_MS (in this case it could be that never a result will come due to an error)
      *
+     * This method is private on purpose as subscribers should not try to load initial data!
+     * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
+     *
      * @param participationId
      */
     private fetchLatestPendingSubmissionByParticipationId = (participationId: number): Observable<ProgrammingSubmission | null> => {
@@ -69,6 +72,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     /**
      * Fetch the latest pending submission for all participations of a given exercise.
      * Returns an empty array if the api request fails.
+     *
+     * This method is private on purpose as subscribers should not try to load initial data!
+     * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
      *
      * @param exerciseId of programming exercise.
      */
