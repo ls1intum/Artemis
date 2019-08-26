@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
 
 chai.use(sinonChai);

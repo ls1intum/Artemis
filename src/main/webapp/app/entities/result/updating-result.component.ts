@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { orderBy as _orderBy } from 'lodash';
-import { Subscription, of } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';

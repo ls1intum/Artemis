@@ -7,8 +7,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseInstructionTestcaseStatusComponent } from '../../../../../main/webapp/app/entities/programming-exercise';
 import { TaskCommand } from '../../../../../main/webapp/app/markdown-editor/domainCommands/programming-exercise/task.command';
+import { ProgrammingExerciseInstructionTestcaseStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 const expect = chai.expect;
 

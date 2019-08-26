@@ -1,10 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { of, Subject, Subscription } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Subject, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 
 /**

@@ -5,6 +5,12 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    providers: [ProgrammingSubmissionService],
 })
-export class ArtemisProgrammingSubmissionModule {}
+export class ArtemisProgrammingSubmissionModule {
+    static forRoot() {
+        return {
+            ngModule: ArtemisProgrammingSubmissionModule,
+            providers: [ProgrammingSubmissionService],
+        };
+    }
+}

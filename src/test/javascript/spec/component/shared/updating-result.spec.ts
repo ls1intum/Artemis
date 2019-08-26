@@ -18,7 +18,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { ProgrammingSubmissionService } from '../../mocks/programming-submission.service';
+import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,7 +28,7 @@ describe('UpdatingResultComponent', () => {
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let programmingSubmissionService: ProgrammingSubmissionService;
+    let programmingSubmissionService: MockProgrammingSubmissionService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
@@ -61,7 +61,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ProgrammingSubmissionService, useClass: ProgrammingSubmissionService },
+                { provide: MockProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
             .compileComponents()
@@ -71,7 +71,7 @@ describe('UpdatingResultComponent', () => {
                 debugElement = fixture.debugElement;
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
+                programmingSubmissionService = debugElement.injector.get(MockProgrammingSubmissionService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
