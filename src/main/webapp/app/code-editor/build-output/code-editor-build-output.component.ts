@@ -42,7 +42,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /** Resizable constants **/
     resizableMinHeight = 150;
-    resizableMaxHeight = 500;
     interactResizable: Interactable;
 
     set buildLogErrors(buildLogErrors: BuildLogErrors) {
@@ -74,30 +73,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     ngAfterViewInit(): void {
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
-        this.interactResizable = interact('.resizable-buildoutput')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeight },
-                        max: { width: 2000, height: this.resizableMaxHeight },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function(event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function(event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function(event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.height = event.rect.height + 'px';
-            });
+        this.interactResizable = interact('.resizable-buildoutput');
     }
 
     /**

@@ -124,31 +124,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     ngAfterViewInit(): void {
         this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
-        this.interactResizable = interact('.resizable-filebrowser')
-            .resizable({
-                // Enable resize from right edge; triggered by class rg-right
-                edges: { left: false, right: '.rg-right', bottom: false, top: false },
-                // Set min and max width
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidth, height: 0 },
-                        max: { width: this.resizableMaxWidth, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function(event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function(event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function(event) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-            });
+        this.interactResizable = interact('.resizable-filebrowser');
     }
 
     /**
