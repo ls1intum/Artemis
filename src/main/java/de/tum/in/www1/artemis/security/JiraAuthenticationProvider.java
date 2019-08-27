@@ -175,9 +175,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             authorities.add(adminAuthority);
         }
 
-        List<Course> courses = courseRepository.findAll();
-        List<String> instructorGroups = courses.stream().map(Course::getInstructorGroupName).collect(Collectors.toList());
-        List<String> teachingAssistantGroups = courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
+        Set<String> instructorGroups = courseRepository.findAllInstructorGroupNames();
+        Set<String> teachingAssistantGroups = courseRepository.findAllTeachingAssistantGroupNames();
 
         // Check if user is an instructor in any course
         if (groups.stream().anyMatch(instructorGroups::contains)) {
