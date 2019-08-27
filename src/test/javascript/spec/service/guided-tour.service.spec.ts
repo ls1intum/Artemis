@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of, Observable } from 'rxjs';
+import { of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
@@ -153,27 +153,11 @@ describe('Service Tests', () => {
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
                 });
 
-                it('should be able to skip the tour even if the REST call is failing', () => {
-                    guidedTourService.updateGuidedTourSettings = jasmine.createSpy().and.returnValue(Observable.throwError(500));
-                    guidedTourService.finishGuidedTour();
-                    guidedTourComponentFixture.detectChanges();
-                    // tslint:disable-next-line:no-unused-expression
-                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-                });
-
                 it('should start and skip the tour', () => {
                     const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.close'));
                     // tslint:disable-next-line:no-unused-expression
                     expect(skipButton).to.exist;
                     skipButton.nativeElement.click();
-                    guidedTourComponentFixture.detectChanges();
-                    // tslint:disable-next-line:no-unused-expression
-                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-                });
-
-                it('should be able to skip the tour even if the REST call is failing', () => {
-                    guidedTourService.updateGuidedTourSettings = jasmine.createSpy().and.returnValue(Observable.throwError(500));
-                    guidedTourService.skipTour();
                     guidedTourComponentFixture.detectChanges();
                     // tslint:disable-next-line:no-unused-expression
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;

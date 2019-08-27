@@ -393,6 +393,7 @@ export class GuidedTourService {
      */
     public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
+            this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');
         }
         const existingSettingIndex = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
