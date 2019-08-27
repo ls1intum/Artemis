@@ -18,7 +18,8 @@
             "filePattern": "File Pattern",
             "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
             "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "assessedSubmission": "Deine bewertete Abgabe"
         }
     }
 }

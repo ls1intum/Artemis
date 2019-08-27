@@ -52,6 +52,8 @@ public class FileUploadSubmissionResource {
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
+    private final FileUploadAssessmentService fileUploadAssessmentService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseService exerciseService;
@@ -69,7 +71,7 @@ public class FileUploadSubmissionResource {
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
             FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
             UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository, FileService fileService,
-            CacheManager cacheManager) {
+            CacheManager cacheManager, FileUploadAssessmentService fileUploadAssessmentService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -81,6 +83,7 @@ public class FileUploadSubmissionResource {
         this.resultRepository = resultRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
+        this.fileUploadAssessmentService = fileUploadAssessmentService;
     }
 
     /**
@@ -302,10 +305,10 @@ public class FileUploadSubmissionResource {
             fileUploadSubmission.setParticipation(null);
 
             Result result = fileUploadSubmission.getResult();
-            // if (fileUploadSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
-            // List<Feedback> assessments = fileUploadAssessmentService.getAssessmentsForResult(result);
-            // result.setFeedbacks(assessments);
-            // }
+            if (fileUploadSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+                List<Feedback> assessments = fileUploadAssessmentService.getAssessmentsForResult(result);
+                 result.setFeedbacks(assessments);
+            }
 
             if (result != null && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
                 result.setAssessor(null);

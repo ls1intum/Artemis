@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDeleteDialogComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-delete-dialog.component';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [FileUploadExerciseDeleteDialogComponent],
             })
                 .overrideTemplate(FileUploadExerciseDeleteDialogComponent, '')

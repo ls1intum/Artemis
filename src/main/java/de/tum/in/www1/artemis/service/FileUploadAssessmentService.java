@@ -19,13 +19,16 @@ public class FileUploadAssessmentService extends AssessmentService {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
+    private final FeedbackRepository feedbackRepository;
+
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService) {
+            ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService, FeedbackRepository feedbackRepository) {
         super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.userService = userService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -44,6 +47,10 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.evaluateFeedback(fileUploadExercise.getMaxScore());
         resultRepository.save(result);
         return result;
+    }
+
+    public List<Feedback> getAssessmentsForResult(Result result) {
+        return this.feedbackRepository.findByResult(result);
     }
 
     /**

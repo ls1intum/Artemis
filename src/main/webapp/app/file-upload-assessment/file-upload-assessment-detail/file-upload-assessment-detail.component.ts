@@ -25,7 +25,7 @@ export class FileUploadAssessmentDetailComponent {
     }
 
     public delete() {
-        const confirmation = confirm(this.translateService.instant('artemisApp.fileUploadAssessment.deleteAssessment', { index: this.assessment.id }));
+        const confirmation = confirm(this.translateService.instant('artemisApp.fileUploadAssessment.deleteAssessment', { index: this.index }));
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);
         }

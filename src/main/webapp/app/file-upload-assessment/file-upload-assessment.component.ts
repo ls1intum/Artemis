@@ -30,6 +30,7 @@ import { filter } from 'rxjs/operators';
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
     templateUrl: './file-upload-assessment.component.html',
+    styleUrls: ['./file-upload-assessment.component.scss'],
 })
 export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     text: string;
@@ -214,6 +215,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         const referencedFeedback = new Feedback();
         referencedFeedback.credits = 0;
         this.referencedFeedback.push(referencedFeedback);
+        this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
@@ -325,6 +327,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         if (!this.result.feedbacks) {
             this.result.feedbacks = [];
         }
+
+        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
         this.submission.participation.results = [this.result];
         this.result.participation = this.submission.participation;
         if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
@@ -354,6 +361,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         } else {
             this.location.back();
         }
+    }
+
+    updateAssessment(assessment: Feedback, index: number) {
+        assessment.reference = index.toString();
+        this.validateAssessment();
     }
 
     /**

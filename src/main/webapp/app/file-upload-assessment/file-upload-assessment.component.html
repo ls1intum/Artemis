@@ -130,7 +130,7 @@
             <jhi-file-upload-assessment-detail
                 [index]="i + 1"
                 [(assessment)]="referencedFeedback[i]"
-                (assessmentChange)="validateAssessment()"
+                (assessmentChange)="updateAssessment(assessment, i + 1)"
                 (deleteAssessment)="deleteAssessment($event)"
             ></jhi-file-upload-assessment-detail>
         </div>
