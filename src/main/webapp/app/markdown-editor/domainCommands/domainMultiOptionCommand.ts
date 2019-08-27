@@ -1,4 +1,4 @@
-import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
 export type ValueItem = {
     id: string;
