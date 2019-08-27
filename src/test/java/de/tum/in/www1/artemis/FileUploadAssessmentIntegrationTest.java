@@ -68,13 +68,9 @@ public class FileUploadAssessmentIntegrationTest {
 
     private FileUploadExercise fileUploadExercise;
 
-    private FileUploadSubmission fileUploadSubmission;
-
-    private Result fileUploadAssessment;
-
     @BeforeEach
-    public void initTestCase() throws Exception {
-        database.addUsers(6, 2, 0);
+    public void initTestCase() {
+        database.addUsers(1, 2, 0);
         database.addCourseWithOneFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
     }

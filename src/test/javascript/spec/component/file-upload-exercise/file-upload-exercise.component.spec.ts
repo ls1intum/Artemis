@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -22,11 +21,14 @@ import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Course } from 'app/entities/course';
+import { ExerciseType } from 'app/entities/exercise';
 
 describe('FileUploadExerciseComponent', () => {
     let comp: FileUploadExerciseComponent;
     let fixture: ComponentFixture<FileUploadExerciseComponent>;
     let service: FileUploadExerciseService;
+
+    const exercises = [{ id: 20, type: ExerciseType.FILE_UPLOAD }, { id: 20, type: ExerciseType.FILE_UPLOAD }] as FileUploadExercise[];
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -49,7 +51,7 @@ describe('FileUploadExerciseComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExerciseComponent);
                 comp = fixture.componentInstance;
-                service = fixture.debugElement.injector.get(FileUploadExerciseService);
+                comp.fileUploadExercises = exercises;
             });
     });
 

@@ -346,11 +346,16 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
-    public void addCourseWithOneFileUploadExercise() {
+    public FileUploadExercise createFileUploadExerciseWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(fileUploadExercise);
         courseRepo.save(course);
+        return fileUploadExercise;
+    }
+
+    public void addCourseWithOneFileUploadExercise() {
+        var fileUploadExercise = createFileUploadExerciseWithCourse();
         exerciseRepo.save(fileUploadExercise);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
