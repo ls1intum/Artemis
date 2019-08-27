@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Principal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -281,19 +280,18 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @param principal the current user principal
      * @return the list of courses (the user has access to) including all exercises with participation and result for the user
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForDashboard(Principal principal) {
+    public List<Course> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         log.debug("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
 
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user
@@ -301,17 +299,17 @@ public class CourseResource {
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
-        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
         long exerciseCount = 0;
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-            Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
-            course.setLectures(lecturesWithReleasedAttachments);
+            // Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
+            // course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, principal.getName(), isStudent);
+                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -320,27 +318,26 @@ public class CourseResource {
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+                + user.getLogin());
         return courses;
     }
 
     /**
      * GET /courses/:id/for-tutor-dashboard
      *
-     * @param principal abstract notion of the user to find the course exercises
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long courseId) {
+    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course))
             return forbidden();
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, user);
 
         exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise).collect(Collectors.toList());
 
@@ -588,7 +585,7 @@ public class CourseResource {
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<String>> getCategoriesInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get categories of Course : {}", courseId);
 
@@ -596,7 +593,7 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
 
         List<Exercise> exercises = exerciseService.findAllExercisesForCourseAdministration(course, user);
-        List<String> categories = new ArrayList<>();
+        Set<String> categories = new HashSet<>();
         for (Exercise exercise : exercises) {
             categories.addAll(exercise.getCategories());
         }

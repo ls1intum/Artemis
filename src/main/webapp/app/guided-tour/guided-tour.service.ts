@@ -33,8 +33,6 @@ export class GuidedTourService {
         private accountService: AccountService,
         private router: Router,
     ) {
-        this.getGuidedTourSettings();
-
         /**
          * Subscribe to window resize events
          */
@@ -338,30 +336,6 @@ export class GuidedTourService {
             convertedStep.orientation = currentOrientation;
         }
         return convertedStep;
-    }
-
-    /**
-     * Subscribe to guided tour settings GET request and store response value in service class variable
-     */
-    public getGuidedTourSettings() {
-        this.fetchGuidedTourSettings().subscribe(guidedTourSettings => {
-            if (guidedTourSettings) {
-                this.guidedTourSettings = guidedTourSettings;
-            }
-        });
-    }
-
-    /**
-     * Send a GET request for the guided tour settings of the current user
-     * @return {Observable GuidedTourSetting[] } guided tour settings
-     */
-    private fetchGuidedTourSettings(): Observable<GuidedTourSetting[]> {
-        return this.http.get<GuidedTourSetting[]>(this.resourceUrl, { observe: 'response' }).map(res => {
-            if (!res.body) {
-                throw new Error('Empty response returned while fetching guided tour settings');
-            }
-            return res.body;
-        });
     }
 
     /**

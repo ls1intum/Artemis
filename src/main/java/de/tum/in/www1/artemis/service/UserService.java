@@ -401,7 +401,6 @@ public class UserService {
      * Get decrypted password for the current user
      * @return decrypted password or empty string
      */
-    @Transactional(readOnly = true)
     public String decryptPassword() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
         try {
@@ -417,7 +416,6 @@ public class UserService {
      * @param login of a user
      * @return decrypted password or empty string
      */
-    @Transactional(readOnly = true)
     public Optional<String> decryptPasswordByLogin(String login) {
         return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
     }
@@ -427,7 +425,6 @@ public class UserService {
      * @param pageable used to find users
      * @return all users with roles other than ROLE_ANONYMOUS
      */
-    @Transactional(readOnly = true)
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllByLoginNot(pageable, AuthoritiesConstants.ANONYMOUS).map(UserDTO::new);
     }
@@ -437,7 +434,6 @@ public class UserService {
      * @param login user login string
      * @return existing user with given login string or null
      */
-    @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
@@ -447,7 +443,6 @@ public class UserService {
      * @param id user id
      * @return existing user with the given user id
      */
-    @Transactional(readOnly = true)
     public User getUserWithAuthorities(Long id) {
         return userRepository.findOneWithAuthoritiesById(id).get();
     }
@@ -455,7 +450,6 @@ public class UserService {
     /**
      * @return existing user object by current user login
      */
-    @Transactional(readOnly = true)
     public User getUser() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
         return userRepository.findOneByLogin(currentUserLogin).get();
@@ -466,7 +460,6 @@ public class UserService {
      * @param login user login string
      * @return existing user for the given login string or null
      */
-    @Transactional(readOnly = true)
     public Optional<User> getUserByLogin(String login) {
         return userRepository.findOneByLogin(login);
     }
@@ -476,12 +469,10 @@ public class UserService {
      * @param login user login string
      * @return existing user
      */
-    @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
     }
 
-    @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
         User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
@@ -492,18 +483,27 @@ public class UserService {
      * Get user with user groups and authorities of currently logged in user
      * @return currently logged in user
      */
-    @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
+        return user;
+    }
+
+    /**
+     * Get user with user groups and authorities of currently logged in user
+     * @return currently logged in user
+     */
+    public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        User user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin).get();
+        return user;
     }
 
     /**
      * Get user with user groups and authorities by principal object
      * @param principal abstract presentation for user
-     * @return existing user
+     * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities(Principal principal) {
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
     }
@@ -552,7 +552,7 @@ public class UserService {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }
 
-    public User updateGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+    public User updateGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAndAuthorities();
         loggedInUser.setGuidedTourSettings(guidedTourSettings);
         userRepository.save(loggedInUser);

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,13 +31,16 @@ public class CourseService {
 
     private final UserRepository userRepository;
 
+    private final LectureService lectureService;
+
     public CourseService(CourseRepository courseRepository, UserService userService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            UserRepository userRepository) {
+            UserRepository userRepository, LectureService lectureService) {
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.lectureService = lectureService;
     }
 
     /**
@@ -125,23 +127,24 @@ public class CourseService {
      * @return the list of entities
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllActiveWithExercises() {
+    public List<Course> findAllActiveWithExercisesAndLectures() {
         log.debug("Request to get all Courses with Exercises");
-        return courseRepository.findAllActiveWithEagerExercises();
+        return courseRepository.findAllActiveWithEagerExercisesAndLectures();
     }
 
     /**
      * Get all courses with exercises (filtered for given user)
      *
-     * @param principal the user principal
      * @param user      the user entity
      * @return the list of all courses including exercises for the user
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllActiveWithExercisesForUser(Principal principal, User user) {
+    public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
+        // TODO: load exercise.categories eagerly
+
         if (authCheckService.isAdmin()) {
-            // admin => fetch all courses with all exercises immediately
-            List<Course> allCourses = findAllActiveWithExercises();
+            // admin => fetch all courses with all lectures and exercises immediately
+            List<Course> allCourses = findAllActiveWithExercisesAndLectures();
             Set<Course> userCourses = new HashSet<>();
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
@@ -165,7 +168,6 @@ public class CourseService {
                 }
                 // Instructors and TAs see all courses that have not yet finished
                 if (user.getGroups().contains(course.getTeachingAssistantGroupName()) || user.getGroups().contains(course.getInstructorGroupName())) {
-
                     userCourses.add(course);
                 }
                 // Students see all courses that have already started (and not yet finished)
@@ -177,8 +179,10 @@ public class CourseService {
             }
             for (Course course : userCourses) {
                 // fetch visible exercises for each course after filtering
-                List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
+                List<Exercise> exercises = exerciseService.findAllForCourse(course, true, user);
+                Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
                 course.setExercises(new HashSet<>(exercises));
+                course.setLectures(lectures);
             }
             return new ArrayList<>(userCourses);
         }
@@ -324,7 +328,7 @@ public class CourseService {
      */
     public long countNumberOfStudentsForCourse(Course course) {
         String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
+        return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
     }
 
     /**
@@ -335,6 +339,6 @@ public class CourseService {
      */
     public long countNumberOfTutorsForCourse(Course course) {
         String groupName = course.getTeachingAssistantGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
+        return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
     }
 }

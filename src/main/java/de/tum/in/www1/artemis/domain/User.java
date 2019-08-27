@@ -94,14 +94,15 @@ public class User extends AbstractAuditingEntity implements Serializable {
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
      * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
      */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "`groups`")
-    @ElementCollection
-    private List<String> groups = new ArrayList<>();
+    private Set<String> groups = new HashSet<>();
 
     @JsonIgnore
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
-    private List<GuidedTourSettings> guidedTourSettings = new ArrayList<>();
+    private Set<GuidedTourSettings> guidedTourSettings = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany
@@ -233,11 +234,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.langKey = langKey;
     }
 
-    public List<String> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<String> groups) {
+    public void setGroups(Set<String> groups) {
         this.groups = groups;
     }
 
@@ -257,11 +258,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.persistentTokens = persistentTokens;
     }
 
-    public List<GuidedTourSettings> getGuidedTourSettings() {
+    public Set<GuidedTourSettings> getGuidedTourSettings() {
         return this.guidedTourSettings;
     }
 
-    public void setGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+    public void setGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
     }
 

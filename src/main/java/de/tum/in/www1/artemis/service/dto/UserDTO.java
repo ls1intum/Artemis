@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,7 +56,7 @@ public class UserDTO {
 
     private Set<String> authorities;
 
-    private List<String> groups;
+    private Set<String> groups;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -70,7 +69,7 @@ public class UserDTO {
     }
 
     public UserDTO(Long id, String login, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
-            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, List<String> groups) {
+            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, Set<String> groups) {
 
         this.id = id;
         this.login = login;
@@ -201,11 +200,11 @@ public class UserDTO {
         this.authorities = authorities;
     }
 
-    public List<String> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<String> groups) {
+    public void setGroups(Set<String> groups) {
         this.groups = groups;
     }
 
