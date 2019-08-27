@@ -25,7 +25,7 @@ public class TextAssessmentQueueService {
     }
 
     /**
-     * Calculates the proposedTextSubmission for a given Text exercise
+     * Calculates the proposedTextSubmission for a given Text exercise. This means the Text exercise which should be assessed next
      *
      * @param textExercise the exercise for
      * @throws IllegalArgumentException if textExercise isn't automatically assessable
@@ -39,7 +39,7 @@ public class TextAssessmentQueueService {
      * Calculates the proposedTextSubmission for a given Text exercise
      *
      * @param textExercise the exercise for
-     * @param languages  list of languages the submission which the returned  submission should have if null all languages are allowed
+     * @param languages  list of languages the submission which the returned submission should have if null all languages are allowed
      * @throws IllegalArgumentException if textExercise isn't automatically assessable
      * @return a TextSubmission with the highest information Gain if there is one
      */
@@ -132,7 +132,7 @@ public class TextAssessmentQueueService {
         TextExercise currentExercise = (TextExercise) textSubmissionList.get(0).getParticipation().getExercise();
         List<TextCluster> clusters = textClusterRepository.findAllByExercise(currentExercise);
 
-        if (!textSubmissionList.stream().map(Submission::getParticipation).map(Participation::getExercise).allMatch(elem -> elem == currentExercise)) {
+        if (textSubmissionList.stream().map(submission -> submission.getParticipation().getExercise()).anyMatch(elem -> elem != currentExercise)) {
             throw new IllegalArgumentException("All TextSubmissions have to be from the same Exercise");
         }
         textSubmissionList.forEach(textSubmission -> {
