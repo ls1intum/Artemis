@@ -169,6 +169,26 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (programmingExercise == null) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(programmingExercise,
+                SubmissionType.INSTRUCTOR);
+        for (ProgrammingSubmission submission : submissions) {
+            // notify the user via websocket.
+            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+        }
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
      * 

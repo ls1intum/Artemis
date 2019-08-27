@@ -197,4 +197,14 @@ public class ProgrammingSubmissionService {
         newSubmission.setParticipation((Participation) participation);
         return programmingSubmissionRepository.save(newSubmission);
     }
+
+    @Transactional
+    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(ProgrammingExercise programmingExercise, SubmissionType submissionType)
+            throws IllegalStateException {
+        List<ProgrammingExerciseStudentParticipation> studentParticipations = programmingExerciseParticipationService.findByExerciseId(programmingExercise.getId());
+        // TODO: What to do with the exception? Very unlikely but annoying here...
+        List<ProgrammingSubmission> submissions = studentParticipations.stream()
+                .map(participation -> createSubmissionWithLastCommitHashForParticipation(participation, submissionType)).collect(Collectors.toList());
+        return submissions;
+    }
 }
