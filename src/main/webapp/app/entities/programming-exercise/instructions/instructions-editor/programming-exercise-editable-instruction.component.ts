@@ -113,10 +113,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: 200 },
-                    max: { height: 1200 },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: 200 },
+                        max: { width: 2000, height: 1200 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

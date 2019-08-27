@@ -36,10 +36,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             interact('.resizable')
                 .resizable({
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
-                    restrictSize: {
-                        min: { width: 15 },
-                        max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500 },
-                    },
+                    modifiers: [
+                        interact.modifiers!.restrictSize({
+                            min: { width: 15, height: 0 },
+                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 2000 },
+                        }),
+                    ],
                     inertia: true,
                 })
                 .on('resizestart', function(event: any) {
