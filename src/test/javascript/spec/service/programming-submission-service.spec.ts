@@ -172,7 +172,7 @@ describe('ProgrammingSubmissionService', () => {
         httpGetStub.returns(of(pendingSubmissions));
 
         // This load the submissions for participation 1 and 2, but not for 3.
-        submissionService.preloadLatestPendingSubmissionsForExercise(exerciseId).toPromise();
+        submissionService.subscribeSubmissionStateOfExercise(exerciseId).toPromise();
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id).subscribe(([state, sub]) => {
             submissionState = state;
             submission = sub;

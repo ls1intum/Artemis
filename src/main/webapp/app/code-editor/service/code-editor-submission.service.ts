@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { Participation, StudentParticipation } from 'app/entities/participation';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
@@ -12,6 +13,7 @@ import { DomainType } from 'app/code-editor/service/code-editor-repository.servi
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSubmissionService extends DomainDependent implements OnDestroy {
     private participationId: number | null;
+    private exerciseId: number | null;
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
@@ -33,8 +35,9 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
         // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
         if (domainType === DomainType.PARTICIPATION && domainValue.id !== this.participationId) {
             this.participationId = domainValue.id;
+            this.exerciseId = (domainValue as StudentParticipation).exercise.id;
             this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmissionByParticipationId(this.participationId)
+                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId)
                 .pipe(
                     tap(([submissionState]) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
                     map(([, submission]) => !!submission),
