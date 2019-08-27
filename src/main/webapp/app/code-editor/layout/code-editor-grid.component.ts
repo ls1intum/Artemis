@@ -138,8 +138,8 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 // Set min and max height
                 modifiers: [
                     interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinHeightBottom, height: 0 },
-                        max: { width: this.resizableMaxHeightBottom, height: 2000 },
+                        min: { width: 0, height: this.resizableMinHeightBottom },
+                        max: { width: this.$window.nativeWindow.screen.width, height: this.resizableMaxHeightBottom },
                     }),
                 ],
                 inertia: true,
