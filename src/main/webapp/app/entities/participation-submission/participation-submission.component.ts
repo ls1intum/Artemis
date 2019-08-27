@@ -1,8 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ParticipationService } from 'app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/entities/submission/submission.service';
-import { Result } from 'app/entities/result';
 
 import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
@@ -17,15 +15,9 @@ export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
     submissions: any;
     eventSubscriber: Subscription;
-    result: Result;
     isLoading = true;
 
-    constructor(
-        private route: ActivatedRoute,
-        private participationService: ParticipationService,
-        private submissionService: SubmissionService,
-        private eventManager: JhiEventManager,
-    ) {}
+    constructor(private route: ActivatedRoute, private submissionService: SubmissionService, private eventManager: JhiEventManager) {}
 
     ngOnInit() {
         this.setupPage();

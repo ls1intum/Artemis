@@ -1,0 +1,30 @@
+import { Routes } from '@angular/router';
+
+import { UserRouteAccessService } from 'app/core';
+import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
+import { ParticipationSubmissionDeletePopupComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
+
+export const participationSubmissionRoute: Routes = [
+    {
+        path: 'participation/:participationId/submissions',
+        component: ParticipationSubmissionComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.participation.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+];
+
+export const participationSubmissionPopupRoute: Routes = [
+    {
+        path: 'participation/submission/:id/delete',
+        component: ParticipationSubmissionDeletePopupComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.participation.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+];

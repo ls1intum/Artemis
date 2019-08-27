@@ -16,17 +16,10 @@ import {
     ParticipationService,
     ParticipationWebsocketService,
 } from './';
-import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { SortByModule } from 'app/components/pipes';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArtemisResultModule } from 'app/entities/result';
-import {
-    ParticipationSubmissionDeleteDialogComponent,
-    ParticipationSubmissionDeletePopupComponent,
-} from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
@@ -37,26 +30,20 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         SortByModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseActionsModule,
-        ArtemisResultModule,
-        NgxDatatableModule,
+        ArtemisParticipationSubmissionModule,
     ],
 
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
-        ParticipationSubmissionDeleteDialogComponent,
-        ParticipationSubmissionDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
-        ParticipationSubmissionComponent,
     ],
     entryComponents: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
-        ParticipationSubmissionDeleteDialogComponent,
-        ParticipationSubmissionDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
