@@ -4,7 +4,6 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    adminState,
     AuditsComponent,
     JhiConfigurationComponent,
     JhiHealthCheckComponent,
@@ -20,6 +19,7 @@ import {
     UserManagementDeleteDialogComponent,
     UserManagementDetailComponent,
     UserManagementUpdateComponent,
+    adminState,
 } from './';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
