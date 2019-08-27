@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { NotificationComponent, notificationRoute, NotificationService } from './';
@@ -10,6 +10,5 @@ import { RouterModule } from '@angular/router';
     entryComponents: [NotificationComponent],
     exports: [],
     providers: [NotificationService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisNotificationModule {}

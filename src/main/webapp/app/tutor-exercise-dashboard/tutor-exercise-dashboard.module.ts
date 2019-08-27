@@ -1,13 +1,11 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorExerciseDashboardRoute } from './tutor-exercise-dashboard.route';
 import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { TutorExerciseDashboardComponent } from './tutor-exercise-dashboard.component';
 import { RepositoryService } from 'app/entities/repository';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -27,7 +25,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
 @NgModule({
     imports: [
-        BrowserModule,
         ArtemisSharedModule,
         ArtemisResultModule,
         MomentModule,
@@ -53,7 +50,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         CourseScoreCalculationService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorExerciseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
@@ -25,6 +25,5 @@ import {
         PasswordResetFinishComponent,
         SettingsComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisAccountModule {}

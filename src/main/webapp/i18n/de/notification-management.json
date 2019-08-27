@@ -1,30 +1,32 @@
 {
-    "notificationManagement": {
-        "home": {
-            "title": "Mitteilungen",
-            "createLabel": "Neue Mitteilung erstellen",
-            "createOrEditLabel": "Mitteilung erstellen oder bearbeiten"
-        },
-        "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
-        "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
-        "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
-        "delete": {
-            "question": "Bist du sicher, dass du die Mitteilung {{ id }} löschen möchtest?"
-        },
-        "detail": {
-            "title": "Mitteilung"
-        },
-        "title": "Titel",
-        "text": "Text",
-        "type": "Typ",
-        "expireDate": "Gültig bis",
-        "notificationDate": "Mitteilungsdatum",
-        "active": "Aktiv",
-        "notActive": "Nicht Aktiv",
-        "newAnswer": "Antwort ansehen",
-        "newQuestion": "Frage ansehen",
-        "exerciseCreated": "Übung ansehen",
-        "exerciseUpdated": "Übung ansehen",
-        "attachmentUpdated": "Vorlesung ansehen"
+    "artemisApp": {
+        "notificationManagement": {
+            "home": {
+                "title": "Mitteilungen",
+                "createLabel": "Neue Mitteilung erstellen",
+                "createOrEditLabel": "Mitteilung erstellen oder bearbeiten"
+            },
+            "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
+            "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
+            "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
+            "delete": {
+                "question": "Bist du sicher, dass du die Mitteilung {{ id }} löschen möchtest?"
+            },
+            "detail": {
+                "title": "Mitteilung"
+            },
+            "title": "Titel",
+            "text": "Text",
+            "type": "Typ",
+            "expireDate": "Gültig bis",
+            "notificationDate": "Mitteilungsdatum",
+            "active": "Aktiv",
+            "notActive": "Nicht Aktiv",
+            "newAnswer": "Antwort ansehen",
+            "newQuestion": "Frage ansehen",
+            "exerciseCreated": "Übung ansehen",
+            "exerciseUpdated": "Übung ansehen",
+            "attachmentUpdated": "Vorlesung ansehen"
+        }
     }
 }

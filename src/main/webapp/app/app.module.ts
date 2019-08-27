@@ -27,7 +27,6 @@ import { ArtemisEntityModule } from './entities/entity.module';
 import { ArtemisCourseScoresModule, ArtemisExerciseScoresModule } from './scores';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { ArtemisCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArtemisQuizModule } from './quiz/participate';
 import { ArtemisTextModule } from './text-editor';
@@ -54,7 +53,6 @@ import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/instructor-ex
 import { ParticipationDataProvider } from 'app/course-list';
 import { ArtemisTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArtemisTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArtemisExampleTextSubmissionModule } from 'app/example-text-submission';
 import { ArtemisExampleModelingSubmissionModule } from 'app/example-modeling-submission';
 import { ArtemisComplaintsModule } from 'app/complaints';
@@ -68,7 +66,9 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArtemisConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
-import { ArtemisAdminModule } from 'app/admin/admin.module';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
 @NgModule({
     imports: [
@@ -77,6 +77,7 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
         ArtemisAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
+        GuidedTourModule.forRoot(),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
@@ -95,20 +96,18 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
         ArtemisSharedModule.forRoot(),
         ArtemisCoreModule,
         ArtemisHomeModule,
-        ArtemisAdminModule,
         ArtemisLegalModule,
+        ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
         ArtemisEntityModule,
         ArtemisApollonDiagramsModule,
         ArtemisCourseListModule,
-        ArtemisCodeEditorModule,
         ArtemisQuizModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
         ArtemisStatisticModule,
         ArtemisModelingSubmissionModule,
-        ArtemisMarkdownEditorModule,
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,
         ArtemisTextAssessmentModule,
@@ -146,6 +145,7 @@ import { ArtemisAdminModule } from 'app/admin/admin.module';
             provide: ErrorHandler,
             useClass: SentryErrorHandler,
         },
+        GuidedTourService,
         ProfileService,
         RepositoryService,
         PaginationConfig,

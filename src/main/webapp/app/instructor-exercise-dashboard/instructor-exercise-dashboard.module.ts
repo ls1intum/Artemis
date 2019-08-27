@@ -1,6 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
@@ -18,7 +16,6 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
 
 @NgModule({
     imports: [
-        BrowserModule,
         ArtemisSharedModule,
         MomentModule,
         ClipboardModule,
@@ -32,6 +29,5 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
     declarations: [InstructorExerciseDashboardComponent],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisInstructorExerciseStatsDashboardModule {}

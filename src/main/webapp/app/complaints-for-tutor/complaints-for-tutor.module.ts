@@ -1,7 +1,5 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import { NgModule } from '@angular/core';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 
@@ -12,7 +10,7 @@ import { ComplaintService } from 'app/entities/complaint';
 import { ComplaintResponseService } from 'app/entities/complaint-response';
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule],
+    imports: [ArtemisSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsForTutorComponent],
     exports: [ComplaintsForTutorComponent],
     providers: [
@@ -24,7 +22,6 @@ import { ComplaintResponseService } from 'app/entities/complaint-response';
             useClass: JhiLanguageService,
         },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisComplaintsForTutorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

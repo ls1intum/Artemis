@@ -1,13 +1,11 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
 import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
 import { RepositoryService } from 'app/entities/repository';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -23,16 +21,7 @@ import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/t
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
 @NgModule({
-    imports: [
-        BrowserModule,
-        ArtemisSharedModule,
-        ArtemisResultModule,
-        MomentModule,
-        ClipboardModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArtemisTutorLeaderboardModule,
-    ],
+    imports: [ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisTutorLeaderboardModule],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
@@ -46,7 +35,6 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
         CourseScoreCalculationService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisTutorCourseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

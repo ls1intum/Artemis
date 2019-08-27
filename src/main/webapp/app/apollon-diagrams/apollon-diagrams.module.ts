@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
@@ -17,9 +17,8 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisResultModule],
     declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent],
-    entryComponents: [ApollonDiagramCreateFormComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent, ResultComponent],
+    entryComponents: [ApollonDiagramCreateFormComponent, ApollonQuizExerciseGenerationComponent],
     providers: [JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisApollonDiagramsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

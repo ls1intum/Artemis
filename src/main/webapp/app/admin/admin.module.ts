@@ -1,7 +1,7 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisSharedModule } from 'app/shared';
 import {
     adminState,
@@ -51,7 +51,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
     ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     entryComponents: [UserManagementDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisAdminModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

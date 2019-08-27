@@ -1,4 +1,4 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -39,7 +39,6 @@ const ENTITY_STATES = [...quizStatisticRoute];
         ShortAnswerQuestionStatisticComponent,
     ],
     providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisStatisticModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

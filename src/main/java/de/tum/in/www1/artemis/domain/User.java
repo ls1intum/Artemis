@@ -99,6 +99,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
     private List<String> groups = new ArrayList<>();
 
     @JsonIgnore
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    private List<GuidedTourSettings> guidedTourSettings = new ArrayList<>();
+
+    @JsonIgnore
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "authority_name", referencedColumnName = "name") })
@@ -250,6 +255,14 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     public void setPersistentTokens(Set<PersistentToken> persistentTokens) {
         this.persistentTokens = persistentTokens;
+    }
+
+    public List<GuidedTourSettings> getGuidedTourSettings() {
+        return this.guidedTourSettings;
+    }
+
+    public void setGuidedTourSettings(List<GuidedTourSettings> guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override

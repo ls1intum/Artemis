@@ -1,12 +1,12 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
-import { ArtemisProgrammingSubmissionModule } from 'app/submission/submission.module';
+import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingSubmissionModule],
@@ -14,7 +14,6 @@ import { ArtemisProgrammingSubmissionModule } from 'app/submission/submission.mo
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],
     providers: [ResultService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisResultModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

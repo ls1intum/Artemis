@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -15,12 +15,6 @@ import {
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTaskStatusComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
-    ProgrammingExerciseInstructorStatusComponent,
-    ProgrammingExerciseInstructorTriggerBuildButtonComponent,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
@@ -28,40 +22,39 @@ import {
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
-    ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
 } from './';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 import { ArtemisTableModule } from 'app/components/table/table.module';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/programming-exercise-plant-uml.service';
-import { ProgrammingExerciseInstructionResultDetailComponent } from './instructions/programming-exercise-instructions-result-detail.component';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
+import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({
     imports: [
+        // Shared modules.
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
+        NgxDatatableModule,
         SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
-        ArtemisResultModule,
-        ArtemisMarkdownEditorModule,
         ArtemisTableModule,
-        NgxDatatableModule,
+        // Programming exercise sub modules.
+        ArtemisProgrammingExerciseInstructionsEditorModule,
+        ArtemisProgrammingExerciseStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
+        // Other entity modules.
+        ArtemisResultModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -75,17 +68,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseEditableInstructionComponent,
-        ProgrammingExerciseInstructorStatusComponent,
-        ProgrammingExerciseInstructorExerciseStatusComponent,
-        ProgrammingExerciseInstructionStepWizardComponent,
-        ProgrammingExerciseInstructionResultDetailComponent,
-        ProgrammingExerciseInstructionTestcaseStatusComponent,
-        ProgrammingExerciseInstructionTaskStatusComponent,
         ProgrammingExerciseManageTestCasesComponent,
-        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-        ProgrammingExerciseStudentTriggerBuildButtonComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -98,34 +81,10 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
-        ProgrammingExerciseInstructorStatusComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseInstructionTaskStatusComponent,
-        ProgrammingExerciseInstructionStepWizardComponent,
-        ProgrammingExerciseInstructionResultDetailComponent,
-        ProgrammingExerciseInstructorExerciseStatusComponent,
-        ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
     ],
-    exports: [
-        ProgrammingExerciseComponent,
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseEditableInstructionComponent,
-        ProgrammingExerciseInstructorExerciseStatusComponent,
-        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-        ProgrammingExerciseStudentTriggerBuildButtonComponent,
-    ],
-    providers: [
-        ProgrammingExerciseService,
-        ProgrammingExerciseTestCaseService,
-        ProgrammingExercisePopupService,
-        ProgrammingExerciseTaskExtensionWrapper,
-        ProgrammingExercisePlantUmlExtensionWrapper,
-        ProgrammingExerciseInstructionService,
-        ProgrammingExercisePlantUmlService,
-        ProgrammingExerciseParticipationService,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
+    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

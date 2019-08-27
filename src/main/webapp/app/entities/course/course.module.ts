@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
@@ -58,7 +58,6 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
     ],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent, CourseExerciseCardComponent, CourseDeletePopupComponent],
     providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisCourseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

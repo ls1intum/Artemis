@@ -1,5 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ChartsModule } from 'ng2-charts';
@@ -15,11 +14,10 @@ import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/t
 const ENTITY_STATES = instructorCourseDashboardRoute;
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArtemisTutorLeaderboardModule],
+    imports: [ArtemisSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArtemisTutorLeaderboardModule],
     declarations: [InstructorCourseDashboardComponent],
     exports: [],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisInstructorCourseStatsDashboardModule {}
