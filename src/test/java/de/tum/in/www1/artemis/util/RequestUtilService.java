@@ -68,8 +68,12 @@ public class RequestUtilService {
     }
 
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<String, String>());
+    }
+
+    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params).with(csrf()))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
 
         if (res.getResponse().getStatus() >= 299) {

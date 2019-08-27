@@ -23,6 +23,11 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
+    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
+    }
+
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -87,6 +92,16 @@ public class ModelFactory {
             submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
         return submission;
+    }
+
+    public static FileUploadSubmission generateFileUploadSubmission(String filePath, boolean submitted) {
+        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setSubmitted(submitted);
+        if (submitted) {
+            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return fileUploadSubmission;
     }
 
     public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {

@@ -78,6 +78,9 @@ public class DatabaseUtilService {
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
+    FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
     SubmissionRepository submissionRepository;
 
     @Autowired
@@ -120,6 +123,7 @@ public class DatabaseUtilService {
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
+        fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
@@ -342,6 +346,19 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
+    public void addCourseWithOneFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        course.addExercises(fileUploadExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(fileUploadExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+    }
+
     /**
      * Stores for the given model a submission of the user and initiates the corresponding Result
      *
@@ -482,6 +499,35 @@ public class DatabaseUtilService {
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        Result result = new Result();
+        result.setSubmission(fileUploadSubmission);
+        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setScore(100L);
+        result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission.setResult(result);
+        fileUploadSubmission.getParticipation().addResult(result);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
