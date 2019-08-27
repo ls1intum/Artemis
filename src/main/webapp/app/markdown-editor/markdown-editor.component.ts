@@ -236,10 +236,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeight },
+                        max: { width: 2000, height: this.resizableMaxHeight },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
