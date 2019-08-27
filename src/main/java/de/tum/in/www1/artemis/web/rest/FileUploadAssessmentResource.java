@@ -97,7 +97,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/file-upload-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
+    public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -128,7 +128,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PostMapping("/file-upload-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("/file-upload-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);

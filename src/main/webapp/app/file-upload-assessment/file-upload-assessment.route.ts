@@ -7,7 +7,7 @@ import { FileUploadAssessmentComponent } from 'app/file-upload-assessment/file-u
 
 export const fileUploadAssessmentRoutes: Routes = [
     {
-        path: 'file-upload-exercise/:exerciseId/submissions/:submissionId/assessment',
+        path: 'file-upload-exercise/:exerciseId/submission/:submissionId/assessment',
         component: FileUploadAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

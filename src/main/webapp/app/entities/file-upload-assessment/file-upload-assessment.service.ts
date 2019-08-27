@@ -30,7 +30,7 @@ export class FileUploadAssessmentsService {
             feedbacks,
             complaintResponse,
         };
-        return this.http.post<Result>(url, assessmentUpdate);
+        return this.http.put<Result>(url, assessmentUpdate);
     }
 
     getAssessment(submissionId: number): Observable<Result> {
@@ -38,6 +38,6 @@ export class FileUploadAssessmentsService {
     }
 
     cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+        return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
     }
 }
