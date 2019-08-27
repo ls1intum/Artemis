@@ -28,9 +28,9 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission'
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/entities/submission/submission.service';
-import { participationRoute } from 'app/entities/participation';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { participationSubmissionRoute } from 'app/entities/participation-submission';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +46,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, RouterTestingModule.withRoutes([participationRoute[2]])],
+            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, RouterTestingModule.withRoutes([participationSubmissionRoute[0]])],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
