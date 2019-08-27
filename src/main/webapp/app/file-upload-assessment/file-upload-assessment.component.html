@@ -93,10 +93,10 @@
                 Student submission
             </div>
             <div class="card-body">
-                <div class="card-text">
-                    <a [href]="submission.filePath" target="_blank">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                <div *ngIf="submission.filePath" class="card-text">
+                    <a [href]="submission.filePath!" target="_blank">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
                     <span class="ml-1 badge badge-info">
-                        {{ attachmentExtension(submission.filePath) | uppercase }}
+                        {{ attachmentExtension(submission.filePath!) | uppercase }}
                     </span>
                 </div>
                 <button class="btn btn-success" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
