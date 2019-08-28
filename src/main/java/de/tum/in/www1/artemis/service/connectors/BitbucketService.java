@@ -94,11 +94,47 @@ public class BitbucketService implements VersionControlService {
         }
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
-        protectMasterBranch(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+        protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
 
-    private void protectMasterBranch(String projectKeyFromUrl, String repositorySlugFromUrl, String username) {
-        // TODO: Simon Leiß implement, prevent deletion and prevent force push
+    private void protectBranches(String projectKey, String repositorySlug) {
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
+        log.info("Setting up branch protection for repository " + repositorySlug);
+
+        // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
+        HashMap<String, Object> matcher = new HashMap<>();
+        matcher.put("displayId", "*");
+        matcher.put("id", "*");
+        HashMap<String, Object> type = new HashMap<>();
+        type.put("id", "PATTERN");
+        type.put("name", "Pattern");
+        matcher.put("type", type);
+        matcher.put("active", true);
+
+        HashMap<String, Object> fastForwardOnlyType = new HashMap<>();
+        fastForwardOnlyType.put("type", "fast-forward-only"); // Prevent force-pushes
+        fastForwardOnlyType.put("matcher", matcher);
+
+        HashMap<String, Object> noDeletesType = new HashMap<>();
+        noDeletesType.put("type", "no-deletes"); // Prevent deletion of branches
+        noDeletesType.put("matcher", matcher);
+
+        List<Object> body = new ArrayList<>();
+        body.add(fastForwardOnlyType);
+        body.add(noDeletesType);
+
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
+        }
+        catch (Exception emAll) {
+            log.error("Exception occurred while protecting repository " + repositorySlug, emAll);
+        }
+
+        log.info("Branch protection for repository " + repositorySlug + " set up");
     }
 
     @Override
