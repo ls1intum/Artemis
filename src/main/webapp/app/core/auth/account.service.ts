@@ -9,7 +9,6 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { JhiWebsocketService, User } from 'app/core';
 import { Course } from 'app/entities/course';
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
