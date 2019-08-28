@@ -8,7 +8,7 @@
         <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
     </button>
     <button
-        class="btn btn-failed"
+        class="btn btn-danger"
         [disabled]="!hasFailedSubmissions"
         (click)="triggerBuildOfFailedSubmissions()"
         [ngbTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | translate"
