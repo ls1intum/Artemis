@@ -32,7 +32,17 @@ export class GuidedTourService {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private router: Router,
-    ) {
+    ) {}
+
+    /**
+     * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
+     */
+    public init() {
+        // Retrieve the guided tour setting from the account service
+        this.accountService.identity().then(user => {
+            this.guidedTourSettings = user ? user.guidedTourSettings : [];
+        });
+
         /**
          * Subscribe to window resize events
          */
@@ -310,7 +320,7 @@ export class GuidedTourService {
 
     /**
      * Set orientation of the passed on tour step
-     * @param {step} passed on tour step of a guided tour
+     * @param step passed on tour step of a guided tour
      * @return guided tour step with defined orientation
      */
     private setTourOrientation(step: TourStep): TourStep {
@@ -365,10 +375,7 @@ export class GuidedTourService {
      * @return true if a guided tour is available
      */
     public checkGuidedTourAvailabilityForCurrentRoute(): boolean {
-        if (this.router.url === '/overview') {
-            return true;
-        }
-        return false;
+        return this.router.url === '/overview';
     }
 
     /**

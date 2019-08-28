@@ -557,7 +557,7 @@ public class UserService {
     }
 
     /**
-     *
+     * Update the guided tour settings of the currently logged in user
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
      */
