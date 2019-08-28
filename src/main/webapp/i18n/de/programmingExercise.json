@@ -80,7 +80,11 @@
                 "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
-            "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen."
+            "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
+            "resubmitAll": "Alle erneut ausführen",
+            "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
+            "resubmitFailed": "Alle erneut ausführen",
+            "resubmitFailedTootip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet."
         }
     }
 }

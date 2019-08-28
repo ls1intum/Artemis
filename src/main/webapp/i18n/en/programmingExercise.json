@@ -80,7 +80,11 @@
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
-            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit."
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
+            "resubmitAll": "Trigger all",
+            "resubmitAllTooltip": "Trigger the last submission of all submissions again. The results will be rated.",
+            "resubmitFailed": "Trigger failed",
+            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. The results will be rated."
         }
     }
 }
