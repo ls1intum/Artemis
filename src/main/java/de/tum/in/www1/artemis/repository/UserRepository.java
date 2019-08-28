@@ -3,11 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,29 +34,32 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findOneByLogin(String login);
 
-    @EntityGraph(attributePaths = { "authorities", "groups" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+    @Query("select distinct user from User user left join fetch user.groups left join fetch user.authorities where user.login = :#{#login}")
+    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(@Param("login") String login);
 
-    @EntityGraph(attributePaths = "authorities")
-    Optional<User> findOneWithAuthoritiesById(Long id);
+    @Query("select distinct user from User user left join fetch user.groups left join fetch user.authorities left join fetch user.guidedTourSettings where user.login = :#{#login}")
+    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(@Param("login") String login);
 
-    @EntityGraph(attributePaths = "authorities")
+    @Query("select distinct user from User user left join fetch user.authorities where user.id = :#{#userId}")
+    Optional<User> findOneWithAuthoritiesById(@Param("userId") Long userId);
+
+    @Query("select distinct user from User user left join fetch user.authorities where user.login = :#{#login}")
     @Cacheable(cacheNames = USERS_CACHE)
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
+    Optional<User> findOneWithAuthoritiesByLogin(@Param("login") String login);
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
 
-    @Query("SELECT r.participation.student.id FROM Result r WHERE r.submission.id = :#{#submissionId}")
+    @Query("select result.participation.student.id from Result result where result.submission.id = :#{#submissionId}")
     Long findUserIdBySubmissionId(@Param("submissionId") Long submissionId);
 
-    @Query("SELECT r.participation.student FROM Result r WHERE r.id = :#{#resultId}")
+    @Query("select result.participation.student from Result result where result.id = :#{#resultId}")
     User findUserByResultId(@Param("resultId") Long resultId);
 
-    Long countByGroupsIsContaining(List<String> groups);
+    Long countByGroupsIsContaining(Set<String> groups);
 
     List<User> findAllByGroups(String group);
 
     @Modifying
-    @Query("Update User u SET u.lastNotificationRead = utc_timestamp where u.id = :#{#userId}")
-    void updateUserNotificationReadDate(@Param("userId") Long id);
+    @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
+    void updateUserNotificationReadDate(@Param("userId") Long userId);
 }

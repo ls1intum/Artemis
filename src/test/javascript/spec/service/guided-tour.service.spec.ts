@@ -16,9 +16,10 @@ import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { ContentType, GuidedTourState, Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
+import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,6 +29,7 @@ describe('Service Tests', () => {
         describe('Service methods', () => {
             let service: GuidedTourService;
             let httpMock: any;
+            const expected = new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED);
 
             beforeEach(() => {
                 TestBed.configureTestingModule({
@@ -43,15 +45,13 @@ describe('Service Tests', () => {
                 httpMock.verify();
             });
 
-            it('should call correct URL', () => {
-                const req = httpMock.expectOne({ method: 'GET' });
+            it('should call correct update URL and return the right JSON object', () => {
+                service.guidedTourSettings = [];
+                service.updateGuidedTourSettings('guided_tour_key', 1, GuidedTourState.STARTED).subscribe();
+                const req = httpMock.expectOne({ method: 'PUT' });
                 const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
                 expect(req.request.url).equal(`${resourceUrl}`);
-            });
-
-            it('should return json', () => {
-                const req = httpMock.expectOne({ method: 'GET' });
-                expect(req.request.responseType).to.equal('json');
+                expect(service.guidedTourSettings).to.eql([expected]);
             });
         });
 
@@ -116,6 +116,7 @@ describe('Service Tests', () => {
                     // Prepare GuidedTourService and GuidedTourComponent
                     spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                     spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                    spyOn(guidedTourService, 'init').and.returnValue(of());
                     guidedTourComponent.ngAfterViewInit();
 
                     await guidedTourComponentFixture.ngZone!.run(() => {
