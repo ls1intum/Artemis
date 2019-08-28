@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.GuidedTourSettings;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis")
-public class GuidedTourSettingsResourceTest {
+public class GuidedTourSettingResourceTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -59,21 +59,21 @@ public class GuidedTourSettingsResourceTest {
     @WithMockUser(value = "student1")
     @SuppressWarnings("unchecked")
     public void updateGuidedTourSettings() throws Exception {
-        Set<GuidedTourSettings> guidedTourSettingsSet = new HashSet<>();
+        Set<GuidedTourSetting> guidedTourSettingSet = new HashSet<>();
 
-        GuidedTourSettings guidedTourSettings1 = new GuidedTourSettings();
-        guidedTourSettings1.setGuidedTourKey("course_overview_tour");
-        guidedTourSettings1.setGuidedTourStep(5);
-        guidedTourSettings1.setGuidedTourState(GuidedTourSettings.Status.FINISHED);
+        GuidedTourSetting guidedTourSetting1 = new GuidedTourSetting();
+        guidedTourSetting1.setGuidedTourKey("course_overview_tour");
+        guidedTourSetting1.setGuidedTourStep(5);
+        guidedTourSetting1.setGuidedTourState(GuidedTourSetting.Status.FINISHED);
 
-        GuidedTourSettings guidedTourSettings2 = new GuidedTourSettings();
-        guidedTourSettings2.setGuidedTourKey("new_tour");
-        guidedTourSettings2.setGuidedTourStep(7);
-        guidedTourSettings2.setGuidedTourState(GuidedTourSettings.Status.STARTED);
+        GuidedTourSetting guidedTourSetting2 = new GuidedTourSetting();
+        guidedTourSetting2.setGuidedTourKey("new_tour");
+        guidedTourSetting2.setGuidedTourStep(7);
+        guidedTourSetting2.setGuidedTourState(GuidedTourSetting.Status.STARTED);
 
-        guidedTourSettingsSet.add(guidedTourSettings1);
-        guidedTourSettingsSet.add(guidedTourSettings2);
-        Set<GuidedTourSettings> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsSet, Set.class, HttpStatus.OK);
+        guidedTourSettingSet.add(guidedTourSetting1);
+        guidedTourSettingSet.add(guidedTourSetting2);
+        Set<GuidedTourSetting> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
         assertThat(serverGuidedTourSettings.size()).isEqualTo(2);

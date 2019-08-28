@@ -29,9 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSettings;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
@@ -57,15 +58,19 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
+    private final GuidedTourSettingsRepository guidedTourSettingsRepository;
+
     private final CacheManager cacheManager;
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService) {
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
+            GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
+        this.guidedTourSettingsRepository = guidedTourSettingsRepository;
     }
 
     /**
@@ -551,9 +556,13 @@ public class UserService {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }
 
-    public User updateGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
+    public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
-        loggedInUser.setGuidedTourSettings(guidedTourSettings);
+        loggedInUser.getGuidedTourSettings().clear();
+        for (GuidedTourSetting setting : guidedTourSettings) {
+            loggedInUser.addGuidedTourSetting(setting);
+            guidedTourSettingsRepository.save(setting);
+        }
         return userRepository.save(loggedInUser);
     }
 }

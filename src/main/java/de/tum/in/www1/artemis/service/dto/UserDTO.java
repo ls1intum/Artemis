@@ -12,7 +12,7 @@ import javax.validation.constraints.Size;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.GuidedTourSettings;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -59,7 +59,7 @@ public class UserDTO {
 
     private Set<String> groups;
 
-    private Set<GuidedTourSettings> guidedTourSettings;
+    private Set<GuidedTourSetting> guidedTourSettings;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -73,7 +73,7 @@ public class UserDTO {
 
     public UserDTO(Long id, String login, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
             Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, Set<String> groups,
-            Set<GuidedTourSettings> guidedTourSettings) {
+            Set<GuidedTourSetting> guidedTourSettings) {
 
         this.id = id;
         this.login = login;
@@ -213,11 +213,11 @@ public class UserDTO {
         this.groups = groups;
     }
 
-    public Set<GuidedTourSettings> getGuidedTourSettings() {
+    public Set<GuidedTourSetting> getGuidedTourSettings() {
         return guidedTourSettings;
     }
 
-    public void setGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
+    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
     }
 

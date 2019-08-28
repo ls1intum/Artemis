@@ -156,6 +156,8 @@ public class CacheConfiguration {
             createIfNotExists(cm, ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
             createIfNotExists(cm, ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };

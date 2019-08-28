@@ -100,9 +100,10 @@ public class AccountResource {
      */
     @GetMapping("/account")
     public UserDTO getAccount() {
-        log.info("GET /account " + SecurityUtils.getCurrentUserLogin().get());
+        long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
+        log.info("GET /account " + SecurityUtils.getCurrentUserLogin().get() + " took " + (System.currentTimeMillis() - start) + "ms");
         return userDTO;
     }
 

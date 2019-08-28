@@ -99,11 +99,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "`groups`")
     private Set<String> groups = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id"))
-    private Set<GuidedTourSettings> guidedTourSettings = new HashSet<>();
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "authority_name", referencedColumnName = "name") })
@@ -153,7 +151,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     /**
-     * @return UserName as a concatenation of first and last Name
+     * @return name as a concatenation of first name and last name
      */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
@@ -244,11 +242,21 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.authorities = authorities;
     }
 
-    public Set<GuidedTourSettings> getGuidedTourSettings() {
+    public Set<GuidedTourSetting> getGuidedTourSettings() {
         return this.guidedTourSettings;
     }
 
-    public void setGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
+    public void addGuidedTourSetting(GuidedTourSetting setting) {
+        this.guidedTourSettings.add(setting);
+        setting.setUser(this);
+    }
+
+    public void removeGuidedTourSetting(GuidedTourSetting setting) {
+        this.guidedTourSettings.remove(setting);
+        setting.setUser(null);
+    }
+
+    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
     }
 
