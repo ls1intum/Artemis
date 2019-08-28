@@ -14,7 +14,8 @@ export class ProgrammingExerciseInstructorTriggerAllButtonComponent implements O
 
     @Input() exerciseId: number;
 
-    isBuilding = false;
+    isBuildingFailedSubmissions = false;
+    hasFailedSubmissions = false;
     buildingSummary: { [submissionState: string]: number };
     submissionStateSubscription: Subscription;
 
@@ -32,17 +33,23 @@ export class ProgrammingExerciseInstructorTriggerAllButtonComponent implements O
                     ),
                     tap((buildingSummary: { [submissionState: string]: number }) => {
                         this.buildingSummary = buildingSummary;
-                        this.isBuilding = this.buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] > 0;
+                        this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
                     }),
                 )
                 .subscribe();
         }
     }
 
-    triggerBuild() {
+    triggerBuildOfAllSubmissions() {
+        this.programmingSubmissionService.triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId).subscribe();
+    }
+
+    triggerBuildOfFailedSubmissions() {
+        this.isBuildingFailedSubmissions = true;
         this.programmingSubmissionService
+            // TODO: Add new endpoint.
             .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
-            .pipe(tap(() => (this.isBuilding = true)))
-            .subscribe();
+            .pipe()
+            .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 }

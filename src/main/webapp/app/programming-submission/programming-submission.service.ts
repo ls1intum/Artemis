@@ -18,7 +18,7 @@ export enum ProgrammingSubmissionState {
     HAS_FAILED_SUBMISSION = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
 }
 
-export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, Submission | null];
+export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, ProgrammingSubmission | null];
 
 export type ExerciseBuildState = { [participationId: number]: [ProgrammingSubmissionState, ProgrammingSubmission | null] };
 
@@ -105,8 +105,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .subscribe();
     };
 
-    private onError = (participationId: number) => {
-        this.emitFailedSubmission(participationId);
+    private onError = (participationId: number, exerciseId: number) => {
+        this.emitFailedSubmission(participationId, exerciseId);
     };
 
     private resetResultWaitingTimer = (participationId: number) => {
@@ -130,8 +130,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 .receive(newSubmissionTopic)
                 .pipe(
                     tap((submission: ProgrammingSubmission) => {
-                        const subject = this.submissionSubjects[participationId];
-                        subject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
+                        this.emitBuildingSubmission(participationId, exerciseId, submission);
                         // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
                     }),
@@ -171,7 +170,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // If the timer runs out, we will emit an error as we assume the result is lost.
         const timerObservable = this.resultTimerSubjects[participationId].pipe(
             tap(() => {
-                this.onError(participationId);
+                this.onError(participationId, exerciseId);
             }),
         );
 
@@ -186,16 +185,46 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .subscribe();
     };
 
-    private emitNoPendingSubmission = (participationId: number) => {
-        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+    private emitNoPendingSubmission = (participationId: number, exerciseId: number) => {
+        const newSubmissionState = [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as ProgrammingSubmissionStateObj;
+        this.submissionSubjects[participationId].next(newSubmissionState);
+        if (!this.exerciseBuildState[exerciseId]) {
+            this.exerciseBuildState[exerciseId] = {};
+        }
+        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
+        // TODO: This could be refactored into a setter.
+        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
+        if (exerciseBuildStateSubject) {
+            exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
+        }
     };
 
-    private emitBuildingSubmission = (participationId: number, submission: ProgrammingSubmission) => {
-        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
+    private emitBuildingSubmission = (participationId: number, exerciseId: number, submission: ProgrammingSubmission) => {
+        const newSubmissionState = [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission] as ProgrammingSubmissionStateObj;
+        this.submissionSubjects[participationId].next(newSubmissionState);
+        if (!this.exerciseBuildState[exerciseId]) {
+            this.exerciseBuildState[exerciseId] = {};
+        }
+        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
+        // TODO: This could be refactored into a setter.
+        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
+        if (exerciseBuildStateSubject) {
+            exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
+        }
     };
 
-    private emitFailedSubmission = (participationId: number) => {
-        this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+    private emitFailedSubmission = (participationId: number, exerciseId: number) => {
+        const newSubmissionState = [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null] as ProgrammingSubmissionStateObj;
+        this.submissionSubjects[participationId].next(newSubmissionState);
+        if (!this.exerciseBuildState[exerciseId]) {
+            this.exerciseBuildState[exerciseId] = {};
+        }
+        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
+        // TODO: This could be refactored into a setter.
+        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
+        if (exerciseBuildStateSubject) {
+            exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
+        }
     };
 
     /**
@@ -332,15 +361,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 if (submission) {
                     const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
                     if (remainingTime > 0) {
-                        this.emitBuildingSubmission(participationId, submission);
+                        this.emitBuildingSubmission(participationId, exerciseId, submission);
                         this.startResultWaitingTimer(participationId, remainingTime);
                         return [participationId, submissionToBeProcessed, ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION];
                     }
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
-                    this.onError(participationId);
+                    this.onError(participationId, exerciseId);
                     return [participationId, submissionToBeProcessed, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION];
                 }
-                this.emitNoPendingSubmission(participationId);
+                this.emitNoPendingSubmission(participationId, exerciseId);
                 return [participationId, null, ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION];
             }),
             tap(([, submission, submissionState]: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {

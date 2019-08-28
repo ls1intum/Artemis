@@ -3,8 +3,17 @@
         Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}. Failed submissions:
         {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
     </span>
-    <button class="btn btn-primary" [disabled]="isBuilding" (click)="triggerBuild()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllSubmissionsTooltip' | translate">
-        <fa-icon icon="redo" [spin]="isBuilding"></fa-icon>
-        <span jhiTranslate="artemisApp.programmingExercise.resubmitAllSubmissionsTooltip">Trigger all</span>
+    <button class="btn btn-primary" (click)="triggerBuildOfAllSubmissions()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate">
+        <fa-icon icon="redo"></fa-icon>
+        <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
+    </button>
+    <button
+        class="btn btn-failed"
+        [disabled]="!hasFailedSubmissions"
+        (click)="triggerBuildOfFailedSubmissions()"
+        [ngbTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | translate"
+    >
+        <fa-icon icon="redo" [spin]="isBuildingFailedSubmissions"></fa-icon>
+        <span jhiTranslate="artemisApp.programmingExercise.resubmitFailed">Trigger failed</span>
     </button>
 </div>
