@@ -19,8 +19,8 @@ import {
     UserManagementDeleteDialogComponent,
     UserManagementDetailComponent,
     UserManagementUpdateComponent,
+    adminState,
 } from './';
-import { adminState } from './admin.route';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
