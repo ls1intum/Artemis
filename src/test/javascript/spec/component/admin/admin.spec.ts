@@ -1,19 +1,10 @@
+/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { WindowRef } from 'app/core';
-import { DebugElement, EventEmitter, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
-import { SinonStub, spy, stub } from 'sinon';
-import { Subject } from 'rxjs';
-import { CodeEditorAceComponent, CodeEditorFileService, CodeEditorRepositoryFileService } from 'app/code-editor';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCodeEditorRepositoryFileService } from '../../mocks';
-import { CreateFileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { AnnotationArray } from 'app/entities/ace-editor';
 import { AuditsComponent } from 'app/admin';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
 

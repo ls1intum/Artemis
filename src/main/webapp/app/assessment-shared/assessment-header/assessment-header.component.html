@@ -1,0 +1,56 @@
+<h3 class="top-container">
+    <!--back button only used in tutor dashboard-->
+    <div class="row-container mr-2">
+        <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goBack.emit()" class="back-button mr-2"></fa-icon>
+        <span jhiTranslate="modelingAssessmentEditor.assessment">Assessment</span>
+    </div>
+    <jhi-alert></jhi-alert>
+    <div class="row-container" *ngIf="!isLoading">
+        <span
+            id="assessmentLocked"
+            *ngIf="!isAssessor"
+            class="text-danger ml-3"
+            style="font-size: 65%"
+            jhiTranslate="modelingAssessmentEditor.assessmentLocked"
+            [translateValues]="{ otherUser: result?.assessor?.firstName }"
+        >
+            Assessment locked by another user!
+        </span>
+        <span
+            id="assessmentLockedCurrentUser"
+            *ngIf="isAssessor"
+            class="text-danger ml-3"
+            style="font-size: 65%"
+            jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser"
+        >
+            You have the lock for this assessment
+        </span>
+        <ng-container *ngIf="!result?.completionDate">
+            <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
+                <fa-icon icon="save"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
+            </button>
+            <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
+                <span jhiTranslate="entity.action.submit">Submit</span>
+            </button>
+            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!isAssessor">
+                <span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+        </ng-container>
+        <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid">
+            <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
+        </button>
+        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()">
+            <span jhiTranslate="modelingAssessmentEditor.button.resolveConflict">Resolve Conflict</span>
+        </button>
+        <button
+            class="btn ml-2 btn-success"
+            *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint"
+            [disabled]="busy"
+            (click)="nextSubmission.emit()"
+        >
+            <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
+            <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
+        </button>
+    </div>
+</h3>
