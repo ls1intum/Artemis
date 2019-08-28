@@ -99,7 +99,6 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "`groups`")
     private Set<String> groups = new HashSet<>();
 
-    @JsonIgnore
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "guided_tour_settings", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
     private Set<GuidedTourSettings> guidedTourSettings = new HashSet<>();

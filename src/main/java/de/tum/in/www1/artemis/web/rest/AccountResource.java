@@ -103,7 +103,6 @@ public class AccountResource {
         log.info("GET /account " + SecurityUtils.getCurrentUserLogin().get());
         User user = userService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
-        // log.info("UserDTO: " + userDTO);
         return userDTO;
     }
 

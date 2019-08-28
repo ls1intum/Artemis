@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,20 +51,23 @@ public class GuidedTourSettingsResourceTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void testGuidedTourSettingsInitiallyNull() throws Exception {
+    public void guidedTourSettingsIsInitiallyNull() throws Exception {
         User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings()).isNull();
+        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
     }
 
     @Test
     @WithMockUser(value = "student1")
-    public void testUpdateGuidedTourSettings() throws Exception {
+    public void updateGuidedTourSettings() throws Exception {
         List<GuidedTourSettings> guidedTourSettingsList = new ArrayList<>();
         GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
         guidedTourSettings.setGuidedTourKey("course_overview_tour");
         guidedTourSettings.setGuidedTourStep(5);
         guidedTourSettingsList.add(guidedTourSettings);
-        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsList, List.class, HttpStatus.OK);
+        Set<GuidedTourSettings> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsList, Set.class, HttpStatus.OK);
+        assertThat(serverGuidedTourSettings).isNotNull();
+        assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
+        assertThat(serverGuidedTourSettings.size()).isEqualTo(1);
 
         User user = request.get("/api/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isNotNull();

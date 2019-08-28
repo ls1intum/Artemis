@@ -552,9 +552,8 @@ public class UserService {
     }
 
     public User updateGuidedTourSettings(Set<GuidedTourSettings> guidedTourSettings) {
-        User loggedInUser = getUserWithGroupsAndAuthorities();
+        User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         loggedInUser.setGuidedTourSettings(guidedTourSettings);
-        userRepository.save(loggedInUser);
-        return loggedInUser;
+        return userRepository.save(loggedInUser);
     }
 }
