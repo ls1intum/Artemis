@@ -28,7 +28,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
             },
         };
 
-        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, autoCompleter];
+        this.addCompleter(autoCompleter);
     }
 
     /**

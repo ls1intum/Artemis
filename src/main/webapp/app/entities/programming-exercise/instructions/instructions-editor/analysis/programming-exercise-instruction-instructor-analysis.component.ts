@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, map as rxMap, tap } from 'rxjs/operators';
 import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
@@ -33,6 +33,18 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
         this.analysisSubscription = this.delayedAnalysisSubject
             .pipe(
                 debounceTime(500),
+                rxMap(() => {
+                    const { completeAnalysis, missingTestCases, invalidTestCases, invalidHints } = this.analysisService.analyzeProblemStatement(
+                        this.problemStatement,
+                        this.taskRegex,
+                        this.exerciseTestCases,
+                        this.exerciseHints,
+                    );
+                    this.missingTestCases = missingTestCases;
+                    this.invalidTestCases = invalidTestCases;
+                    this.invalidHints = invalidHints;
+                    return completeAnalysis;
+                }),
                 tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),
             )
             .subscribe();
@@ -62,16 +74,7 @@ export class ProgrammingExerciseInstructionInstructorAnalysisComponent implement
      * The method makes sure to filter out duplicates in the test case list.
      */
     analyzeTasks() {
-        const { completeAnalysis, missingTestCases, invalidTestCases, invalidHints } = this.analysisService.analyzeProblemStatement(
-            this.problemStatement,
-            this.taskRegex,
-            this.exerciseTestCases,
-            this.exerciseHints,
-        );
-        this.missingTestCases = missingTestCases;
-        this.invalidTestCases = invalidTestCases;
-        this.invalidHints = invalidHints;
-        this.delayedAnalysisSubject.next(completeAnalysis);
+        this.delayedAnalysisSubject.next();
     }
 
     private emitAnalysis(analysis: ProblemStatementAnalysis) {

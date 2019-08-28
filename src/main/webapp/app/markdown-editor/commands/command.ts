@@ -74,7 +74,7 @@ export abstract class Command {
         this.moveCursorTo(cursor.row, currentLine.length);
     }
 
-    protected addToCompleters(completer: any) {
+    protected addCompleter(completer: any) {
         this.aceEditorContainer.getEditor().completers = [...(this.aceEditorContainer.getEditor().completers || []), completer];
     }
 

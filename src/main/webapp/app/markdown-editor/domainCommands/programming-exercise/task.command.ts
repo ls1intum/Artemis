@@ -19,7 +19,7 @@ export class TaskCommand extends DomainTagCommand {
                 callback(null, { caption: 'task', value: this.getTask(), meta: 'insert task' });
             },
         };
-        this.addToCompleters(taskCommandCompleter);
+        this.addCompleter(taskCommandCompleter);
     }
 
     private getTask() {
