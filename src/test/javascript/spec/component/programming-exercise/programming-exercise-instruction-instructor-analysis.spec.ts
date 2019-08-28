@@ -1,5 +1,5 @@
 import { DebugElement, SimpleChange } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -69,18 +69,20 @@ describe('ProgrammingExerciseInstructionInstructionAnalysis', () => {
         expect(comp.invalidTestCases).to.be.empty;
     });
 
-    it('should render warnings on missing and invalid test cases', () => {
+    it('should render warnings on missing and invalid test cases', fakeAsync(() => {
         comp.problemStatement = problemStatement;
         comp.taskRegex = taskRegex;
         comp.exerciseTestCases = exerciseTestCases;
         comp.exerciseHints = exerciseHints;
+        comp.ngOnInit();
         const changes = { problemStatement: new SimpleChange(undefined, problemStatement, false), exerciseTestCases: new SimpleChange(undefined, exerciseTestCases, false) };
         comp.ngOnChanges(changes);
         fixture.detectChanges();
+        tick(500);
 
         expect(debugElement.nativeElement.innerHtml).not.to.equal('');
         expect(debugElement.query(By.css('fa-icon'))).to.exist;
         expect(comp.missingTestCases).to.be.deep.equal(missingTestCases);
         expect(comp.invalidTestCases).to.be.deep.equal(invalidTestCases);
-    });
+    }));
 });
