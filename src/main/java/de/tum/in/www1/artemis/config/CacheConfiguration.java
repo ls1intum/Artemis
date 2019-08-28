@@ -47,7 +47,6 @@ public class CacheConfiguration {
             createIfNotExists(cm, User.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Authority.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".authorities", jcacheConfiguration);
-            createIfNotExists(cm, PersistentToken.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".persistentTokens", jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName() + ".exercises", jcacheConfiguration);

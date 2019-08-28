@@ -146,9 +146,9 @@ public class DatabaseUtilService {
      * @param numberOfTutors
      */
     public void addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser" }, numberOfStudents);
-        LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor" }, numberOfTutors);
-        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor" }, numberOfInstructors);
+        LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
+        LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
+        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
         LinkedList<User> usersToAdd = new LinkedList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);

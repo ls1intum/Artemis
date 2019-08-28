@@ -489,7 +489,8 @@ public class UserService {
     }
 
     /**
-     * Get user with user groups and authorities of currently logged in user
+     * Get user with user groups, authorities and guided tour settings of currently logged in user
+     * Note: this method should only be invoked if the guided tour settings are really needed
      * @return currently logged in user
      */
     public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
@@ -503,13 +504,12 @@ public class UserService {
      * @param principal abstract presentation for user
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    public User getUserWithGroupsAndAuthorities(Principal principal) {
+    public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
     }
 
     /**
      * Not activated users should be automatically deleted after 3 days.
-     * <p>
      * This is scheduled to get fired everyday, at 01:00 (am).
      */
     @Scheduled(cron = "0 0 1 * * ?")

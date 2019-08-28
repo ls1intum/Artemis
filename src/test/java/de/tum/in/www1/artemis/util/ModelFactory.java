@@ -62,7 +62,6 @@ public class ModelFactory {
         user.setLangKey("en");
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
-        user.setPersistentTokens(new HashSet<>());
         return user;
     }
 

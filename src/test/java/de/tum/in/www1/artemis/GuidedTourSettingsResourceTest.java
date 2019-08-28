@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -58,20 +57,30 @@ public class GuidedTourSettingsResourceTest {
 
     @Test
     @WithMockUser(value = "student1")
+    @SuppressWarnings("unchecked")
     public void updateGuidedTourSettings() throws Exception {
-        List<GuidedTourSettings> guidedTourSettingsList = new ArrayList<>();
-        GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
-        guidedTourSettings.setGuidedTourKey("course_overview_tour");
-        guidedTourSettings.setGuidedTourStep(5);
-        guidedTourSettingsList.add(guidedTourSettings);
-        Set<GuidedTourSettings> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsList, Set.class, HttpStatus.OK);
+        Set<GuidedTourSettings> guidedTourSettingsSet = new HashSet<>();
+
+        GuidedTourSettings guidedTourSettings1 = new GuidedTourSettings();
+        guidedTourSettings1.setGuidedTourKey("course_overview_tour");
+        guidedTourSettings1.setGuidedTourStep(5);
+        guidedTourSettings1.setGuidedTourState(GuidedTourSettings.Status.FINISHED);
+
+        GuidedTourSettings guidedTourSettings2 = new GuidedTourSettings();
+        guidedTourSettings2.setGuidedTourKey("new_tour");
+        guidedTourSettings2.setGuidedTourStep(7);
+        guidedTourSettings2.setGuidedTourState(GuidedTourSettings.Status.STARTED);
+
+        guidedTourSettingsSet.add(guidedTourSettings1);
+        guidedTourSettingsSet.add(guidedTourSettings2);
+        Set<GuidedTourSettings> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
-        assertThat(serverGuidedTourSettings.size()).isEqualTo(1);
+        assertThat(serverGuidedTourSettings.size()).isEqualTo(2);
 
         User user = request.get("/api/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isNotNull();
         assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
-        assertThat(user.getGuidedTourSettings().size()).isEqualTo(1);
+        assertThat(user.getGuidedTourSettings().size()).isEqualTo(2);
     }
 }
