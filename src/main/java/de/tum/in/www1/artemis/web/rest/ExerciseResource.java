@@ -102,7 +102,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User student = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
         if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
@@ -112,7 +112,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
     /**

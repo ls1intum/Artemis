@@ -91,14 +91,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')") // TODO MJ better path
     // "/modeling-submissions/{submissionId}/result"?
     // TODO MJ merge with getAssessmentBySubmissionId() ?
-    // Note: This endpoint is currently not used and not fully tested after migrating UML models and
-    // modeling
+    // Note: This endpoint is currently not used and not fully tested after migrating UML models and modeling
     // submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
-        checkAuthorization(modelingExercise);
+        checkAuthorization(modelingExercise, user);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(participation.getExercise().getId(), submission);
             Result result = submission.getResult();
@@ -194,11 +194,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     // TODO MJ changing submitted assessment always produces Conflict
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        checkAuthorization(modelingExercise, user);
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         // TODO CZ: move submit logic to modeling assessment service
@@ -225,7 +226,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             // }
         }
         // remove information about the student for tutors to ensure double-blind assessment
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
         if (submit && (((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate() == null
@@ -250,10 +251,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
-        checkAuthorization(modelingExercise);
+        checkAuthorization(modelingExercise, user);
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         return ResponseEntity.ok(result);
     }
@@ -273,11 +275,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        checkAuthorization(modelingExercise, user);
 
         Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
 
@@ -290,7 +293,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
             result.getParticipation().setResults(null);
         }
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
+                && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 

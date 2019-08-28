@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 
@@ -38,9 +40,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.student.login = :#{#username}")
-    List<StudentParticipation> findByStudentUsernameWithEagerResults(@Param("username") String username);
-
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerResults(@Param("exerciseId") Long exerciseId);
 
@@ -59,6 +58,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null or result.assessmentType = 'AUTOMATIC')")
     List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Find all participations of submissions that are submitted and do not already have any result. This means neither a manual nor a automatic assessment took place
+     *
+     * @param exerciseId the exercise id the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have any result
+     */
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null)")
+    List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionWithoutResult(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.id = :#{#participationId}")
     Optional<StudentParticipation> findByIdWithEagerResults(@Param("participationId") Long participationId);
@@ -91,4 +99,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
     StudentParticipation findOneByIdWithEagerExerciseAndEagerCourse(@Param("participationId") Long participationId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.exercise left join fetch participation.results where participation.student.id = :#{#studentId}")
+    List<StudentParticipation> findByStudentIdWithEagerResults(@Param("studentId") Long studentId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.student.id = :#{#studentId} and participation.exercise in :#{#exercises}")
+    List<StudentParticipation> findByStudentIdWithEagerResults(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
 }

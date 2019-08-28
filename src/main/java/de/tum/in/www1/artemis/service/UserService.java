@@ -29,8 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
@@ -56,15 +58,19 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
+    private final GuidedTourSettingsRepository guidedTourSettingsRepository;
+
     private final CacheManager cacheManager;
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService) {
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
+            GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
+        this.guidedTourSettingsRepository = guidedTourSettingsRepository;
     }
 
     /**
@@ -124,8 +130,7 @@ public class UserService {
         if (passwordEncoder != null) {
             return passwordEncoder;
         }
-        passwordEncoder = new PBEPasswordEncoder();
-        passwordEncoder.setPbeStringEncryptor(encryptor());
+        passwordEncoder = new PBEPasswordEncoder(encryptor());
         return passwordEncoder;
     }
 
@@ -400,7 +405,6 @@ public class UserService {
      * Get decrypted password for the current user
      * @return decrypted password or empty string
      */
-    @Transactional(readOnly = true)
     public String decryptPassword() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
         try {
@@ -416,7 +420,6 @@ public class UserService {
      * @param login of a user
      * @return decrypted password or empty string
      */
-    @Transactional(readOnly = true)
     public Optional<String> decryptPasswordByLogin(String login) {
         return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
     }
@@ -426,17 +429,15 @@ public class UserService {
      * @param pageable used to find users
      * @return all users with roles other than ROLE_ANONYMOUS
      */
-    @Transactional(readOnly = true)
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllByLoginNot(pageable, AuthoritiesConstants.ANONYMOUS).map(UserDTO::new);
     }
 
     /**
-     * Get user with groups and authorities by given login string
+     * Get user with authorities by given login string
      * @param login user login string
      * @return existing user with given login string or null
      */
-    @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
@@ -446,7 +447,6 @@ public class UserService {
      * @param id user id
      * @return existing user with the given user id
      */
-    @Transactional(readOnly = true)
     public User getUserWithAuthorities(Long id) {
         return userRepository.findOneWithAuthoritiesById(id).get();
     }
@@ -454,7 +454,6 @@ public class UserService {
     /**
      * @return existing user object by current user login
      */
-    @Transactional(readOnly = true)
     public User getUser() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
         return userRepository.findOneByLogin(currentUserLogin).get();
@@ -465,7 +464,6 @@ public class UserService {
      * @param login user login string
      * @return existing user for the given login string or null
      */
-    @Transactional(readOnly = true)
     public Optional<User> getUserByLogin(String login) {
         return userRepository.findOneByLogin(login);
     }
@@ -475,12 +473,10 @@ public class UserService {
      * @param login user login string
      * @return existing user
      */
-    @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
     }
 
-    @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
         User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
@@ -491,25 +487,34 @@ public class UserService {
      * Get user with user groups and authorities of currently logged in user
      * @return currently logged in user
      */
-    @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
+        return user;
+    }
+
+    /**
+     * Get user with user groups, authorities and guided tour settings of currently logged in user
+     * Note: this method should only be invoked if the guided tour settings are really needed
+     * @return currently logged in user
+     */
+    public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
+        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
+        User user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin).get();
+        return user;
     }
 
     /**
      * Get user with user groups and authorities by principal object
      * @param principal abstract presentation for user
-     * @return existing user
+     * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @Transactional(readOnly = true)
-    public User getUserWithGroupsAndAuthorities(Principal principal) {
+    public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
     }
 
     /**
      * Not activated users should be automatically deleted after 3 days.
-     * <p>
      * This is scheduled to get fired everyday, at 01:00 (am).
      */
     @Scheduled(cron = "0 0 1 * * ?")
@@ -549,5 +554,20 @@ public class UserService {
      */
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * Update the guided tour settings of the currently logged in user
+     * @param guidedTourSettings the updated set of guided tour settings
+     * @return the updated user object with the changed guided tour settings
+     */
+    public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
+        User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        loggedInUser.getGuidedTourSettings().clear();
+        for (GuidedTourSetting setting : guidedTourSettings) {
+            loggedInUser.addGuidedTourSetting(setting);
+            guidedTourSettingsRepository.save(setting);
+        }
+        return userRepository.save(loggedInUser);
     }
 }

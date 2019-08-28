@@ -12,8 +12,7 @@ import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
-import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
-import { CodeEditorSubmissionService } from 'app/code-editor/service';
+import { CodeEditorBuildLogService, CodeEditorSubmissionService } from 'app/code-editor/service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -43,7 +42,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /** Resizable constants **/
     resizableMinHeight = 150;
-    resizableMaxHeight = 500;
     interactResizable: Interactable;
 
     set buildLogErrors(buildLogErrors: BuildLogErrors) {
@@ -75,28 +73,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     ngAfterViewInit(): void {
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
-        this.interactResizable = interact('.resizable-buildoutput')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
-                // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
-                },
-                inertia: true,
-            })
-            .on('resizestart', function(event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function(event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function(event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.height = event.rect.height + 'px';
-            });
+        this.interactResizable = interact('.resizable-buildoutput');
     }
 
     /**

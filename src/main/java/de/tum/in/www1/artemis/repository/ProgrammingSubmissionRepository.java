@@ -21,6 +21,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(attributePaths = { "result.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
+    @EntityGraph(attributePaths = "result")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(attributePaths = { "result.feedbacks" })

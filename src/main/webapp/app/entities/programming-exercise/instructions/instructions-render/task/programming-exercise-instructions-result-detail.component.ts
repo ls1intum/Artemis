@@ -10,7 +10,7 @@ import { Feedback } from 'app/entities/feedback';
 @Component({
     selector: 'jhi-programming-exercise-instructions-result-detail',
     // This popup references the result detail html template, so make sure the constant names match
-    templateUrl: '../../../entities/result/result-detail.component.html',
+    templateUrl: '../../../../result/result-detail.component.html',
 })
 export class ProgrammingExerciseInstructionResultDetailComponent implements OnInit {
     @Input() result: Result;

@@ -161,10 +161,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 // Enable resize from left edge; triggered by class .resizing-bar
                 edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
                 // Set min and max width
-                restrictSize: {
-                    min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidth, height: 0 },
+                        max: { width: this.resizableMaxWidth, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -185,9 +188,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
                 edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
                 // Set min height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeight },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
