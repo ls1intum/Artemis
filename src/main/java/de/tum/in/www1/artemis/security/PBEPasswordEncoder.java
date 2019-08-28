@@ -1,21 +1,16 @@
 package de.tum.in.www1.artemis.security;
 
 import org.jasypt.encryption.pbe.PBEStringEncryptor;
-import org.jasypt.exceptions.EncryptionInitializationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * Created by Josias Montag on 23.09.16. PBEPasswordEncoder for Spring 4, based on org.jasypt.spring.security3.PBEPasswordEncoder;
+ * PBEPasswordEncoder for Spring, based on org.jasypt.spring.security3.PBEPasswordEncoder;
  */
 public class PBEPasswordEncoder implements PasswordEncoder {
 
-    public PBEPasswordEncoder() {
-        super();
-    }
+    private final PBEStringEncryptor pbeStringEncryptor;
 
-    private PBEStringEncryptor pbeStringEncryptor = null;
-
-    public void setPbeStringEncryptor(final PBEStringEncryptor pbeStringEncryptor) {
+    public PBEPasswordEncoder(final PBEStringEncryptor pbeStringEncryptor) {
         this.pbeStringEncryptor = pbeStringEncryptor;
     }
 
@@ -26,20 +21,11 @@ public class PBEPasswordEncoder implements PasswordEncoder {
 
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
-        checkInitialization();
-        String decPassword;
+        String decPassword = this.pbeStringEncryptor.decrypt(encodedPassword);
 
-        decPassword = this.pbeStringEncryptor.decrypt(encodedPassword);
-
-        if ((decPassword == null) || (rawPassword == null)) {
-            return (decPassword == rawPassword.toString());
+        if (decPassword == null || rawPassword == null) {
+            return (decPassword == rawPassword);
         }
         return decPassword.equals(rawPassword.toString());
-    }
-
-    private synchronized void checkInitialization() {
-        if (this.pbeStringEncryptor == null) {
-            throw new EncryptionInitializationException("PBE Password encoder not initialized: PBE " + "string encryptor is null");
-        }
     }
 }

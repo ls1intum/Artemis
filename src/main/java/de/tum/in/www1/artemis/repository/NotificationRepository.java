@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,5 +27,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} AND notification.type = 'TA') "
             + "or (notification.course.studentGroupName in :#{#currentGroups} AND notification.type = 'STUDENT')))"
             + "or notification.course is null and notification.recipient.login = ?#{principal.username}")
-    Page<Notification> findAllNotificationsForCurrentUser(@Param("currentGroups") List<String> currentUserGroups, Pageable pageable);
+    Page<Notification> findAllNotificationsForCurrentUser(@Param("currentGroups") Set<String> currentUserGroups, Pageable pageable);
 }
