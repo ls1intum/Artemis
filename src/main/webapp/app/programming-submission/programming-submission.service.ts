@@ -15,7 +15,7 @@ export enum ProgrammingSubmissionState {
     // The submission was created on the server, we assume that the build is running within an expected time frame.
     IS_BUILDING_PENDING_SUBMISSION = 'IS_BUILDING_PENDING_SUBMISSION',
     // A failed submission is a pending submission that has not received a result within an expected time frame.
-    HAS_FAILED_SUBMISSION = 'HAS_PENDING_SUBMISSION_WITHOUT_RESULT',
+    HAS_FAILED_SUBMISSION = 'HAS_FAILED_SUBMISSION',
 }
 
 export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, ProgrammingSubmission | null];
@@ -332,7 +332,21 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
-        return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', {});
+        return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build-all', {});
+    }
+
+    public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
+        return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', { participationIds });
+    }
+
+    public getFailedSubmissionParticipationsForExercise(exerciseId: number) {
+        const exerciseBuildState = this.exerciseBuildState[exerciseId];
+        return Object.entries(exerciseBuildState)
+            .filter(([, buildState]) => {
+                const [submissionState] = buildState;
+                return submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+            })
+            .map(([participationId]) => parseInt(participationId, 10));
     }
 
     /**

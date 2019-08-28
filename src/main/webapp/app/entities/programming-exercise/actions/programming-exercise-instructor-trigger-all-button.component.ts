@@ -46,9 +46,9 @@ export class ProgrammingExerciseInstructorTriggerAllButtonComponent implements O
 
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions = true;
+        const failedSubmissionParticipations = this.programmingSubmissionService.getFailedSubmissionParticipationsForExercise(this.exerciseId);
         this.programmingSubmissionService
-            // TODO: Add new endpoint.
-            .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
+            .triggerInstructorBuildForParticipationsOfExercise(this.exerciseId, failedSubmissionParticipations)
             .pipe()
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }

@@ -199,12 +199,11 @@ public class ProgrammingSubmissionService {
     }
 
     @Transactional
-    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(ProgrammingExercise programmingExercise, SubmissionType submissionType)
-            throws IllegalStateException {
-        List<ProgrammingExerciseStudentParticipation> studentParticipations = programmingExerciseParticipationService.findByExerciseId(programmingExercise.getId());
+    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
+            SubmissionType submissionType) throws IllegalStateException {
         // TODO: What to do with the exception? Very unlikely but annoying here...
-        List<ProgrammingSubmission> submissions = studentParticipations.stream()
-                .map(participation -> createSubmissionWithLastCommitHashForParticipation(participation, submissionType)).collect(Collectors.toList());
+        List<ProgrammingSubmission> submissions = participations.stream().map(participation -> createSubmissionWithLastCommitHashForParticipation(participation, submissionType))
+                .collect(Collectors.toList());
         return submissions;
     }
 }

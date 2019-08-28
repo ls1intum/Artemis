@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.web.rest.dto.BuildTriggerDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -169,7 +170,7 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
+    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
@@ -179,7 +180,33 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
-        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(programmingExercise,
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
+        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
+                SubmissionType.INSTRUCTOR);
+        for (ProgrammingSubmission submission : submissions) {
+            // notify the user via websocket.
+            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody BuildTriggerDTO buildTriggerDTO) {
+        List<Long> participationIds = buildTriggerDTO.getParticipationIds();
+        if (participationIds.isEmpty()) {
+            return badRequest();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (programmingExercise == null) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds);
+        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
                 SubmissionType.INSTRUCTOR);
         for (ProgrammingSubmission submission : submissions) {
             // notify the user via websocket.

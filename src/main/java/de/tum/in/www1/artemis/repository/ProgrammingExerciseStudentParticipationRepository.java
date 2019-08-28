@@ -35,6 +35,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
 
+    @Query("select participation from ProgrammingExerciseStudentParticipation participation where participation.exercise.id = :#{#exerciseId} and participation.id in :#{#participationIds}")
+    List<ProgrammingExerciseStudentParticipation> findByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId, @Param("participationIds") List<Long> participationIds);
+
     @EntityGraph(attributePaths = "student")
     @Query("select distinct participation from Participation participation where participation.id = :#{#participationId}")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithStudent(@Param("participationId") Long participationId);

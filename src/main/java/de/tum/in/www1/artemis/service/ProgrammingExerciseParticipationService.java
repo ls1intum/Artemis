@@ -74,6 +74,10 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
+    public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, List<Long> participationIds) {
+        return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
+    }
+
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
     }
