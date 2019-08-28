@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +38,12 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      */
     @Query("SELECT COUNT (DISTINCT textSubmission) FROM TextSubmission textSubmission WHERE textSubmission.participation.exercise.id = :#{#exerciseId} AND textSubmission.submitted = TRUE AND (textSubmission.submissionDate < textSubmission.participation.exercise.dueDate OR textSubmission.participation.exercise.dueDate IS NULL)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
+     * @param exerciseId the Id of the exercise
+     * @return List of Text Submissions
+     */
+    @EntityGraph(attributePaths = { "blocks", "result", "participation" })
+    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
 }
