@@ -68,7 +68,7 @@
                 "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test Repository gefunden werden."
             },
             "hintsAnalysis": {
-                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sindÖ",
+                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
                 "issues": "Hinweis Probleme.",
                 "ok": "Hinweise ok.",
                 "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
