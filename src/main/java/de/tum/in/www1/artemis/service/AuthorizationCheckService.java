@@ -79,6 +79,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged in user is at least a student in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
+     @param user the user whose permissions should be checked
      * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(Exercise exercise, User user) {
@@ -235,6 +236,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
+     * @param user the user whose permissions should be checked
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(StudentParticipation participation, User user) {
