@@ -134,9 +134,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
                     }),
-                    tap((submission: ProgrammingSubmission) => {
-                        this.exerciseBuildState[exerciseId][participationId] = [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission];
-                    }),
                 )
                 .subscribe();
         }
@@ -163,7 +160,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             distinctUntilChanged(),
             tap(() => {
                 // This is the normal case - the last pending submission received a result, so we emit null as the message that there is no pending submission anymore.
-                this.submissionSubjects[participationId].next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+                this.emitNoPendingSubmission(participationId, exerciseId);
             }),
         );
 
