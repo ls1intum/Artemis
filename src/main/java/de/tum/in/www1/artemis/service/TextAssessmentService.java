@@ -75,10 +75,6 @@ public class TextAssessmentService extends AssessmentService {
             checkAssessmentDueDate(textExercise);
         }
 
-        /*
-         * result.setAssessmentType(AssessmentType.MANUAL); if (textAssessment.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() ==
-         * FeedbackType.AUTOMATIC_ADAPTED)) { result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC); }
-         */
         User user = userService.getUser();
         result.setAssessor(user);
 
