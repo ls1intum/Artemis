@@ -58,6 +58,10 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
         return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), user);
     }
 
@@ -68,7 +72,22 @@ public class AuthorizationCheckService {
      * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(Exercise exercise) {
-        return isStudentInCourse(exercise.getCourse(), null) || isAtLeastTeachingAssistantForExercise(exercise);
+        return isAtLeastStudentForExercise(exercise, null);
+    }
+
+    /**
+     * checks if the currently logged in user is at least a student in the course of the given exercise.
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     @param user the user whose permissions should be checked
+     * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
+     */
+    public boolean isAtLeastStudentForExercise(Exercise exercise, User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return isStudentInCourse(exercise.getCourse(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
     /**
@@ -84,7 +103,33 @@ public class AuthorizationCheckService {
             user = userService.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin();
+    }
 
+    /**
+     * checks if the passed user is at least a teaching assistant in the given course
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
+     */
+    public boolean isAtLeastStudentInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
+                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin();
+    }
+
+    /**
+     * checks if the currently logged in user is at least an instructor in the course of the given exercise.
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
+     */
+    public boolean isAtLeastInstructorForExercise(Exercise exercise, User user) {
+        return isAtLeastInstructorInCourse(exercise.getCourse(), user);
     }
 
     /**
@@ -94,7 +139,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
      */
     public boolean isAtLeastInstructorForExercise(Exercise exercise) {
-        return isAtLeastInstructorInCourse(exercise.getCourse(), null);
+        return isAtLeastInstructorForExercise(exercise, null);
     }
 
     /**
@@ -179,12 +224,31 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(StudentParticipation participation) {
-        // A template/solution participation doesn't have a student, this is done to avoid null pointer exceptions
         if (participation.getStudent() == null) {
             return false;
         }
         else {
             return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+        }
+    }
+
+    /**
+     * checks if the currently logged in user is owner of the given participation
+     *
+     * @param participation the participation that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is student is owner of this participation, otherwise false
+     */
+    public boolean isOwnerOfParticipation(StudentParticipation participation, User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        if (participation.getStudent() == null) {
+            return false;
+        }
+        else {
+            return participation.getStudent().equals(user);
         }
     }
 
