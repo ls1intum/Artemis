@@ -20,10 +20,10 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    private guidedTourSettings: GuidedTourSetting[];
+    public guidedTourSettings: GuidedTourSetting[];
+    public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private currentTourStepIndex = 0;
-    public currentTour: GuidedTour | null;
     private onResizeMessage = false;
 
     constructor(
@@ -222,7 +222,7 @@ export class GuidedTourService {
 
     /**
      * Checks if the current window size is supposed display the guided tour
-     * @return {boolean} returns true if the minimum screen size is not defined or greater than the current window.innerWidth
+     * @return true if the minimum screen size is not defined or greater than the current window.innerWidth, otherwise false
      */
     public tourAllowedForWindowSize(): boolean {
         if (this.currentTour) {
@@ -232,7 +232,7 @@ export class GuidedTourService {
     }
 
     /**
-     *  @return {boolean} if highlighted element is available
+     *  @return true if highlighted element is available, otherwise false
      */
     public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
@@ -273,7 +273,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the `show resize` message should be displayed
+     * @return true if the `show resize` message should be displayed, otherwise false
      */
     public get isOnResizeMessage(): boolean {
         return this.onResizeMessage;
@@ -295,7 +295,7 @@ export class GuidedTourService {
 
     /**
      *  Prevents the tour from advancing by clicking the backdrop
-     *  @return {boolean} `preventBackdropFromAdvancing` configuration if tour should advance when clicking on the backdrop
+     *  @return the `preventBackdropFromAdvancing` configuration if tour should advance when clicking on the backdrop
      *  or false if this configuration is not set
      */
     public get preventBackdropFromAdvancing(): boolean {
@@ -353,10 +353,11 @@ export class GuidedTourService {
      * @param guidedTourKey the guided_tour_key that will be stored in the database
      * @param guidedTourStep the last tour step the user visited before finishing / skipping the tour
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
-     * @return {Observable<EntityResponseType>} updated guided tour settings
+     * @return Observable<EntityResponseType>: updated guided tour settings
      */
     public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
+            this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');
         }
         const existingSettingIndex = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
