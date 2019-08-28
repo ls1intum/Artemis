@@ -60,7 +60,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     this.participations = participationsResponse.body!;
                 });
                 if (this.exercise.type === this.PROGRAMMING) {
-                    this.programmingSubmissionService.subscribeSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
+                    this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
             });
         });

@@ -2,6 +2,7 @@
     <h2>
         <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
     </h2>
+    <jhi-programming-exercise-instructor-trigger-all-button [exerciseId]="exercise.id"></jhi-programming-exercise-instructor-trigger-all-button>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
     <br />

@@ -1,8 +1,10 @@
-<span>
-    Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] }}. Failed submissions:
-    {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] }}
-</span>
-<button class="btn btn-primary" [disabled]="isBuilding" (click)="triggerBuild()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllSubmissionsTooltip' | translate">
-    <fa-icon icon="redo" [spin]="isBuilding"></fa-icon>
-    <span jhiTranslate="artemisApp.programmingExercise.resubmitAllSubmissionsTooltip">Trigger all</span>
-</button>
+<div *ngIf="buildingSummary">
+    <span>
+        Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}. Failed submissions:
+        {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
+    </span>
+    <button class="btn btn-primary" [disabled]="isBuilding" (click)="triggerBuild()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllSubmissionsTooltip' | translate">
+        <fa-icon icon="redo" [spin]="isBuilding"></fa-icon>
+        <span jhiTranslate="artemisApp.programmingExercise.resubmitAllSubmissionsTooltip">Trigger all</span>
+    </button>
+</div>

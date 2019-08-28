@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, throwError, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap, mergeMap, concatAll, combineAll, mergeAll } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -24,7 +24,7 @@ export type ExerciseBuildState = { [participationId: number]: [ProgrammingSubmis
 
 export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number) => Observable<ProgrammingSubmissionStateObj>;
-    subscribeSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseBuildState>;
+    getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseBuildState>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -256,35 +256,34 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
      */
-    public subscribeSubmissionStateOfExercise = (exerciseId: number): Observable<ExerciseBuildState> => {
+    public getSubmissionStateOfExercise = (exerciseId: number): Observable<ExerciseBuildState> => {
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple done.
         const preloadingSubject = this.exerciseBuildStateSubjects[exerciseId];
         if (preloadingSubject) {
             return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseBuildState>;
         }
-        const newSubject = new BehaviorSubject<ExerciseBuildState | undefined>(undefined);
-        this.exerciseBuildStateSubjects[exerciseId] = newSubject;
+        this.exerciseBuildStateSubjects[exerciseId] = new BehaviorSubject<ExerciseBuildState | undefined>(undefined);
         this.fetchLatestPendingSubmissionByExerciseId(exerciseId)
             .pipe(
                 map(submissions => {
                     return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
                 }),
-                switchMap(
-                    (submissions: Array<[number, ProgrammingSubmission | null]>): Observable<[number, ProgrammingSubmission | null, ProgrammingSubmissionState]> => {
-                        if (!submissions.length) {
-                            throwError('submission information object is empty!');
-                        }
-                        return from(submissions).pipe(
-                            switchMap(([participationId, submission]) => {
+                switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
+                    if (!submissions.length) {
+                        throwError('submission information object is empty!');
+                    }
+                    return from(submissions).pipe(
+                        switchMap(
+                            ([participationId, submission]): Observable<[number, ProgrammingSubmission | null, ProgrammingSubmissionState]> => {
                                 this.submissionSubjects[participationId] = new BehaviorSubject<[ProgrammingSubmissionState, ProgrammingSubmission | null | undefined]>([
                                     ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
                                     undefined,
                                 ]);
                                 return this.processPendingSubmission(submission, participationId, exerciseId);
-                            }),
-                        );
-                    },
-                ),
+                            },
+                        ),
+                    );
+                }),
                 reduce((acc, val: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {
                     const [participationId, submission, submissionState] = val;
                     return { ...acc, [participationId]: [submissionState, submission] };
@@ -293,9 +292,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             )
             .subscribe((exerciseBuildState: ExerciseBuildState) => {
                 this.exerciseBuildState[exerciseId] = exerciseBuildState;
-                newSubject.next(exerciseBuildState);
+                this.exerciseBuildStateSubjects[exerciseId].next(exerciseBuildState);
             });
-        return newSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseBuildState>;
+        return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseBuildState>;
     };
 
     public triggerBuild(participationId: number) {
@@ -321,6 +320,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         participationId: number,
         exerciseId: number,
     ): Observable<[number, ProgrammingSubmission | null, ProgrammingSubmissionState]> => {
+        if (!this.exerciseBuildState[exerciseId]) {
+            this.exerciseBuildState[exerciseId] = {};
+        }
         return of(submissionToBeProcessed).pipe(
             tap(() => {
                 this.setupWebsocketSubscription(participationId, exerciseId);
