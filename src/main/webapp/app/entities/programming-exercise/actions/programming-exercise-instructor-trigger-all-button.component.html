@@ -1,7 +1,7 @@
 <div *ngIf="buildingSummary" class="d-flex">
     <div class="d-flex flex-column justify-content-between">
         <span
-            class="badge badge-secondary flex-grow-0"
+            class="badge badge-primary flex-grow-0"
             [innerHTML]="
                 'artemisApp.programmingExercise.buildingSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
             "
@@ -9,7 +9,7 @@
             Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
         </span>
         <span
-            class="badge badge-primary flex-grow-0"
+            [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'badge-danger' : 'badge-success', 'flex-grow-0']"
             [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
         >
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
