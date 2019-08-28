@@ -256,12 +256,12 @@ public class LtiService {
                 if (TUMX.equals(launchRequest.getContext_label())) {
                     newUser = userService.createUser(username, "", USER_GROUP_NAME_EDX, fullname, email, null, "en");
                     // add user to edx group
-                    newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME_EDX)));
+                    newUser.setGroups(new HashSet<>(Collections.singleton(USER_GROUP_NAME_EDX)));
                 }
                 else if (U4I.equals(launchRequest.getContext_label())) {
                     newUser = userService.createUser(username, "", USER_GROUP_NAME_U4I, fullname, email, null, "en");
                     // add user to u4i group
-                    newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME_U4I)));
+                    newUser.setGroups(new HashSet<>(Collections.singleton(USER_GROUP_NAME_U4I)));
                 }
                 else {
                     throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
@@ -302,7 +302,7 @@ public class LtiService {
     private void addUserToExerciseGroup(User user, Course course) {
         String courseStudentGroupName = course.getStudentGroupName();
         if (!user.getGroups().contains(courseStudentGroupName)) {
-            List<String> groups = user.getGroups();
+            Set<String> groups = user.getGroups();
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userRepository.save(user);

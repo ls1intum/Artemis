@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +11,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GuidedTourSettings;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.UserService;
 
 /**
- * Rest controller for managing GuidedTourSettings
+ * Rest controller for managing GuidedTourSetting
  */
 @RestController
 @RequestMapping("/api")
@@ -36,20 +36,6 @@ public class GuidedTourSettingsResource {
     }
 
     /**
-     * GET /guided-tour-settings: get all guided tour settings of the current user
-     *
-     * @return the guided tour settings
-     */
-    @GetMapping("/guided-tour-settings")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<GuidedTourSettings>> getGuidedTourSettings() {
-        log.debug("REST request to get all guided tour settings of the current user");
-        User currentUser = userService.getUser();
-        return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
-    }
-
-    /**
      * PUT /guided-tour-settings: update all guided tour settings of the current user
      * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
@@ -57,8 +43,8 @@ public class GuidedTourSettingsResource {
     @PutMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    public ResponseEntity<List<GuidedTourSettings>> updateGuidedTourSettings(@RequestBody List<GuidedTourSettings> guidedTourSettings) {
-        log.debug("REST request to update GuidedTourSettings : {}", guidedTourSettings);
+    public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
+        log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
         return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
     }

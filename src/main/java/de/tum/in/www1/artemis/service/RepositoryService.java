@@ -53,6 +53,7 @@ public class RepositoryService {
      * @param repository VCS repository to get files for.
      * @return a map of files with the information if they are a file or a folder.
      */
+    @SuppressWarnings("unchecked")
     public HashMap<String, FileType> getFiles(Repository repository) {
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
 
@@ -76,7 +77,7 @@ public class RepositoryService {
      */
     public byte[] getFile(Repository repository, String filename) throws IOException {
         Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if (!file.isPresent()) {
+        if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
         InputStream inputStream = new FileInputStream(file.get());
@@ -140,7 +141,7 @@ public class RepositoryService {
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
-        if (!file.isPresent()) {
+        if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
         if (!repository.isValidFile(file.get())) {
@@ -171,7 +172,7 @@ public class RepositoryService {
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
 
-        if (!file.isPresent()) {
+        if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
         if (!repository.isValidFile(file.get())) {
@@ -250,13 +251,11 @@ public class RepositoryService {
      * @param exercise to which the repository belongs.
      * @param repoUrl of the repository on the server.
      * @return the repository if available.
-     * @throws IOException if the repository can't be checked out.
      * @throws GitAPIException if the repository can't be checked out.
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl)
-            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
