@@ -35,7 +35,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Assessor" prop="result">
             <ng-template ngx-datatable-cell-template let-value="value">
-                {{ value ? value.assessor.firstName : 'n.a' }}
+                {{ value && value.assesor ? value.assesor.firstName : 'n.a' }}
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Action" prop="id">
