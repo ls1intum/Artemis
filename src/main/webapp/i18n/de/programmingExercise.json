@@ -84,7 +84,9 @@
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitFailed": "Alle erneut ausführen",
-            "resubmitFailedTootip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet."
+            "resubmitFailedTootip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
+            "buildingSubmissions": "Laufende Abgaben: {{number}}",
+            "failedSubmissions": "Gescheiterte Abgaben: {{number}}"
         }
     }
 }

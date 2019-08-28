@@ -84,7 +84,9 @@
             "resubmitAll": "Trigger all",
             "resubmitAllTooltip": "Trigger the last submission of all submissions again. The results will be rated.",
             "resubmitFailed": "Trigger failed",
-            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. The results will be rated."
+            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. The results will be rated.",
+            "buildingSubmissions": "Building submissions: {{number}}",
+            "failedSubmissions": "Failed submissions: {{number}}"
         }
     }
 }

@@ -1,14 +1,26 @@
-<div *ngIf="buildingSummary">
-    <span>
-        Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}. Failed submissions:
-        {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
-    </span>
-    <button class="btn btn-primary" (click)="triggerBuildOfAllSubmissions()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate">
+<div *ngIf="buildingSummary" class="d-flex">
+    <div class="d-flex flex-column justify-content-between">
+        <span
+            class="badge badge-secondary flex-grow-0"
+            [innerHTML]="
+                'artemisApp.programmingExercise.buildingSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
+            "
+        >
+            Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
+        </span>
+        <span
+            class="badge badge-primary flex-grow-0"
+            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
+        >
+            Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
+        </span>
+    </div>
+    <button class="btn btn-secondary ml-3" (click)="triggerBuildOfAllSubmissions()" [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate">
         <fa-icon icon="redo"></fa-icon>
         <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
     </button>
     <button
-        class="btn btn-danger"
+        class="btn btn-primary ml-3"
         [disabled]="!hasFailedSubmissions"
         (click)="triggerBuildOfFailedSubmissions()"
         [ngbTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | translate"
