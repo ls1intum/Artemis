@@ -141,26 +141,26 @@ public class ModelingSubmissionResource {
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
+        User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
 
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise));
+            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
         }
 
         List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(clearStudentInformation(submissions, exercise));
+        return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
     }
 
     /**
      * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
      */
-    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise, User user) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
         }
         return submissions;

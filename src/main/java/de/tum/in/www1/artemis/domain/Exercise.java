@@ -82,8 +82,10 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> categories = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
+    @Column(name = "categories")
+    private Set<String> categories = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
@@ -286,11 +288,11 @@ public abstract class Exercise implements Serializable {
         this.difficulty = difficulty;
     }
 
-    public List<String> getCategories() {
+    public Set<String> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<String> categories) {
+    public void setCategories(Set<String> categories) {
         this.categories = categories;
     }
 

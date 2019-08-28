@@ -87,12 +87,14 @@ describe('Component Tests', () => {
             const currentStepSpy = spyOn(guidedTourComponent, 'subscribeToGuidedTourCurrentStepStream');
             const resizeEventSpy = spyOn(guidedTourComponent, 'subscribeToResizeEvent');
             const scrollEventSpy = spyOn(guidedTourComponent, 'subscribeToScrollEvent');
+            const guidedTourInitSpy = spyOn(guidedTourService, 'init').and.returnValue(of());
 
             guidedTourComponent.ngAfterViewInit();
 
             expect(currentStepSpy.calls.count()).to.equal(1);
             expect(resizeEventSpy.calls.count()).to.equal(1);
             expect(scrollEventSpy.calls.count()).to.equal(1);
+            expect(guidedTourInitSpy.calls.count()).to.equal(1);
         });
 
         it('should handle user permissions', () => {
@@ -106,6 +108,7 @@ describe('Component Tests', () => {
                 // Prepare guided tour service
                 spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                 spyOn(guidedTourService, 'updateGuidedTourSettings');
+                spyOn(guidedTourService, 'init').and.returnValue(of());
 
                 // Prepare guided tour component
                 guidedTourComponent.ngAfterViewInit();
