@@ -125,8 +125,7 @@ public class UserService {
         if (passwordEncoder != null) {
             return passwordEncoder;
         }
-        passwordEncoder = new PBEPasswordEncoder();
-        passwordEncoder.setPbeStringEncryptor(encryptor());
+        passwordEncoder = new PBEPasswordEncoder(encryptor());
         return passwordEncoder;
     }
 

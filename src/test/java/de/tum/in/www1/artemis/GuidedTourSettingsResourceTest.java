@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSettings;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -49,14 +50,14 @@ public class GuidedTourSettingsResourceTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void getGuidedTourSettings() throws Exception {
-        List<GuidedTourSettings> guidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, List.class);
-        assertThat(guidedTourSettings.isEmpty()).isTrue();
+    public void testGuidedTourSettingsInitiallyNull() throws Exception {
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings()).isNull();
     }
 
     @Test
     @WithMockUser(value = "student1")
-    public void updateGuidedTourSettings() throws Exception {
+    public void testUpdateGuidedTourSettings() throws Exception {
         List<GuidedTourSettings> guidedTourSettingsList = new ArrayList<>();
         GuidedTourSettings guidedTourSettings = new GuidedTourSettings();
         guidedTourSettings.setGuidedTourKey("course_overview_tour");
@@ -64,8 +65,9 @@ public class GuidedTourSettingsResourceTest {
         guidedTourSettingsList.add(guidedTourSettings);
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingsList, List.class, HttpStatus.OK);
 
-        List<GuidedTourSettings> updatedGuidedTourSettings = request.get("/api/guided-tour-settings", HttpStatus.OK, List.class);
-        assertThat(updatedGuidedTourSettings.isEmpty()).isFalse();
-        assertThat(updatedGuidedTourSettings.size()).isEqualTo(1);
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings()).isNotNull();
+        assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
+        assertThat(user.getGuidedTourSettings().size()).isEqualTo(1);
     }
 }

@@ -16,12 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -72,8 +69,6 @@ public class CourseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ObjectMapper objectMapper;
-
     private final LectureService lectureService;
 
     private final ComplaintRepository complaintRepository;
@@ -94,10 +89,9 @@ public class CourseResource {
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
-            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -107,7 +101,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
@@ -117,7 +110,6 @@ public class CourseResource {
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-
     }
 
     /**
@@ -168,7 +160,7 @@ public class CourseResource {
             return createCourse(updatedCourse);
         }
         Optional<Course> existingCourse = courseRepository.findById(updatedCourse.getId());
-        if (!existingCourse.isPresent()) {
+        if (existingCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -292,21 +284,15 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
+        Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
 
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // get all participations of this user
-        // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
-        // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
-        // this would also improve the performance for other REST calls
-        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentId(user.getId(), activeExercises);
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
-        long exerciseCount = 0;
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-            // Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
-            // course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
@@ -314,11 +300,10 @@ public class CourseResource {
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
-                exerciseCount++;
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + user.getLogin());
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
+                + " exercises for user " + user.getLogin());
         return courses;
     }
 
@@ -352,7 +337,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            Long numberOfSubmissions = 0L;
+            long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -360,7 +345,7 @@ public class CourseResource {
                 numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -465,7 +450,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            Long numberOfParticipations = 0L;
+            long numberOfParticipations = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -473,9 +458,9 @@ public class CourseResource {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            Long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
-            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
+            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfParticipations);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -509,21 +494,21 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
-        Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
                 ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        Long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
                 ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
