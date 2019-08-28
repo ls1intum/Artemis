@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
+import { adminState } from './admin.route';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    adminState,
     AuditsComponent,
     JhiConfigurationComponent,
     JhiHealthCheckComponent,
@@ -25,10 +25,12 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
+const ENTITY_STATES = [...adminState];
+
 @NgModule({
     imports: [
+        RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
-        RouterModule.forChild(adminState),
         FormDateTimePickerModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
