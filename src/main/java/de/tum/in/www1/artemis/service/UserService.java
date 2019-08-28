@@ -433,7 +433,7 @@ public class UserService {
     }
 
     /**
-     * Get user with groups and authorities by given login string
+     * Get user with authorities by given login string
      * @param login user login string
      * @return existing user with given login string or null
      */

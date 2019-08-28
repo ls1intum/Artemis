@@ -1,4 +1,4 @@
-import { ISubmissionWebsocketService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/submission/programming-submission-websocket.service';
+import { ISubmissionWebsocketService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission-websocket.service';
 import { of } from 'rxjs';
 
 export class MockSubmissionWebsocketService implements ISubmissionWebsocketService {

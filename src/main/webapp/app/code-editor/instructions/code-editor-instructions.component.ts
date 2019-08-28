@@ -6,8 +6,10 @@ import { Subscription } from 'rxjs';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Participation } from '../../entities/participation';
 import { WindowRef } from '../../core/websocket/window.service';
-import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
+import { ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -44,28 +46,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
         this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
-        this.interactResizable = interact('.resizable-instructions')
-            .resizable({
-                // Enable resize from left edge; triggered by class rg-left
-                edges: { left: '.rg-left', right: false, bottom: false, top: false },
-                // Set maximum width
-                restrictSize: {
-                    min: { width: this.minInstructionsWidth },
-                    max: { width: this.initialInstructionsWidth },
-                },
-                inertia: true,
-            })
-            .on('resizestart', function(event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function(event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function(event: any) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-            });
+        this.interactResizable = interact('.resizable-instructions');
 
         this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
             if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
