@@ -548,7 +548,6 @@ public abstract class Exercise implements Serializable {
      * @param isStudent defines if the current user is a student
      */
     public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
-
         // remove the unnecessary inner course attribute
         setCourse(null);
 
@@ -565,32 +564,81 @@ public abstract class Exercise implements Serializable {
             }
         }
 
-        // add results to participation
-        // TODO: change: we now want to take into account the submissions and their result
+        // add relevant submission with its result to participation
         if (participation != null) {
+            // find appropriate submission
+            Submission submission = findAppropriateSubmission(participation.getSubmissions());
 
-            // only transmit the relevant result
-            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
-
-            // add results to json
-            if (result != null) {
-                // remove inner participation from result
-                result.setParticipation(null);
-
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    result.filterSensitiveInformation();
-                }
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getResult() != null) {
+                submission.getResult().filterSensitiveInformation();
             }
-            participation.setResults(results);
+
+            // add submission to participation
+            participation.setSubmissions(Sets.newHashSet(submission));
+
+            // remove unnecessary results from participation
+            participation.setResults(null);
+
             // remove inner exercise from participation
             participation.setExercise(null);
 
             // add participation into an array
             setParticipations(Sets.newHashSet(participation));
         }
+    }
+
+    /**
+     * Filter for appropriate submission. Relevance in the following order:
+     * - submission with rated result
+     * - submission with unrated result (late submission)
+     * - no submission with any result > latest submission
+     *
+     * @param submissions that need to be filtered
+     * @return filtered submission
+     */
+    private Submission findAppropriateSubmission(Set<Submission> submissions) {
+        List<Submission> submissionsWithRatedResult = new ArrayList<>();
+        ;
+        List<Submission> submissionsWithUnratedResult = new ArrayList<>();
+        ;
+        List<Submission> submissionsWithoutResult = new ArrayList<>();
+
+        for (Submission submission : submissions) {
+            Result result = submission.getResult();
+            if (result != null) {
+                if (result.isRated()) {
+                    submissionsWithRatedResult.add(submission);
+                }
+                else {
+                    submissionsWithUnratedResult.add(submission);
+                }
+            }
+            else {
+                submissionsWithoutResult.add(submission);
+            }
+        }
+
+        Comparator<Submission> comparator = ((Submission s1, Submission s2) -> {
+            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null)
+                return 0;
+            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
+        });
+
+        if (submissionsWithRatedResult.size() > 0) {
+            submissionsWithRatedResult.sort(comparator);
+            return submissionsWithRatedResult.get(submissionsWithRatedResult.size() - 1);
+        }
+        else if (submissionsWithUnratedResult.size() > 0) {
+            submissionsWithUnratedResult.sort(comparator);
+            return submissionsWithUnratedResult.get(submissionsWithUnratedResult.size() - 1);
+        }
+        else if (submissionsWithoutResult.size() > 0) {
+            submissionsWithoutResult.sort(comparator);
+            return submissionsWithoutResult.get(submissionsWithoutResult.size() - 1);
+        }
+
+        return null;
     }
 
     @Override

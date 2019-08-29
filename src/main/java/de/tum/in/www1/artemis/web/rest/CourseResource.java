@@ -289,26 +289,15 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
 
-        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
-        log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
-
-        // TODO: use the call 'participationService.findWithSubmissionsWithResultByStudentId' in the future and filter for the right submission + result depending on the exercise
         // type
         Set<Exercise> activeExercises = courses.stream().flatMap(c -> c.getExercises().stream()).collect(Collectors.toSet());
 
-        long startFirstCall = System.currentTimeMillis();
-        List<StudentParticipation> participationWithResults = participationService.findWithResultsByStudentId(user.getId(), activeExercises);
-        log.info("1st participations call took " + (System.currentTimeMillis() - startFirstCall) + "ms for " + participationWithResults.size() + " participations with "
-                + participationWithResults.stream().mapToLong(p -> p.getResults().size()).sum() + " results");
-
-        long startSecondCall = System.currentTimeMillis();
-        List<StudentParticipation> participationsWithSubmissionsAndResults = participationService.findWithSubmissionsWithResultByStudentId(user.getId(), activeExercises);
-        log.info("2nd participations call took " + (System.currentTimeMillis() - startSecondCall) + "ms for " + participationsWithSubmissionsAndResults.size()
-                + " participations with " + participationsWithSubmissionsAndResults.stream().mapToLong(p -> p.getSubmissions().size()).sum() + " submissions and results.");
+        long startParticipationCall = System.currentTimeMillis();
+        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentId(user.getId(), activeExercises);
+        log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentId in " + (System.currentTimeMillis() - startParticipationCall) + "ms");
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);

@@ -618,17 +618,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations for the given student including all results
-     *
-     * @param username the username of the student
-     * @return the list of participations of the given student including all results
-     */
-    @Transactional(readOnly = true)
-    public List<StudentParticipation> findWithResultsByStudentUsername(String username) {
-        return studentParticipationRepository.findByStudentUsernameWithEagerResults(username);
-    }
-
-    /**
      * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
      *
      * @param buildPlanId the id of build plan
