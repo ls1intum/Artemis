@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -648,6 +649,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>) buildResultDetails.get("details");
+            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
+                .getProgrammingLanguage();
             if (!details.isEmpty()) {
                 result.setHasFeedback(true);
             }
@@ -659,19 +662,28 @@ public class BambooService implements ContinuousIntegrationService {
                 Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
                 List<Map<String, Object>> errors = (List<Map<String, Object>>) errorsMap.get("error");
 
-                String errorMessageString = "";
-                for (Map<String, Object> error : errors) {
-                    //Splitting string at the first linebreak to only get the first line of the Exception
-                    errorMessageString += ((String) error.get("message")).split("\\n", 2)[0] + "\n";
-                }
+                final StringBuilder errorMessageString = new StringBuilder();
+                errors.forEach(error -> {
+                    final String message = (String) error.get("message");
+                    errorMessageString.append(processErrorMessage(programmingLanguage, message)).append("\\n");
+                });
 
-                createAutomaticFeedback(result, methodName, false, errorMessageString);
+                createAutomaticFeedback(result, methodName, false, errorMessageString.toString());
             }
         } catch (Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
         }
 
         return result.getFeedbacks();
+    }
+
+    private String processErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return message.split("\\n", 2)[0]
+                .replace("java.lang.AssertionError: ", "");
+        }
+
+        return message;
     }
 
     /**
@@ -705,6 +717,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs;
+            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
+                .getProgrammingLanguage();
 
             for (Map<String, Object> job : castedJobs) {
 
@@ -714,18 +728,12 @@ public class BambooService implements ContinuousIntegrationService {
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     List<String> errors = (List<String>) failedTest.get("errors");
-                    String errorMessageString = "";
-                    for (String error : errors) {
-                        //Splitting string at the first linebreak to only get the first line of the Exception
-                        errorMessageString += error.split("\\n", 2)[0] + "\n";
-                    }
-
-                    //TODO: if PE.Language == C, do not split, else do split (take only first line)
-                    //TODO: filter java.lang.AssertionError
+                    final StringBuilder errorMessageString = new StringBuilder();
+                    errors.forEach(error -> errorMessageString.append(processErrorMessage(programmingLanguage, error)));
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
-                    createAutomaticFeedback(result, methodName, false, errorMessageString);
+                    createAutomaticFeedback(result, methodName, false, errorMessageString.toString());
                 }
 
                 // 2) add feedback for passed test cases
