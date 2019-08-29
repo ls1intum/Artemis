@@ -36,7 +36,7 @@ describe('SubmissionService', () => {
         text: 'asdfasdfasdfasdf',
     } as TextSubmission;
 
-    const url = `api/participation/${participation.id}/submissions`;
+    const url = `api/participations/${participation.id}/submissions`;
 
     beforeEach(async(() => {
         httpService = new MockHttpService();

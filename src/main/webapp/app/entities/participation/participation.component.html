@@ -44,7 +44,7 @@
                 <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a routerLink="/participation/{{ participation.id }}/submissions">{{ participation.id }}</a>
+                            <a routerLink="/participations/{{ participation.id }}/submissions">{{ participation.id }}</a>
                         </div>
                         <ng-template #displayId>
                             {{ participation.id }}
@@ -72,7 +72,7 @@
                             <button
                                 type="submit"
                                 *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: 'participation/' + participation.id + '/delete' } }]"
+                                [routerLink]="['/', { outlets: { popup: 'participations/' + participation.id + '/delete' } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1"
