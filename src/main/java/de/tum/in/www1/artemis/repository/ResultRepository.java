@@ -92,7 +92,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
-    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(long exerciseId, boolean rated, AssessmentType assessmentType);
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(long exerciseId, boolean rated,
+            List<AssessmentType> assessmentType);
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 

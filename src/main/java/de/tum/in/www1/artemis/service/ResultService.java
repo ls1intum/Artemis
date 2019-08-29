@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.Arrays.asList;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -330,9 +332,8 @@ public class ResultService {
      */
     @Transactional(readOnly = true)
     public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(exerciseId, true, AssessmentType.AUTOMATIC)
-                + resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeAndCompletionDateIsNotNull(exerciseId, true,
-                        AssessmentType.SEMI_AUTOMATIC);
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
+                asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
     }
 
     /**
