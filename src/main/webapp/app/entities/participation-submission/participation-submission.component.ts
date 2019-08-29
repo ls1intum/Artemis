@@ -6,6 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -13,7 +14,7 @@ import { of } from 'rxjs';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    submissions: any;
+    submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
 
@@ -36,8 +37,10 @@ export class ParticipationSubmissionComponent implements OnInit {
                 catchError(() => of([])),
             )
             .subscribe(submissions => {
-                this.submissions = submissions;
-                this.isLoading = false;
+                if (submissions) {
+                    this.submissions = submissions;
+                    this.isLoading = false;
+                }
             });
     }
 }
