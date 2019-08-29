@@ -1,19 +1,3 @@
-$titlebar-height: 65px;
-
-.top-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    jhi-alert {
-        font-size: initial;
-    }
-}
-
-.row-container {
-    display: flex;
-    align-items: center;
-}
-
 .assessment-container {
     display: flex;
     min-height: calc(100vh - 173px);
