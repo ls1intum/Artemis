@@ -98,6 +98,37 @@ export class ParticipationService {
         });
     }
 
+    mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
+        const combinedParticipation = new ProgrammingExerciseStudentParticipation();
+        if (participations && participations.length > 0) {
+            combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
+            combinedParticipation.initializationState = participations[0].initializationState;
+            combinedParticipation.initializationDate = participations[0].initializationDate;
+            combinedParticipation.presentationScore = participations[0].presentationScore;
+            combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            this.mergeResultsAndSubmissions(combinedParticipation, participations);
+        }
+        return combinedParticipation;
+    }
+
+    mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation {
+        const combinedParticipation = new StudentParticipation();
+        if (participations && participations.length > 0) {
+            this.mergeResultsAndSubmissions(combinedParticipation, participations);
+        }
+        return combinedParticipation;
+    }
+
+    public convertParticipationsDateFromServer(participations: StudentParticipation[]) {
+        const convertedParticipations: StudentParticipation[] = [];
+        if (participations != null && participations.length > 0) {
+            participations.forEach((participation: StudentParticipation) => {
+                convertedParticipations.push(this.convertParticipationDateFromServer(participation));
+            });
+        }
+        return convertedParticipations;
+    }
+
     protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
         const copy: StudentParticipation = Object.assign({}, participation, {
             initializationDate: participation.initializationDate != null && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
@@ -139,16 +170,6 @@ export class ParticipationService {
         return participation;
     }
 
-    public convertParticipationsDateFromServer(participations: StudentParticipation[]) {
-        const convertedParticipations: StudentParticipation[] = [];
-        if (participations != null && participations.length > 0) {
-            participations.forEach((participation: StudentParticipation) => {
-                convertedParticipations.push(this.convertParticipationDateFromServer(participation));
-            });
-        }
-        return convertedParticipations;
-    }
-
     protected convertResultsDateFromServer(results: Result[]) {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
@@ -173,19 +194,6 @@ export class ParticipationService {
         return convertedSubmissions;
     }
 
-    mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
-        const combinedParticipation = new ProgrammingExerciseStudentParticipation();
-        if (participations && participations.length > 0) {
-            combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
-            combinedParticipation.initializationState = participations[0].initializationState;
-            combinedParticipation.initializationDate = participations[0].initializationDate;
-            combinedParticipation.presentationScore = participations[0].presentationScore;
-            combinedParticipation.buildPlanId = participations[0].buildPlanId;
-            this.mergeResultsAndSubmissions(combinedParticipation, participations);
-        }
-        return combinedParticipation;
-    }
-
     private mergeResultsAndSubmissions(combinedParticipation: StudentParticipation, participations: StudentParticipation[]) {
         combinedParticipation.id = participations[0].id;
         combinedParticipation.initializationState = participations[0].initializationState;
@@ -204,13 +212,5 @@ export class ParticipationService {
                     : participation.submissions;
             }
         });
-    }
-
-    mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation {
-        const combinedParticipation = new StudentParticipation();
-        if (participations && participations.length > 0) {
-            this.mergeResultsAndSubmissions(combinedParticipation, participations);
-        }
-        return combinedParticipation;
     }
 }
