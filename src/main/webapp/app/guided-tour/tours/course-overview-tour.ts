@@ -1,6 +1,6 @@
-import { Orientation } from 'app/guided-tour/guided-tour.constants';
+import { LinkType, Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextLinkTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -70,10 +70,13 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.LEFT,
             highlightPadding: 10,
         }),
-        new TextTourStep({
+        new TextLinkTourStep({
             selector: '.footer .col-sm-6',
             headlineTranslateKey: 'tour.course-overview.contact.headline',
             contentTranslateKey: 'tour.course-overview.contact.content',
+            externalUrlTranslateKey: 'tour.course-overview.contact.link',
+            externalUrl: 'https://github.com/ls1intum/ArTEMiS',
+            linkType: LinkType.BUTTON,
             orientation: Orientation.TOPLEFT,
         }),
     ],

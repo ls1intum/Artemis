@@ -19,19 +19,20 @@ export abstract class TourStep {
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
      */
     permission?: string[];
-
-    constructor(data: any) {
-        Object.assign(this, data);
-    }
 }
 
 export class TextTourStep extends TourStep {
     /** Translation key for the title **/
     headlineTranslateKey: string;
     /** Translation key for the title **/
-    subHeadlineTranslateKey: string;
+    subHeadlineTranslateKey?: string;
     /** Translation key for the content **/
     contentTranslateKey: string;
+
+    constructor(tourStep: TextTourStep) {
+        super();
+        Object.assign(this, tourStep);
+    }
 }
 
 export class TextLinkTourStep extends TextTourStep {
@@ -41,14 +42,29 @@ export class TextLinkTourStep extends TextTourStep {
     externalUrlTranslateKey: string;
     /** Link type, either link or button **/
     linkType: LinkType;
+
+    constructor(tourStep: TextLinkTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
 }
 
 export class ImageTourStep extends TextTourStep {
     /** Image url **/
     imageUrl: string;
+
+    constructor(tourStep: ImageTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
 }
 
 export class VideoTourStep extends TextTourStep {
     /** Embed video url **/
     videoUrl: string;
+
+    constructor(tourStep: VideoTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
 }
