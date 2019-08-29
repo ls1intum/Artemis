@@ -131,7 +131,8 @@ public class CompassService {
         }
 
         // Print statistics of the current modeling exercise for internal analysis. Disabled by default due to performance reasons.
-        // compassCalculationEngines.get(exerciseId).printStatistic(exerciseId, resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
+        // compassCalculationEngines.get(exerciseId)
+        // .printStatistic(exerciseId, resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
 
         List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
 

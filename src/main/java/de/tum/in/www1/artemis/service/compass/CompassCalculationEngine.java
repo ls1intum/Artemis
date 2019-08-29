@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -538,20 +538,24 @@ public class CompassCalculationEngine implements CalculationEngine {
             totalNumberOfAdaptedFeedback += referenceFeedback.stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED).count();
             totalNumberOfManualFeedback += referenceFeedback.stream().filter(feedback -> feedback.getType() == FeedbackType.MANUAL).count();
 
-            numberOfAssessedClasses += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("Class") || feedback.getReferenceElementType().equals("AbstractClass")
-                || feedback.getReferenceElementType().equals("Interface")|| feedback.getReferenceElementType().equals("Enumeration")).count();
+            numberOfAssessedClasses += referenceFeedback.stream()
+                    .filter(feedback -> feedback.getReferenceElementType().equals("Class") || feedback.getReferenceElementType().equals("AbstractClass")
+                            || feedback.getReferenceElementType().equals("Interface") || feedback.getReferenceElementType().equals("Enumeration"))
+                    .count();
             numberOfAssessedAttrbutes += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("ClassAttribute")).count();
             numberOfAssessedMethods += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("ClassMethod")).count();
-            numberOfAssessedAssociations += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("ClassBidirectional")
-                || feedback.getReferenceElementType().equals("ClassUnidirectional") || feedback.getReferenceElementType().equals("ClassAggregation")
-                || feedback.getReferenceElementType().equals("ClassInheritance") || feedback.getReferenceElementType().equals("ClassDependency")
-                || feedback.getReferenceElementType().equals("ClassComposition") || feedback.getReferenceElementType().equals("ClassRealization")).count();
+            numberOfAssessedAssociations += referenceFeedback.stream()
+                    .filter(feedback -> feedback.getReferenceElementType().equals("ClassBidirectional") || feedback.getReferenceElementType().equals("ClassUnidirectional")
+                            || feedback.getReferenceElementType().equals("ClassAggregation") || feedback.getReferenceElementType().equals("ClassInheritance")
+                            || feedback.getReferenceElementType().equals("ClassDependency") || feedback.getReferenceElementType().equals("ClassComposition")
+                            || feedback.getReferenceElementType().equals("ClassRealization"))
+                    .count();
             numberOfAssessedPackages += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("Package")).count();
 
             for (Feedback feedback : referenceFeedback) {
                 int feedbackLength = 0;
 
-                if(feedback.getText() != null) {
+                if (feedback.getText() != null) {
                     feedbackLength = feedback.getText().length();
                 }
 
@@ -559,13 +563,15 @@ public class CompassCalculationEngine implements CalculationEngine {
 
                 if (feedback.getCredits() > 0) {
                     totalLengthOfPositiveFeedback += feedbackLength;
-                    totalNumberOfPositiveFeedbackItems ++;
-                } else if (feedback.getCredits() == 0) {
+                    totalNumberOfPositiveFeedbackItems++;
+                }
+                else if (feedback.getCredits() == 0) {
                     totalLengthOfNeutralFeedback += feedbackLength;
-                    totalNumberOfNeutralFeedbackItems ++;
-                } else if (feedback.getCredits() < 0) {
+                    totalNumberOfNeutralFeedbackItems++;
+                }
+                else if (feedback.getCredits() < 0) {
                     totalLengthOfNegativeFeedback += feedbackLength;
-                    totalNumberOfNegativeFeedbackItems ++;
+                    totalNumberOfNegativeFeedbackItems++;
                 }
             }
         }
@@ -581,15 +587,19 @@ public class CompassCalculationEngine implements CalculationEngine {
 
         for (UMLElement element : modelElementMapping.keySet()) {
             if (element instanceof UMLClass) {
-                numberOfClasses ++;
-            } else if (element instanceof UMLAttribute) {
-                numberOfAttrbutes ++;
-            } else if (element instanceof UMLMethod) {
-                numberOfMethods ++;
-            } else if (element instanceof UMLClassRelationship) {
-                numberOfAssociations ++;
-            } else if (element instanceof UMLPackage) {
-                numberOfPackages ++;
+                numberOfClasses++;
+            }
+            else if (element instanceof UMLAttribute) {
+                numberOfAttrbutes++;
+            }
+            else if (element instanceof UMLMethod) {
+                numberOfMethods++;
+            }
+            else if (element instanceof UMLClassRelationship) {
+                numberOfAssociations++;
+            }
+            else if (element instanceof UMLPackage) {
+                numberOfPackages++;
             }
         }
 
@@ -611,20 +621,21 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Number of assessed classes: " + numberOfAssessedClasses + " (" + Math.round(numberOfAssessedClasses * 10000.0 / numberOfClasses) / 100.0 + "%)" + "\n");
         log.debug("Number of assessed attributes: " + numberOfAssessedAttrbutes + " (" + Math.round(numberOfAssessedAttrbutes * 10000.0 / numberOfAttrbutes) / 100.0 + "%)" + "\n");
         log.debug("Number of assessed methods: " + numberOfAssessedMethods + " (" + Math.round(numberOfAssessedMethods * 10000.0 / numberOfMethods) / 100.0 + "%)" + "\n");
-        log.debug("Number of assessed associations: " + numberOfAssessedAssociations + " (" + Math.round(numberOfAssessedAssociations * 10000.0 / numberOfAssociations) / 100.0 + "%)" + "\n");
+        log.debug("Number of assessed associations: " + numberOfAssessedAssociations + " (" + Math.round(numberOfAssessedAssociations * 10000.0 / numberOfAssociations) / 100.0
+                + "%)" + "\n");
         log.debug("Number of assessed packages: " + numberOfAssessedPackages + " (" + Math.round(numberOfAssessedPackages * 10000.0 / numberOfPackages) / 100.0 + "%)" + "\n");
         double feedbackPerAssessment = totalNumberOfFeedback * 1.0 / finishedResults.size();
         log.debug("Average number of feedback elements per assessment: " + feedbackPerAssessment + "\n\n\n");
 
-
         // Feedback type
         log.debug("################################################## Feedback type ##################################################" + "\n");
 
-        log.debug("Automatic feedback: " + totalNumberOfAutomaticFeedback + " (" + Math.round(totalNumberOfAutomaticFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
+        log.debug("Automatic feedback: " + totalNumberOfAutomaticFeedback + " (" + Math.round(totalNumberOfAutomaticFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)"
+                + "\n");
         log.debug("Adapted feedback: " + totalNumberOfAdaptedFeedback + " (" + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
         log.debug("Manual feedback: " + totalNumberOfManualFeedback + " (" + Math.round(totalNumberOfManualFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
-        log.debug("Amount of automatic feedback that was adapted: " + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / (totalNumberOfAutomaticFeedback + totalNumberOfAdaptedFeedback)) / 100.0 + "%\n\n\n");
-
+        log.debug("Amount of automatic feedback that was adapted: "
+                + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / (totalNumberOfAutomaticFeedback + totalNumberOfAdaptedFeedback)) / 100.0 + "%\n\n\n");
 
         // Feedback length
         log.debug("################################################## Feedback length ##################################################" + "\n");
@@ -637,7 +648,6 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Average length of neutral feedback: " + totalLengthOfNeutralFeedback * 1.0 / totalNumberOfNeutralFeedbackItems + "\n");
         log.debug("Total amount of negative feedback: " + totalNumberOfNegativeFeedbackItems + "\n");
         log.debug("Average length of negative feedback: " + totalLengthOfNegativeFeedback * 1.0 / totalNumberOfNegativeFeedbackItems + "\n\n\n");
-
 
         // Similarity sets
         log.debug("################################################## Similarity sets ##################################################" + "\n");
@@ -656,7 +666,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 numberOfElementsInSimilaritySets += feedbackList.size();
             }
 
-            for (Score score : assessment.getContextScoreList().values()){
+            for (Score score : assessment.getContextScoreList().values()) {
                 if (score.getPoints() > 0) {
                     numberOfSimilaritySetsPositiveScore += 1;
                     if (score.getConfidence() >= 0.8) {
@@ -669,12 +679,11 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Number of unique elements (without context) of submitted models: " + modelIndex.getNumberOfUniqueElements() + "\n");
         log.debug("Number of similarity sets (including context) of assessed models: " + numberOfSimilaritySets + "\n");
         log.debug("Average number of elements per similarity set: " + numberOfElementsInSimilaritySets * 1.0 / numberOfSimilaritySets + "\n");
-        //  The optimal correction effort describes the maximum amount of model elements that tutors would have to assess in an optimal scenario
+        // The optimal correction effort describes the maximum amount of model elements that tutors would have to assess in an optimal scenario
         log.debug("Optimal correction effort (# similarity sets / # model elements): " + numberOfSimilaritySets * 1.0 / numberOfElementsInSimilaritySets + "\n");
 
         log.debug("Number of similarity sets with positive score: " + numberOfSimilaritySetsPositiveScore + "\n");
         log.debug("Number of similarity sets with positive score and confidence at least 80%: " + numberOfSimilaritySetsPositiveScoreRegardingConfidence + "\n\n\n");
-
 
         // Variability index
         log.debug("################################################## Variability index ##################################################" + "\n");
@@ -683,17 +692,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / elementsPerModel + "\n");
         log.debug("Variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / elementsPerModel + "\n");
 
-        log.debug("Normalized variability index #1 (positive score): " + (numberOfSimilaritySetsPositiveScore - elementsPerModel) / (numberOfModelElements - elementsPerModel) + "\n");
-        log.debug("Normalized variability index #2 (positive score and confidence >= 80%): " + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - elementsPerModel) / (numberOfModelElements - elementsPerModel) + "\n");
-        log.debug("Normalized variability index #3 (based on \"all\" similarity sets): " + (numberOfSimilaritySets - elementsPerModel) / (numberOfModelElements - elementsPerModel) + "\n");
+        log.debug("Normalized variability index #1 (positive score): " + (numberOfSimilaritySetsPositiveScore - elementsPerModel) / (numberOfModelElements - elementsPerModel)
+                + "\n");
+        log.debug("Normalized variability index #2 (positive score and confidence >= 80%): "
+                + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - elementsPerModel) / (numberOfModelElements - elementsPerModel) + "\n");
+        log.debug("Normalized variability index #3 (based on \"all\" similarity sets): " + (numberOfSimilaritySets - elementsPerModel) / (numberOfModelElements - elementsPerModel)
+                + "\n");
 
         // Alternative calculation of the variability index considering the average feedback items per assessment instead of the average elements per model
         log.debug("Alternative variability index #1 (positive score): " + numberOfSimilaritySetsPositiveScore / feedbackPerAssessment + "\n");
-        log.debug("Alternative variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / feedbackPerAssessment + "\n");
+        log.debug("Alternative variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / feedbackPerAssessment
+                + "\n");
         log.debug("Alternative variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / feedbackPerAssessment + "\n");
 
-        log.debug("Normalized alternative variability index #1 (positive score): " + (numberOfSimilaritySetsPositiveScore - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
-        log.debug("Normalized alternative variability index #2 (positive score and confidence >= 80%): " + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
-        log.debug("Normalized alternative variability index #3 (based on \"all\" similarity sets): " + (numberOfSimilaritySets - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
+        log.debug("Normalized alternative variability index #1 (positive score): "
+                + (numberOfSimilaritySetsPositiveScore - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
+        log.debug("Normalized alternative variability index #2 (positive score and confidence >= 80%): "
+                + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
+        log.debug("Normalized alternative variability index #3 (based on \"all\" similarity sets): "
+                + (numberOfSimilaritySets - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
     }
 }
