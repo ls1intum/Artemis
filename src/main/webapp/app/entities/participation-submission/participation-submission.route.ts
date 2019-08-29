@@ -6,7 +6,7 @@ import { ParticipationSubmissionDeletePopupComponent } from 'app/entities/partic
 
 export const participationSubmissionRoute: Routes = [
     {
-        path: 'participations/:participationId/submissions',
+        path: 'participation/:participationId/submissions',
         component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -18,7 +18,7 @@ export const participationSubmissionRoute: Routes = [
 
 export const participationSubmissionPopupRoute: Routes = [
     {
-        path: 'participations/submission/:id/delete',
+        path: 'participation/submission/:id/delete',
         component: ParticipationSubmissionDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
