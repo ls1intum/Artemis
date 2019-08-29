@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ParticipationService } from 'app/entities/participation';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -14,8 +15,8 @@ import { ParticipationService } from 'app/entities/participation';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    submissions: any;
     participation: any;
+    submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
 
@@ -43,8 +44,10 @@ export class ParticipationSubmissionComponent implements OnInit {
                 catchError(() => of([])),
             )
             .subscribe(submissions => {
-                this.submissions = submissions;
-                this.isLoading = false;
+                if (submissions) {
+                    this.submissions = submissions;
+                    this.isLoading = false;
+                }
             });
 
         this.isLoading = true;
