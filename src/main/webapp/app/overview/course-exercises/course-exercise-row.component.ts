@@ -12,6 +12,7 @@ import { AccountService, WindowRef } from 'app/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -24,6 +25,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly isIntelliJ = isIntelliJ;
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;

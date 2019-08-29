@@ -178,22 +178,6 @@
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
-            jhi-intellij-button
-            (click)="importIntoIntelliJ()"
-            [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            *ngIf="isIntelliJ && !isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
-        ></button>
-        <button
-            jhi-intellij-button
-            (click)="submitChanges()"
-            buttonLabel="Submit"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            *ngIf="isIntelliJ && isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
-        ></button>
-        <button
             jhi-exercise-action-button
             buttonIcon="download"
             [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"

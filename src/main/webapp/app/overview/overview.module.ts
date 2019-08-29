@@ -65,7 +65,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 
-    exports: [],
+    exports: [ExerciseActionButtonComponent],
 })
 export class ArtemisOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

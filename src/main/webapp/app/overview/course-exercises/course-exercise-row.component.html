@@ -58,7 +58,18 @@
             </div>
         </div>
         <div class="row">
+            <jhi-programming-exercise-student-ide-actions
+                *ngIf="isIntelliJ"
+                [smallButtons]="true"
+                [courseId]="course.id"
+                [smallColumns]="true"
+                [equalColumns]="false"
+                [exercise]="exercise"
+                [ngClass]="'mt-2 mb-2'"
+            >
+            </jhi-programming-exercise-student-ide-actions>
             <jhi-exercise-details-student-actions
+                *ngIf="!isIntelliJ"
                 [actionsOnly]="true"
                 [smallButtons]="true"
                 [courseId]="course.id"
