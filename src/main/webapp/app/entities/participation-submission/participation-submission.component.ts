@@ -6,6 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ParticipationService } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -14,10 +15,16 @@ import { of } from 'rxjs';
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
     submissions: any;
+    participation: any;
     eventSubscriber: Subscription;
     isLoading = true;
 
-    constructor(private route: ActivatedRoute, private submissionService: SubmissionService, private eventManager: JhiEventManager) {}
+    constructor(
+        private route: ActivatedRoute,
+        private submissionService: SubmissionService,
+        private participationService: ParticipationService,
+        private eventManager: JhiEventManager,
+    ) {}
 
     ngOnInit() {
         this.setupPage();
@@ -37,6 +44,21 @@ export class ParticipationSubmissionComponent implements OnInit {
             )
             .subscribe(submissions => {
                 this.submissions = submissions;
+                this.isLoading = false;
+            });
+
+        this.isLoading = true;
+
+        this.participationService
+            .find(this.participationId)
+            .pipe(
+                map(({ body }) => body),
+                catchError(() => of([])),
+            )
+            .subscribe(participation => {
+                this.participation = participation;
+                console.log('blub');
+                console.log(participation);
                 this.isLoading = false;
             });
     }
