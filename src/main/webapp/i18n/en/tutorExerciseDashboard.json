@@ -55,6 +55,8 @@
             "numberOfTotalSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
+            "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",
+            "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
             "language": "Language",
             "languages": {

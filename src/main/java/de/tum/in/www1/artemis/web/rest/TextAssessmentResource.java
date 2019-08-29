@@ -94,12 +94,14 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise);
+        checkTextExerciseForRequest(textExercise, user);
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
+                && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
@@ -118,8 +120,9 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise);
+        checkTextExerciseForRequest(textExercise, user);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         if (result.getParticipation().getExercise().getAssessmentDueDate() == null
@@ -127,7 +130,8 @@ public class TextAssessmentResource extends AssessmentResource {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user) && result.getParticipation() != null
+                && result.getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
@@ -145,12 +149,14 @@ public class TextAssessmentResource extends AssessmentResource {
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise);
+        checkTextExerciseForRequest(textExercise, user);
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
+                && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
@@ -169,8 +175,9 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise);
+        checkTextExerciseForRequest(textExercise, user);
         TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
         if (submission.getResult() == null) {
             // if there is no result everything is fine
@@ -196,9 +203,10 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
+        User user = userService.getUserWithGroupsAndAuthorities();
         final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
         final Exercise exercise = result.getParticipation().getExercise();
-        checkAuthorization(exercise);
+        checkAuthorization(exercise, user);
 
         if (!(exercise instanceof TextExercise)) {
             throw new BadRequestAlertException("No text exercise found for the given ID.", "textExercise", "exerciseNotFound");
@@ -217,7 +225,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         textSubmission.getBlocks().sort(byStartIndexReversed);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
@@ -237,11 +245,12 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get data for tutors text assessment exercise: {}, submission: {}", exerciseId, submissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise);
+        checkTextExerciseForRequest(textExercise, user);
 
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
-        if (!textSubmission.isPresent()) {
+        if (textSubmission.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
                     .body(null);
@@ -252,7 +261,6 @@ public class TextAssessmentResource extends AssessmentResource {
         List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId);
 
         if (!participation.getResults().isEmpty()) {
-            User user = userService.getUser();
 
             // TODO: this does not work if we have multiple submissions / results for the same participation
             // this happens some and then, I guess because students press the save/submit button simultaneously multiple times, we actually have about 100 cases in the database
@@ -260,7 +268,7 @@ public class TextAssessmentResource extends AssessmentResource {
                 Result latestResult = participation.findLatestSubmission().get().getResult();
                 User assessor = latestResult.getAssessor();
 
-                if (authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+                if (authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
                     // skip this case as, because instructors are allowed to override assessments
                 }
                 // Another tutor started assessing this submission and hasn't finished yet
@@ -284,7 +292,7 @@ public class TextAssessmentResource extends AssessmentResource {
             ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise) && participation instanceof StudentParticipation) {
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user) && participation instanceof StudentParticipation) {
             ((StudentParticipation) participation).filterSensitiveInformation();
         }
 
@@ -301,10 +309,11 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (!textSubmission.isPresent()) {
+        if (textSubmission.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
                     .body(null);
@@ -312,13 +321,13 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // If the user is not an instructor, and this is not an example submission used for tutorial,
         // do not provide the results
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
         if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
             return forbidden();
         }
 
         // If the user is not at least a tutor for this exercise, return error
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
 
@@ -349,13 +358,12 @@ public class TextAssessmentResource extends AssessmentResource {
      * @throws BadRequestAlertException if no request was found
      *
      */
-    @Nullable
-    private void checkTextExerciseForRequest(TextExercise textExercise) {
+    private void checkTextExerciseForRequest(@Nullable TextExercise textExercise, User user) {
         if (textExercise == null) {
             throw new BadRequestAlertException("No exercise was found for the given ID.", "textExercise", "exerciseNotFound");
         }
 
         validateExercise(textExercise);
-        checkAuthorization(textExercise);
+        checkAuthorization(textExercise, user);
     }
 }

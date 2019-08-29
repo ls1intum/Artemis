@@ -126,6 +126,6 @@ public class StudentParticipation extends Participation {
 
     @Override
     public String toString() {
-        return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + ", exercise=" + exercise + '}';
+        return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + '}';
     }
 }

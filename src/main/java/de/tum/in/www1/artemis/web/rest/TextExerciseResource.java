@@ -257,6 +257,7 @@ public class TextExerciseResource {
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
@@ -277,9 +278,8 @@ public class TextExerciseResource {
                     .body(null);
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins
-        // can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -307,14 +307,14 @@ public class TextExerciseResource {
                 result.setFeedbacks(assessments);
             }
 
-            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
                 result.setAssessor(null);
             }
 
             participation.addSubmissions(textSubmission);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             participation.setStudent(null);
         }
 

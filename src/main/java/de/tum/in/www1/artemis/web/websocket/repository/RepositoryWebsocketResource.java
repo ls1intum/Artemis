@@ -146,7 +146,7 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", error);
             return;
         }
-        catch (IOException | GitAPIException | InterruptedException ex) {
+        catch (GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
@@ -159,8 +159,8 @@ public class RepositoryWebsocketResource {
      * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
      * Map.
      * 
-     * @param submissions
-     * @param repository
+     * @param submissions the file submissions (changes) that should be saved in the repository
+     * @param repository the git repository in which the file changes should be saved
      * @return a map of <filename, error | null>
      */
     private Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {

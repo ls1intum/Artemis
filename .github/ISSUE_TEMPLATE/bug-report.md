@@ -3,7 +3,6 @@ name: "🐛 Bug report"
 about: Something on Artemis is not working as expected? Create a report to help us
   improve.
 labels: bug
-assignees: jpbernius, krusche
 
 ---
 
