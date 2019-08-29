@@ -71,10 +71,7 @@ public class TextAssessmentQueueService {
         List<TextBlock> textBlocks = textSubmission.getBlocks();
         double totalScore = 0.0;
         for (TextBlock textBlock : textBlocks) {
-            if (textBlock.isAssessable()) {
-                continue;
-            }
-            if (textBlock.getCluster() == null) {
+            if (textBlock.isAssessable() || textBlock.getCluster() == null || textBlock.getAddedDistance() == null) {
                 continue;
             }
             double textBlockScore = textBlock.getAddedDistance();
