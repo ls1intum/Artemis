@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,7 +27,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false and not submission.participation is null")
     List<Submission> findAllUnsubmittedModelingAndTextSubmissions();
 
-    /* Get all submissions from a participation_id */
+    /* Get all submissions from a participation_id and load result at the same time */
+    @EntityGraph(attributePaths = { "result" })
     List<Submission> findAllByParticipationId(Long participationId);
 
     /**
