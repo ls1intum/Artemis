@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -129,11 +128,10 @@ public class ExerciseService {
      * @param course corresponding course
      * @param withLtiOutcomeUrlExisting check if only exercises with an exisitng LTI Outcome URL should be returned
      * @param user the user entity
-     * @param principal  corresponding principal
      * @return a List of all Exercises for the given course
      */
     @Transactional(readOnly = true)
-    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
+    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, User user) {
         List<Exercise> exercises = null;
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
@@ -143,7 +141,7 @@ public class ExerciseService {
 
             if (course.isOnlineCourse() && withLtiOutcomeUrlExisting) {
                 // students in only courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal);
+                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
                 exercises = exerciseRepository.findByCourseId(course.getId());
@@ -175,7 +173,23 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public Exercise findOne(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (!exercise.isPresent()) {
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        updateExerciseElementsAfterDatabaseFetch(exercise.get());
+        return exercise.get();
+    }
+
+    /**
+     * Get one exercise by exerciseId with its categories
+     *
+     * @param exerciseId the exerciseId of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Exercise findOneWithCategories(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
+        if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
         updateExerciseElementsAfterDatabaseFetch(exercise.get());
@@ -193,14 +207,14 @@ public class ExerciseService {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
 
-        if (!exercise.isPresent()) {
+        if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
         updateExerciseElementsAfterDatabaseFetch(exercise.get());
         return exercise.get();
     }
 
-    // TODO: we could move this to Exercise.java and override it in the subclasses to avoid the if-else statements
+    // TODO this is not a nice solution, we unproxy elements and potentially hide them again afterwards.
     private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
         if (exercise instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise;

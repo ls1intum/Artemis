@@ -1,2 +1,2 @@
-export * from './programming-submission-websocket.service';
+export * from './programming-submission.service';
 export { ArtemisProgrammingSubmissionModule } from './programming-submission.module';

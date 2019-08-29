@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionWebsocketService } from 'app/programming-submission/programming-submission-websocket.service';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
-    constructor(submissionService: ProgrammingSubmissionWebsocketService) {
+    constructor(submissionService: ProgrammingSubmissionService) {
         super(submissionService);
     }
     triggerBuild = (event: any) => {

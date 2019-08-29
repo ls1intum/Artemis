@@ -35,16 +35,19 @@ public class TextSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            SimpMessageSendingOperations messagingTemplate) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.textAssessmentQueueService = textAssessmentQueueService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -143,6 +146,9 @@ public class TextSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
+        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
+            return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
+        }
         Random r = new Random();
         List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
                 .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
@@ -151,6 +157,18 @@ public class TextSubmissionService extends SubmissionService {
             return Optional.empty();
         }
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    /**
+     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
+     * The corresponding TextBlocks and Participations are retrieved from the database
+     * @param exercise Exercise for which all assessed submissions should be retrieved
+     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
+     *
+     */
+    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
+        return textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
+                .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
     }
 
     /**

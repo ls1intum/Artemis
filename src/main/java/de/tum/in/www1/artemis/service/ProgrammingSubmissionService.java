@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -123,7 +124,8 @@ public class ProgrammingSubmissionService {
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      * @throws IllegalAccessException if the user does not have access to the given participation.
      */
-    public ProgrammingSubmission getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
+    @Transactional(readOnly = true)
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
@@ -135,12 +137,29 @@ public class ProgrammingSubmissionService {
             throw new IllegalAccessException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
+        return findLatestPendingSubmissionForParticipation(participationId);
+    }
+
+    /**
+     * For every student participation of a programming exercise, try to find a pending submission.
+     *
+     * @param programmingExerciseId for which to search pending submissions
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
+        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
+    }
+
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
         Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (!submissionOpt.isPresent() || submissionOpt.get().getResult() != null) {
+        if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
-            return null;
+            return Optional.empty();
         }
-        return submissionOpt.get();
+
+        return submissionOpt;
     }
 
     /**

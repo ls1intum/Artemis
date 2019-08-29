@@ -27,11 +27,13 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
         interact('.expanded-instructions')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                // Set maximum width
-                restrictSize: {
-                    min: { width: 215 },
-                    max: { width: 1000 },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: 215, height: 0 },
+                        max: { width: 1000, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

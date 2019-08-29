@@ -8,7 +8,7 @@ import { CookieModule } from 'ngx-cookie';
 import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
 
 @NgModule({
-    imports: [NgbModule.forRoot(), InfiniteScrollModule, CookieModule.forRoot(), ArtemisIconsModule],
+    imports: [NgbModule, InfiniteScrollModule, CookieModule.forRoot(), ArtemisIconsModule],
     exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, ArtemisIconsModule],
 })
 export class ArtemisSharedLibsModule {
