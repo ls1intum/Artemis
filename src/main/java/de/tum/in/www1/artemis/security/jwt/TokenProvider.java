@@ -83,7 +83,7 @@ public class TokenProvider implements InitializingBean {
     }
 
     /**
-     * Generates a access token that allows user to download a file. This token is only valid for the given validity period.
+     * Generates an access token that allows a user to download a file. This token is only valid for the given validity period.
      *
      * @param authentication Currently active authentication mostly the currently logged in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
