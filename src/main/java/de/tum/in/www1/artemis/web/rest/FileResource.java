@@ -250,7 +250,8 @@ public class FileResource {
         }
         if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
             log.info("Attachment with invalid token was accessed");
-            return ResponseEntity.status(403).body("You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture");
+            return ResponseEntity.status(403)
+                    .body("You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture");
         }
         Lecture lecture = optionalLecture.get();
         try {
