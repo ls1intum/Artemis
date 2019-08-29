@@ -1,5 +1,4 @@
-import { APP_INITIALIZER, Injector, NgModule } from '@angular/core';
-import { createCustomElement } from '@angular/elements';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IntellijButtonComponent } from 'app/intellij/intellij-button/intellij-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -9,15 +8,13 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisResultModule } from 'app/entities/result';
 import { MomentModule } from 'ngx-moment';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { ProgrammingExerciseStudentIdeActionsComponent } from './programming-exercise-student-ide-actions/programming-exercise-student-ide-actions.component';
-import { ArtemisOverviewModule } from 'app/overview';
 
 export function initJavaBridge(bridge: JavaBridgeService) {
     return () => bridge.initBridge();
 }
 
 @NgModule({
-    declarations: [IntellijButtonComponent, ProgrammingExerciseStudentIdeActionsComponent],
+    declarations: [IntellijButtonComponent],
     imports: [
         CommonModule,
         FontAwesomeModule,
@@ -26,9 +23,8 @@ export function initJavaBridge(bridge: JavaBridgeService) {
         ArtemisSharedModule,
         ArtemisResultModule,
         MomentModule,
-        ArtemisOverviewModule,
     ],
-    exports: [IntellijButtonComponent, ProgrammingExerciseStudentIdeActionsComponent],
+    exports: [IntellijButtonComponent],
     providers: [JavaBridgeService, { provide: APP_INITIALIZER, useFactory: initJavaBridge, deps: [JavaBridgeService], multi: true }],
 })
 export class IntellijModule {}

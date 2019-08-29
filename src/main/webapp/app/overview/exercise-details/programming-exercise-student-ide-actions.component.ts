@@ -2,7 +2,6 @@ import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course';
-import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
@@ -13,7 +12,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
     templateUrl: './programming-exercise-student-ide-actions.component.html',
-    styleUrls: ['../../overview/course-overview.scss'],
+    styleUrls: ['../course-overview.scss'],
     providers: [JhiAlertService, SourceTreeService],
 })
 export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
@@ -37,7 +36,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private javaBridge: JavaBridgeService,
-        private router: Router,
     ) {}
 
     ngOnInit(): void {
