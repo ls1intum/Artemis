@@ -347,6 +347,7 @@ task buildJarForDocker (type: Exec) {
 // 2) Execute tests:                ./gradlew executeTests
 // 3) Check Java code format:       ./gradlew spotlessCheck
 // 4) Apply Java code formatter:    ./gradlew spotlessApply
-// 4) Find dependency updates:      ./gradlew dependencyUpdates
-// 5) Check JavaDoc:                ./gradlew checkstyleMain
-// 6) Generate liquibase diff:      ./gradlew liquibaseDiffChangelog
+// 5) Find dependency updates:      ./gradlew dependencyUpdates
+// 6) Check JavaDoc:                ./gradlew checkstyleMain
+// 7) Generate Liquibase diff:      ./gradlew liquibaseDiffChangelog
+// 8) Clear Liquibase checksums:    ./gradlew liquibaseClearChecksums

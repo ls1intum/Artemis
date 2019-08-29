@@ -66,6 +66,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Initial subscriptions for GuidedTourCurrentStepStream, resize event and scroll event
      */
     public ngAfterViewInit(): void {
+        this.guidedTourService.init();
         this.subscribeToGuidedTourCurrentStepStream();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
