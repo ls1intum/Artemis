@@ -32,7 +32,6 @@ export abstract class Participation implements BaseEntity {
     public presentationScore: number;
     public results: Result[];
     public submissions: Submission[];
-    public latestSubmissionDate: Moment | null;
     public student: User;
     public exercise: Exercise;
     public type: ParticipationType;
