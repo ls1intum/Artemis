@@ -508,6 +508,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         return Math.abs(score1 - score2) < Constants.COMPASS_SCORE_EQUALITY_THRESHOLD;
     }
 
+    @Override
     public void printStatistic(long exerciseId, List<Result> finishedResults) {
         log.debug("Statistics for exercise " + exerciseId + "\n\n\n");
 
