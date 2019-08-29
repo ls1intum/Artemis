@@ -102,4 +102,11 @@ public interface CalculationEngine {
      */
     double getConfidenceForElement(String elementId, long submissionId);
 
+    /**
+     * Used for internal analysis of modeling data. Do not remove, usage is commented out due to performance reasons.
+     *
+     * @param exerciseId the id of the modeling exercise that is analyzed
+     * @param finishedResults the list of finished results, i.e. results for which assessor and completion date is not null
+     */
+    void printStatistic(long exerciseId, List<Result> finishedResults);
 }
