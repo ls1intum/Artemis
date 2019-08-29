@@ -199,12 +199,12 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     isSubmissionInDueTime(): boolean {
-        if (this.participation.latestSubmissionDate && this.participation.exercise.dueDate) {
-            return this.participation.latestSubmissionDate.isBefore(this.participation.exercise.dueDate);
+        if (this.participation.submissions[0] && this.participation.submissions[0].submissionDate && this.participation.exercise.dueDate) {
+            return this.participation.submissions[0].submissionDate.isBefore(this.participation.exercise.dueDate);
         } else if (!this.participation.exercise.dueDate) {
             return true;
         } else {
-            return false; // latestSubmissionDate is null
+            return false;
         }
     }
 
