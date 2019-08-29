@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.Arrays.asList;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -320,6 +322,18 @@ public class ResultService {
     @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
+    }
+
+    /**
+     * Calculate the number of assessments which are either AUTOMATIC or SEMI_AUTOMATIC for a given exercise
+     *
+     * @param exerciseId the exercise we are interested in
+     * @return number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
+                asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
     }
 
     /**
