@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +22,7 @@ public interface GroupNotificationRepository extends JpaRepository<Notification,
             + "((groupNotification.course.instructorGroupName in :#{#currentGroups} AND groupNotification.type = 'INSTRUCTOR') "
             + "or (groupNotification.course.teachingAssistantGroupName in :#{#currentGroups} AND groupNotification.type = 'TA') "
             + "or (groupNotification.course.studentGroupName in :#{#currentGroups} AND groupNotification.type = 'STUDENT'))")
-    List<Notification> findAllRecentNewNotificationsForCurrentUser(@Param("currentGroups") List<String> currentUserGroups,
+    List<Notification> findAllRecentNewNotificationsForCurrentUser(@Param("currentGroups") Set<String> currentUserGroups,
             @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
     List<GroupNotification> findAllByCourseId(Long courseId);

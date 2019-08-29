@@ -10,6 +10,8 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfAssessments;
 
+    private Long numberOfAutomaticAssistedAssessments;
+
     private Long numberOfComplaints;
 
     private Long numberOfOpenComplaints;
@@ -45,6 +47,14 @@ public class StatsForInstructorDashboardDTO {
 
     public void setNumberOfAssessments(Long numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
+    }
+
+    public Long getNumberOfAutomaticAssistedAssessments() {
+        return numberOfAutomaticAssistedAssessments;
+    }
+
+    public void setNumberOfAutomaticAssistedAssessments(Long numberOfAutomaticAssistedAssessments) {
+        this.numberOfAutomaticAssistedAssessments = numberOfAutomaticAssistedAssessments;
     }
 
     public Long getNumberOfComplaints() {

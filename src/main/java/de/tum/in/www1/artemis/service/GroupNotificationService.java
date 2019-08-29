@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -217,7 +218,7 @@ public class GroupNotificationService {
      * @return list of notifications for the current user
      */
     public List<Notification> findAllRecentNewNotificationsForCurrentUser(User currentUser) {
-        List<String> userGroups = currentUser.getGroups();
+        Set<String> userGroups = currentUser.getGroups();
         if (userGroups.size() == 0) {
             return new ArrayList<>();
         }
