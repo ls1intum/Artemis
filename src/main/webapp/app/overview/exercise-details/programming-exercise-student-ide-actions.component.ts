@@ -42,8 +42,14 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         this.javaBridge.state.subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
     }
 
+    /**
+     * Get the participation status of the current exercise depending on if the user has already started the exercise
+     * or not.
+     *
+     * @return The participation status of the current exercise
+     */
     participationStatus(): ParticipationStatus {
-        if (!this.hasParticipations(this.exercise)) {
+        if (!this.hasParticipations()) {
             return ParticipationStatus.UNINITIALIZED;
         } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
@@ -51,18 +57,29 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         return ParticipationStatus.INACTIVE;
     }
 
-    hasParticipations(exercise: Exercise): boolean {
-        return exercise.participations && exercise.participations.length > 0;
+    /**
+     * Determines if the current exercise has any participation. This indirectly reflects, whether the exercise has
+     * already been started or not.
+     *
+     * @return True, if the exercise has any participation, false otherwise
+     */
+    hasParticipations(): boolean {
+        return this.exercise.participations && this.exercise.participations.length > 0;
     }
 
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
-    }
-
+    /**
+     * Get the repo URL of a participation. Can be used to clone from the repo or push to it.
+     *
+     * @param participation The participation for which to get the repository URL
+     * @return The URL of the remote repository in which the user's code referring the the current exercise is stored.
+     */
     repositoryUrl(participation: Participation) {
         return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
 
+    /**
+     * Starts the exercise by initializing a new participation and creating a new personal repository.
+     */
     startExercise() {
         this.exercise.loading = true;
 
@@ -84,10 +101,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             );
     }
 
-    buildSourceTreeUrl(cloneUrl: string): string {
-        return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
-    }
-
+    /**
+     * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
+     */
     importIntoIntelliJ() {
         const title = this.exercise.title;
         const id = this.exercise.id;
@@ -95,6 +111,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         this.javaBridge.clone(repo, title, id, this.courseId);
     }
 
+    /**
+     * Submits the changes made in the IDE by staging everything, committing the changes and pushing them to master.
+     */
     submitChanges() {
         this.javaBridge.submit();
     }
