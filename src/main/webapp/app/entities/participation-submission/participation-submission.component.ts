@@ -6,7 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { ParticipationService } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { Submission } from 'app/entities/submission';
 
 @Component({
@@ -15,7 +15,7 @@ import { Submission } from 'app/entities/submission';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    participation: any;
+    participation: StudentParticipation;
     submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
@@ -37,6 +37,21 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.participationId = +params['participationId'];
         });
 
+        this.participationService
+            .find(this.participationId)
+            .pipe(
+                map(({ body }) => body),
+                catchError(() => of(null)),
+            )
+            .subscribe(participation => {
+                if (participation) {
+                    this.participation = participation;
+                    this.isLoading = false;
+                }
+            });
+
+        this.isLoading = true;
+
         this.submissionService
             .findAllSubmissionsOfParticipation(this.participationId)
             .pipe(
@@ -48,21 +63,6 @@ export class ParticipationSubmissionComponent implements OnInit {
                     this.submissions = submissions;
                     this.isLoading = false;
                 }
-            });
-
-        this.isLoading = true;
-
-        this.participationService
-            .find(this.participationId)
-            .pipe(
-                map(({ body }) => body),
-                catchError(() => of([])),
-            )
-            .subscribe(participation => {
-                this.participation = participation;
-                console.log('blub');
-                console.log(participation);
-                this.isLoading = false;
             });
     }
 }
