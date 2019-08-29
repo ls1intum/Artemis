@@ -41,7 +41,7 @@ public class TextBlock implements Serializable {
     private Integer positionInCluster = null;
 
     @Column(name = "added_distance")
-    private double addedDistance;
+    private Double addedDistance;
 
     @ManyToOne
     @JsonIgnore
@@ -165,7 +165,7 @@ public class TextBlock implements Serializable {
         this.addedDistance = addedDistance;
     }
 
-    public double getAddedDistance() {
+    public Double getAddedDistance() {
         return addedDistance;
     }
 }
