@@ -9,7 +9,7 @@ export const participationSubmissionRoute: Routes = [
         path: 'participation/:participationId/submissions',
         component: ParticipationSubmissionComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -21,7 +21,7 @@ export const participationSubmissionPopupRoute: Routes = [
         path: 'participation/submission/:id/delete',
         component: ParticipationSubmissionDeletePopupComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
