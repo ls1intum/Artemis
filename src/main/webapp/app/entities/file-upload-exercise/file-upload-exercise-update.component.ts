@@ -5,6 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 /* 3rd party */
 import { Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 
 /* application */
@@ -49,16 +50,24 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.activatedRoute.params.subscribe(params => {
             if (params['courseId']) {
                 const courseId = params['courseId'];
-                this.courseService.find(courseId).subscribe(res => {
-                    const course = res.body!;
-                    this.fileUploadExercise.course = course;
-                    this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
-                    this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course.id).subscribe(
-                        (categoryRes: HttpResponse<string[]>) => {
-                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                        },
-                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                    );
+                this.courseService
+                    .find(courseId)
+                    .pipe(filter(res => !!res.body))
+                    .subscribe(res => {
+                        const course = res.body!;
+                        this.fileUploadExercise.course = course;
+                        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
+                        this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course.id).subscribe(
+                            (categoryRes: HttpResponse<string[]>) => {
+                                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                            },
+                            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                        );
+                    });
+            } else if (params['exerciseId']) {
+                const exerciseId = params['exerciseId'];
+                this.fileUploadExerciseService.find(exerciseId).subscribe(res => {
+                    this.fileUploadExercise = res.body!;
                 });
             }
         });
