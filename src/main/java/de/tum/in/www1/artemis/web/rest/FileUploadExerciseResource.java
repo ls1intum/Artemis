@@ -50,7 +50,7 @@ public class FileUploadExerciseResource {
     private final GroupNotificationService groupNotificationService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-                                      CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -77,9 +77,9 @@ public class FileUploadExerciseResource {
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
-                .headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                .body(null);
+                    .headers(
+                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
@@ -88,7 +88,7 @@ public class FileUploadExerciseResource {
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -96,6 +96,7 @@ public class FileUploadExerciseResource {
      *
      * @param fileUploadExercise the fileUploadExercise to update
      * @param notificationText the text shown to students
+     * @param exerciseId the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -103,15 +104,15 @@ public class FileUploadExerciseResource {
     @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-                                                                       @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
-                .headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                .body(null);
+                    .headers(
+                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {

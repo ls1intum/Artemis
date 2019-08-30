@@ -357,8 +357,6 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
-
-
     /**
      * Stores for the given model a submission of the user and initiates the corresponding Result
      *

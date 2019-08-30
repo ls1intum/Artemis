@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +15,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -61,11 +61,11 @@ public class FileUploadExerciseIntegrationTest {
         String filePattern = "Example file pattern";
         FileUploadExercise fileUploadExercise = database.createFileUploadExerciseWithCourse();
         fileUploadExercise.setFilePattern(filePattern);
-        FileUploadExercise receivedfileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
+        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
 
-        assertThat(receivedfileUploadExercise).isNotNull();
-        assertThat(receivedfileUploadExercise.getId()).isNotNull();
-        assertThat(receivedfileUploadExercise.getFilePattern()).isEqualTo(filePattern);
+        assertThat(receivedFileUploadExercise).isNotNull();
+        assertThat(receivedFileUploadExercise.getId()).isNotNull();
+        assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern);
     }
 
     @Test
