@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CourseExerciseService } from 'app/entities/course';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -20,10 +20,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
 import { ArtemisSharedModule } from 'app/shared';
 import { IntellijModule } from 'app/intellij/intellij.module';
-import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisExerciseModule } from 'app/entities/exercise/exercise.module';
-import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
+import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,8 +44,8 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, ArtemisExerciseModule, IntellijModule],
-            declarations: [ProgrammingExerciseStudentIdeActionsComponent],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule],
+            declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },

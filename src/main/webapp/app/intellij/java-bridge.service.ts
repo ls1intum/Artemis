@@ -1,7 +1,7 @@
-import { Injectable, OnInit } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IntelliJState, isIntelliJ, JavaDowncallBridge } from 'app/intellij/intellij';
+import { IntelliJState, JavaDowncallBridge } from 'app/intellij/intellij';
 
 @Injectable({
     providedIn: 'root',
@@ -12,16 +12,10 @@ export class JavaBridgeService implements JavaDowncallBridge {
 
     constructor(private window: WindowRef) {}
 
-    initBridge() {
-        if (isIntelliJ) {
-            this.window.nativeWindow.javaDowncallBridge = this;
-            this.setupDefaultState();
-        }
-    }
-
-    private setupDefaultState() {
-        this.intellijState = { opened: -1 };
-        this.intellijStateSubject = new BehaviorSubject<IntelliJState>(this.intellijState);
+    static initBridge(bridge: JavaBridgeService, win: WindowRef) {
+        win.nativeWindow.javaDowncallBridge = bridge;
+        bridge.intellijState = { opened: -1 };
+        bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
     }
 
     /**
@@ -60,10 +54,7 @@ export class JavaBridgeService implements JavaDowncallBridge {
      *
      * @return An observable containing the internal state of the IDE
      */
-    get state(): Observable<IntelliJState> {
-        if (!this.intellijState) {
-            this.setupDefaultState();
-        }
+    state(): Observable<IntelliJState> {
         return this.intellijStateSubject;
     }
 

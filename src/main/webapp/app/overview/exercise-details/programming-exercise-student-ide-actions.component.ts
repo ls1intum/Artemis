@@ -30,7 +30,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private javaBridge: JavaBridgeService) {}
 
     ngOnInit(): void {
-        this.javaBridge.state.subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
+        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
     }
 
     /**
