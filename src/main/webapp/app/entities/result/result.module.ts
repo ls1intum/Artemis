@@ -7,10 +7,9 @@ import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultCo
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
-import { ArtemisExerciseModule } from 'app/entities/exercise/exercise.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingSubmissionModule, ArtemisExerciseModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingSubmissionModule],
     declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],

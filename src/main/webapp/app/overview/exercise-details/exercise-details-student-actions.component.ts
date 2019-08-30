@@ -10,7 +10,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -55,7 +54,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private httpClient: HttpClient,
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
-        private javaBridge: JavaBridgeService,
         private router: Router,
     ) {}
 
