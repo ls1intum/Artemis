@@ -530,7 +530,7 @@ describe('CodeEditorStudentIntegration', () => {
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         container.ngOnInit();
         const result = { id: 3, successful: false };
-        const participation = { id: 1, results: [result] } as Participation;
+        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();

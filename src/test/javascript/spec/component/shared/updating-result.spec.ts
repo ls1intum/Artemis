@@ -167,7 +167,7 @@ describe('UpdatingResultComponent', () => {
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.be.false;
     });
 
@@ -175,16 +175,16 @@ describe('UpdatingResultComponent', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.be.true;
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.equal(false);
     });
 
