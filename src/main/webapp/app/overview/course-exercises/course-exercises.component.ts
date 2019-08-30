@@ -19,6 +19,11 @@ enum ExerciseSortingOrder {
     DUE_DATE_DESC = -1,
 }
 
+enum SortFilterStorageKey {
+    FILTER = 'artemis.course.exercises.filter',
+    ORDER = 'artemis.course.exercises.order',
+}
+
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
@@ -28,7 +33,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
-    activeFilters: Set<ExerciseFilter>;
     public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
@@ -38,6 +42,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
     readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
     sortingOrder: ExerciseSortingOrder;
+    activeFilters: Set<ExerciseFilter>;
 
     constructor(
         private courseService: CourseService,
@@ -51,8 +56,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        this.activeFilters = new Set<ExerciseFilter>();
-        this.sortingOrder = ExerciseSortingOrder.DUE_DATE_DESC;
+        const filters = localStorage.getItem(SortFilterStorageKey.FILTER);
+        this.activeFilters = new Set(filters ? filters.split(',').map(filter => ExerciseFilter[filter]) : []);
+        const order = localStorage.getItem(SortFilterStorageKey.ORDER);
+        this.sortingOrder = !order || order === ExerciseSortingOrder.DUE_DATE_ASC.toString() ? ExerciseSortingOrder.DUE_DATE_ASC : ExerciseSortingOrder.DUE_DATE_DESC;
         this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -64,6 +71,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
+
         this.applyFiltersAndOrder();
 
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
@@ -92,6 +100,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      */
     flipOrder() {
         this.sortingOrder = this.sortingOrder === this.ASC ? this.DESC : this.ASC;
+        localStorage.setItem(SortFilterStorageKey.ORDER, this.sortingOrder.toString());
         this.applyFiltersAndOrder();
     }
 
@@ -100,13 +109,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * @param filters The filters which should be applied
      * @param active Should the activeFilters be active or inactive
      */
-    filterUpdate(filters: ExerciseFilter[], active: boolean) {
-        if (active) {
-            filters.forEach(filter => this.activeFilters.add(filter));
-        } else {
-            filters.forEach(filter => this.activeFilters.delete(filter));
-        }
-
+    filterUpdate(filters: ExerciseFilter[]) {
+        filters.forEach(filter => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
+        localStorage.setItem(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
         this.applyFiltersAndOrder();
     }
 
