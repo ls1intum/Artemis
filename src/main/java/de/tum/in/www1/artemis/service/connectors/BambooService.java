@@ -720,6 +720,9 @@ public class BambooService implements ContinuousIntegrationService {
                         errorMessageString += error.split("\\n", 2)[0] + "\n";
                     }
 
+                    //TODO: if PE.Language == C, do not split, else do split (take only first line)
+                    //TODO: filter java.lang.AssertionError
+
                     log.debug("errorMSGString is {}", errorMessageString);
 
                     createAutomaticFeedback(result, methodName, false, errorMessageString);

@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -305,7 +302,7 @@ public class BitbucketService implements VersionControlService {
      * @param groups   Names of Bitbucket groups
      * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
-    public void addUserToGroups(String username, List<String> groups) throws BitbucketException {
+    public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();

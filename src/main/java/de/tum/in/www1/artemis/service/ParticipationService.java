@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -623,12 +620,24 @@ public class ParticipationService {
     /**
      * Get all participations for the given student including all results
      *
-     * @param username the username of the student
+     * @param userId the id of the user for which the participations should be found
+     * @return the list of participations of the given student including all results for all possible exercises
+     */
+    @Transactional(readOnly = true)
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(userId);
+    }
+
+    /**
+     * Get all participations for the given student including all results for the given exercises
+     *
+     * @param userId the id of the user for which the participations should be found
+     * @param exercises the exercises for which participations should be found
      * @return the list of participations of the given student including all results
      */
     @Transactional(readOnly = true)
-    public List<StudentParticipation> findWithResultsByStudentUsername(String username) {
-        return studentParticipationRepository.findByStudentUsernameWithEagerResults(username);
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**

@@ -30,6 +30,8 @@ public class TokenProvider implements InitializingBean {
 
     private static final String AUTHORITIES_KEY = "auth";
 
+    public static final String DOWNLOAD_FILE_AUTHORITY = "FILE_DOWNLOAD";
+
     private Key key;
 
     private long tokenValidityInMilliseconds;
@@ -81,6 +83,23 @@ public class TokenProvider implements InitializingBean {
     }
 
     /**
+     * Generates an access token that allows a user to download a file. This token is only valid for the given validity period.
+     *
+     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param durationValidityInSeconds The duration how long the access token should be valid
+     * @param fileName The name of the file, which the token belongs to
+     * @return File access token as a JWT token
+     */
+    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) {
+        String authorities = DOWNLOAD_FILE_AUTHORITY + fileName;
+
+        long now = (new Date()).getTime();
+        Date validity = new Date(now + durationValidityInSeconds * 1000);
+
+        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+    }
+
+    /**
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken
@@ -94,6 +113,28 @@ public class TokenProvider implements InitializingBean {
         User principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    }
+
+    /**
+     * Checks if a certain authority and filename is inside the JWT token. Also validates the JWT token if it is still valid.
+     *
+     * @param authToken The token that has to be checked
+     * @param authority What authority should be included in the token
+     * @param fileName The name of the file the token belongs to
+     * @return true if everything matches
+     */
+    public boolean validateTokenForAuthorityAndFile(String authToken, String authority, String fileName) {
+        if (!validateToken(authToken)) {
+            return false;
+        }
+        try {
+            String tokenAuthorities = (String) Jwts.parser().setSigningKey(key).parseClaimsJws(authToken).getBody().get("auth");
+            return tokenAuthorities.contains(authority + fileName);
+        }
+        catch (Exception e) {
+            log.trace("Invalid action: {}", e);
+        }
+        return false;
     }
 
     /**
