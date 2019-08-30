@@ -5,8 +5,8 @@ import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CourseExerciseService } from 'app/entities/course';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { Exercise, ParticipationStatus } from 'app/entities/exercise';
+import { InitializationState, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +15,7 @@ import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.s
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IntelliJState } from 'app/intellij/intellij';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
 import { ArtemisSharedModule } from 'app/shared';
@@ -38,7 +38,6 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     let cloneSpy: SinonSpy;
     let submitSpy: SinonSpy;
 
-    const participation = { id: 1 } as StudentParticipation;
     const exercise = { id: 42 } as Exercise;
     const ideState = { opened: 40 } as IntelliJState;
 
@@ -87,4 +86,57 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
+        const stateObservable = new BehaviorSubject({ opened: exercise.id });
+        comp.exercise = exercise;
+        ideStateStub.returns(stateObservable);
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.isOpenedInIntelliJ).to.be.true;
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should reflect the correct participation state', fakeAsync(() => {
+        const inactivePart = { id: 2, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
+        const participationSubject = new Subject<StudentParticipation>();
+        const stateObservable = new BehaviorSubject(ideState);
+        comp.exercise = exercise;
+        startExerciseStub.returns(participationSubject);
+        ideStateStub.returns(stateObservable);
+        comp.startExercise();
+        participationSubject.next(inactivePart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatus()).to.be.equal(ParticipationStatus.INACTIVE);
+        expect(startExerciseStub).to.have.been.calledOnce;
+        participationSubject.next(initPart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatus()).to.be.equal(ParticipationStatus.INITIALIZED);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should clone the correct repository in the IDE', () => {
+        const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
+        const progExercise = { id: 42, title: 'Test Title' } as Exercise;
+        progExercise.participations = [participation];
+        comp.exercise = progExercise;
+        comp.courseId = 456;
+
+        comp.importIntoIntelliJ();
+        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', 'Test Title', 42, 456);
+    });
 });
