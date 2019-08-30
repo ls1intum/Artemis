@@ -45,6 +45,7 @@
             </div>
         </div>
         <jhi-programming-exercise-instruction-instructor-analysis
+            *ngIf="exercise?.id"
             [exerciseTestCases]="exerciseTestCases"
             [exerciseHints]="exerciseHints"
             [problemStatement]="exercise.problemStatement"
