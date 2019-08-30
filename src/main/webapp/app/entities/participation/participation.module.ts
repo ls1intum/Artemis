@@ -14,7 +14,6 @@ import {
     ParticipationPopupService,
     participationRoute,
     ParticipationService,
-    ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
@@ -38,7 +37,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
-    providers: [ParticipationService, ParticipationWebsocketService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ParticipationService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisParticipationModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -7,7 +7,7 @@ import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
 import { MockHttpService } from '../mocks/mock-http.service';
 import { IProgrammingSubmissionService, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { IParticipationWebsocketService } from 'app/participation-websocket/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Submission } from 'app/entities/submission';
 import { Result } from 'app/entities/result';

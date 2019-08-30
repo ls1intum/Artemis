@@ -5,7 +5,7 @@ import { catchError, distinctUntilChanged, filter, last, concatAll, switchMap, m
 import { JhiWebsocketService } from 'app/core';
 import { Submission } from 'app/entities/submission/submission.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/participation-websocket/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
 
-import { Participation } from './participation.model';
+import { Participation } from '../entities/participation/participation.model';
 import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
