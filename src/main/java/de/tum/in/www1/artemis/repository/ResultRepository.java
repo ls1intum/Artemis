@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -32,8 +32,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findLatestResultsForExercise(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(attributePaths = "feedbacks")
-    @Query("select distinct result from Result result where result.completionDate = (select max(result2.completionDate) from Result result2 where result2.participation.id = :#{#participationId})")
-    Optional<Result> findLatestResultWithFeedbacksForParticipation(@Param("participationId") Long participationId);
+    Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = r.participation.exercise.id and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.course.id = :courseId and r.successful = true order by r.completionDate asc")
     List<Result> findEarliestSuccessfulResultsForCourse(@Param("courseId") Long courseId);
@@ -44,7 +43,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
-    Optional<Result> findDistinctBySubmission(Submission submission);
+    @EntityGraph(attributePaths = "assessor")
+    Optional<Result> findDistinctWithAssessorBySubmissionId(Long submissionId);
+
+    @EntityGraph(attributePaths = "feedbacks")
+    Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
     List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
 
@@ -78,10 +81,27 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
-    @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
-    Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);
+    /**
+     * Load a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
+     */
+    @EntityGraph(attributePaths = { "submission", "feedbacks" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(long exerciseId, boolean rated,
+            List<AssessmentType> assessmentType);
+
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
+
+    /**
+     * Checks if a result for the given participation exists.
+     *
+     * @param participationId the id of the participation to check.
+     * @return true if a result for the given participation exists, false otherwise.
+     */
+    boolean existsByParticipationId(long participationId);
 }

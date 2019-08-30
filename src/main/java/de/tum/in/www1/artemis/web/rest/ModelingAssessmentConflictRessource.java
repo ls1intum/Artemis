@@ -45,6 +45,12 @@ public class ModelingAssessmentConflictRessource {
         this.modelingExerciseService = modelingExerciseService;
     }
 
+    /**
+     * GET /exercises/:exerciseId/model-assessment-conflicts : sends all conflicts for modeling assessment
+     *
+     * @param exerciseId the id of the exercise to get the conflicts from
+     * @return all conflicts for modelling assessment
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 200, message = GET_CONFLICTS_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
@@ -58,6 +64,12 @@ public class ModelingAssessmentConflictRessource {
         return ResponseEntity.ok(conflictService.getConflictsForExercise(exerciseId));
     }
 
+    /**
+     * PUT model-assessment-conflicts/:conflictId/escalate : updates the state of the given conflict by escalating the conflict to the next authority
+     *
+     * @param conflictId id of the conflict to escalate
+     * @return escalated conflict of the given conflictId
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 200, message = PUT_ESCALATE_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
@@ -73,6 +85,12 @@ public class ModelingAssessmentConflictRessource {
         }
     }
 
+    /**
+     * PUT model-assessment-conflicts/escalate : updates the state of the given conflicts by escalating the conflicts to the next authority
+     *
+     * @param conflicts list of conflicts that will be escalated
+     * @return list of escalated conflicts
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 200, message = PUT_ESCALATE_BULK_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })

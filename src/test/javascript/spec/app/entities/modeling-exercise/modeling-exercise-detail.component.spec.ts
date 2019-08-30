@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ModelingExerciseDetailComponent } from 'app/entities/modeling-exercise/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/shared/model/modeling-exercise.model';
 
@@ -15,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ModelingExerciseDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

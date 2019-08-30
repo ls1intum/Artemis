@@ -2,9 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
-import { CSRFService } from 'app/core/auth/csrf.service';
-import { WindowRef } from './window.service';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { AuthServerProvider, CSRFService, WindowRef } from 'app/core';
 
 import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';

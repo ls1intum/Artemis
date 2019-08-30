@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * A TextExercise.
@@ -19,6 +20,10 @@ public class TextExercise extends Exercise implements Serializable {
     @Lob
     private String sampleSolution;
 
+    @OneToMany(mappedBy = "exercise")
+    @JsonIgnore
+    private List<TextCluster> clusters;
+
     public String getSampleSolution() {
         return sampleSolution;
     }
@@ -30,6 +35,10 @@ public class TextExercise extends Exercise implements Serializable {
 
     public void setSampleSolution(String sampleSolution) {
         this.sampleSolution = sampleSolution;
+    }
+
+    public boolean isAutomaticAssessmentEnabled() {
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }
 
     /**

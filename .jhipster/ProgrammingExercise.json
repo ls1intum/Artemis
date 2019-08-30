@@ -21,6 +21,10 @@
         {
             "fieldName": "packageName",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "sequentialTestRuns",
+            "fieldType": "Boolean"
         }
     ],
     "relationships": [

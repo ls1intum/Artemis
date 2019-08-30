@@ -88,6 +88,7 @@ public class AttachmentResource {
      * PUT /attachments : Updates an existing attachment.
      *
      * @param attachment the attachment to update
+     * @param notificationText text that will be send to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -125,6 +126,7 @@ public class AttachmentResource {
     /**
      * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
      *
+     * @param lectureId the id of the lecture
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
     @GetMapping(value = "/lectures/{lectureId}/attachments")

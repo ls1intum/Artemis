@@ -1,9 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     ModelingExerciseComponent,
     ModelingExerciseDeleteDialogComponent,
@@ -18,21 +18,21 @@ import {
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
-import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
-import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
+import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
+        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         SortByModule,
         FormDateTimePickerModule,
-        ArTEMiSMarkdownEditorModule,
-        ArTEMiSCategorySelectorModule,
-        ArTEMiSDifficultyPickerModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisCategorySelectorModule,
+        ArtemisDifficultyPickerModule,
     ],
     declarations: [
         ModelingExerciseComponent,
@@ -51,12 +51,11 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
     ],
     providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSModelingExerciseModule {
+export class ArtemisModelingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +14,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
@@ -94,6 +91,11 @@ public class BitbucketService implements VersionControlService {
         }
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+        protectMasterBranch(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+    }
+
+    private void protectMasterBranch(String projectKeyFromUrl, String repositorySlugFromUrl, String username) {
+        // TODO: Simon Leiß implement, prevent deletion and prevent force push
     }
 
     @Override
@@ -101,11 +103,6 @@ public class BitbucketService implements VersionControlService {
         if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
-    }
-
-    @Override
-    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
-        // NOT NEEDED
     }
 
     @Override
@@ -129,7 +126,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public URL getRepositoryWebUrl(Participation participation) {
+    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
         try {
             return new URL(BITBUCKET_SERVER_URL + "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) + "/repos/"
                     + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");
@@ -200,6 +197,7 @@ public class BitbucketService implements VersionControlService {
      * @param username           The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
+    @SuppressWarnings("unchecked")
     private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
         String forkName = String.format("%s-%s", baseRepositorySlug, username);
         Map<String, Object> body = new HashMap<>();
@@ -228,11 +226,11 @@ public class BitbucketService implements VersionControlService {
                 throw e;
             }
         }
-        catch (Exception e) {
-            log.error("Could not fork base repository for user " + username, e);
+        catch (Exception emAll) {
+            log.error("Could not fork base repository for user " + username, emAll);
             throw new BitbucketException("Error while forking repository");
         }
-        if (response != null && response.getStatusCode().equals(HttpStatus.CREATED)) {
+        if (response.getStatusCode().equals(HttpStatus.CREATED)) {
             String slug = (String) response.getBody().get("slug");
             String cloneUrl = buildCloneUrl(baseProjectKey, forkName, username).toString();
             Map<String, String> result = new HashMap<>();
@@ -274,7 +272,7 @@ public class BitbucketService implements VersionControlService {
      * @param password     The wanted passowrd in clear text
      * @param emailAddress The eMail address for the user
      * @param displayName  The display name (full name)
-     * @throws BitbucketException
+     * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -302,9 +300,9 @@ public class BitbucketService implements VersionControlService {
      *
      * @param username The Bitbucket username
      * @param groups   Names of Bitbucket groups
-     * @throws BitbucketException
+     * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
-    public void addUserToGroups(String username, List<String> groups) throws BitbucketException {
+    public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
@@ -453,7 +451,7 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-    public void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
+    private void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);

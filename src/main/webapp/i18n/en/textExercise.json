@@ -19,6 +19,7 @@
             "exampleSubmissions": "Example submissions",
             "assessedSubmission": "Your assessed submission",
             "createExampleSubmissions": "Create example submission",
+            "automaticAssessmentEnabled": "Automatic Assessment enabled",
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
             "saveSuccessful": "Your answer was saved successfully!",
             "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",

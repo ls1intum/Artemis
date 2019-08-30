@@ -105,6 +105,7 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises : Updates an existing quizExercise.
      *
      * @param quizExercise the quizExercise to update
+     * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -164,6 +165,7 @@ public class QuizExerciseResource {
     /**
      * GET /courses/:courseId/quiz-exercises : get all the exercises.
      *
+     * @param courseId id of the course of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
+import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -24,7 +24,7 @@ export class SystemNotificationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user: User) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
                 this.loadActiveNotification();
                 // maybe use connectedPromise as a set function
@@ -48,11 +48,13 @@ export class SystemNotificationComponent implements OnInit {
     subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
         this.jhiWebsocketService.subscribe(this.websocketChannel);
-        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification) => {
-            if (!systemNotification) {
+        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
+            // as we cannot send null as websocket payload (this is not supported), we send a string 'deleted' in case the system notification was deleted
+            if (systemNotification === 'deleted') {
                 this.loadActiveNotification();
                 return;
             }
+            systemNotification = systemNotification as SystemNotification;
             systemNotification.notificationDate = systemNotification.notificationDate ? moment(systemNotification.notificationDate) : null;
             systemNotification.expireDate = systemNotification.expireDate ? moment(systemNotification.expireDate) : null;
             if (!this.notification) {

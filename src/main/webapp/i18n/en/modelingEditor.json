@@ -56,7 +56,7 @@
                 },
                 "duplicate": {
                     "title": "Duplicate Elements",
-                    "text": "With <code>Ctrl + D</code> you can duplicate the currently selected elements with all their properties."
+                    "text": "With <code>Ctrl + C</code> you can copy the currently selected elements with all their properties. <code>Ctrl + V</code> creates a copy of previously copied elements."
                 },
                 "undo": {
                     "title": "Undo & Redo",

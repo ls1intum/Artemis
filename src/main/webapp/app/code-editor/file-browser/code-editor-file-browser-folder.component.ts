@@ -15,6 +15,7 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
 
     @Input() onCollapseExpand: () => void;
     @Input() isCompressed = false;
+    @Input() disableActions: boolean;
     @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem; fileType: FileType }>();
 
     setCreatingNodeInFolder(event: any, fileType: FileType) {

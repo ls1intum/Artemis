@@ -1,4 +1,4 @@
-import { element, by } from 'protractor';
+import { by, element } from 'protractor';
 
 export class QuizExercisePage {
     createNewQuiz = element(by.id('create-quiz-button'));

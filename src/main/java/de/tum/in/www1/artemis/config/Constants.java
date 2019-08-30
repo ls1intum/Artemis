@@ -48,16 +48,24 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
-    public static final String shortNameRegex = "^[a-zA-Z][a-zA-Z0-9]*";
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
 
-    public static final Pattern shortNamePattern = Pattern.compile(shortNameRegex);
+    public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]*";
+
+    public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
+
+    public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
+
+    public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
+
+    public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
 
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
 
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
 
-    public static final String ASSIGNMENT_REPO_NAME = "Assignment";
+    public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
     public static final String ASSIGNMENT_REPO_PATH = "assignment";
 

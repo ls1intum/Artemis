@@ -1,60 +1,25 @@
 import { DatePipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
-import {
-    ArTEMiSSharedCommonModule,
-    ArTEMiSSharedLibsModule,
-    HasAnyAuthorityDirective,
-    RemoveKeysPipe,
-    SafeHtmlPipe,
-    SafeUrlPipe,
-    KeysPipe,
-    TypeCheckPipe,
-    HtmlForMarkdownPipe,
-} from './';
+import { ArtemisSharedCommonModule, ArtemisSharedLibsModule, HasAnyAuthorityDirective } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
 import { NgbDateMomentAdapter } from './util/datepicker-adapter';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
-import { ExerciseTypePipe } from 'app/entities/exercise';
-import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 @NgModule({
-    imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [
-        HasAnyAuthorityDirective,
-        SafeHtmlPipe,
-        SafeUrlPipe,
-        RemoveKeysPipe,
-        SecuredImageComponent,
-        ExerciseTypePipe,
-        KeysPipe,
-        TypeCheckPipe,
-        RemovePositiveAutomaticFeedbackPipe,
-        HtmlForMarkdownPipe,
-    ],
-    providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
+    declarations: [HasAnyAuthorityDirective, SecuredImageComponent],
+    providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService],
     entryComponents: [],
-    exports: [
-        ArTEMiSSharedCommonModule,
-        HasAnyAuthorityDirective,
-        DatePipe,
-        SafeHtmlPipe,
-        SafeUrlPipe,
-        RemoveKeysPipe,
-        SecuredImageComponent,
-        ExerciseTypePipe,
-        KeysPipe,
-        TypeCheckPipe,
-        RemovePositiveAutomaticFeedbackPipe,
-        HtmlForMarkdownPipe,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
 })
-export class ArTEMiSSharedModule {
+export class ArtemisSharedModule {
     static forRoot() {
         return {
-            ngModule: ArTEMiSSharedModule,
+            ngModule: ArtemisSharedModule,
         };
     }
 }

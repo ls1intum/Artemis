@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { DatePipe } from '@angular/common';
 import { CourseService } from '../course';
 

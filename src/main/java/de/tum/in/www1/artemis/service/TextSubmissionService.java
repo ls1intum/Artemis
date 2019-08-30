@@ -17,8 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -29,21 +29,25 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ParticipationService participationService;
 
     private final ResultRepository resultRepository;
 
+    private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository, ParticipationRepository participationRepository,
-            ParticipationService participationService, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
+            StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.textAssessmentQueueService = textAssessmentQueueService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -61,32 +65,30 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
             if (!optionalParticipation.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
             }
-            Participation participation = optionalParticipation.get();
+            StudentParticipation participation = optionalParticipation.get();
 
             if (participation.getInitializationState() == InitializationState.FINISHED) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
             }
 
-            textSubmission = save(textSubmission, textExercise, participation);
+            textSubmission = save(textSubmission, participation);
         }
         return textSubmission;
     }
 
     /**
-     * Saves the given submission. Furthermore, the submission is added to the AutomaticSubmissionService, if not submitted yet. Is used for creating and updating text submissions.
-     * If it is used for a submit action, Compass is notified about the new model. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
+     * Saves the given submission. Is used for creating and updating text submissions. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
      *
-     * @param textSubmission the submission to notifyCompass
-     * @param textExercise   the exercise to notifyCompass in
-     * @param participation  the participation
-     * @return the textSubmission entity
+     * @param textSubmission the submission that should be saved
+     * @param participation  the participation the participation the submission belongs to
+     * @return the textSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission, TextExercise textExercise, Participation participation) {
+    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
@@ -103,7 +105,7 @@ public class TextSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-        Participation savedParticipation = participationRepository.save(participation);
+        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
             Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
             if (optionalTextSubmission.isPresent()) {
@@ -136,21 +138,37 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random text submission for that exercise which still doesn't have any result.
+     * Given an exercise id, find a random text submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
      *
-     * @param textExercise the exercise for which we want to retrieve a submission without result
-     * @return a textSubmission without any result, if any
+     * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
+    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
+        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
+            return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
+        }
         Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
+                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    /**
+     * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
+     * The corresponding TextBlocks and Participations are retrieved from the database
+     * @param exercise Exercise for which all assessed submissions should be retrieved
+     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
+     *
+     */
+    public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
+        return textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
+                .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
     }
 
     /**
@@ -170,6 +188,7 @@ public class TextSubmissionService extends SubmissionService {
             TextSubmission textSubmission = new TextSubmission();
 
             result.setSubmission(null);
+            textSubmission.setLanguage(submission.getLanguage());
             textSubmission.setResult(result);
             textSubmission.setParticipation(submission.getParticipation());
             textSubmission.setId(submission.getId());
@@ -187,10 +206,10 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
-        for (Participation participation : participations) {
+        for (StudentParticipation participation : participations) {
             Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
             if (!optionalTextSubmission.isPresent()) {

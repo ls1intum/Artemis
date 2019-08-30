@@ -24,6 +24,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public weeklyLecturesGrouped: object;
 
     public exerciseCountMap: Map<string, number>;
+    public totalAttachmentCount: number;
 
     constructor(
         private courseService: CourseService,
@@ -52,6 +53,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
+
+        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     ngOnDestroy(): void {
@@ -132,10 +135,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
     }
 
-    getTotalAttachments() {
-        if (!this.course!.lectures) {
-            return 0;
-        }
-        return this.course!.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0);
+    private getAttachmentCount() {
+        return this.course && this.course.lectures ? this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0) : 0;
     }
 }

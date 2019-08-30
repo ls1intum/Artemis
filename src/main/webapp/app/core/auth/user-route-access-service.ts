@@ -1,7 +1,7 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
-import { AccountService, StateStorageService } from '../';
+import { AccountService, StateStorageService } from 'app/core';
 import { LocalStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })

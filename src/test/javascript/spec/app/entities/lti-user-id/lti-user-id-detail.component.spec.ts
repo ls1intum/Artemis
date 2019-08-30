@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { LtiUserIdDetailComponent } from 'app/entities/lti-user-id/lti-user-id-detail.component';
 import { LtiUserId } from 'app/shared/model/lti-user-id.model';
 
@@ -15,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [LtiUserIdDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

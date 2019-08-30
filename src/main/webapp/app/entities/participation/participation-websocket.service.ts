@@ -6,6 +6,7 @@ import { Participation } from './participation.model';
 import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
@@ -20,7 +21,7 @@ export interface IParticipationWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
-    cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
+    cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
     openWebsocketConnections: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation | null> | null;
@@ -32,7 +33,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         participations.forEach(participation => {
             this.removeParticipation(participation.id, participation.exercise.id);
         });
-        this.cachedParticipations = new Map<number, Participation>();
+        this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
         this.participationObservable = null;
     }
@@ -82,7 +83,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param newParticipation The new participation for the cached data maps
      * @param exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
      */
-    public addParticipation = (newParticipation: Participation, exercise?: Exercise) => {
+    public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
         const participation = { ...newParticipation };
         if (!participation.exercise && !exercise) {
@@ -102,7 +103,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns all participations for all exercises. The participation objects include the exercise data and all results.
      * @return array of Participations
      */
-    private getAllParticipations(): Participation[] {
+    private getAllParticipations(): StudentParticipation[] {
         return [...this.cachedParticipations.values()];
     }
 
@@ -112,7 +113,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId ID of the exercise that the participations belong to.
      * @return array of Participations
      */
-    public getAllParticipationsForExercise(exerciseId: number): Participation[] {
+    public getAllParticipationsForExercise(exerciseId: number): StudentParticipation[] {
         return [...this.cachedParticipations.values()].filter(participation => {
             return participation.exercise.id === exerciseId;
         });

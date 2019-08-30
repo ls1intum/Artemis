@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DragAndDropQuestionUpdateComponent } from 'app/entities/drag-and-drop-question/drag-and-drop-question-update.component';
 import { DragAndDropQuestionService } from 'app/entities/drag-and-drop-question/drag-and-drop-question.service';
 import { DragAndDropQuestion } from 'app/shared/model/drag-and-drop-question.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DragAndDropQuestionUpdateComponent],
             })
                 .overrideTemplate(DragAndDropQuestionUpdateComponent, '')

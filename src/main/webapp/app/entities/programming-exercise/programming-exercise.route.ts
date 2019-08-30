@@ -5,13 +5,18 @@ import { UserRouteAccessService } from 'app/core';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
+import { PendingChangesGuard } from 'app/shared';
+
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
+import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
+import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
+import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -71,6 +76,36 @@ export const programmingExerciseRoute: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
+        component: ProgrammingExerciseManageTestCasesComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'exercise/:id/archive',
+        component: ProgrammingExerciseArchivePopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+    {
+        path: 'exercise/:id/cleanup',
+        component: ProgrammingExerciseCleanupPopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
     },
 ];
 

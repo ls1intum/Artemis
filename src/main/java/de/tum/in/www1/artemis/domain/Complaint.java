@@ -11,6 +11,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
  * A Complaint.
@@ -36,6 +37,10 @@ public class Complaint implements Serializable {
 
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "complaint_type")
+    private ComplaintType complaintType;
 
     @Column(name = "result_before_complaint")
     @Lob
@@ -96,6 +101,19 @@ public class Complaint implements Serializable {
         this.submittedTime = submittedTime;
     }
 
+    public ComplaintType getComplaintType() {
+        return complaintType;
+    }
+
+    public Complaint complaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
+        return this;
+    }
+
+    public void setComplaintType(ComplaintType complaintType) {
+        this.complaintType = complaintType;
+    }
+
     public String getResultBeforeComplaint() {
         return resultBeforeComplaint;
     }
@@ -135,6 +153,14 @@ public class Complaint implements Serializable {
         this.student = user;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    /**
+     * Removes the student from the complaint, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
+     * the student.
+     */
+    public void filterSensitiveInformation() {
+        setStudent(null);
+    }
 
     @Override
     public boolean equals(Object o) {

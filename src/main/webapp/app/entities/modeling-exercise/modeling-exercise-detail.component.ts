@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
@@ -16,8 +17,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-    problemStatement: string | null;
-    gradingInstructions: string | null;
+    problemStatement: SafeHtml | null;
+    gradingInstructions: SafeHtml | null;
 
     constructor(
         private eventManager: JhiEventManager,

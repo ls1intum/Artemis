@@ -1,0 +1,52 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #hintForm="ngForm">
+            <h2 id="jhi-exercise-hint-heading" jhiTranslate="artemisApp.exerciseHint.home.createOrEditLabel">Create or edit a Exercise Hint</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!exerciseHint?.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id" readonly [(ngModel)]="exerciseHint.id" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
+                    <input type="text" required minlength="5" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
+                </div>
+                <div class="form-group hint-form__editor-wrapper">
+                    <jhi-markdown-editor
+                        [markdown]="exerciseHint.content"
+                        (markdownChange)="updateHintContent($event)"
+                        [resizableMinHeight]="MarkdownEditorHeight.SMALL"
+                        [resizableMaxHeight]="MarkdownEditorHeight.LARGE"
+                        [enableResize]="true"
+                        [domainCommands]="domainCommands"
+                        [editorMode]="editorMode"
+                    ></jhi-markdown-editor>
+                </div>
+                <div *ngIf="!isLoading; else exerciseLoading" class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
+                    <input
+                        type="text"
+                        required
+                        class="form-control"
+                        name="exercise"
+                        id="field_exercise"
+                        [disabled]="true"
+                        [ngModel]="exerciseHint.exercise && exerciseHint.exercise.title + ' (ID: ' + exerciseHint.exercise.id + ')'"
+                    />
+                </div>
+                <ng-template #exerciseLoading>
+                    <fa-icon icon="circle-notch" spin="true" class="mb-3 text-secondary"></fa-icon>
+                </ng-template>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || isLoading || exerciseNotFound" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

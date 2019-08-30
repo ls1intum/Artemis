@@ -16,7 +16,7 @@
                 "title": "Modellierungsaufgabe"
             },
             "diagramType": "Diagrammtyp",
-            "problemStatement": "<strong>Aufgabenstellung:</strong> {{ problemStatement }}",
+            "problemStatement": "Aufgabenstellung:",
             "exampleSolution": "Beispiel Lösung",
             "exampleSolutionExplanation": "Erklärung Beispiel Lösung",
             "createExampleSolution": "Beispiel Lösung erstellen",

@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DragItemComponent } from 'app/entities/drag-item/drag-item.component';
 import { DragItemService } from 'app/entities/drag-item/drag-item.service';
 import { DragItem } from 'app/shared/model/drag-item.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DragItemComponent],
                 providers: [],
             })

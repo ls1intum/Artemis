@@ -154,6 +154,8 @@ public class TutorParticipationService {
      * @param exercise          - the exercise we are referring to
      * @param exampleSubmission - the example submission to add
      * @return the updated tutor participation
+     * @throws EntityNotFoundException if example submission or tutor participation is not found
+     * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
     public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission) throws EntityNotFoundException, BadRequestAlertException {
         User user = userService.getUserWithGroupsAndAuthorities();

@@ -40,7 +40,7 @@ export class JhiConfigurationService {
             }
         }
         // by default, use the default ApplicationContext Id
-        return res['contexts']['ArTEMiS']['beans'];
+        return res['contexts']['Artemis']['beans'];
     }
 
     getEnv(): Observable<any> {

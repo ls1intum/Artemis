@@ -3,10 +3,9 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
-import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
 
 @NgModule({
-    imports: [HttpClientModule, ArTEMiSNotificationModule],
+    imports: [HttpClientModule],
     exports: [],
     declarations: [],
     providers: [
@@ -18,7 +17,7 @@ import { ArTEMiSNotificationModule } from 'app/entities/notification/notificatio
         DatePipe,
     ],
 })
-export class ArTEMiSCoreModule {
+export class ArtemisCoreModule {
     constructor() {
         registerLocaleData(locale);
     }

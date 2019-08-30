@@ -1,0 +1,47 @@
+/* define position style mixin */
+@mixin position-style($position, $top, $left, $bottom, $right, $z-index) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: $z-index;
+}
+
+/* define user-select mixin */
+@mixin user-select($value) {
+    -webkit-user-select: $value;
+    -moz-user-select: $value;
+    -ms-user-select: $value;
+    user-select: $value;
+}
+
+/* apply transform translate3d mixin */
+@mixin transformTranslate3D($tx, $ty, $tz) {
+    -webkit-transform: translate3d($tx, $ty, $tz);
+    -moz-transform: translate3d($tx, $ty, $tz);
+    -ms-transform: translate3d($tx, $ty, $tz);
+    -o-transform: translate3d($tx, $ty, $tz);
+    transform: translate3d($tx, $ty, $tz);
+}
+
+/* quiz mapping letter or number mixin */
+@mixin quiz-mapping-letter-number($color) {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: $color;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+/* dnd quiz statistic letter position mixin */
+@mixin dnd-letter-position($tx, $ty, $tz) {
+    @include transformTranslate3D($tx, $ty, $tz);
+    position: absolute;
+    top: 3%;
+    left: 3%;
+    z-index: 1;
+    opacity: 1;
+}

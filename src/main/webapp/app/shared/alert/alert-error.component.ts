@@ -70,7 +70,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     break;
 
                 default:
-                    if (httpErrorResponse.error !== '' && httpErrorResponse.error.message) {
+                    if (httpErrorResponse.error && httpErrorResponse.error.message) {
                         this.addErrorAlert(httpErrorResponse.error.message);
                     } else {
                         this.addErrorAlert(httpErrorResponse.error);

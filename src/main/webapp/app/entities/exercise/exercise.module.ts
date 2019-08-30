@@ -1,9 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArtemisSharedModule } from '../../shared';
 import {
     ExerciseLtiConfigurationDialogComponent,
     ExerciseLtiConfigurationPopupComponent,
@@ -18,16 +18,15 @@ import {
 const ENTITY_STATES = [...exercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
     entryComponents: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
     providers: [ExercisePopupService, ExerciseService, ExerciseLtiConfigurationService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSExerciseModule {
+export class ArtemisExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

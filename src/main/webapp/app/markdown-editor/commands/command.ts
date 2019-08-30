@@ -1,17 +1,23 @@
+import { ElementRef } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 
 /**
- * abstract class for all commands - default and domain commands of ArTEMiS
+ * abstract class for all commands - default and domain commands of Artemis
  * default commands: markdown commands e.g. bold, italic
- * domain commands: ArTEMiS customized commands
+ * domain commands: Artemis customized commands
  */
 export abstract class Command {
     buttonIcon: string;
     buttonTranslationString: string;
     protected aceEditorContainer: AceEditorComponent;
+    protected markdownWrapper: ElementRef;
 
     public setEditor(aceEditorContainer: AceEditorComponent): void {
         this.aceEditorContainer = aceEditorContainer;
+    }
+
+    public setMarkdownWrapper(ref: ElementRef) {
+        this.markdownWrapper = ref;
     }
 
     protected getSelectedText(): string {

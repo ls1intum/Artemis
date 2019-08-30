@@ -1,28 +1,28 @@
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { UserMgmtComponent } from 'app/admin/user-management/user-management.component';
-import { UserService, User } from 'app/core';
+import { ArtemisTestModule } from '../../../test.module';
+import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
+import { User, UserService } from 'app/core';
 
 describe('Component Tests', () => {
     describe('User Management Component', () => {
-        let comp: UserMgmtComponent;
-        let fixture: ComponentFixture<UserMgmtComponent>;
+        let comp: UserManagementComponent;
+        let fixture: ComponentFixture<UserManagementComponent>;
         let service: UserService;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [UserMgmtComponent],
+                imports: [ArtemisTestModule],
+                declarations: [UserManagementComponent],
             })
-                .overrideTemplate(UserMgmtComponent, '')
+                .overrideTemplate(UserManagementComponent, '')
                 .compileComponents();
         }));
 
         beforeEach(() => {
-            fixture = TestBed.createComponent(UserMgmtComponent);
+            fixture = TestBed.createComponent(UserManagementComponent);
             comp = fixture.componentInstance;
             service = fixture.debugElement.injector.get(UserService);
         });

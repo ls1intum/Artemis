@@ -3,6 +3,7 @@ import { Course, CourseScoreCalculationService, CourseService } from 'app/entiti
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
+import { CachingStrategy } from 'app/shared';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -12,6 +13,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
+    CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
     public course: Course | null;

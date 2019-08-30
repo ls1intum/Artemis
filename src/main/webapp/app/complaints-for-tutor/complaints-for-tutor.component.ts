@@ -4,7 +4,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -12,58 +12,49 @@ import { Complaint } from 'app/entities/complaint';
     providers: [JhiAlertService],
 })
 export class ComplaintsForTutorComponent implements OnInit {
-    @Input() resultId: number;
+    @Input() complaint: Complaint;
     @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond (i.e. that he is not the assessor)
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
-    loading = true;
-    complaint: Complaint;
     complaintText = '';
-    alreadySubmitted: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
+    ComplaintType = ComplaintType;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
-        this.complaintService.findByResultId(this.resultId).subscribe(
-            res => {
-                if (!res.body) {
-                    return;
+        this.complaintText = this.complaint.complaintText;
+        this.handled = this.complaint.accepted !== undefined;
+        if (this.handled) {
+            this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => {
+                if (complaintResponse.body) {
+                    this.complaintResponse = complaintResponse.body;
                 }
-                this.complaint = res.body;
-                this.complaintText = this.complaint.complaintText;
-                this.handled = this.complaint.accepted !== undefined;
-                this.alreadySubmitted = true;
-                this.loading = false;
-
-                if (this.handled) {
-                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
-                }
-            },
-            (err: HttpErrorResponse) => {
-                this.onError(err.message);
-            },
-        );
+            });
+        }
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
         if (this.complaintResponse.responseText.length <= 0 || !this.isAllowedToRespond) {
             return;
         }
-        this.handled = true;
         this.complaint.accepted = acceptComplaint;
         this.complaintResponse.complaint = this.complaint;
-        if (acceptComplaint) {
+        if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
+            this.handled = true;
         } else {
-            // If the complaint was rejected, just the complaint response is created.
+            // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
-                    this.jhiAlertService.success('artemisApp.textAssessment.complaintResponse.created');
+                    this.handled = true;
+                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                        ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
+                        : this.jhiAlertService.success('artemisApp.complaintResponse.created');
                     this.complaintResponse = response.body!;
                 },
                 (err: HttpErrorResponse) => {

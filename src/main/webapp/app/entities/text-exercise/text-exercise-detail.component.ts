@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
@@ -7,17 +8,20 @@ import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
+    AssessmentType = AssessmentType;
+
     textExercise: TextExercise;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;

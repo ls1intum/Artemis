@@ -1,0 +1,42 @@
+[
+    {
+        "id": 10933,
+        "text": "good",
+        "reference": "AbstractClass:840bbac6-c42f-4a15-81df-bd7631fc1a95",
+        "credits": 0.5,
+        "positive": true,
+        "type": "AUTOMATIC",
+        "referenceType": "AbstractClass",
+        "referenceId": "840bbac6-c42f-4a15-81df-bd7631fc1a95"
+    },
+    {
+        "id": 10934,
+        "text": "neutral",
+        "reference": "ClassAttribute:44f51e4f-5e3f-4fbd-b4b5-83b53e263ef9",
+        "credits": 0,
+        "positive": true,
+        "type": "AUTOMATIC",
+        "referenceType": "ClassAttribute",
+        "referenceId": "44f51e4f-5e3f-4fbd-b4b5-83b53e263ef9"
+    },
+    {
+        "id": 10935,
+        "text": "This is correct",
+        "reference": "Class:8f59210a-ea9e-4bae-9225-94ae961577ba",
+        "credits": 0.5,
+        "positive": true,
+        "type": "AUTOMATIC",
+        "referenceType": "Class",
+        "referenceId": "8f59210a-ea9e-4bae-9225-94ae961577ba"
+    },
+    {
+        "id": 10936,
+        "text": "not so bad",
+        "reference": "ClassAttribute:5101c7d4-a233-4561-b1b0-1e3258d38ef0",
+        "credits": 0,
+        "positive": true,
+        "type": "AUTOMATIC",
+        "referenceType": "ClassAttribute",
+        "referenceId": "5101c7d4-a233-4561-b1b0-1e3258d38ef0"
+    }
+]

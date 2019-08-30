@@ -1,13 +1,12 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { ConnectionNotificationComponent } from './';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule],
+    imports: [ArtemisSharedModule],
     declarations: [ConnectionNotificationComponent],
     entryComponents: [],
     exports: [ConnectionNotificationComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSConnectionNotificationModule {}
+export class ArtemisConnectionNotificationModule {}

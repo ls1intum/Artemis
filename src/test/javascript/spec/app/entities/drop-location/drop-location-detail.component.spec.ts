@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DropLocationDetailComponent } from 'app/entities/drop-location/drop-location-detail.component';
 import { DropLocation } from 'app/shared/model/drop-location.model';
 
@@ -15,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DropLocationDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

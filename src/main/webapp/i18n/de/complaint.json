@@ -5,17 +5,13 @@
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
             "description": "Du kannst insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen.",
             "descriptionExtended": "Jeder Student darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
-            "moreFeedback": "Mehr Feedback",
-            "moreFeedbackDescription": "Wenn etwas nicht klar genug ist oder du weitere Erklärungen benötigst, bitte den Tutor, dir mehr Feedback zu geben.",
-            "moreFeedbackButton": "Mehr Feedback anfordern",
-            "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann von einem zweiten Tutor überprüft.",
-            "alreadySubmitted": "Du hast eine Beschwerde eingereicht am",
+            "beDescriptive": "Bitte beschreibe ausführlich, warum die Bewertung falsch ist. Deine Beschwerde wird dann von einem zweiten Reviewer überprüft.",
+            "alreadySubmitted": "Du hast eine Beschwerde eingereicht",
             "submit": "Eine Beschwerde einreichen",
             "created": "Deine Beschwerde wurde eingereicht!",
-            "moreInfo": "Beschwerde einreichen oder mehr Feedback anfordern",
-            "moreInfo_temp": "Beschwerde einreichen",
+            "moreInfo": "Beschwerde einreichen",
             "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Bewertung ist älter als eine Woche",
-            "responseExists": "Antwort auf deine Beschwerde vom ",
+            "responseExists": "Antwort auf deine Beschwerde ",
             "hint": "Scrolle nach unten um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
             "acceptedLong": "Beschwerde wurde angenommen",
@@ -23,19 +19,11 @@
             "rejectedLong": "Beschwerde wurde abgelehnt",
             "tooManyComplaints": "Maximale Anzahl an Beschwerden erreicht. Du kannst nicht mehr als {{ maxComplaintNumber }} offene oder abgelehnte Beschwerden gleichzeitig haben.",
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
-            "complaintResponse": {
-                "title": "Antwort auf die Beschwerde",
-                "created": "Deine Antwort auf die Beschwerde wurde eingereicht",
-                "updateAssessment": "Bewertung aktualisieren",
-                "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
-                "rejectComplaint": "Beschwerde zurückweisen",
-                "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
-            },
             "listOfComplaints": {
                 "exercise": "Übung",
                 "submissionId": "Einreichung ID",
-                "reviewerLogin": "Prüfer-Login",
-                "reviewerName": "Prüfer-Name",
+                "reviewerLogin": "Reviewer-Login",
+                "reviewerName": "Rewviewer-Name",
                 "studentLogin": "Schüler-Login",
                 "studentName": "Schüler-Name",
                 "actions": "Aktionen",
@@ -46,6 +34,28 @@
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
                 "noComplaintsToShow": "Es gibt im Moment keine Beschwerden zu zeigen."
+            },
+            "review": "Beschwerde überprüfen"
+        },
+        "moreFeedback": {
+            "title": "Weiteres Feedback anfragen",
+            "description": "Bitte den Reviewer, dir weiteres Feedback zu geben, wenn etwas nicht klar genug ist oder du weitere Erklärungen benötigst.",
+            "beDescriptive": "Bitte beschreibe ausführlich, was für dich in der Bewertung unklar ist. Deine Anfrage wird dann von demselben Reviewer bewertet.",
+            "created": "Deine Antwort auf die Feedbackanfrage wurde eingereicht!",
+            "button": "Weiteres Feedback anfragen",
+            "info": "Das Absenden einer Feedbackanfrage hat keinen Einfluss auf die Anzahl der maximalen Beschwerden, aber deine Punktzahl bleibt unverändert.",
+            "review": "Feedbackanfrage überprüfen",
+            "alreadyHandled": "Die Anfrage wurde bereits bearbeitet",
+            "alreadySubmitted": "Du hast bereits weiteres Feedback angefordert",
+            "acceptedLong": "Die Feedbackanfrage wurde beantwortet",
+            "responseExists": "Antwort auf deine Feedbackanfrage ",
+            "notAllowedTooltip": "Die Anfrage von weiterem Feedback ist aktuell nicht möglich, da die Bewertung älter als eine Woche ist",
+            "accepted": "Beantwortet",
+            "hint": "Scrolle nach unten um die Feedbackanfrage zu prüfen",
+            "list": {
+                "title": "Liste der Feedbackanfragen",
+                "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
+                "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
             }
         }
     }

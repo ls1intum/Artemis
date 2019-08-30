@@ -1,11 +1,11 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { LtiUserIdDialogComponent } from '../../../../../../main/webapp/app/entities/lti-user-id/lti-user-id-dialog.component';
 import { LtiUserIdService } from '../../../../../../main/webapp/app/entities/lti-user-id/lti-user-id.service';
 import { LtiUserId } from '../../../../../../main/webapp/app/entities/lti-user-id/lti-user-id.model';
@@ -21,7 +21,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [LtiUserIdDialogComponent],
                 providers: [UserService, LtiUserIdService],
             })

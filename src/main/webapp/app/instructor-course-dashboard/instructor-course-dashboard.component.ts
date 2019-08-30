@@ -1,6 +1,8 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
 import { Course, CourseService } from 'app/entities/course';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
@@ -18,7 +20,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    loading = true;
+    isLoading = true;
     exercisesSortingPredicate = 'assessmentDueDate';
     exercisesReverseOrder = false;
 
@@ -31,23 +33,38 @@ export class InstructorCourseDashboardComponent implements OnInit {
     constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
-        this.loading = true;
+        this.isLoading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
     }
 
     private loadCourse(courseId: number) {
-        this.courseService
-            .findWithExercisesAndParticipations(courseId)
-            .subscribe((res: HttpResponse<Course>) => (this.course = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
-
-        this.courseService.getStatsForInstructors(courseId).subscribe(
-            (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = Object.assign({}, this.stats, res.body);
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
-            },
-            (response: string) => this.onError(response),
-            () => (this.loading = false),
+        // Load the course.
+        const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
+            map((res: HttpResponse<Course>) => res.body!),
+            tap((course: Course) => (this.course = course)),
+            catchError((response: HttpErrorResponse) => {
+                this.onError(response.message);
+                return of(null);
+            }),
         );
+
+        // Load course stats.
+        const loadStatsObservable = this.courseService.getStatsForInstructors(courseId).pipe(
+            map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
+            tap(stats => {
+                this.stats = stats;
+                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+            }),
+            catchError((response: string) => {
+                this.onError(response);
+                return of(null);
+            }),
+        );
+
+        // After both calls are done, the loading flag is removed.
+        zip(loadCourseObservable, loadStatsObservable).subscribe(() => {
+            this.isLoading = false;
+        });
     }
 
     calculatePercentage(numerator: number, denominator: number): number {

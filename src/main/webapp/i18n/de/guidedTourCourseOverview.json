@@ -1,0 +1,52 @@
+{
+    "tour": {
+        "course-overview": {
+            "welcome": {
+                "headline": "Willkommen in Artemis",
+                "subHeadline": "(Automatic Assessment Management System for Interactive Learning)",
+                "content": "Artemis ist eine Lernplattform die dir ermöglicht, Programmierübungen in interaktiven Lernsessions zu lösen."
+            },
+            "overview-menu": {
+                "headline": "Kursübersicht",
+                "content": "Auf dieser Seite bekommst du eine Übersicht über alle deine Kurse."
+            },
+            "course-admin-menu": {
+                "headline": "Kursadministration",
+                "content": "Hier kannst du deine Kurse und Übungen administrieren und verwalten."
+            },
+            "admin-menu": {
+                "headline": "Server-Administration",
+                "content": "Hier bekommst du einen Einblick in die Anwendungsadministration."
+            },
+            "notification-menu": {
+                "headline": "Deine Benachrichtigungen",
+                "content": "In diesem Dropdown kannst du die Benachrichtungen über neue Übungen einsehen."
+            },
+            "account-menu": {
+                "headline": "Persönliche Einstellungen",
+                "content": "In diesem Menü kannst du die Sprache ändern und dieses Tutorial jederzeit neu starten."
+            },
+            "course": {
+                "headline": "Deine aktuellen Kurse",
+                "content": "Du bist für diesen Kurs angemeldet. Schau dir die Kursdetailseite nach der Tour genauer an, indem du auf diese Kachel klickst."
+            },
+            "course-footer": {
+                "headline": "Nächste fällige Übungsabgabe",
+                "content": "Hier siehst du welche Übung in den nächsten Tagen abgeschlossen werden soll."
+            },
+            "register": {
+                "headline": "Melde dich für andere Kurse an",
+                "content": "Du kannst auf dieser Seite einsehen, ob du dich für weitere Kurse anmelden kannst."
+            },
+            "contact": {
+                "headline": "Kontaktiere das Artemis Team",
+                "content": "Du kannst dich gerne an uns wenden, um Feedback zu hinterlassen, neue Features vorzuschlagen oder Fehler zu melden."
+            },
+            "team": {
+                "headline": "Lerne das Team kennen",
+                "content": "Willst du wissen wer hinter Artemis und dem LS1 Lehrstuhl steckt? ",
+                "link-text": "Klick hier"
+            }
+        }
+    }
+}

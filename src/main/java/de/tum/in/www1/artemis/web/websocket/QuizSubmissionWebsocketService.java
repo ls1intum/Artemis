@@ -42,6 +42,15 @@ public class QuizSubmissionWebsocketService {
         this.authCheckService = authCheckService;
     }
 
+    // TODO it would be nice to have some kind of startQuiz call that creates the participation with an initialization date. This should happen when the quiz is first shown
+    // to the user. Then we also could find out how long students work on the quiz on average
+
+    /**
+     * Saves a Submission
+     * @param exerciseId the exerciseID to the corresponding QuizExercise
+     * @param quizSubmission the submission which should be saved
+     * @param principal the current principal
+     */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
         String username = principal.getName();

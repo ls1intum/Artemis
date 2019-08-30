@@ -4,7 +4,8 @@
             "undefined": "",
             "null": "",
             "JAVA": "Java",
-            "PYTHON": "Python"
+            "PYTHON": "Python",
+            "C": "C"
         }
     }
 }

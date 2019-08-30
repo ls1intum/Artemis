@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    @Input() participation: Participation;
+    @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;
@@ -36,6 +36,8 @@ export class ResultComponent implements OnInit, OnChanges {
     hasFeedback: boolean;
     resultIconClass: string[];
     resultString: string;
+
+    resultTooltip: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -84,6 +86,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
+            this.resultTooltip = this.buildResultTooltip();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
@@ -101,6 +104,12 @@ export class ResultComponent implements OnInit, OnChanges {
             return this.translate.instant('artemisApp.editor.buildFailed');
         }
         return this.result!.resultString;
+    }
+
+    buildResultTooltip() {
+        if (this.result && this.result.resultString.includes('(preliminary)')) {
+            return this.translate.instant('artemisApp.result.preliminary');
+        }
     }
 
     getHasFeedback() {

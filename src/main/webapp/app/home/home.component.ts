@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 @Component({
     selector: 'jhi-home',
@@ -23,6 +24,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     captchaRequired = false;
     credentials: Credentials;
 
+    isSubmittingLogin = false;
+
     constructor(
         private router: Router,
         private accountService: AccountService,
@@ -31,6 +34,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private elementRef: ElementRef,
         private renderer: Renderer,
         private eventManager: JhiEventManager,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -53,6 +57,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
 
     login() {
+        this.isSubmittingLogin = true;
         this.loginService
             .login({
                 username: this.username,
@@ -89,7 +94,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
                 this.authenticationError = true;
                 this.authenticationAttempts++;
-            });
+            })
+            .finally(() => (this.isSubmittingLogin = false));
     }
 
     currentUserCallback(account: User) {

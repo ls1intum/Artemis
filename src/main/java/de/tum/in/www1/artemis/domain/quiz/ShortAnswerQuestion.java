@@ -54,6 +54,12 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return this;
     }
 
+    /**
+     * Add new short answer spot to current spot list and add the associated AnswerCounter implicitly
+     *
+     * @param shortAnswerSpot to be added to spot list
+     * @return this ShortAnswerQuestion object
+     */
     public ShortAnswerQuestion addSpots(ShortAnswerSpot shortAnswerSpot) {
         this.spots.add(shortAnswerSpot);
         shortAnswerSpot.setQuestion(this);
@@ -62,6 +68,12 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return this;
     }
 
+    /**
+     * Remove short answer spot from current spot list and remove remove the associated SpotCounter implicitly
+     *
+     * @param shortAnswerSpot to be removed
+     * @return this ShortAnswerQuestion object
+     */
     public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
         // if an spot was removed then remove the associated SpotCounter implicitly
         if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
@@ -80,6 +92,12 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return this;
     }
 
+    /**
+     * Add a list of short answer spots to the current spot list and to the the short answer statistics.
+     * AnswerCounters without any ShortAnswerSpot will be removed in this process.
+     *
+     * @param shortAnswerSpots list of short answer spots to be added
+     */
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
         ShortAnswerQuestionStatistic shortAnswerStatistic;
         if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {

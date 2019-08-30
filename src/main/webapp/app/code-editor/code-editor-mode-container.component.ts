@@ -27,7 +27,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     /** Code Editor State Variables **/
     editorState: EditorState;
     commitState: CommitState;
-    isBuilding: boolean;
 
     constructor(
         protected participationService: ParticipationService,
@@ -72,7 +71,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
         this.buildLogErrors = { errors: {}, timestamp: 0 };
-        this.isBuilding = false;
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
         this.fileChange = undefined;

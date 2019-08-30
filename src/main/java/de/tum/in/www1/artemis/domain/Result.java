@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import static java.math.BigDecimal.ROUND_HALF_UP;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -226,7 +227,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
+     * @param hasFeedback explicit flag used only by Programming Exercise
      */
     public void setHasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -237,7 +238,7 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @return
+     * @return true if the result has feedback, otherwise false
      */
     public Boolean getHasFeedback() {
         return hasFeedback;
@@ -248,8 +249,8 @@ public class Result implements Serializable {
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
-     * @param hasFeedback
-     * @return
+     * @param hasFeedback explicit flag used only by Programming Exercise
+     * @return result with newly set hasFeedback property
      */
     public Result hasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
@@ -294,6 +295,22 @@ public class Result implements Serializable {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
+    /**
+     * Sets the result to rated if:
+     * - It was created by an instructor (SubmissionType)
+     * - OR if the submissionDate is <= the exerciseDueDate.
+     * @param exerciseDueDate date after which no normal submission is considered rated.
+     * @param submission to which the result belongs.
+     */
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
+        if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
+            this.rated = true;
+        }
+        else {
+            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+        }
+    }
+
     public Submission getSubmission() {
         return submission;
     }
@@ -322,6 +339,11 @@ public class Result implements Serializable {
         return this;
     }
 
+    public Result addFeedbacks(List<Feedback> feedbacks) {
+        feedbacks.forEach(feedback -> addFeedback(feedback));
+        return this;
+    }
+
     public Result removeFeedback(Feedback feedback) {
         this.feedbacks.remove(feedback);
         feedback.setResult(null);
@@ -332,15 +354,58 @@ public class Result implements Serializable {
         this.feedbacks = feedbacks;
     }
 
-    public void setNewFeedback(List<Feedback> feedbacks) {
-        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
-        // will also be deleted in the database because of the 'orphanRemoval = true' flag.
-        getFeedbacks().clear();
+    /**
+     * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
+     * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
+     *
+     * @param feedbacks the new feedback list
+     */
+    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
         for (Feedback feedback : feedbacks) {
             feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
-            addFeedback(feedback);
+            setFeedbackType(feedback);
         }
+        // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it
+        // will also be deleted in the database because of the 'orphanRemoval = true' flag.
+        getFeedbacks().clear();
+        feedbacks.forEach(this::addFeedback);
+    }
+
+    /**
+     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if Compass created the feedback
+     * automatically and the tutor has overridden the feedback in the manual assessment. This is done to differentiate between automatic feedback that was overridden manually and
+     * pure manual feedback to analyze the quality of automatic assessments. In all other cases the type stays the same.
+     *
+     * @param feedback the new feedback for which to set the type
+     */
+    private void setFeedbackType(Feedback feedback) {
+        if (feedback.getType() == null) {
+            feedback.setType(FeedbackType.MANUAL);
+        }
+        else if ((feedback.getType().equals(FeedbackType.AUTOMATIC) && feedbackHasChanged(feedback))) {
+            feedback.setType(FeedbackType.AUTOMATIC_ADAPTED);
+        }
+    }
+
+    /**
+     * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
+     */
+    private boolean feedbackHasChanged(Feedback feedback) {
+        if (this.feedbacks == null || this.feedbacks.size() == 0) {
+            return false;
+        }
+        return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
+                .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
+    }
+
+    /**
+     * Compares the given feedback texts (existingText and newText) and checks if the text has changed.
+     */
+    private boolean feedbackTextHasChanged(String existingText, String newText) {
+        if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
+            return false;
+        }
+        return !Objects.equals(existingText, newText);
     }
 
     public Participation getParticipation() {
@@ -382,12 +447,20 @@ public class Result implements Serializable {
         this.assessmentType = assessmentType;
     }
 
+    public void determineAssessmentType() {
+        setAssessmentType(AssessmentType.MANUAL);
+        if (feedbacks.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
+            setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        }
+    }
+
     public Boolean hasComplaint() {
         return hasComplaint;
     }
 
     /**
      * `hasComplaint` could be null in the database
+     * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
         return Optional.ofNullable(hasComplaint);
@@ -424,7 +497,8 @@ public class Result implements Serializable {
         if (submission instanceof QuizSubmission) {
             QuizSubmission quizSubmission = (QuizSubmission) submission;
             // get the exercise this result belongs to
-            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
+            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
@@ -437,6 +511,14 @@ public class Result implements Serializable {
         double totalScore = calculateTotalScore(maxScore);
         setScore(totalScore, maxScore);
         setResultString(totalScore, maxScore);
+    }
+
+    /**
+     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
+     * their assessor.
+     */
+    public void filterSensitiveInformation() {
+        setAssessor(null);
     }
 
     @Override
@@ -477,6 +559,6 @@ public class Result implements Serializable {
         }
         // limit total score to be between 0 and maxScore
         totalScore = Math.max(Math.min(totalScore, maxScore), 0);
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_UP).doubleValue();
+        return new BigDecimal(totalScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }

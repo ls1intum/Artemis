@@ -11,6 +11,7 @@ import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
+    styleUrls: ['../../quiz.scss'],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     isSaving: boolean;

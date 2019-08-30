@@ -1,6 +1,7 @@
 import * as $ from 'jquery';
 
 import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -13,7 +14,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Result } from 'app/entities/result';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { TextExercise, TextExercisePopupService } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
@@ -43,9 +44,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     readOnly: boolean;
     toComplete: boolean;
 
-    formattedProblemStatement: string | null;
-    formattedSampleSolution: string | null;
-    formattedGradingInstructions: string | null;
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
@@ -102,10 +103,13 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 // Enable resize from left edge; triggered by class .resizing-bar
                 edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
                 // Set min and max width
-                restrictSize: {
-                    min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidth, height: 0 },
+                        max: { width: this.resizableMaxWidth, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -126,10 +130,13 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 // Enable resize from left edge; triggered by class .resizing-bar-assessment
                 edges: { left: '.resizing-bar-assessment', right: false, bottom: false, top: false },
                 // Set min and max width
-                restrictSize: {
-                    min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: this.resizableMinWidth, height: 0 },
+                        max: { width: this.resizableMaxWidth, height: 2000 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -150,9 +157,12 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
                 edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
                 // Set min height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeight },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

@@ -6,6 +6,7 @@ import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { CachingStrategy } from 'app/shared';
 
 @Component({
     selector: 'jhi-course-detail',
@@ -13,6 +14,7 @@ import { CourseService } from './course.service';
     styleUrls: ['./course-detail.component.scss'],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    CachingStrategy = CachingStrategy;
     course: Course;
     private subscription: Subscription;
     private eventSubscriber: Subscription;

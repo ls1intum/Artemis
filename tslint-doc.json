@@ -1,0 +1,20 @@
+
+{
+    "rulesDirectory": [
+        "node_modules/codelyzer"
+    ],
+    "extends": [
+        "tslint-config-prettier"
+    ],
+    "rules": {
+        "completed-docs": [
+            true,
+            {
+                "properties": { "privacies": ["public"] },
+                "enums": { "visibilities": ["all"] },
+                "functions": { "visibilities": ["all"] },
+                "methods": { "privacies": ["public"]}
+            }
+        ]
+    }
+}

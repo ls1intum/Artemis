@@ -7,6 +7,12 @@
             "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
             "rejectComplaint": "Beschwerde zurückweisen",
             "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
+        },
+        "moreFeedbackResponse": {
+            "title": "Antwort auf die Anfrage",
+            "created": "Deine Antwort auf die weitere Feedbackanfrage wurde eingereicht",
+            "sendResponseTooltip": "Antwort auf Feedbackanfrage senden",
+            "provideFeedback": "Weiteres Feedback geben"
         }
     }
 }

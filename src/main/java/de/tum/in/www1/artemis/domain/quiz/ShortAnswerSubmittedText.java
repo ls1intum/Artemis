@@ -111,8 +111,8 @@ public class ShortAnswerSubmittedText implements Serializable {
     /**
      * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy
      *
-     * @param submittedText
-     * @param solution
+     * @param submittedText for a short answer question
+     * @param solution of the short answer question
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {

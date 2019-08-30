@@ -1,9 +1,11 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import Interactable from '@interactjs/core/Interactable';
+import 'brace/mode/latex';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
     Command,
@@ -20,6 +22,7 @@ import {
     UnorderedListCommand,
     ReferenceCommand,
     ColorPickerCommand,
+    FullscreenCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
@@ -29,20 +32,38 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 350,
+    MEDIUM = 500,
     LARGE = 1000,
 }
+
+export enum EditorMode {
+    NONE = 'none',
+    LATEX = 'latex',
+}
+
+const getAceMode = (mode: EditorMode) => {
+    switch (mode) {
+        case EditorMode.LATEX:
+            return 'ace/mode/latex';
+        case EditorMode.NONE:
+            return null;
+        default:
+            return null;
+    }
+};
 
 @Component({
     selector: 'jhi-markdown-editor',
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
-    public MarkdownEditorHeight = MarkdownEditorHeight;
+    // This ref is used for entering the fullscreen mode.
+    @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
     @ViewChild('aceEditor', { static: false })
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
@@ -52,10 +73,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input()
-    markdown: string;
+    @Input() markdown: string;
+    @Input() editorMode = EditorMode.NONE;
     @Output() markdownChange = new EventEmitter<string>();
-    @Output() html = new EventEmitter<string | null>();
+    @Output() html = new EventEmitter<SafeHtml | null>();
 
     /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
@@ -64,6 +85,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
      * because the class definitions are saved within that method*/
     colorCommands: Command[] = [new ColorPickerCommand()];
+
+    /**
+     * Use this array for commands that are not related to the markdown but to the editor (e.g. fullscreen mode).
+     * These elements will be displayed on the right side of the command bar.
+     */
+    metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
     defaultCommands: Command[] = [
@@ -87,13 +114,15 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
 
+    @Output() onPreviewSelect = new EventEmitter();
+
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
-    previewTextAsHtml: string | null;
+    previewTextAsHtml: SafeHtml | null;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
@@ -103,8 +132,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ContentChild('preview', { static: false }) previewChild: ElementRef;
 
     /** Resizable constants **/
-    @Input()
-    defaultHeight = MarkdownEditorHeight.SMALL;
     @Input()
     enableResize = false;
     @Input()
@@ -158,15 +185,25 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().completers = [];
 
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
             });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
             });
         }
         this.setupMarkdownEditor();
+
+        const selectedAceMode = getAceMode(this.editorMode);
+        if (selectedAceMode) {
+            this.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .setMode(selectedAceMode);
+        }
 
         if (this.enableResize) {
             this.setupResizable();
@@ -198,10 +235,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
-                },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: this.resizableMinHeight },
+                        max: { width: 2000, height: this.resizableMaxHeight },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {
@@ -219,27 +258,16 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
-     * @function parse
-     * @desc Check if domainCommands are contained within the text to decide how to parse the text
-     *       1. If no domainCommands are contained parse markdown to HTML and emit the result to the parent component
-     *       2. Otherwise create an array containing all domainCommands identifier passed on from the client,
-     *       3. Create a copy of the markdown text
-     *       4. Create the regEx Expression which searches for the domainCommand identifier
-     *       5. Go through the copy of the markdown text until it is empty and split it as soon as a domainCommand identifier is found into [command]
-     *           5a. One command can contain text over several lines
-     *           5b. All the text between two identifiers is mapped to the first identifier
-     *       6. Reduce the copy by the length of the command
-     *       7. Call the parseLineForDomainCommand for command and save it into content
-     *       8. Emit the content to parent component to assign the values of the array to the right attributes
+     * Parses markdown to generate a preview if the standard preview is used and/or searches for domain command identifiers.
+     * Will emit events for both the generated preview and domain commands.
+     *
      */
     parse(): void {
-        /** check if domainCommands are passed on from the parent component */
-        if (this.domainCommands == null || this.domainCommands.length === 0) {
-            /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
+        if (this.showDefaultPreview) {
             this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
             this.html.emit(this.previewTextAsHtml);
-            return;
-        } else {
+        }
+        if (this.domainCommands && this.domainCommands.length && this.markdown) {
             /** create array with domain command identifier */
             const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which
@@ -319,6 +347,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     togglePreview(event: any): void {
         this.previewMode = !this.previewMode;
+        if (this.previewMode) {
+            this.onPreviewSelect.emit();
+        }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();

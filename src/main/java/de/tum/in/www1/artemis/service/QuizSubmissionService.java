@@ -71,9 +71,10 @@ public class QuizSubmissionService {
         result.evaluateSubmission();
         // save result
         quizSubmission.setResult(result);
-        quizSubmissionRepository.save(quizSubmission);
-        // replace proxy with submission, because of Lazy-fetching
+        quizSubmission.setParticipation(participation);
         result.setSubmission(quizSubmission);
+        resultRepository.save(result);
+        quizSubmissionRepository.save(quizSubmission);
 
         // add result to statistics
         QuizScheduleService.addResultToStatistic(quizExercise.getId(), result);

@@ -7,8 +7,8 @@ import * as sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArTEMiSTestModule } from '../../../test.module';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisSharedModule } from 'app/shared';
 import { ActivatedRoute } from '@angular/router';
 import { Attachment } from 'app/entities/attachment';
 import { CourseStatisticsComponent } from 'app/overview';
@@ -42,7 +42,7 @@ describe('CourseStatisticsComponent', () => {
                     student: {
                         id: 9,
                         login: 'artemis_test_user_1',
-                        firstName: 'ArTEMiS Test User 1',
+                        firstName: 'Artemis Test User 1',
                         email: 'krusche+testuser_1@in.tum.de',
                         activated: true,
                         langKey: 'en',
@@ -69,7 +69,7 @@ describe('CourseStatisticsComponent', () => {
                     student: {
                         id: 9,
                         login: 'artemis_test_user_1',
-                        firstName: 'ArTEMiS Test User 1',
+                        firstName: 'Artemis Test User 1',
                         email: 'krusche+testuser_1@in.tum.de',
                         activated: true,
                         langKey: 'en',
@@ -121,7 +121,7 @@ describe('CourseStatisticsComponent', () => {
                     student: {
                         id: 9,
                         login: 'artemis_test_user_1',
-                        firstName: 'ArTEMiS Test User 1',
+                        firstName: 'Artemis Test User 1',
                         email: 'krusche+testuser_1@in.tum.de',
                         activated: true,
                         langKey: 'en',
@@ -159,7 +159,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArTEMiSSharedModule, ChartsModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
             declarations: [CourseStatisticsComponent],
             providers: [
                 {

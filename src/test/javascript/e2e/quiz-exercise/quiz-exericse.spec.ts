@@ -2,7 +2,6 @@ import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
 import { browser, by, element, ExpectedConditions as ec } from 'protractor';
 import { CoursePage, NewCoursePage } from '../page-objects/entities/course-page-object';
 import { QuizExercisePage } from '../page-objects/entities/quiz-exercise-page-object';
-import { errorRoute } from '../../../../main/webapp/app/layouts';
 
 const expect = chai.expect;
 

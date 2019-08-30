@@ -13,20 +13,28 @@ export const enum InitializationState {
     BUILD_PLAN_CONFIGURED = 'BUILD_PLAN_CONFIGURED',
     INITIALIZED = 'INITIALIZED',
     FINISHED = 'FINISHED',
+    INACTIVE = 'INACTIVE',
 }
 
-export class Participation implements BaseEntity {
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java
+export enum ParticipationType {
+    STUDENT = 'student',
+    PROGRAMMING = 'programming',
+    TEMPLATE = 'template',
+    SOLUTION = 'solution',
+}
+
+export abstract class Participation implements BaseEntity {
     public id: number;
 
-    public repositoryUrl: string;
-    public buildPlanId: string;
     public initializationState: InitializationState;
     public initializationDate: Moment | null;
     public presentationScore: number;
     public results: Result[];
     public submissions: Submission[];
-    public student: User;
-    public exercise: Exercise;
+    public type: ParticipationType;
 
-    constructor() {}
+    constructor(type: ParticipationType) {
+        this.type = type;
+    }
 }

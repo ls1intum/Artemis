@@ -3,7 +3,6 @@ import { Routes } from '@angular/router';
 import {
     CourseExercisesComponent,
     CourseOverviewComponent,
-    CourseGradeBookComponent,
     CourseStatisticsComponent,
     OverviewComponent,
     CourseExerciseDetailsComponent,
@@ -55,15 +54,6 @@ export const OVERVIEW_ROUTES: Routes = [
                 data: {
                     authorities: ['ROLE_USER'],
                     pageTitle: 'overview.statistics',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'gradebook',
-                component: CourseGradeBookComponent,
-                data: {
-                    authorities: ['ROLE_USER'],
-                    pageTitle: 'overview.gradebook',
                 },
                 canActivate: [UserRouteAccessService],
             },

@@ -16,6 +16,7 @@
             "detail": {
                 "title": "Kurs"
             },
+            "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "color": "Farbe",

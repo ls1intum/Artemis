@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { generateDragAndDropQuizExercise } from './quiz-exercise-generator';
-import { Course, CourseService } from '../../entities/course';
-import { QuizExerciseService } from '../../entities/quiz-exercise';
-import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { Course, CourseService } from 'app/entities/course';
+import { QuizExerciseService } from 'app/entities/quiz-exercise';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ApollonEditor } from '@ls1intum/apollon';
+import { generateDragAndDropQuizExercise } from 'app/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',

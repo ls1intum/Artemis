@@ -10,17 +10,28 @@ public class TutorLeaderboardDTO {
 
     private Long numberOfAcceptedComplaints;
 
+    private Long numberOfNotAnsweredMoreFeedbackRequests;
+
     private Long numberOfComplaintResponses;
+
+    private Long numberOfAnsweredMoreFeedbackRequests;
 
     private Long points;
 
-    public TutorLeaderboardDTO(Long userId, String name, Long numberOfAssessments, Long numberOfAcceptedComplaints, Long numberOfComplaintResponses, Long points) {
+    public TutorLeaderboardDTO(Long userId, String name, Long numberOfAssessments, Long numberOfAcceptedComplaints, Long numberOfNotAnsweredMoreFeedbackRequests,
+            Long numberOfComplaintResponses, Long numberOfAnsweredMoreFeedbackRequests, Long points) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
         this.numberOfAcceptedComplaints = numberOfAcceptedComplaints;
+        this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
         this.numberOfComplaintResponses = numberOfComplaintResponses;
+        this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
         this.points = points;
+    }
+
+    @SuppressWarnings("unused")
+    public TutorLeaderboardDTO() {
     }
 
     public Long getUserId() {
@@ -47,6 +58,14 @@ public class TutorLeaderboardDTO {
         this.numberOfAssessments = numberOfAssessments;
     }
 
+    public Long getNumberOfNotAnsweredMoreFeedbackRequests() {
+        return numberOfNotAnsweredMoreFeedbackRequests;
+    }
+
+    public void setNumberOfNotAnsweredMoreFeedbackRequests(Long numberOfNotAnsweredMoreFeedbackRequests) {
+        this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
+    }
+
     public Long getNumberOfAcceptedComplaints() {
         return numberOfAcceptedComplaints;
     }
@@ -61,6 +80,14 @@ public class TutorLeaderboardDTO {
 
     public void setNumberOfComplaintResponses(Long numberOfComplaintResponses) {
         this.numberOfComplaintResponses = numberOfComplaintResponses;
+    }
+
+    public Long getNumberOfAnsweredMoreFeedbackRequests() {
+        return numberOfAnsweredMoreFeedbackRequests;
+    }
+
+    public void setNumberOfAnsweredMoreFeedbackRequests(Long numberOfAnsweredMoreFeedbackRequests) {
+        this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
     }
 
     public Long getPoints() {

@@ -40,6 +40,12 @@ public final class HeaderUtil {
         return headers;
     }
 
+    /**
+     * Creates a authorization headers for a given username and password
+     * @param username the username
+     * @param password the password
+     * @return the acceptHeader
+     */
     public static HttpHeaders createAuthorization(String username, String password) {
         HttpHeaders acceptHeaders = new HttpHeaders() {
 

@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ResultTest {
 
@@ -14,7 +14,7 @@ public class ResultTest {
 
     List<Feedback> feedbackList;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SystemNotification;
@@ -26,7 +27,7 @@ import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
+import io.github.jhipster.web.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 
@@ -82,6 +83,7 @@ public class NotificationResource {
     /**
      * GET /notifications : get all notifications by pages.
      *
+     * @param pageable Pagination information for fetching the nofications
      * @return the list notifications
      */
     @GetMapping("/notifications")
@@ -92,13 +94,14 @@ public class NotificationResource {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
 
         final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
      * GET /notifications/for-user : get all notifications for users including the active system notification.
      *
+     * @param pageable Pagination information for fetching the nofications, <b>currently ignored</b>
      * @return the list notifications
      */
     @GetMapping("/notifications/for-user")

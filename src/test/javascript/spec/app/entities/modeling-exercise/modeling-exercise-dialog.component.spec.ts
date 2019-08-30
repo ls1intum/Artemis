@@ -5,11 +5,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ModelingExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise-dialog.component';
 import { ModelingExerciseService } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.model';
-import { DiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Component Tests', () => {
     describe('ModelingExercise Management Dialog Component', () => {
@@ -21,7 +21,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ModelingExerciseDialogComponent],
                 providers: [ModelingExerciseService],
             })
@@ -42,7 +42,7 @@ describe('Component Tests', () => {
                 [],
                 fakeAsync(() => {
                     // GIVEN
-                    const entity = new ModelingExercise(DiagramType.ClassDiagram);
+                    const entity = new ModelingExercise(UMLDiagramType.ClassDiagram);
                     spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
                     comp.modelingExercise = entity;
                     // WHEN
@@ -61,7 +61,7 @@ describe('Component Tests', () => {
                 [],
                 fakeAsync(() => {
                     // GIVEN
-                    const entity = new ModelingExercise(DiagramType.ClassDiagram);
+                    const entity = new ModelingExercise(UMLDiagramType.ClassDiagram);
                     spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
                     comp.modelingExercise = entity;
                     // WHEN

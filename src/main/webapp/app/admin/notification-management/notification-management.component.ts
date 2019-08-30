@@ -6,11 +6,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
-import { ITEMS_PER_PAGE } from '../../shared';
-import { AccountService, User, UserService } from '../../core';
+import { ITEMS_PER_PAGE } from 'app/shared';
+import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
-import { UserMgmtDeleteDialogComponent } from 'app/admin';
-import { NotificationMgmtDeleteDialogComponent } from 'app/admin/notification-management/notification-management-delete-dialog.component';
+import { NotificationMgmtDeleteDialogComponent } from 'app/admin';
 import * as moment from 'moment';
 
 @Component({

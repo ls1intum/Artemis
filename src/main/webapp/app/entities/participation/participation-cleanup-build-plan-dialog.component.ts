@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { Participation, ParticipationPopupService, ParticipationService } from '../participation';
+import { Participation, ParticipationPopupService, ParticipationService, StudentParticipation } from '../participation';
 import { ExerciseType } from '../exercise';
 
 import { Subscription } from 'rxjs/Subscription';
@@ -17,7 +17,7 @@ export class ParticipationCleanupBuildPlanDialogComponent implements OnInit {
     // make constants available to html for comparison
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
-    participation: Participation;
+    participation: StudentParticipation;
 
     constructor(private participationService: ParticipationService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 

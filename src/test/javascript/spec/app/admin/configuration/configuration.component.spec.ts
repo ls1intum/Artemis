@@ -1,12 +1,9 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { JhiConfigurationService } from 'app/admin/configuration/configuration.service';
-import { ITEMS_PER_PAGE } from 'app/shared';
-import { Log } from 'app/admin';
 
 describe('Component Tests', () => {
     describe('JhiConfigurationComponent', () => {
@@ -16,7 +13,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [JhiConfigurationComponent],
                 providers: [JhiConfigurationService],
             })

@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SystemNotification;
@@ -22,7 +23,7 @@ import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
+import io.github.jhipster.web.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 
@@ -33,7 +34,7 @@ public class SystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
 
-    private static final String ENTITY_NAME = "systemNotification";
+    private static final String ENTITY_NAME = "notificationManagement";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -90,6 +91,7 @@ public class SystemNotificationResource {
     /**
      * GET /system-notifications : get all system notifications for administration purposes.
      *
+     * @param pageable instance of the pageable interface to enable paging
      * @return the list of system notifications
      */
     @GetMapping("/system-notifications")
@@ -97,7 +99,7 @@ public class SystemNotificationResource {
     public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
@@ -133,7 +135,6 @@ public class SystemNotificationResource {
     /**
      * GET /system-notifications/:id : get the "id" system notification.
      *
-     * @param id the id of the system notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/system-notifications/active-notification")

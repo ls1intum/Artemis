@@ -8,10 +8,9 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -29,15 +28,20 @@ public class ActivityService implements ApplicationListener<SessionDisconnectEve
         this.messagingTemplate = messagingTemplate;
     }
 
-    @SubscribeMapping("/topic/activity")
-    @SendTo("/topic/tracker")
-    public ActivityDTO sendActivity(@Payload ActivityDTO activityDTO, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
+    /**
+     * Sends activityDTO to /topic/tracker
+     * @param activityDTO the Payload  Activity Data Transfer Object
+     * @param stompHeaderAccessor the corresponding Header  Accessor
+     * @param principal the current principal
+     */
+    @MessageMapping("/topic/activity")
+    public void sendActivity(@Payload ActivityDTO activityDTO, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
         activityDTO.setUserLogin(principal.getName());
         activityDTO.setSessionId(stompHeaderAccessor.getSessionId());
         activityDTO.setIpAddress(stompHeaderAccessor.getSessionAttributes().get(IP_ADDRESS).toString());
         activityDTO.setTime(Instant.now());
         log.debug("Sending user tracking data {}", activityDTO);
-        return activityDTO;
+        messagingTemplate.convertAndSend("/topic/tracker", activityDTO);
     }
 
     @Override
@@ -45,6 +49,7 @@ public class ActivityService implements ApplicationListener<SessionDisconnectEve
         ActivityDTO activityDTO = new ActivityDTO();
         activityDTO.setSessionId(event.getSessionId());
         activityDTO.setPage("logout");
+        log.debug("Session disconnect {}", activityDTO);
         messagingTemplate.convertAndSend("/topic/tracker", activityDTO);
     }
 }

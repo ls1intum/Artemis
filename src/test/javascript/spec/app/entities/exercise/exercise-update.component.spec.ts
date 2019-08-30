@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseUpdateComponent } from 'app/entities/exercise/exercise-update.component';
 import { ExerciseService } from 'app/entities/exercise/exercise.service';
 import { Exercise } from 'app/shared/model/exercise.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ExerciseUpdateComponent],
             })
                 .overrideTemplate(ExerciseUpdateComponent, '')

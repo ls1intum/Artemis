@@ -2,9 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { JhiParseLinks } from 'ng-jhipster';
 
-import { Audit } from './audit.model';
-import { AuditsService } from './audits.service';
-import { ITEMS_PER_PAGE } from '../../shared';
+import { Audit, AuditsService } from 'app/admin';
+import { ITEMS_PER_PAGE } from 'app/shared';
 
 @Component({
     selector: 'jhi-audit',

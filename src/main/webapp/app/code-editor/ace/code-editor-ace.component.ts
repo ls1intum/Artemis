@@ -9,8 +9,8 @@ import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Subscription } from 'rxjs';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { fromEvent, of, Subscription } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
@@ -18,13 +18,14 @@ import * as ace from 'brace';
 
 import { AnnotationArray, TextChange } from 'app/entities/ace-editor';
 import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
+import { CodeEditorGridService, CodeEditorRepositoryFileService, ResizeType } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor/model';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
+    styleUrls: ['./code-editor-ace.scss'],
     providers: [JhiAlertService, WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -54,6 +55,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editorMode: string; // String or mode object
     isLoading = false;
     annotationChange: Subscription;
+    resizeSubscription: Subscription;
     buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     // We store changes in the editor since the last content emit to update annotation positions.
@@ -64,7 +66,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * @function ngAfterViewInit
@@ -76,6 +78,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             animatedScroll: true,
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
+        });
+        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_LEFT, ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
+            this.editor.getEditor().resize();
         });
     }
 
@@ -165,16 +170,24 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     loadFile(fileName: string) {
         this.isLoading = true;
         /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService.getFile(fileName).subscribe(
-            fileObj => {
-                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
+        this.repositoryFileService
+            .getFile(fileName)
+            .pipe(
+                tap(fileObj => {
+                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
+                    // It is possible that the selected file has changed - in this case don't update the editor.
+                    if (this.selectedFile === fileName) {
+                        this.initEditorAfterFileChange();
+                    }
+                }),
+                catchError(err => {
+                    console.log('There was an error while getting file', this.selectedFile, err);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
                 this.isLoading = false;
-                this.initEditorAfterFileChange();
-            },
-            err => {
-                console.log('There was an error while getting file', this.selectedFile, err);
-            },
-        );
+            });
     }
 
     /**
@@ -205,6 +218,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
+        }
+        if (this.resizeSubscription) {
+            this.resizeSubscription.unsubscribe();
         }
     }
 }

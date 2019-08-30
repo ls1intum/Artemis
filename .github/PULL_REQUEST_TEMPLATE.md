@@ -1,4 +1,4 @@
-<!-- Thanks for contributing to ArTEMiS! Before you submit your pull request, please make sure to check the following boxes by putting an x in the [ ] (don't: [x ], [ x], do: [x]) -->
+<!-- Thanks for contributing to Artemis! Before you submit your pull request, please make sure to check the following boxes by putting an x in the [ ] (don't: [x ], [ x], do: [x]) -->
 <!-- If your pull request is not ready for review yet, create a draft pull request! -->
 
 ### Checklist
@@ -19,7 +19,7 @@
 ### Steps for Testing
 <!-- Please describe in detail how the reviewer can test your changes. -->
 
-1. Log in to ArTEMiS
+1. Log in to Artemis
 2. Navigate to Course Administration
 3. ...
 

@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
-import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
 import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -29,8 +28,6 @@ public class ModelAssessmentConflictService {
 
     private final ConflictingResultService conflictingResultService;
 
-    private final ConflictingResultRepository conflictingResultRepository;
-
     private final UserService userService;
 
     private final AuthorizationCheckService authCheckService;
@@ -38,10 +35,9 @@ public class ModelAssessmentConflictService {
     private final ResultRepository resultRepository;
 
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
+            UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
-        this.conflictingResultRepository = conflictingResultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
@@ -55,27 +51,33 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
+    /**
+     * Retrieves all model assessment conflicts for a given submission, for which the current user is responsible
+     *
+     * @param submissionId The id of the submission
+     * @return A list of all assessment conflicts for the given submission id
+     */
     @Transactional(readOnly = true)
     public List<ModelAssessmentConflict> getConflictsForCurrentUserForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> conflictsForSubmission = getConflictsForSubmission(submissionId);
         if (conflictsForSubmission.isEmpty()) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         else {
-            Exercise exercise = conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
             return conflictsForSubmission.stream().filter(conflict -> currentUserIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
         }
     }
 
-    public List<ModelAssessmentConflict> getConflictsForSubmission(Long submissionId) {
+    private List<ModelAssessmentConflict> getConflictsForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingSubmission(submissionId);
         loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(existingConflicts);
         return existingConflicts;
     }
 
-    public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
-        List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
-        return conflicts;
+    private List<ModelAssessmentConflict> getConflictsForResult(Result result) {
+        return modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
     }
 
     public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
@@ -90,8 +92,10 @@ public class ModelAssessmentConflictService {
 
     /**
      * Deletes all conflicts related to the given Participation. Needs to be called before a Participation gets deleted to prevent foreign key constraint violations.
+     *
+     * @param participation The participation for which all conflicts should get deleted
      */
-    public void deleteAllConflictsForParticipation(Participation participation) {
+    void deleteAllConflictsForParticipation(Participation participation) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
                 .filter(conflict -> conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())).collect(Collectors.toList());
         modelAssessmentConflictRepository.deleteAll(existingConflicts);
@@ -100,9 +104,9 @@ public class ModelAssessmentConflictService {
     /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
      * 
-     * @param conflicts
+     * @param conflicts The conflicts for which properties should be loaded
      */
-    public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
+    private void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(conflict -> {
             conflict.getCausingConflictingResult()
                     .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
@@ -114,7 +118,8 @@ public class ModelAssessmentConflictService {
     @Transactional
     public Exercise getExerciseOfConflict(Long conflictId) {
         ModelAssessmentConflict conflict = findOne(conflictId);
-        return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) conflict.getCausingConflictingResult().getResult().getParticipation();
+        return studentParticipation.getExercise();
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
@@ -165,7 +170,7 @@ public class ModelAssessmentConflictService {
         newConflictingFeedbacks.keySet().forEach(modelElementId -> {
             Optional<ModelAssessmentConflict> foundExistingConflict = existingConflicts.stream()
                     .filter(existingConflict -> existingConflict.getCausingConflictingResult().getModelElementId().equals(modelElementId)).findFirst();
-            if (!foundExistingConflict.isPresent()) {
+            if (foundExistingConflict.isEmpty()) {
                 ModelAssessmentConflict newConflict = createConflict(modelElementId, causingResult, newConflictingFeedbacks.get(modelElementId));
                 existingConflicts.add(newConflict);
             }
@@ -193,7 +198,14 @@ public class ModelAssessmentConflictService {
         });
     }
 
-    public boolean currentUserIsResponsibleForHandling(ModelAssessmentConflict conflict, Exercise exercise) {
+    /**
+     * Checks if the current user is responsible for handling a model assessment conflict
+     *
+     * @param conflict The conflict for which the responsibility should be checked
+     * @param exercise The exercise related to the given conflict
+     * @return True, if the the user is the assessor of the unhandled conflict, or any conflicting results inside the conflict
+     */
+    private boolean currentUserIsResponsibleForHandling(ModelAssessmentConflict conflict, Exercise exercise) {
         User currentUser = userService.getUser();
         if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return true;

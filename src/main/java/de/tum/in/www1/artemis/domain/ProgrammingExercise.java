@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Objects;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.*;
 
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-public class ProgrammingExercise extends Exercise implements Serializable {
+public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
@@ -42,15 +44,24 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
-    @JsonIgnoreProperties("exercise")
-    private Participation templateParticipation;
+    @Column(name = "sequential_test_runs")
+    private Boolean sequentialTestRuns;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "template_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private TemplateProgrammingExerciseParticipation templateParticipation;
+
+    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "solution_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private Participation solutionParticipation;
+    private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
@@ -87,6 +98,23 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     public String getTestRepositoryUrl() {
         return testRepositoryUrl;
+    }
+
+    /**
+     * Returns the test repository name of the exercise. Test test repository name is extracted from the test repository url.
+     *
+     * @return the test repository name if a valid test repository url is set. Otherwise returns null!
+     */
+    public String getTestRepositoryName() {
+        if (getTestRepositoryUrl() == null)
+            return null;
+
+        Pattern p = Pattern.compile(".*/(.*-tests)\\.git");
+        Matcher m = p.matcher(getTestRepositoryUrl());
+        if (!m.matches() || m.groupCount() != 1)
+            return null;
+
+        return m.group(1);
     }
 
     public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {
@@ -174,24 +202,35 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         this.packageName = packageName;
     }
 
-    public Participation getTemplateParticipation() {
+    public TemplateProgrammingExerciseParticipation getTemplateParticipation() {
         return templateParticipation;
     }
 
-    public void setTemplateParticipation(Participation templateParticipation) {
+    public void setTemplateParticipation(TemplateProgrammingExerciseParticipation templateParticipation) {
         this.templateParticipation = templateParticipation;
+        if (this.templateParticipation != null) {
+            this.templateParticipation.setProgrammingExercise(this);
+        }
     }
 
-    public Participation getSolutionParticipation() {
+    public SolutionProgrammingExerciseParticipation getSolutionParticipation() {
         return solutionParticipation;
     }
 
-    public void setSolutionParticipation(Participation solutionParticipation) {
+    public void setSolutionParticipation(SolutionProgrammingExerciseParticipation solutionParticipation) {
         this.solutionParticipation = solutionParticipation;
+        if (this.solutionParticipation != null) {
+            this.solutionParticipation.setProgrammingExercise(this);
+        }
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
+    /**
+     * Gets a URL of the  templateRepositoryUrl if there is one
+     *
+     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
+     */
     @JsonIgnore
     public URL getTemplateRepositoryUrlAsUrl() {
         String templateRepositoryUrl = getTemplateRepositoryUrl();
@@ -207,6 +246,11 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
+    /**
+     * Gets a URL of the solutionRepositoryUrl if there is one
+     *
+     * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
+     */
     @JsonIgnore
     public URL getSolutionRepositoryUrlAsUrl() {
         String solutionRepositoryUrl = getSolutionRepositoryUrl();
@@ -222,6 +266,11 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
+    /**
+     * Gets a URL of the testRepositoryURL if there is one
+     *
+     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
+     */
     @JsonIgnore
     public URL getTestRepositoryUrlAsUrl() {
         if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
@@ -252,6 +301,26 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JsonIgnore
     public String getPackageFolderName() {
         return getPackageName().replace(".", "/");
+    }
+
+    public Set<ProgrammingExerciseTestCase> getTestCases() {
+        return testCases;
+    }
+
+    public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
+        this.testCases = testCases;
+    }
+
+    @JsonProperty("sequentialTestRuns")
+    public Boolean hasSequentialTestRuns() {
+        if (sequentialTestRuns == null) {
+            return false;
+        }
+        return sequentialTestRuns;
+    }
+
+    public void setSequentialTestRuns(Boolean sequentialTestRuns) {
+        this.sequentialTestRuns = sequentialTestRuns;
     }
 
     /**

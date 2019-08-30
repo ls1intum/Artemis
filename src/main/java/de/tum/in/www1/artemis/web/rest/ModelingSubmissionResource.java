@@ -7,10 +7,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.*;
 
 /**
@@ -52,8 +53,6 @@ public class ModelingSubmissionResource {
 
     private final CourseService courseService;
 
-    private final ResultService resultService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final CompassService compassService;
@@ -63,13 +62,12 @@ public class ModelingSubmissionResource {
     private final UserService userService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-            ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService,
-            CompassService compassService, ExerciseService exerciseService, UserService userService) {
+            ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
+            ExerciseService exerciseService, UserService userService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
         this.courseService = courseService;
-        this.resultService = resultService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.exerciseService = exerciseService;
@@ -126,6 +124,15 @@ public class ModelingSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
+    /**
+     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
+     * only return all the modeling submissions where the tutor has a result associated
+     *
+     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param submittedOnly if true, it returns only submission with submitted flag set to true
+     * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
+     * @return a list of modeling submissions
+     */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
@@ -134,27 +141,27 @@ public class ModelingSubmissionResource {
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
+        User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
 
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise));
+            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
         }
 
         List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(clearStudentInformation(submissions, exercise));
+        return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
     }
 
     /**
      * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
      */
-    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            submissions.forEach(submission -> submission.getParticipation().setStudent(null));
+    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise, User user) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
         }
         return submissions;
     }
@@ -168,7 +175,7 @@ public class ModelingSubmissionResource {
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
@@ -178,7 +185,8 @@ public class ModelingSubmissionResource {
         }
         ModelingSubmission modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(modelingExercise);
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        studentParticipation.setExercise(modelingExercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -186,6 +194,8 @@ public class ModelingSubmissionResource {
     /**
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment.
      *
+     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
@@ -211,10 +221,11 @@ public class ModelingSubmissionResource {
 
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
+            // TODO rename this, because if Compass is activated we pass a submission with a partial automatic result
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
-            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }
@@ -222,18 +233,19 @@ public class ModelingSubmissionResource {
         }
 
         // Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(exercise);
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        studentParticipation.setExercise(exercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
     /**
-     * Given an exerciseId, find a modeling submission for that exercise which still doesn't have any result. If the diagram type is supported by Compass we get an array of ids of
-     * the next optimal submissions from Compass, i.e. the submissions for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not
-     * supported by Compass we just get an array with the id of a random submission without assessment.
+     * Given an exerciseId, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get an array of
+     * ids of the next optimal submissions from Compass, i.e. the submissions for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's
+     * not supported by Compass we just get an array with the id of a random submission without manual assessment.
      *
-     * @param exerciseId the id of the modeling exercise for which we want to get a submission without result
-     * @return an array of modeling submission id(s) without any result
+     * @param exerciseId the id of the modeling exercise for which we want to get a submission without manual result
+     * @return an array of modeling submission id(s) without a manual result
      */
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -246,26 +258,36 @@ public class ModelingSubmissionResource {
 
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             // ask Compass for optimal submission to assess if diagram type is supported
-            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+            List<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+
             if (optimalModelSubmissions.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
-            // TODO CZ: think about how to handle canceled assessments with Compass as I do not want to receive the same submission again, if I canceled the assessment
+
+            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
+            Collections.shuffle(optimalModelSubmissions);
             return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            Random r = new Random();
-            List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-                    .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
+                    .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
             if (submissionsWithoutResult.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
+
+            Random r = new Random();
             return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())).getId() });
         }
     }
 
+    /**
+     * DELETE /exercises/{exerciseId}/optimal-model-submissions: Reset models waiting for assessment by Compass by emptying the waiting list
+     *
+     * @param exerciseId id of the exercise
+     * @return the response entity with status 200 (OK) if reset was performed successfully, otherwise appropriate error code
+     */
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
@@ -278,8 +300,74 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before sending an exercise to the client for a student. IMPORTANT: Do not call
-     * this method from a transactional context as this would remove the sensitive information also from the entity in the database without explicitly saving it.
+     * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
+     *
+     * @param participationId the participationId for which to find the submission and data for the modeling editor
+     * @return the ResponseEntity with the submission as body
+     */
+    @GetMapping("/modeling-editor/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+        if (participation == null) {
+            return ResponseEntity.notFound()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
+        }
+        ModelingExercise modelingExercise;
+        if (participation.getExercise() instanceof ModelingExercise) {
+            modelingExercise = (ModelingExercise) participation.getExercise();
+            if (modelingExercise == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                        .body(null);
+            }
+
+            // make sure sensitive information are not sent to the client
+            modelingExercise.filterSensitiveInformation();
+        }
+        else {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
+                    .body(null);
+        }
+
+        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
+        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
+            return forbidden();
+        }
+
+        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
+        ModelingSubmission modelingSubmission;
+        if (!optionalModelingSubmission.isPresent()) {
+            // this should never happen as the submission is initialized along with the participation when the exercise is started
+            modelingSubmission = new ModelingSubmission();
+            modelingSubmission.setParticipation(participation);
+        }
+        else {
+            // only try to get and set the model if the modelingSubmission existed before
+            modelingSubmission = optionalModelingSubmission.get();
+        }
+
+        // make sure only the latest submission and latest result is sent to the client
+        participation.setSubmissions(null);
+        participation.setResults(null);
+
+        // do not send the result to the client if the assessment is not finished
+        if (modelingSubmission.getResult() != null && (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null)) {
+            modelingSubmission.setResult(null);
+        }
+
+        if (modelingSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            modelingSubmission.getResult().setAssessor(null);
+        }
+
+        return ResponseEntity.ok(modelingSubmission);
+    }
+
+    /**
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
      */
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client
@@ -288,13 +376,17 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
-                exercise.filterSensitiveInformation();
-            }
-            // remove information about the student from the submission for tutors to ensure a double-blind assessment
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                modelingSubmission.getParticipation().setStudent(null);
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    exercise.filterSensitiveInformation();
+                    modelingSubmission.setResult(null);
+                }
+                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                    StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+                    studentParticipation.setStudent(null);
+                }
             }
         }
     }

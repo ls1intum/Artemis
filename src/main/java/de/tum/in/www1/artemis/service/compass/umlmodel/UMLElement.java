@@ -29,12 +29,12 @@ public abstract class UMLElement {
 
     public abstract String getType();
 
-    public int getElementID() {
+    public int getSimilarityID() {
         return similarityID;
     }
 
-    public void setElementID(int elementID) {
-        this.similarityID = elementID;
+    public void setSimilarityID(int similarityID) {
+        this.similarityID = similarityID;
     }
 
     public String getJSONElementID() {

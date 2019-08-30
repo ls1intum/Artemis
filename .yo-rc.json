@@ -4,7 +4,7 @@
       "packageName": "de.tum.in.www1.artemis",
       "nativeLanguage": "en"
     },
-    "jhipsterVersion": "6.1.2",
+    "jhipsterVersion": "6.2.0",
     "baseName": "Artemis",
     "packageName": "de.tum.in.www1.artemis",
     "packageFolder": "de/tum/in/www1/artemis",
@@ -31,6 +31,7 @@
     "enableTranslation": true,
     "nativeLanguage": "en",
     "languages": ["en", "de"],
+    "blueprints": [],
     "cacheProvider": "ehcache",
     "enableHibernateCache": true
   }

@@ -2,7 +2,7 @@
     <div class="col-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="headline">
-                <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage"> </jhi-secured-image>
+                <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>
                 <div *ngIf="!croppedImage" class="no-image"></div>
                 <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">
                     Create new Course
@@ -62,11 +62,10 @@
                             <image-cropper
                                 [imageChangedEvent]="imageChangedEvent"
                                 [maintainAspectRatio]="true"
-                                [aspectRatio]="1 / 1"
+                                [aspectRatio]="1"
                                 [resizeToWidth]="200"
                                 [cropperMinWidth]="100"
-                                [cropperMaxWidth]="400"
-                                [lyScaleDown]="true"
+                                [onlyScaleDown]="true"
                                 [roundCropper]="true"
                                 outputType="base64"
                                 (imageCropped)="imageCropped($event)"

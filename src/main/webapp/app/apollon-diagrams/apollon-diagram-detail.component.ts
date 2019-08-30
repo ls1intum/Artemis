@@ -4,7 +4,7 @@ import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
-import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
+import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 

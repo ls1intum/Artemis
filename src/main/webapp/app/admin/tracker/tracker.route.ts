@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 
-import { JhiTrackerComponent } from './tracker.component';
+import { JhiTrackerComponent } from 'app/admin';
 
 export const trackerRoute: Route = {
     path: 'jhi-tracker',

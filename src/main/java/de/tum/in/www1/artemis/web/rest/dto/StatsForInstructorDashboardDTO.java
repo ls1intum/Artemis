@@ -10,9 +10,15 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfAssessments;
 
+    private Long numberOfAutomaticAssistedAssessments;
+
     private Long numberOfComplaints;
 
     private Long numberOfOpenComplaints;
+
+    private Long numberOfMoreFeedbackRequests;
+
+    private Long numberOfOpenMoreFeedbackRequests;
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
@@ -43,6 +49,14 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfAssessments = numberOfAssessments;
     }
 
+    public Long getNumberOfAutomaticAssistedAssessments() {
+        return numberOfAutomaticAssistedAssessments;
+    }
+
+    public void setNumberOfAutomaticAssistedAssessments(Long numberOfAutomaticAssistedAssessments) {
+        this.numberOfAutomaticAssistedAssessments = numberOfAutomaticAssistedAssessments;
+    }
+
     public Long getNumberOfComplaints() {
         return numberOfComplaints;
     }
@@ -57,6 +71,22 @@ public class StatsForInstructorDashboardDTO {
 
     public void setNumberOfOpenComplaints(Long numberOfOpenComplaints) {
         this.numberOfOpenComplaints = numberOfOpenComplaints;
+    }
+
+    public Long getNumberOfMoreFeedbackRequests() {
+        return numberOfMoreFeedbackRequests;
+    }
+
+    public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
+        this.numberOfMoreFeedbackRequests = numberOfMoreFeedbackRequests;
+    }
+
+    public Long getNumberOfOpenMoreFeedbackRequests() {
+        return numberOfOpenMoreFeedbackRequests;
+    }
+
+    public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
+        this.numberOfOpenMoreFeedbackRequests = numberOfOpenMoreFeedbackRequests;
     }
 
     public List<TutorLeaderboardDTO> getTutorLeaderboardEntries() {

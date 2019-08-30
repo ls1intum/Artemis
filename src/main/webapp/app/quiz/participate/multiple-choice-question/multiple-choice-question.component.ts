@@ -1,14 +1,15 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
-import { SubmittedAnswer } from 'app/entities/submitted-answer';
 import { Result } from 'app/entities/result';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
+    styleUrls: ['./multiple-choice-question.component.scss', '../quiz-question.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionComponent {
@@ -52,14 +53,14 @@ export class MultipleChoiceQuestionComponent {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new MultipleChoiceQuestion();
-        this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
         this.rendered.answerOptions = this.question.answerOptions!.map(answerOption => {
             const renderedAnswerOption = new AnswerOption();
-            renderedAnswerOption.text = artemisMarkdown.htmlForMarkdown(answerOption.text);
-            renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdown(answerOption.hint);
-            renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdown(answerOption.explanation);
+            renderedAnswerOption.text = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.text);
+            renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.hint);
+            renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.explanation);
             return renderedAnswerOption;
         });
     }

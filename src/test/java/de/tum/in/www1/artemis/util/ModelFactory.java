@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.util;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import com.google.common.collect.Sets;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -35,7 +37,7 @@ public class ModelFactory {
         exercise.setExampleSubmissions(new HashSet<>());
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setCategories(new LinkedList<>());
+        exercise.setCategories(new HashSet<>());
         return exercise;
     }
 
@@ -43,7 +45,7 @@ public class ModelFactory {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
-            student.setGroups(Arrays.asList(groups));
+            student.setGroups(Sets.newHashSet(groups));
             generatedUsers.add(student);
         }
         return generatedUsers;
@@ -58,14 +60,24 @@ public class ModelFactory {
         user.setEmail(login + "@test.de");
         user.setActivated(true);
         user.setLangKey("en");
-        user.setGroups(new LinkedList<>());
+        user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
-        user.setPersistentTokens(new HashSet<>());
         return user;
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         return generateCourse(id, startDate, endDate, exercises, UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
+    }
+
+    public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(submitted);
+        if (submitted) {
+            textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return textSubmission;
     }
 
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
@@ -76,6 +88,14 @@ public class ModelFactory {
             submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
         return submission;
+    }
+
+    public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setSubmission(submission);
+        exampleSubmission.setExercise(exercise);
+        exampleSubmission.setUsedForTutorial(usedForTutorial);
+        return exampleSubmission;
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,

@@ -60,7 +60,7 @@
         <div class="quiz-footer-content">
             <div>
                 <div class="stepwizardquiz">
-                    <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz-step">
+                    <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
                         <div
                             *ngIf="question.type === DRAG_AND_DROP"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"

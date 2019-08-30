@@ -5,7 +5,7 @@ $fa-font-path: '~font-awesome/fonts';
 put Sass variables here:
 eg $input-color: red;
 ****************************/
-// Override Boostrap variables
+// Override Bootstrap variables
 @import 'bootstrap-variables';
 // Import Bootstrap source files from node_modules
 @import 'node_modules/bootstrap/scss/bootstrap';

@@ -1,10 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { DragItem } from '../../../entities/drag-item';
-import { DeviceInfo, DeviceDetectorService } from 'ngx-device-detector';
+import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-drag-item',
     templateUrl: './drag-item.component.html',
+    styleUrls: ['./drag-item.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DragItemComponent implements OnInit {
     @Input() minWidth: string;

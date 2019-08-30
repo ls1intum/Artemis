@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { DiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course, CourseService } from 'app/entities/course';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ import { DifferencePipe } from 'ngx-moment';
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly MODELING = ExerciseType.MODELING;
-    readonly CLASS_DIAGRAM = DiagramType.ClassDiagram;
+    readonly CLASS_DIAGRAM = UMLDiagramType.ClassDiagram;
 
     course: Course;
     modelingExercise: ModelingExercise;

@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { Renderer, ElementRef } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { ElementRef, Renderer } from '@angular/core';
+import { of, throwError } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../../test.module';
+import { ArtemisTestModule } from '../../../../test.module';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
 import { PasswordResetInitService } from 'app/account/password-reset/init/password-reset-init.service';
 import { EMAIL_NOT_FOUND_TYPE } from 'app/shared';
@@ -14,7 +14,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [PasswordResetInitComponent],
                 providers: [
                     {

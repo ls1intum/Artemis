@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -17,15 +17,19 @@ public class ClassContext {
     }
 
     /**
+     * Finds all associations for a UML class inside a class diagram including all similarity IDs
+     *
+     * @param model The class diagram in which to search for associations
+     * @param umlClass The class which should be searched for inside the diagram
      * @return Context including the relations connected to the UML class and all children of the class (attributes + methods)
      */
     public static Context getStrictContext(UMLClass umlClass, UMLClassDiagram model) {
         Set<Integer> associations = findAssociationsForClassInModel(umlClass, model);
         for (UMLElement element : umlClass.getAttributes()) {
-            associations.add(element.getElementID());
+            associations.add(element.getSimilarityID());
         }
         for (UMLElement element : umlClass.getMethods()) {
-            associations.add(element.getElementID());
+            associations.add(element.getSimilarityID());
         }
         if (associations.isEmpty()) {
             return Context.NO_CONTEXT;
@@ -34,16 +38,20 @@ public class ClassContext {
     }
 
     private static Set<Integer> findAssociationsForClassInModel(UMLClass umlClass, UMLClassDiagram model) {
-        Set<Integer> relations = new HashSet<>();
+        Set<Integer> relations = ConcurrentHashMap.newKeySet();
         for (UMLClassRelationship relationship : model.getAssociationList()) {
             if (relationship.getSource().equals(umlClass) || relationship.getTarget().equals(umlClass)) {
-                relations.add(relationship.getElementID());
+                relations.add(relationship.getSimilarityID());
             }
         }
         return relations;
     }
 
     /**
+     * Finds all associations for a UML class inside a class diagram
+     *
+     * @param umlClass The class which should be searched for inside the diagram
+     * @param model The class diagram in which to search for associations
      * @return Context including the relations connected to the UML class
      */
     public static Context getWeakContext(UMLClass umlClass, UMLClassDiagram model) {

@@ -3,6 +3,11 @@ import { Result } from '../result';
 import { User } from './../../core';
 import { BaseEntity } from 'app/shared';
 
+export enum ComplaintType {
+    COMPLAINT = 'COMPLAINT',
+    MORE_FEEDBACK = 'MORE_FEEDBACK',
+}
+
 export class Complaint implements BaseEntity {
     public id: number;
 
@@ -12,6 +17,7 @@ export class Complaint implements BaseEntity {
     public resultBeforeComplaint: string;
     public result: Result;
     public student: User;
+    public complaintType: ComplaintType;
 
     constructor() {}
 }

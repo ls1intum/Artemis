@@ -56,6 +56,7 @@ public class TutorParticipationResource {
      *
      * @param exerciseId the id of the exercise for which to init a tutorParticipations
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @throws URISyntaxException if URI path can't be created
      */
     @PostMapping(value = "/exercises/{exerciseId}/tutorParticipations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -86,6 +87,7 @@ public class TutorParticipationResource {
      * yes, then it returns the participation, if not, it returns an error
      *
      * @param exerciseId the id of the exercise of the tutorParticipation
+     * @param exampleSubmission the example submission that will be added
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping(value = "/exercises/{exerciseId}/exampleSubmission")

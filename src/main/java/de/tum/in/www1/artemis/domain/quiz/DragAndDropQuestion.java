@@ -228,6 +228,10 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
      * permanent location and update the value in backgroundFilePath accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When question is deleted,
      * the file in the permanent location is deleted => This happens in @PostRemove
      */
+
+    /**
+     *Initialisation of the DragAndDropQuestion on Server start
+     */
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)

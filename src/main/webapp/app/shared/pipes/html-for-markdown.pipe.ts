@@ -1,4 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { ShowdownExtension } from 'showdown';
+import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Pipe({
@@ -6,7 +8,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 })
 export class HtmlForMarkdownPipe implements PipeTransform {
     constructor(private markdownService: ArtemisMarkdown) {}
-    transform(markdown: string): string | null {
-        return this.markdownService.htmlForMarkdown(markdown);
+    transform(markdown: string, extensions: ShowdownExtension[] = []): SafeHtml | null {
+        return this.markdownService.htmlForMarkdown(markdown, extensions);
     }
 }

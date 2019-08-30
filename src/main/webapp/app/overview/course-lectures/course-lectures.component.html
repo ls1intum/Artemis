@@ -61,7 +61,7 @@
             </div>
             <div class="row mb-1">
                 <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalAttachments' | translate }}</div>
-                <div class="col-4">{{ getTotalAttachments() }}</div>
+                <div class="col-4">{{ totalAttachmentCount }}</div>
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>

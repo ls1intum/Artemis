@@ -1,4 +1,4 @@
-import { Account } from '../../core';
+import { Account } from 'app/core';
 import { Moment } from 'moment';
 
 export class User extends Account {
@@ -9,6 +9,7 @@ export class User extends Account {
     public lastModifiedBy: string | null;
     public lastModifiedDate: Date | null;
     public lastNotificationRead: Moment | null;
+    public registrationNumber: string | null;
     public password: string | null;
 
     constructor(

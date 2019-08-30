@@ -22,9 +22,12 @@ public class UMLPackage extends UMLElement {
     @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
+
         if (element.getClass() == UMLPackage.class) {
-            similarity += NameSimilarity.nameContainsSimilarity(name, element.getName());
+            UMLPackage otherPackage = (UMLPackage) element;
+            similarity += NameSimilarity.levenshteinSimilarity(name, otherPackage.name);
         }
+
         return similarity;
     }
 

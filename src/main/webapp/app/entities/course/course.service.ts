@@ -18,6 +18,8 @@ import { AccountService, User } from 'app/core';
 import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -71,8 +73,8 @@ export class CourseService {
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
-    findAllParticipationsWithResults(courseId: number): Observable<Participation[]> {
-        return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
+    findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
+        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
     findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
@@ -119,8 +121,8 @@ export class CourseService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }
 
-    getStatsForInstructors(id: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
+    getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 
     findAllCategoriesOfCourse(courseId: number): Observable<HttpResponse<string[]>> {
@@ -189,17 +191,6 @@ export class CourseExerciseService {
 
     constructor(private http: HttpClient) {}
 
-    findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}`).map((res: Exercise) => this.convertDateFromServer(res));
-    }
-
-    findAllExercises(courseId: number, req?: any): Observable<HttpResponse<Exercise[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/${courseId}/exercises/`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Exercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
     // exercise specific calls
 
     findProgrammingExercise(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
@@ -266,19 +257,21 @@ export class CourseExerciseService {
             .map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
-    startExercise(courseId: number, exerciseId: number): Observable<Participation> {
-        return this.http.post<Participation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: Participation) => {
+    startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
+        return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
             return this.handleParticipation(participation);
         });
     }
 
-    resumeExercise(courseId: number, exerciseId: number): Observable<Participation> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-participation`, {}).map((participation: Participation) => {
-            return this.handleParticipation(participation);
-        });
+    resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
+        return this.http
+            .put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
+            .map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            });
     }
 
-    handleParticipation(participation: Participation) {
+    handleParticipation(participation: StudentParticipation) {
         if (participation) {
             // convert date
             participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;

@@ -1,10 +1,10 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, inject, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { QuizSubmissionDeleteDialogComponent } from 'app/entities/quiz-submission/quiz-submission-delete-dialog.component';
 import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
 
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [QuizSubmissionDeleteDialogComponent],
             })
                 .overrideTemplate(QuizSubmissionDeleteDialogComponent, '')

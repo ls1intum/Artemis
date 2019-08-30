@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -114,6 +115,12 @@ public class GroupNotificationService {
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 
+    /**
+     * Notify student group about an exercise update
+     *
+     * @param exercise that has been updated
+     * @param notificationText that should be displayed
+     */
     public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
@@ -127,11 +134,21 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(groupNotification);
     }
 
+    /**
+     * Notify tutor group about the creation of an exercise
+     *
+     * @param exercise that has been created
+     */
     public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
         GroupNotification groupNotification = createExerciseCreatedGroupNotificationForTutors(exercise);
         saveAndSendGroupNotification(groupNotification);
     }
 
+    /**
+     * Notify tutor and instructor group about a new question in an exercise
+     *
+     * @param studentQuestion that has been posted
+     */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
         GroupNotification tutorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
         GroupNotification instructorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
@@ -139,6 +156,11 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(instructorNotification);
     }
 
+    /**
+     * Notify tutor and instructor group about a new question in a lecture
+     *
+     * @param studentQuestion that has been posted
+     */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
         GroupNotification tutorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
         GroupNotification instructorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
@@ -146,6 +168,11 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(instructorNotification);
     }
 
+    /**
+     * Notify tutor and instructor group about a new answer for an exercise
+     *
+     * @param studentQuestionAnswer that has been submitted for a question
+     */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
         GroupNotification tutorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
         GroupNotification instructorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
@@ -153,6 +180,11 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(instructorNotification);
     }
 
+    /**
+     * Notify tutor and instructor group about a new answer for a lecture
+     *
+     * @param studentQuestionAnswer that has been submitted for a question
+     */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
         GroupNotification tutorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
         GroupNotification instructorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
@@ -160,6 +192,12 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(instructorNotification);
     }
 
+    /**
+     * Notify student group about an attachment change
+     *
+     * @param attachment that has been changed
+     * @param notificationText that should be displayed
+     */
     public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
         if (attachment.getReleaseDate() != null && !attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
             return;
@@ -173,8 +211,14 @@ public class GroupNotificationService {
         messagingTemplate.convertAndSend(groupNotification.getTopic(), groupNotification);
     }
 
+    /**
+     * Find all recent new notifications for the current user
+     *
+     * @param currentUser currently logged in user
+     * @return list of notifications for the current user
+     */
     public List<Notification> findAllRecentNewNotificationsForCurrentUser(User currentUser) {
-        List<String> userGroups = currentUser.getGroups();
+        Set<String> userGroups = currentUser.getGroups();
         if (userGroups.size() == 0) {
             return new ArrayList<>();
         }

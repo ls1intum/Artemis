@@ -12,12 +12,13 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 ...LAYOUT_ROUTES,
                 {
                     path: 'admin',
-                    loadChildren: './admin/admin.module#ArTEMiSAdminModule',
+                    loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
                 },
+                { path: 'code-editor', loadChildren: () => import('./code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule) },
             ],
             { useHash: true, enableTracing: false },
         ),
     ],
     exports: [RouterModule],
 })
-export class ArTEMiSAppRoutingModule {}
+export class ArtemisAppRoutingModule {}

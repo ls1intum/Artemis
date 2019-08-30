@@ -74,6 +74,7 @@ public class LtiResource {
      * @param exerciseId    the id of the exercise the user wants to open
      * @param request       HTTP request
      * @param response      HTTP response
+     * @throws IOException  If an input or output exception occurs
      */
     @PostMapping(value = "/lti/launch/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response)

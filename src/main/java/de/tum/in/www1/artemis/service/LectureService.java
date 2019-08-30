@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -30,10 +29,32 @@ public class LectureService {
         this.authCheckService = authCheckService;
     }
 
-    public List<Lecture> findAllByCourseId(Long courseId) {
+    public Set<Lecture> findAllByCourseId(Long courseId) {
         return lectureRepository.findAllByCourseId(courseId);
     }
 
+    /**
+     * Finds all Lectures for a given Course
+     *
+     * @param course corresponding course
+     * @param user the user entity
+     * @return a List of all Lectures for the given course
+     */
+    @Transactional(readOnly = true)
+    public Set<Lecture> findAllForCourse(Course course, User user) {
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(course.getId());
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            lectures = filterActiveAttachments(lectures);
+        }
+        return lectures;
+    }
+
+    /**
+     * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
+     *
+     * @param lectureWithAttachments lecture that has attachments
+     * @return lecture with filtered attachments
+     */
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = lectureWithAttachments.getCourse();
@@ -51,6 +72,12 @@ public class LectureService {
         return lectureWithAttachments;
     }
 
+    /**
+     * Filter active attachments for a set of lectures.
+     *
+     * @param lecturesWithAttachments lectures that have attachments
+     * @return lectures with filtered attachments
+     */
     public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments) {
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {

@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -59,9 +59,12 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository) {
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            Optional<TextClusteringScheduleService> textClusteringScheduleService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -72,6 +75,7 @@ public class TextExerciseResource {
         this.resultRepository = resultRepository;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.textClusteringScheduleService = textClusteringScheduleService;
     }
 
     /**
@@ -112,12 +116,16 @@ public class TextExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
+        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
 
         if (textExercise.getDueDate() != null && textExercise.getAssessmentDueDate() == null) {
             textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -127,6 +135,7 @@ public class TextExerciseResource {
      * PUT /text-exercises : Updates an existing textExercise.
      *
      * @param textExercise the textExercise to update
+     * @param notificationText about the text exercise update that should be displayed for the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or with status 500
      *         (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -150,7 +159,12 @@ public class TextExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
+        TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
+        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
         TextExercise result = textExerciseRepository.save(textExercise);
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
@@ -167,6 +181,7 @@ public class TextExerciseResource {
     /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
+     * @param courseId id of the course of which all the exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/text-exercises")
@@ -225,6 +240,7 @@ public class TextExerciseResource {
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return forbidden();
             }
+            textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
             textExerciseService.delete(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
@@ -236,13 +252,13 @@ public class TextExerciseResource {
      * submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
-     * @return the ResponseEntity with json as body
+     * @return the ResponseEntity with the participation as body
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
+    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -262,9 +278,8 @@ public class TextExerciseResource {
                     .body(null);
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins
-        // can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -275,24 +290,53 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> textSubmission = participation.findLatestTextSubmission();
+        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (textSubmission.isPresent()) {
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.get().setParticipation(null);
+        if (optionalTextSubmission.isPresent()) {
+            TextSubmission textSubmission = optionalTextSubmission.get();
 
-            Result result = textSubmission.get().getResult();
-            if (textSubmission.get().isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
                 List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission.get());
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                result.setAssessor(null);
+            }
+
+            participation.addSubmissions(textSubmission);
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+            participation.setStudent(null);
         }
 
         return ResponseEntity.ok(participation);
+    }
+
+    /**
+     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment (clustering task) for given exercise id
+     *
+     * @param exerciseId id of the exercised that for which the automatic assessment should be triggered
+     * @return the ResponseEntity with status 200 (OK) or with status 400 (Bad Request)
+     */
+    @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
+        if (textClusteringScheduleService.isPresent()) {
+            TextExercise textExercise = textExerciseService.findOne(exerciseId);
+            textClusteringScheduleService.get().scheduleExerciseForInstantClustering(textExercise);
+            return ResponseEntity.ok().build();
+        }
+        else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

@@ -1,38 +1,29 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, flush, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
+import { Subject } from 'rxjs';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { spy, stub, SinonStub } from 'sinon';
-import { of, Subscription, BehaviorSubject, throwError } from 'rxjs';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ArTEMiSTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
-import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import {
-    ProgrammingExercise,
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
-    TestCaseState,
-} from 'src/main/webapp/app/entities/programming-exercise';
-import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
-import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementHtml } from '../../sample/problemStatement.json';
+import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { MockParticipationWebsocketService } from '../../mocks';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
+import { ProgrammingExerciseInstructionTestcaseStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instruction-testcase-status.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,27 +32,26 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
-    let participationWebsocketService: ParticipationWebsocketService;
-    let resultService: ResultService;
-    let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let getLatestResultWithFeedbacksStub: SinonStub;
-    let latestResultSubject: BehaviorSubject<Result>;
+    let testCaseService: ProgrammingExerciseTestCaseService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
-    const exercise = { id: 30 } as ProgrammingExercise;
+    let subscribeForTestCaseSpy: SinonSpy;
+    let getLatestResultWithFeedbacksStub: SinonStub;
+    let generateHtmlSubjectStub: SinonStub;
+
+    const exercise = { id: 30, templateParticipation: { id: 99 } } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
-    const templateparticipation = { id: 1, results: [{ id: 10 }] } as Participation;
+    const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
-            declarations: [
-                ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
-                MockComponent(MarkdownEditorComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                SafeHtmlPipe,
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
+            declarations: [MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent), MockComponent(MarkdownEditorComponent)],
+            providers: [
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
-            providers: [{ provide: ResultService, useClass: MockResultService }, { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService }],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
@@ -69,80 +59,162 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                resultService = debugElement.injector.get(ResultService);
-
-                latestResultSubject = new BehaviorSubject(null);
-
-                getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks');
-                subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(latestResultSubject);
+                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
+                (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
+                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                subscribeForTestCaseSpy = spy(testCaseService, 'subscribeForTestCases');
+                getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                generateHtmlSubjectStub = stub(comp.generateHtmlSubject, 'next');
             });
     });
 
     afterEach(() => {
+        (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
+        subscribeForTestCaseSpy.restore();
         getLatestResultWithFeedbacksStub.restore();
-        subscribeForLatestResultOfParticipationStub.restore();
-
-        latestResultSubject.complete();
-        latestResultSubject = new BehaviorSubject(null);
-        subscribeForLatestResultOfParticipationStub.returns(latestResultSubject);
+        generateHtmlSubjectStub.restore();
     });
 
-    it('should not have any test cases if the result feedbacks of the template participation are empty', () => {
+    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
-        comp.templateParticipation = templateparticipation;
 
         const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-            templateParticipation: new SimpleChange(undefined, comp.templateParticipation, true),
+            exercise: new SimpleChange(undefined, exercise, true),
         };
         comp.ngOnChanges(changes);
         fixture.detectChanges();
+        tick();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(templateparticipation.id);
+        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
-    });
 
-    it('should have test cases if the result feedbacks of the template participation is not empty', () => {
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
-        comp.templateParticipation = { ...templateparticipation, results: [{ id: 20, feedbacks: [{ text: 'test1' }, { text: 'test2' }] }] } as Participation;
 
         const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-            templateParticipation: new SimpleChange(undefined, comp.templateParticipation, true),
+            exercise: new SimpleChange(undefined, exercise, true),
         };
         comp.ngOnChanges(changes);
-        fixture.detectChanges();
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(templateparticipation.id);
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
-    });
 
-    it('should update test cases if new templateParticipation result comes in', () => {
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should update test cases if a new test case result comes in', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
-        comp.templateParticipation = templateparticipation;
-        const newResult = { id: 20, feedbacks: [{ text: 'test1' }, { text: 'test2' }] } as Result;
 
         const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-            templateParticipation: new SimpleChange(undefined, comp.templateParticipation, true),
+            exercise: new SimpleChange(undefined, exercise, true),
         };
         comp.ngOnChanges(changes);
+
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
+
         fixture.detectChanges();
+        tick();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(2);
+        expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
+
+        (testCaseService as MockProgrammingExerciseTestCaseService).next([{ testName: 'testX' }]);
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.exerciseTestCases).to.be.empty;
+
+        expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+        const subject = new Subject<Result>();
+        getLatestResultWithFeedbacksStub.returns(subject);
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
+
+        // No test cases available, might be that the solution build never ran to create tests...
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
+
+        fixture.detectChanges();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(0);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+
+        subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
+        tick();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(2);
+        expect(comp.exerciseTestCases).to.deep.equal(['testX', 'testY']);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.editMode = false;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
+
+        fixture.detectChanges();
+        tick();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
         expect(comp.exerciseTestCases).to.be.empty;
 
-        latestResultSubject.next(newResult);
+        expect(comp.testCaseSubscription).to.be.undefined;
+        expect(subscribeForTestCaseSpy).not.to.have.been.called;
+        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
+
+        const saveProblemStatementButton = debugElement.query(By.css('#save-instructions-button'));
+        expect(saveProblemStatementButton).not.to.exist;
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should re-render the preview html after changes to the problem statement have been made', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+
+        const changes: SimpleChanges = {
+            exercise: new SimpleChange(undefined, exercise, true),
+        };
+        comp.ngOnChanges(changes);
+
         fixture.detectChanges();
+        tick();
 
-        expect(comp.exerciseTestCases).to.have.lengthOf(2);
-        expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
+        expect(generateHtmlSubjectStub).to.have.been.calledOnce;
 
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(templateparticipation.id);
-    });
+        fixture.destroy();
+        flush();
+    }));
 });

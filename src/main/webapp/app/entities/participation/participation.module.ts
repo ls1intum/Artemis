@@ -1,10 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
-import { ArTEMiSSharedModule } from 'app/shared';
-import { ArTEMiSAdminModule } from 'app/admin/admin.module';
+import { ArtemisSharedModule } from 'app/shared';
 import {
     ParticipationCleanupBuildPlanDialogComponent,
     ParticipationCleanupBuildPlanPopupComponent,
@@ -18,11 +17,13 @@ import {
     ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
+import { ArtemisExerciseScoresModule } from 'app/scores';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule, ArtemisProgrammingExerciseActionsModule],
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
@@ -38,12 +39,11 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationCleanupBuildPlanPopupComponent,
     ],
     providers: [ParticipationService, ParticipationWebsocketService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSParticipationModule {
+export class ArtemisParticipationModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
+            if (languageKey) {
                 this.languageService.changeLanguage(languageKey);
             }
         });

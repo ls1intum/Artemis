@@ -53,6 +53,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
+    @Size(max = 20)
+    @Column(name = "registration_number", length = 20)
+    private String registrationNumber;
+
     @Email
     @Size(max = 100)
     @Column(length = 100)
@@ -86,21 +90,24 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
-    @ElementCollection
-    private List<String> groups = new ArrayList<>();
+    /**
+     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
+     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
+     */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "`groups`")
+    private Set<String> groups = new HashSet<>();
 
-    @JsonIgnore
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
+
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "authority_name", referencedColumnName = "name") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
-
-    @JsonIgnore
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "user")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<PersistentToken> persistentTokens = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -143,6 +150,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    /**
+     * @return name as a concatenation of first name and last name
+     */
     public String getName() {
         if (lastName != null && !lastName.equals("")) {
             return firstName + " " + lastName;
@@ -216,11 +226,11 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.langKey = langKey;
     }
 
-    public List<String> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<String> groups) {
+    public void setGroups(Set<String> groups) {
         this.groups = groups;
     }
 
@@ -232,12 +242,22 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.authorities = authorities;
     }
 
-    public Set<PersistentToken> getPersistentTokens() {
-        return persistentTokens;
+    public Set<GuidedTourSetting> getGuidedTourSettings() {
+        return this.guidedTourSettings;
     }
 
-    public void setPersistentTokens(Set<PersistentToken> persistentTokens) {
-        this.persistentTokens = persistentTokens;
+    public void addGuidedTourSetting(GuidedTourSetting setting) {
+        this.guidedTourSettings.add(setting);
+        setting.setUser(this);
+    }
+
+    public void removeGuidedTourSetting(GuidedTourSetting setting) {
+        this.guidedTourSettings.remove(setting);
+        setting.setUser(null);
+    }
+
+    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override
@@ -262,5 +282,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
     }
 }

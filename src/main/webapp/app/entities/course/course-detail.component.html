@@ -2,7 +2,7 @@
     <div class="col-8">
         <div *ngIf="course">
             <div>
-                <jhi-secured-image *ngIf="course.courseIcon" [src]="course.courseIcon"> </jhi-secured-image>
+                <jhi-secured-image *ngIf="course.courseIcon" [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>
                 <h2><span jhiTranslate="artemisApp.course.detail.title">Course</span> {{ course.id }}</h2>
             </div>
             <hr />

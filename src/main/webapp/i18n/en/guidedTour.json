@@ -1,0 +1,14 @@
+{
+    "tour": {
+        "navigation": {
+            "back": "Back",
+            "next": "Next",
+            "done": "Done",
+            "close": "Close"
+        },
+        "resize": {
+            "headline": "Browser window too small",
+            "content": "Please resize the browser to a larger size to continue the tour or close the tour."
+        }
+    }
+}

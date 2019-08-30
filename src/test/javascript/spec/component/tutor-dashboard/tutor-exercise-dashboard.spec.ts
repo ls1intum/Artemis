@@ -2,14 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { stub, SinonStub } from 'sinon';
-import { ArTEMiSTestModule } from '../../test.module';
+import { SinonStub, stub } from 'sinon';
+import { ArtemisTestModule } from '../../test.module';
 import { MockActivatedRoute } from '../../mocks';
 import { ResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { ArTEMiSTutorExerciseDashboardModule, TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard';
+import { TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { MockAlertService } from '../../helpers/mock-alert.service';
@@ -17,7 +17,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers';
-import { ArTEMiSTutorCourseDashboardModule, TutorCourseDashboardComponent } from 'app/tutor-course-dashboard';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { of, throwError } from 'rxjs';
@@ -43,7 +42,7 @@ describe('TutorExerciseDashboardComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule],
             declarations: [
                 TutorExerciseDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),

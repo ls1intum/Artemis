@@ -44,7 +44,7 @@ public abstract class SubmittedAnswer implements Serializable {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
     @JsonView(QuizView.Before.class)
     private QuizQuestion quizQuestion;

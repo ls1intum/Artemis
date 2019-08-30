@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const webpackMerge = require('webpack-merge');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
@@ -120,6 +121,7 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
         ]
     },
     plugins: [
+        new ForkTsCheckerWebpackPlugin(),
         new MiniCssExtractPlugin({
             // Options similar to the same options in webpackOptions.output
             // both options are optional

@@ -7,11 +7,11 @@
     </h4>
     <div *ngIf="!showResult">
         <div class="short-answer-question-display" *ngFor="let textPart of textParts; let i = index">
-            <div class="short-answer-question-display-element" *ngFor="let element of textPart; let j = index">
+            <div class="short-answer-question-display__element" *ngFor="let element of textPart; let j = index">
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" [innerHTML]="element"></div>
-                <div class="short-answer-question-input-container" *ngIf="shortAnswerQuestionUtil.isInputField(element)">
+                <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element)">
                     <input
-                        class="short-answer-question-input"
+                        class="short-answer-question-container__input"
                         type="text"
                         [disabled]="clickDisabled"
                         value="{{ getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : '' }}"
@@ -26,10 +26,10 @@
     </div>
     <div *ngIf="showResult">
         <div class="short-answer-question-display" *ngFor="let textPart of textParts">
-            <div class="short-answer-question-display-element" *ngFor="let element of textPart">
+            <div class="short-answer-question-display__element" *ngFor="let element of textPart">
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" [innerHTML]="element"></div>
                 <div
-                    class="short-answer-question-input-container"
+                    class="short-answer-question-container"
                     *ngIf="
                         shortAnswerQuestionUtil.isInputField(element) &&
                         !showingSampleSolution &&
@@ -37,7 +37,7 @@
                     "
                 >
                     <input
-                        class="short-answer-question-input"
+                        class="short-answer-question-container__input"
                         disabled
                         [style.background]="getBackgroundColourForInputField(element)"
                         value="{{ getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : '' }}"
@@ -47,9 +47,8 @@
                         *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid"
                         [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | translate"
                     >
-                        <!-- class="short-answer-question-display" -->
                         <input
-                            class="short-answer-question-input"
+                            class="short-answer-question-container__input"
                             style="background: grey"
                             disabled
                             value="{{ getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : '' }}"
@@ -57,9 +56,9 @@
                         />
                     </div>
                 </div>
-                <div class="short-answer-question-input-container" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
+                <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
                     <input
-                        class="short-answer-question-input"
+                        class="short-answer-question-container__input"
                         disabled
                         [style.background]="'lightgreen'"
                         value="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text : '' }}"

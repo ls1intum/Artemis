@@ -1,22 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -27,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -50,6 +47,14 @@ public class ParticipationService {
     private String ARTEMIS_BASE_URL;
 
     private final ParticipationRepository participationRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -77,12 +82,21 @@ public class ParticipationService {
 
     private final ModelAssessmentConflictService conflictService;
 
-    public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+    private final AuthorizationCheckService authCheckService;
+
+    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
@@ -96,38 +110,106 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
+        this.authCheckService = authCheckService;
     }
 
     /**
-     * Save a participation.
+     * Save any type of participation without knowing the explicit subtype
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public Participation save(Participation participation) {
+        // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
+        // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            return save((ProgrammingExerciseStudentParticipation) participation);
+        }
+        else if (participation instanceof StudentParticipation) {
+            return save((StudentParticipation) participation);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+            return save((TemplateProgrammingExerciseParticipation) participation);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            return save((SolutionProgrammingExerciseParticipation) participation);
+        }
+        else {
+            throw new RuntimeException("Participation type not known. Cannot save!");
+        }
+    }
+
+    /**
+     * Save a ProgrammingExerciseStudentParticipation.
      *
      * @param participation the entity to save
      * @return the persisted entity
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Participation save(Participation participation) {
-        log.debug("Request to save Participation : {}", participation);
-        return participationRepository.saveAndFlush(participation);
+    public ProgrammingExerciseStudentParticipation save(ProgrammingExerciseStudentParticipation participation) {
+        log.debug("Request to save ProgrammingExerciseStudentParticipation : {}", participation);
+        return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a StudentParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public StudentParticipation save(StudentParticipation participation) {
+        log.debug("Request to save StudentParticipation : {}", participation);
+        return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a TemplateProgrammingExerciseParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public TemplateProgrammingExerciseParticipation save(TemplateProgrammingExerciseParticipation participation) {
+        log.debug("Request to save TemplateProgrammingExerciseParticipation : {}", participation);
+        return templateProgrammingExerciseParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a SolutionProgrammingExerciseParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public SolutionProgrammingExerciseParticipation save(SolutionProgrammingExerciseParticipation participation) {
+        log.debug("Request to save SolutionProgrammingExerciseParticipation : {}", participation);
+        return solutionProgrammingExerciseParticipationRepository.saveAndFlush(participation);
     }
 
     /**
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
-     * repository / build plan related stuff for programming exercises.
+     * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
-     * @param exercise
-     * @param username
-     * @return
+     * @param exercise the exercise which is started
+     * @param username the name of the user who starts the exercise
+     * @return the participation connecting the given exercise and user
      */
     @Transactional
-    public Participation startExercise(Exercise exercise, String username) {
+    public StudentParticipation startExercise(Exercise exercise, String username) {
 
         // common for all exercises
         // Check if participation already exists
-        Participation participation = findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        boolean isNewParticipation = participation == null;
-        if (isNewParticipation || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-            // create a new participation only if it was finished before (only for programming exercises)
-            participation = new Participation();
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), username);
+        StudentParticipation participation;
+        if (optionalStudentParticipation.isEmpty()) {
+            // create a new participation only if no participation can be found
+            if (exercise instanceof ProgrammingExercise) {
+                participation = new ProgrammingExerciseStudentParticipation();
+            }
+            else {
+                participation = new StudentParticipation();
+            }
             participation.setExercise(exercise);
 
             Optional<User> user = userService.getUserByLogin(username);
@@ -138,6 +220,7 @@ public class ParticipationService {
         }
         else {
             // make sure participation and exercise are connected
+            participation = optionalStudentParticipation.get();
             participation.setExercise(exercise);
         }
 
@@ -146,34 +229,69 @@ public class ParticipationService {
             // if (exercise.getCourse().isOnlineCourse()) {
             // participation.setLti(true);
             // } //TODO use lti in the future
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             participation.setInitializationState(InitializationState.UNINITIALIZED);
-            participation = copyRepository(participation, programmingExercise);
-            participation = configureRepository(participation);
-            participation = copyBuildPlan(participation, programmingExercise);
-            participation = configureBuildPlan(participation);
-            participation = configureRepositoryWebHook(participation);
+            programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
+            participation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
             // we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
-            participation.setInitializationState(INITIALIZED);
-            participation.setInitializationDate(ZonedDateTime.now());
+            programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
+            programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
         }
-        else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise || exercise instanceof TextExercise) {
+        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == FINISHED) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
             }
-            if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
+
+            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
                 participation.setInitializationDate(ZonedDateTime.now());
+            }
+
+            if (participation.getId() == null || !submissionRepository.existsByParticipationId(participation.getId())) {
+                // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+                initializeSubmission(participation, exercise);
             }
         }
 
         participation = save(participation);
 
-        if (isNewParticipation) {
+        if (optionalStudentParticipation.isEmpty()) {
+            // only send a new participation to the client over websocket
             messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
 
         return participation;
+    }
+
+    /**
+     * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
+     * database.
+     *
+     * @param participation the participation for which the submission should be initialized
+     * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     */
+    private void initializeSubmission(Participation participation, Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
+            return;
+        }
+
+        Submission submission;
+        if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else {
+            submission = new FileUploadSubmission();
+        }
+
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        participation.addSubmissions(submission);
     }
 
     /**
@@ -185,17 +303,17 @@ public class ParticipationService {
      * @return the found or created participation with a result
      */
 
-    public Participation participationForQuizWithResult(QuizExercise quizExercise, String username) {
+    public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
-            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
+            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
 
             if (!optionalParticipation.isPresent()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
                 // TODO properly handle this case
                 return null;
             }
-            Participation participation = optionalParticipation.get();
+            StudentParticipation participation = optionalParticipation.get();
             // add exercise
             participation.setExercise(quizExercise);
 
@@ -216,7 +334,7 @@ public class ParticipationService {
         }
 
         // Look for Participation in ParticipationHashMap first
-        Participation participation = QuizScheduleService.getParticipation(quizExercise.getId(), username);
+        StudentParticipation participation = QuizScheduleService.getParticipation(quizExercise.getId(), username);
         if (participation != null) {
             return participation;
         }
@@ -238,7 +356,10 @@ public class ParticipationService {
         Result result = new Result().submission(quizSubmission);
 
         // construct participation
-        participation = new Participation().initializationState(INITIALIZED).exercise(quizExercise).addResult(result);
+        participation = new StudentParticipation();
+        participation.setInitializationState(INITIALIZED);
+        participation.setExercise(quizExercise);
+        participation.addResult(result);
 
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
@@ -259,9 +380,10 @@ public class ParticipationService {
      * Service method to resume inactive participation (with previously deleted build plan)
      *
      * @param exercise exercise to which the inactive participation belongs
+     * @param participation inactive participation
      * @return resumed participation
      */
-    public Participation resumeExercise(Exercise exercise, Participation participation) {
+    public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
@@ -271,7 +393,7 @@ public class ParticipationService {
         if (!programmingExercise.isPresent()) {
             return null;
         }
-        participation = copyBuildPlan(participation, programmingExercise.get());
+        participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
@@ -282,9 +404,10 @@ public class ParticipationService {
         return participation;
     }
 
-    private Participation copyRepository(Participation participation, ProgrammingExercise exercise) {
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.get().copyRepository(exercise.getTemplateRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            URL repositoryUrl = versionControlService.get().copyRepository(participation.getProgrammingExercise().getTemplateRepositoryUrlAsUrl(),
+                    participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
                 participation.setRepositoryUrl(repositoryUrl.toString());
                 participation.setInitializationState(InitializationState.REPO_COPIED);
@@ -296,7 +419,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureRepository(Participation participation) {
+    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
@@ -307,9 +430,10 @@ public class ParticipationService {
         }
     }
 
-    private Participation copyBuildPlan(Participation participation, ProgrammingExercise exercise) {
+    private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(exercise.getTemplateBuildPlanId(), participation.getStudent().getLogin());
+            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(participation.getProgrammingExercise().getTemplateBuildPlanId(),
+                    participation.getStudent().getLogin());
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
@@ -319,7 +443,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureBuildPlan(Participation participation) {
+    private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
@@ -330,10 +454,10 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureRepositoryWebHook(Participation participation) {
+    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "ArTEMiS WebHook");
+                    "Artemis WebHook");
             return save(participation);
         }
         else {
@@ -342,40 +466,66 @@ public class ParticipationService {
     }
 
     /**
-     * Get all the participations.
-     *
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public List<Participation> findAll() {
-        log.debug("Request to get all Participations");
-        return participationRepository.findAll();
-    }
-
-    /**
-     * Get all the participations.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<Participation> findAll(Pageable pageable) {
-        log.debug("Request to get all Participations");
-        return participationRepository.findAll(pageable);
-    }
-
-    /**
      * Get one participation by id.
      *
-     * @param id the id of the entity
+     * @param participationId the id of the entity
+     * @return the entity
+     * @throws EntityNotFoundException throws if participation was not found
+     **/
+    @Transactional(readOnly = true)
+    public Participation findOne(Long participationId) throws EntityNotFoundException {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findById(participationId);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one student participation by id.
+     *
+     * @param participationId the id of the entity
+     * @return the entity
+     **/
+    @Transactional(readOnly = true)
+    public StudentParticipation findOneStudentParticipation(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findById(participationId);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one student participation by id with fetched Result, Submissions, Exercise and Course.
+     *
+     * @param participationId the id of the entity
+     * @return the entity
+     **/
+    @Transactional(readOnly = true)
+    public StudentParticipation findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAndExerciseAndCourseById(participationId);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("StudentParticipation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one programming exercise participation by id.
+     *
+     * @param participationId the id of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Participation findOne(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findById(id);
+    public ProgrammingExerciseStudentParticipation findProgrammingExerciseParticipation(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findById(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("ProgrammingExerciseStudentParticipation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -383,31 +533,31 @@ public class ParticipationService {
     /**
      * Get one participation by id including all results.
      *
-     * @param id the id of the participation
+     * @param participationId the id of the participation
      * @return the participation with all its results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerResults(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerResults(id);
+    public StudentParticipation findOneWithEagerResults(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
 
     /**
-     * Get one participation by id including all submissions.
+     * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
-     * @param id the id of the entity
-     * @return the participation with all its submissions
+     * @param participationId the id of the entity
+     * @return the participation with all its submissions and results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerSubmissions(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissions(id);
+    public StudentParticipation findOneWithEagerSubmissionsAndResults(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -415,35 +565,17 @@ public class ParticipationService {
     /**
      * Get one participation by id including all results and submissions.
      *
-     * @param id the id of the participation
+     * @param participationId the id of the participation
      * @return the participation with all its results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerResultsAndSubmissions(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
+    public StudentParticipation findOneWithEagerResultsAndSubmissionsAndAssessor(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
-    }
-
-    /**
-     * Get one initialized/inactive participation by its student and exercise.
-     *
-     * @param exerciseId the project key of the exercise
-     * @param username   the username of the student
-     * @return the entity
-     */
-    @Transactional(readOnly = true)
-    public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
-        log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
-
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
-        if (participation == null) {
-            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, InitializationState.INACTIVE);
-        }
-        return participation;
     }
 
     /**
@@ -451,12 +583,12 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise in any state
      */
     @Transactional(readOnly = true)
-    public Optional<Participation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return participationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**
@@ -464,12 +596,12 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise in state finished
      */
     @Transactional(readOnly = true)
-    public Optional<Participation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return participationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
+        return studentParticipationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
     }
 
     /**
@@ -477,55 +609,108 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise with eager submissions in any state
      */
     @Transactional(readOnly = true)
-    public Optional<Participation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return participationRepository.findByExerciseIdAndStudentLoginWithEagerSubmissions(exerciseId, username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**
      * Get all participations for the given student including all results
      *
-     * @param username the username of the student
-     * @return the list of entities
+     * @param userId the id of the user for which the participations should be found
+     * @return the list of participations of the given student including all results for all possible exercises
      */
     @Transactional(readOnly = true)
-    public List<Participation> findWithResultsByStudentUsername(String username) {
-        return participationRepository.findByStudentUsernameWithEagerResults(username);
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(userId);
     }
 
+    /**
+     * Get all participations for the given student including all results for the given exercises
+     *
+     * @param userId the id of the user for which the participations should be found
+     * @param exercises the exercises for which participations should be found
+     * @return the list of participations of the given student including all results
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
+     *
+     * @param buildPlanId the id of build plan
+     * @param state initialization state
+     * @return the list of programming exercise participations belonging to build plan
+     */
+    @Transactional(readOnly = true)
+    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseId(Long exerciseId) {
-        return participationRepository.findByExerciseId(exerciseId);
+    public List<StudentParticipation> findByExerciseId(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise with eager results.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
-        return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithEagerResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerResults(exerciseId);
     }
 
+    /**
+     * Get all programming exercise participations belonging to exercise and student with eager results.
+     *
+     * @param exerciseId the id of exercise
+     * @param studentId the id of student
+     * @return the list of programming exercise participations belonging to exercise and student
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
-        return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
+    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
     }
 
+    /**
+     * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
+     * corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
-        return participationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
     }
 
+    /**
+     * Get all participations belonging to course with relevant results.
+     *
+     * @param courseId the id of the exercise
+     * @param includeNotRatedResults specify is not rated results are included
+     * @param includeAssessors specify id assessors are included
+     * @return list of participations belonging to course
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
-        List<Participation> participations = includeAssessors ? participationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
-                : participationRepository.findByCourseIdWithEagerResults(courseId);
+    public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
+        List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
+                : studentParticipationRepository.findByCourseIdWithEagerResults(courseId);
 
         return participations.stream()
 
@@ -584,13 +769,13 @@ public class ParticipationService {
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive This means the participation can be resumed in
      * the future
      *
-     * @param participation
+     * @param participation that will be set to inactive
      */
     @Transactional
-    public void cleanupBuildPlan(Participation participation) {
+    public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getBuildPlanId() != null) { // ignore participations without build plan id
             continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-            participation.setInitializationState(InitializationState.INACTIVE);
+            participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
             save(participation);
         }
@@ -600,10 +785,10 @@ public class ParticipationService {
      * NOTICE: be careful with this method because it deletes the students code on the version control server Deletes the repository on the version control server and sets the
      * initialization state of the participation to finished This means the participation cannot be resumed in the future and would need to be restarted
      *
-     * @param participation
+     * @param participation to be stopped
      */
     @Transactional
-    public void cleanupRepository(Participation participation) {
+    public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getRepositoryUrl() != null) {      // ignore participations without repository URL
             versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
             participation.setRepositoryUrl(null);
@@ -613,24 +798,25 @@ public class ParticipationService {
     }
 
     /**
-     * Delete the participation by id.
+     * Delete the participation by participationId.
      *
-     * @param id               the id of the entity
+     * @param participationId  the participationId of the entity
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
     @Transactional(noRollbackFor = { Throwable.class })
-    public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
-        Participation participation = participationRepository.findById(id).get();
+    public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
+        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
 
-        if (participation.getExercise() instanceof ProgrammingExercise) {
-            if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
             }
-            if (deleteRepository && participation.getRepositoryUrl() != null) {
+            if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
-                    versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+                    versionControlService.get().deleteRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl());
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: " + ex.getMessage());
@@ -639,7 +825,7 @@ public class ParticipationService {
 
             // delete local repository cache
             try {
-                gitService.get().deleteLocalRepository(participation);
+                gitService.get().deleteLocalRepository(programmingExerciseParticipation);
             }
             catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
@@ -652,11 +838,28 @@ public class ParticipationService {
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
             // For modeling and text exercises students can send complaints about their assessments and we need to remove
             // the complaints and the according responses belonging to a participation before deleting the participation itself.
-            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
-            complaintRepository.deleteByResult_Participation_Id(id);
+            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
+            complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
-        if (participation.getResults() != null && participation.getResults().size() > 0) {
+        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation);
+
+        Exercise exercise = participation.getExercise();
+        exercise.removeParticipation(participation);
+        exerciseRepository.save(exercise);
+        studentParticipationRepository.delete(participation);
+    }
+
+    /**
+     * Remove all results and submissions of the given participation.
+     * Will do nothing if invoked with a participation without results/submissions.
+     * @param participation to delete results/submissions from.
+     * @return participation without submissions and results.
+     */
+    @Transactional
+    public Participation deleteResultsAndSubmissionsOfParticipation(Participation participation) {
+        // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
+        if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
@@ -665,39 +868,90 @@ public class ParticipationService {
                     Submission submissionToDelete = result.getSubmission();
                     submissionRepository.deleteById(submissionToDelete.getId());
                     result.setSubmission(null);
-                    // make sure submissions don't get deleted twice (see below)
                     participation.removeSubmissions(submissionToDelete);
                 }
             }
         }
-        // The following case is necessary, because we might have submissions without result
-        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
+        // The following case is necessary, because we might have submissions without a result. At this point only submissions without a result will still be connected to the
+        // participation.
+        if (participation.getSubmissions() != null) {
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());
             }
         }
-
-        Exercise exercise = participation.getExercise();
-        exercise.removeParticipation(participation);
-        exerciseRepository.save(exercise);
-        participationRepository.delete(participation);
+        return participation;
     }
 
     /**
      * Delete all participations belonging to the given exercise
      *
      * @param exerciseId the id of the exercise
+     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param deleteRepository specify if repository should be deleted
      */
     @Transactional
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        List<Participation> participationsToDelete = findByExerciseId(exerciseId);
+        List<StudentParticipation> participationsToDelete = findByExerciseId(exerciseId);
 
-        for (Participation participation : participationsToDelete) {
+        for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
     }
 
-    public Participation findOneWithEagerCourse(Long participationId) {
-        return participationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
+    public StudentParticipation findOneWithEagerCourse(Long participationId) {
+        return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Check if a participation can be accessed with the current user.
+     *
+     * @param participation to access
+     * @return can user access participation
+     */
+    @Nullable
+    public boolean canAccessParticipation(StudentParticipation participation) {
+        return Optional.ofNullable(participation).isPresent() && userHasPermissions(participation);
+    }
+
+    /**
+     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
+     *
+     * @param participation to access
+     * @return does user has permissions to access participation
+     */
+    private boolean userHasPermissions(StudentParticipation participation) {
+        if (authCheckService.isOwnerOfParticipation(participation))
+            return true;
+        // if the user is not the owner of the participation, the user can only see it in case he is
+        // a teaching assistant or an instructor of the course, or in case he is admin
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = participation.getExercise().getCourse();
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Get template exercise participation belonging to build plan.
+     *
+     * @param planKey the id of build plan
+     * @return template exercise participation belonging to build plan
+     */
+    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipationByBuildPlanId(String planKey) {
+        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    }
+
+    /**
+     * Get solution exercise participation belonging to build plan.
+     *
+     * @param planKey the id of build plan
+     * @return solution exercise participation belonging to build plan
+     */
+    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
+        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
     }
 }

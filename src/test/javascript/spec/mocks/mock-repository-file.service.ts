@@ -1,7 +1,5 @@
-import { Injectable } from '@angular/core';
 import { IRepositoryFileService } from 'app/entities/repository';
-import { Observable, of } from 'rxjs';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { of } from 'rxjs';
 
 export class MockRepositoryFileService implements IRepositoryFileService {
     createFile = (participationId: number, fileName: string) => of();

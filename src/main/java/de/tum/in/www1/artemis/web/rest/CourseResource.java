@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Principal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -17,14 +16,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -72,8 +69,6 @@ public class CourseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ObjectMapper objectMapper;
-
     private final LectureService lectureService;
 
     private final ComplaintRepository complaintRepository;
@@ -94,10 +89,9 @@ public class CourseResource {
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
-            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -107,7 +101,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
@@ -117,7 +110,6 @@ public class CourseResource {
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-
     }
 
     /**
@@ -136,7 +128,7 @@ public class CourseResource {
         }
         try {
             // Check if course shortname matches regex
-            Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
+            Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
             if (!shortNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
             }
@@ -168,7 +160,7 @@ public class CourseResource {
             return createCourse(updatedCourse);
         }
         Optional<Course> existingCourse = courseRepository.findById(updatedCourse.getId());
-        if (!existingCourse.isPresent()) {
+        if (existingCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -177,7 +169,7 @@ public class CourseResource {
         if (user.getGroups().contains(existingCourse.get().getInstructorGroupName()) || authCheckService.isAdmin()) {
             try {
                 // Check if course shortname matches regex
-                Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
+                Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
                 if (!shortNameMatcher.matches()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
@@ -225,6 +217,9 @@ public class CourseResource {
      * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
+     * @param courseId to find the course
+     * @return response entity for user who has been registered to the course
+     * @throws URISyntaxException exception thrown to indicate that a string could not be parsed as a URI reference.
      */
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -277,46 +272,38 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @param principal the current user principal
      * @return the list of courses (the user has access to) including all exercises with participation and result for the user
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForDashboard(Principal principal) {
+    public List<Course> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         log.debug("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
+        Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
 
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // get all participations of this user
-        // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
-        // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
-        // this would also improve the performance for other REST calls
-        List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentId(user.getId(), activeExercises);
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
 
-        long exerciseCount = 0;
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-            Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
-            course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, principal.getName());
+                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
-                exerciseCount++;
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
+                + " exercises for user " + user.getLogin());
         return courses;
     }
 
@@ -328,14 +315,14 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long courseId) {
+    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course))
             return forbidden();
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, user);
 
         exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise).collect(Collectors.toList());
 
@@ -350,7 +337,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            Long numberOfSubmissions = 0L;
+            long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -358,7 +345,7 @@ public class CourseResource {
                 numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -393,6 +380,9 @@ public class CourseResource {
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
+
+        Long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
         Long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
@@ -441,6 +431,7 @@ public class CourseResource {
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */
     @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -459,7 +450,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            Long numberOfParticipations = 0L;
+            long numberOfParticipations = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -467,11 +458,14 @@ public class CourseResource {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
+            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+
             exercise.setNumberOfParticipations(numberOfParticipations);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
@@ -486,6 +480,7 @@ public class CourseResource {
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */
     @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -499,14 +494,21 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
-        Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
-
-        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+                ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+                ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
+        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
+
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
@@ -560,51 +562,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
-     *
-     * @param courseId the id of the course to get the results from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
-
-        User student = userService.getUser();
-        Course course = courseService.findOne(courseId);
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
-
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
-
-        for (Exercise exercise : exercises) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
-
-            exercise.setParticipations(new HashSet<>());
-
-            // Removing not needed properties and sensitive information for students
-            exercise.setCourse(null);
-            if (isStudent) {
-                exercise.filterSensitiveInformation();
-            }
-
-            for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
-
-                participation.setResults(participation.getResults());
-                exercise.addParticipation(participation);
-            }
-            course.addExercises(exercise);
-        }
-
-        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
-
-        return ResponseEntity.ok().body(course);
-    }
-
-    /**
      * GET /courses/:courseId/categories : Returns all categories used in a course
      *
      * @param courseId the id of the course to get the categories from
@@ -613,15 +570,15 @@ public class CourseResource {
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<String>> getCategoriesInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get categories of Course : {}", courseId);
 
         User user = userService.getUser();
         Course course = courseService.findOne(courseId);
 
-        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, user);
-        List<String> categories = new ArrayList<>();
+        List<Exercise> exercises = exerciseService.findAllExercisesForCourseAdministration(course, user);
+        Set<String> categories = new HashSet<>();
         for (Exercise exercise : exercises) {
             categories.addAll(exercise.getCategories());
         }

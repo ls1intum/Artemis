@@ -30,7 +30,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.templateParticipationSubscription) {
                 this.templateParticipationSubscription.unsubscribe();
             }
-            this.participationWebsocketService.addParticipation(this.templateParticipation, this.exercise);
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
@@ -45,7 +44,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.solutionParticipationSubscription) {
                 this.solutionParticipationSubscription.unsubscribe();
             }
-            this.participationWebsocketService.addParticipation(this.solutionParticipation, this.exercise);
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(

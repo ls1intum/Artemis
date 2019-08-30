@@ -27,8 +27,12 @@ public class ConflictingResultService {
     }
 
     /**
-     * Helper method for creating a conflictingResult instance with the elementID and result of the given feedback aswell as the given conflict. Used to create an member of the
+     * Helper method for creating a conflictingResult instance with the elementID and result of the given feedback as well as the given conflict. Used to create an member of the
      * resultsInConflict list of the ModelAssessmentConflict object.
+     *
+     * @param conflict between a newly assessed model element and already persisted assessed model elements
+     * @param feedback in conflict
+     * @return conflictingResult instance
      */
     public ConflictingResult createConflictingResult(ModelAssessmentConflict conflict, Feedback feedback) {
         ConflictingResult conflictingResult = new ConflictingResult();
@@ -41,6 +45,10 @@ public class ConflictingResultService {
     /**
      * Helper method for creating a ConflictingResult instance with the given modelElementID and result. Used to create the causingConflictingResult instance of the
      * ModelAssessmentConflict object
+     *
+     * @param modelElementID of the element that caused the conflict
+     * @param result that caused the conflict
+     * @return conflictingResult instance
      */
     public ConflictingResult createConflictingResult(String modelElementID, Result result) {
         ConflictingResult conflictingResult = new ConflictingResult();

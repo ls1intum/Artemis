@@ -19,7 +19,7 @@ public class QuizStatisticService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultRepository resultRepository;
 
@@ -29,11 +29,11 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, ParticipationRepository participationRepository, ResultRepository resultRepository,
+    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             QuizSubmissionRepository quizSubmissionRepository, QuizPointStatisticRepository quizPointStatisticRepository,
             QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
@@ -56,7 +56,7 @@ public class QuizStatisticService {
         }
 
         // add the Results in every participation of the given quizExercise to the statistics
-        for (Participation participation : participationRepository.findByExerciseId(quizExercise.getId())) {
+        for (Participation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
 
             Result latestRatedResult = null;
             Result latestUnratedResult = null;

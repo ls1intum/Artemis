@@ -5,6 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationPopupService {
@@ -29,7 +30,7 @@ export class ParticipationPopupService {
             } else {
                 // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
                 setTimeout(() => {
-                    this.ngbModalRef = this.participationModalRef(component, new Participation());
+                    this.ngbModalRef = this.participationModalRef(component, new StudentParticipation());
                     resolve(this.ngbModalRef);
                 }, 0);
             }

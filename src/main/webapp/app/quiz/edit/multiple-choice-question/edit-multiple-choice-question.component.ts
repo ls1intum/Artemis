@@ -10,6 +10,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
+    styleUrls: ['../../../quiz.scss'],
     providers: [ArtemisMarkdown],
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {

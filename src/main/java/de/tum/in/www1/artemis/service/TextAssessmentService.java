@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -23,8 +21,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
@@ -49,11 +47,12 @@ public class TextAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it
+     * This function is used for manually assessed results. It updates the completion date and sets the assessor attribute. Furthermore, it
      * saves the assessment in the file system the total score is calculated and set in the result.
      *
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
+     * @param textExercise  the corresponding TextExercise
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */
@@ -76,7 +75,6 @@ public class TextAssessmentService extends AssessmentService {
             checkAssessmentDueDate(textExercise);
         }
 
-        result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
 
@@ -91,10 +89,10 @@ public class TextAssessmentService extends AssessmentService {
         result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
             feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
             result.addFeedback(feedback);
         }
         result.setHasFeedback(false);
+        result.determineAssessmentType();
 
         resultRepository.save(result);
         return result;

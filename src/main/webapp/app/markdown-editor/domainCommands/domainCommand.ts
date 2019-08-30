@@ -1,7 +1,7 @@
 import { Command } from 'app/markdown-editor/commands/command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
-/** abstract class for all domainCommands - customized commands for ArTEMiS specific use cases
+/** abstract class for all domainCommands - customized commands for Artemis specific use cases
  * e.g multiple choice questons, drag an drop questions
  * Each domain command has its own logic and an unique identifier**/
 export abstract class DomainCommand extends Command {

@@ -32,8 +32,7 @@
                 title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{
                     conflictingResult.result.assessor.firstName
                 }} {{ conflictingResult.result.assessor.lastName }}"
-                [highlightedElementIds]="conflictingModelHighlightedElementIds"
-                [highlightColor]="highlightColor"
+                [highlightedElements]="conflictingModelHighlightedElements"
                 [centeredElementId]="conflictingResult.modelElementId"
                 [readOnly]="true"
                 [resizeOptions]="{}"
@@ -46,8 +45,7 @@
                 [diagramType]="modelingExercise.diagramType"
                 [model]="model"
                 [feedbacks]="currentFeedbacksCopy"
-                [highlightedElementIds]="modelHighlightedElementIds"
-                [highlightColor]="highlightColor"
+                [highlightedElements]="modelHighlightedElements"
                 title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
                 [centeredElementId]="currentConflict.causingConflictingResult.modelElementId"
                 (feedbackChanged)="onFeedbackChanged($event)"

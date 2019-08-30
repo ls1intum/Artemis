@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
@@ -114,6 +114,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participation.results && participation.results.length > 0;
     }
 
+    repositoryUrl(participation: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+    }
+
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
@@ -170,10 +174,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
     }
 
-    resumeExercise() {
+    resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeExercise(this.courseId, this.exercise.id)
+            .resumeProgrammingExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
                 participation => {

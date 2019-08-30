@@ -1,11 +1,11 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Component Tests', () => {
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [ProgrammingExerciseComponent],
                 providers: [],
             })

@@ -1,11 +1,11 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { PointCounterDialogComponent } from '../../../../../../main/webapp/app/entities/point-counter/point-counter-dialog.component';
 import { PointCounterService } from '../../../../../../main/webapp/app/entities/point-counter/point-counter.service';
 import { PointCounter } from '../../../../../../main/webapp/app/entities/point-counter/point-counter.model';
@@ -21,7 +21,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [PointCounterDialogComponent],
                 providers: [QuizPointStatisticService, PointCounterService],
             })

@@ -1,11 +1,11 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { SubmittedAnswerDialogComponent } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer-dialog.component';
 import { SubmittedAnswerService } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.service';
 import { SubmittedAnswer } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.model';
@@ -22,7 +22,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [SubmittedAnswerDialogComponent],
                 providers: [QuestionService, QuizSubmissionService, SubmittedAnswerService],
             })

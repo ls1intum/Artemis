@@ -39,7 +39,8 @@
             "feedbackTextRequired": "Feedback Text ist erforderlich.",
             "positive": "Positiv",
             "graded": "Bewertet",
-            "notGraded": "Nicht bewertet"
+            "notGraded": "Nicht bewertet",
+            "preliminary": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt."
         }
     }
 }

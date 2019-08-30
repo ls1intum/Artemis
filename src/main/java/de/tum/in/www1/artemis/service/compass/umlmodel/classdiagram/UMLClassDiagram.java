@@ -109,6 +109,7 @@ public class UMLClassDiagram extends UMLDiagram {
      *
      * @return isEntirelyAssessed
      */
+    @SuppressWarnings("unused")
     public boolean isEntirelyAssessed() {
         if (isUnassessed() || lastAssessmentCompassResult.getCoverage() != 1) {
             return false;
@@ -150,6 +151,11 @@ public class UMLClassDiagram extends UMLDiagram {
         return classList.stream().mapToInt(UMLClass::getElementCount).sum() + associationList.size();
     }
 
+    /**
+     * Get the confidence of the last assessed compass result
+     *
+     * @return The confidence of the last compass result
+     */
     @SuppressWarnings("unused")
     public double getLastAssessmentConfidence() {
         if (isUnassessed()) {
@@ -159,6 +165,11 @@ public class UMLClassDiagram extends UMLDiagram {
         return lastAssessmentCompassResult.getConfidence();
     }
 
+    /**
+     * Get the coverage for the last assessed compass result
+     *
+     * @return The coverage of the last compass results
+     */
     public double getLastAssessmentCoverage() {
         if (isUnassessed()) {
             return -1;

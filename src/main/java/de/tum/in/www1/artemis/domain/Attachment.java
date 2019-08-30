@@ -74,14 +74,17 @@ public class Attachment implements Serializable {
      * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
      * This happens in @PostRemove
      */
+
+    /**
+     *Initialisation of the Attachment on Server start
+     */
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
         if (attachmentType == AttachmentType.FILE && getLecture() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
             link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getLecture().getId().toString());
         }
-        // save current path as old path (needed to know old path in onUpdate() and onDelete())
-        prevLink = link;
+        prevLink = link; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
     @PrePersist

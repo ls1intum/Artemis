@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 @Service
@@ -47,5 +51,15 @@ public class TextExerciseService {
         // delete all participations belonging to this text exercise
         participationService.deleteAllByExerciseId(id, false, false);
         textExerciseRepository.deleteById(id);
+    }
+
+    /**
+     * Find all exercises with *Due Date* in the future.
+     *
+     * @return List of Text Exercises
+     */
+    @Transactional(readOnly = true)
+    public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
+        return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
     }
 }

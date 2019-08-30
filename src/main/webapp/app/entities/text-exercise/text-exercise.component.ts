@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -48,10 +49,6 @@ export class TextExerciseComponent extends ExerciseComponent {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
-    }
-
-    convertMarkdownToHtml(text: string): string | null {
-        return this.artemisMarkdown.htmlForMarkdown(text);
     }
 
     trackId(index: number, item: TextExercise) {

@@ -1,8 +1,7 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { JhiMetricsService } from 'app/admin/metrics/metrics.service';
 
@@ -14,7 +13,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [JhiMetricsMonitoringComponent],
             })
                 .overrideTemplate(JhiMetricsMonitoringComponent, '')

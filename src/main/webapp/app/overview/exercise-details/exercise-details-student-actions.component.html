@@ -198,12 +198,12 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatus() === INACTIVE"
-            (click)="resumeExercise()"
+            (click)="resumeProgrammingExercise()"
         ></button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{
-                exercise.participations[0].repositoryUrl
+            <pre style="max-width: 100%;" ngxClipboard [cbContent]="repositoryUrl(exercise.participations[0])" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{
+                repositoryUrl(exercise.participations[0])
             }}</pre>
             <p *ngIf="repositoryPassword">
                 {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
@@ -211,7 +211,7 @@
             </p>
             <button
                 ngxClipboard
-                [cbContent]="exercise.participations[0].repositoryUrl"
+                [cbContent]="repositoryUrl(exercise.participations[0])"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
                 [class.btn-success]="wasCopied"
@@ -221,7 +221,7 @@
             >
                 {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
             </button>
-            <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">{{
+            <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(repositoryUrl(exercise.participations[0])) | safeUrl">{{
                 'artemisApp.exerciseActions.cloneSourceTree' | translate
             }}</a>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>

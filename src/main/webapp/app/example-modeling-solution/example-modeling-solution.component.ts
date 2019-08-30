@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService } from '../core';
@@ -21,7 +22,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     exerciseId: number;
     exampleSolution: UMLModel;
     isAtLeastInstructor = false;
-    formattedProblemStatement: string | null;
+    formattedProblemStatement: SafeHtml | null;
 
     constructor(
         private exerciseService: ModelingExerciseService,

@@ -63,6 +63,7 @@ entity Exercise (exercise) {        //abstract
     dueDate ZonedDateTime,
     assessmentDueDate ZonedDateTime,
     maxScore Double,
+    assessmentType AssessmentType,
     difficulty DifficultyLevel,
     categories String               //List<String>, similar to User --> groups
 }
@@ -220,6 +221,7 @@ entity ExerciseResult (result) {
 
 enum AssessmentType {
     AUTOMATIC,
+    SEMI_AUTOMATIC,
     MANUAL
 }
 
@@ -275,6 +277,18 @@ entity ProgrammingSubmission {      //extends Submission
 
 entity TextSubmission {             //extends Submission
     text String                     //LONGTEXT --> lob
+}
+
+entity TextBlock {
+    id String
+    text String
+    startIndex Integer
+    endIndex   Integer
+}
+
+entity TextCluster {
+    probabilities Blob
+    distanceMatrix Blob
 }
 
 entity FileUploadSubmission {       //extends Submission
@@ -475,6 +489,9 @@ relationship OneToMany {
     Exercise{studentQuestions} to StudentQuestion{exercise},
     Lecture{studentQuestions} to StudentQuestion{lecture},
     ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
+    TextSubmission{blocks} to TextBlock{submission},
+    TextCluster{blocks} to TextBlock{cluster},
+    TextExercise{clusters} to TextCluster{exercise}
 }
 
 relationship OneToOne {

@@ -3,6 +3,8 @@
         "title": "Artemis",
         "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "generic": {
+            "yes": "Ja",
+            "no": "Nein",
             "emptyList": "Keine Elemente verfügbar"
         },
         "menu": {
@@ -66,6 +68,8 @@
                 "shortAnswerSubmittedAnswer": "Short Answer Submitted Answer",
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
+                "programmingExerciseTestCase": "Programming Exercise Test Case",
+                "exerciseHint": "Aufgabenhinweis",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -93,7 +97,9 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "noNotifications": "Keine neuen Mitteilungen verfügbar",
+            "guidedTour": "Guided Tour",
+            "startTour": "Tour starten",
+            "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
         "form": {
@@ -192,7 +198,8 @@
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
-            "scores": "Bewertungen"
+            "scores": "Bewertungen",
+            "manageHints": "Verwalte Hinweise"
         },
         "detail": {
             "field": "Feld",
@@ -232,11 +239,12 @@
         "userexists": "Benutzername bereits vergeben!",
         "emailexists": "Email wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
-        "invalid.template.build.plan.id": "Die Vorlage Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "invalid.solution.build.plan.id": "Die Lösung Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "invalid.template.repository.url": "Die Vorlage Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "idnull": "Ungültige ID"
+        "invalid.template.build.plan.id": "Die Vorlage Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "invalid.solution.build.plan.id": "Die Lösung Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "invalid.template.repository.url": "Die Vorlage Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "idnull": "Ungültige ID",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",

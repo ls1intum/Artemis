@@ -3,7 +3,8 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
-                {{ 'artemisApp.complaint.listOfComplaints.title' | translate }}
+                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.title' | translate }}</span>
+                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.title' | translate }}</span>
             </h2>
         </div>
     </div>
@@ -22,12 +23,14 @@
                 (ngModelChange)="triggerAddressedComplaints()"
             />
             <label class="form-check-label" for="field_showAddressedComplaint">
-                {{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | translate }}
+                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | translate }}</span>
+                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | translate }}</span>
             </label>
         </div>
 
         <div [hidden]="complaintsToShow.length !== 0">
-            {{ 'artemisApp.complaint.listOfComplaints.noComplaintsToShow' | translate }}
+            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.noComplaintsToShow' | translate }}</span>
+            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.noRequestsToShow' | translate }}</span>
         </div>
 
         <table class="table" [hidden]="complaintsToShow.length === 0">
@@ -101,14 +104,20 @@
 
                     <td>
                         <span class="text-warning" *ngIf="complaint.accepted == undefined">{{ 'artemisApp.complaint.listOfComplaints.noReply' | translate }}</span>
-                        <span class="text-success" *ngIf="complaint.accepted == true">{{ 'artemisApp.complaint.listOfComplaints.accepted' | translate }}</span>
+                        <span class="text-success" *ngIf="complaint.accepted == true && complaintType === ComplaintType.COMPLAINT">{{
+                            'artemisApp.complaint.listOfComplaints.accepted' | translate
+                        }}</span>
+                        <span class="text-success" *ngIf="complaint.accepted == true && complaintType === ComplaintType.MORE_FEEDBACK">{{
+                            'artemisApp.moreFeedback.accepted' | translate
+                        }}</span>
                         <span class="text-danger" *ngIf="complaint.accepted == false">{{ 'artemisApp.complaint.listOfComplaints.rejected' | translate }}</span>
                     </td>
 
                     <td class="text-center">
                         <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}
+                            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}</span>
+                            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.tutorExerciseDashboard.showMoreFeedbackRequests' | translate }}</span>
                         </button>
                     </td>
                 </tr>
@@ -117,6 +126,7 @@
     </div>
 
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
-        {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
+        <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}</span>
+        <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequests' | translate }}</span>
     </div>
 </div>

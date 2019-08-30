@@ -4,13 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ExerciseDashboardPopupService } from '../../dashboard/exercise-dashboard-popup.service';
+import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.service';
 import { Exercise, ExerciseService } from '../exercise/index';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
-    selector: 'jhi-instructor-dashboard-cleanup-dialog',
+    selector: 'jhi-programming-exercise-cleanup-dialog',
     templateUrl: './programming-exercise-cleanup-dialog.component.html',
 })
 export class ProgrammingExerciseCleanupDialogComponent {
@@ -47,13 +47,13 @@ export class ProgrammingExerciseCleanupDialogComponent {
 }
 
 @Component({
-    selector: 'jhi-instructor-dashboard-cleanup-popup',
+    selector: 'jhi-programming-exercise-cleanup-popup',
     template: '',
 })
-export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseCleanupPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {

@@ -1,9 +1,9 @@
 import { Exercise, ExerciseType } from '../exercise';
 import { Course } from '../course';
-import { DiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 export class ModelingExercise extends Exercise {
-    public diagramType: DiagramType;
+    public diagramType: UMLDiagramType;
     public sampleSolutionModel: string;
     public sampleSolutionExplanation: string;
 
@@ -12,11 +12,11 @@ export class ModelingExercise extends Exercise {
     public automaticAssessmentSupported = false; // TODO: in the future, we will set this value to true when loading the modeling exercise
     // from the server when the corresponding diagram type supports automatic assessment
 
-    constructor(diagramType: DiagramType, course?: Course) {
+    constructor(diagramType: UMLDiagramType, course?: Course) {
         super(ExerciseType.MODELING);
         this.course = course || null;
         this.diagramType = diagramType;
     }
 }
 
-export { DiagramType };
+export { UMLDiagramType as DiagramType };

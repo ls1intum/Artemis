@@ -3,7 +3,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Result } from 'app/entities/result';
-import { Participation } from 'app/entities/participation';
+import { Participation, StudentParticipation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -47,8 +47,8 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<Participation> {
-        return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
+    public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<StudentParticipation> {
+        return this.http.get<StudentParticipation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
     }
 
     public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
@@ -56,7 +56,7 @@ export class TextAssessmentsService {
     }
 
     getParticipationForSubmissionWithoutAssessment(exerciseId: number) {
-        return this.http.get<Participation>(`${SERVER_API_URL}api/exercise/${exerciseId}/participation-without-assessment`);
+        return this.http.get<StudentParticipation>(`${SERVER_API_URL}api/exercise/${exerciseId}/participation-without-assessment`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
