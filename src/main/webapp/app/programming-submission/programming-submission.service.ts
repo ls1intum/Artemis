@@ -155,7 +155,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 if (!result || !result.submission) {
                     return false;
                 }
-                return result.submission.id === this.exerciseBuildState[exerciseId][participationId][1]!.id;
+                const [, submission] = this.exerciseBuildState[exerciseId][participationId];
+                return !!submission && result.submission.id === submission.id;
             }),
             distinctUntilChanged(),
             tap(() => {
