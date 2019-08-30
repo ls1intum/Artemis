@@ -19,7 +19,7 @@ import { AccountService } from 'app/core';
     templateUrl: './file-upload-exercise.component.html',
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
-    @Input() fileUploadExercises: FileUploadExercise[];
+    @Input() fileUploadExercises: FileUploadExercise[] = [];
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -33,7 +33,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
-        this.fileUploadExercises = [];
     }
 
     protected loadExercises(): void {
