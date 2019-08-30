@@ -667,7 +667,10 @@ public class ParticipationResource {
     @GetMapping(value = "/participations/{participationId}/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        checkAccessPermissionAtInstructor(participation);
         List<Submission> submissions = participationService.getSubmissionsWithParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
+
 }
