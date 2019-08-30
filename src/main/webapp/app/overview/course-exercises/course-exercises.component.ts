@@ -29,12 +29,15 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
     activeFilters: Set<ExerciseFilter>;
-    private order: ExerciseSortingOrder;
     public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
     public upcomingExercises: Exercise[];
     public exerciseCountMap: Map<string, number>;
+
+    readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
+    readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
+    sortingOrder: ExerciseSortingOrder;
 
     constructor(
         private courseService: CourseService,
@@ -49,7 +52,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
         this.activeFilters = new Set<ExerciseFilter>();
-        this.order = ExerciseSortingOrder.DUE_DATE_DESC;
+        this.sortingOrder = ExerciseSortingOrder.DUE_DATE_DESC;
         this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -77,10 +80,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         return ExerciseFilter;
     }
 
-    get sortingOrder() {
-        return ExerciseSortingOrder;
-    }
-
     /**
      * Return the total number of exercises for the logged in user
      */
@@ -90,10 +89,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     /**
      * Reorders all displayed exercises
-     * @param selectedOrder The order in which the exercises should be displayed
      */
-    orderUpdate(selectedOrder: ExerciseSortingOrder) {
-        this.order = selectedOrder;
+    flipOrder() {
+        this.sortingOrder = this.sortingOrder === this.ASC ? this.DESC : this.ASC;
         this.applyFiltersAndOrder();
     }
 
@@ -207,7 +205,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             const aValue = a.dueDate ? a.dueDate.valueOf() : moment().valueOf();
             const bValue = b.dueDate ? b.dueDate.valueOf() : moment().valueOf();
 
-            return this.order.valueOf() * (aValue - bValue);
+            return this.sortingOrder.valueOf() * (aValue - bValue);
         });
     }
 
