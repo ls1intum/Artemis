@@ -137,7 +137,7 @@ public class SubmissionResource {
 
         if (!submission.isPresent()) {
             log.error("Submission with id: " + id + " cannot be deleted");
-            return null;
+            return ResponseEntity.notFound().build();
         }
 
         checkAccessPermissionAtInstructor(submission.get());
