@@ -198,12 +198,27 @@ public class ProgrammingSubmissionService {
         return programmingSubmissionRepository.save(newSubmission);
     }
 
+    /**
+     * Uses {@link #createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation, SubmissionType)} but for multiple participations.
+     * Will ignore exceptions that are raised by this method and just not create a submission for the concerned participations.
+     *
+     * @param participations for which to create new submissions.
+     * @param submissionType the type for the submissions to be created.
+     * @return list of created submissions (might be smaller as the list of provided participations!).
+     */
     @Transactional
     public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
-            SubmissionType submissionType) throws IllegalStateException {
-        // TODO: What to do with the exception? Very unlikely but annoying here...
-        List<ProgrammingSubmission> submissions = participations.stream().map(participation -> createSubmissionWithLastCommitHashForParticipation(participation, submissionType))
-                .collect(Collectors.toList());
-        return submissions;
+            SubmissionType submissionType) {
+        return participations.stream().map(participation -> {
+            ProgrammingSubmission submission;
+            try {
+                submission = createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
+                return submission;
+            }
+            catch (IllegalStateException ex) {
+                // The exception is already logged, we just return null here.
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

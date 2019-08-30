@@ -5,19 +5,19 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisSharedModule } from 'app/shared';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-trigger-build-button.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExerciseInstructorTriggerAllButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-trigger-all-button.component';
+import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
 
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammingExerciseInstructorTriggerAllButtonComponent,
+        ProgrammmingExerciseInstructorSubmissionStateComponent,
     ],
     exports: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammingExerciseInstructorTriggerAllButtonComponent,
+        ProgrammmingExerciseInstructorSubmissionStateComponent,
     ],
     providers: [],
 })

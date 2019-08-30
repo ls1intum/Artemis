@@ -170,6 +170,13 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Trigger the CI of all participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
@@ -191,6 +198,16 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Trigger the CI of the provided participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * Note: If a participationId does not belong to the exercise, it will be ignored!
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @param buildTriggerDTO list of participation ids.
+     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody BuildTriggerDTO buildTriggerDTO) {

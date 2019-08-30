@@ -184,40 +184,34 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     private emitNoPendingSubmission = (participationId: number, exerciseId: number) => {
         const newSubmissionState = [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as ProgrammingSubmissionStateObj;
-        this.submissionSubjects[participationId].next(newSubmissionState);
-        if (!this.exerciseBuildState[exerciseId]) {
-            this.exerciseBuildState[exerciseId] = {};
-        }
-        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
-        // TODO: This could be refactored into a setter.
-        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
-        if (exerciseBuildStateSubject) {
-            exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
-        }
+        this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
 
     private emitBuildingSubmission = (participationId: number, exerciseId: number, submission: ProgrammingSubmission) => {
         const newSubmissionState = [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission] as ProgrammingSubmissionStateObj;
-        this.submissionSubjects[participationId].next(newSubmissionState);
-        if (!this.exerciseBuildState[exerciseId]) {
-            this.exerciseBuildState[exerciseId] = {};
-        }
-        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
-        // TODO: This could be refactored into a setter.
-        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
-        if (exerciseBuildStateSubject) {
-            exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
-        }
+        this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
 
     private emitFailedSubmission = (participationId: number, exerciseId: number) => {
         const newSubmissionState = [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null] as ProgrammingSubmissionStateObj;
+        this.notifySubscribers(participationId, exerciseId, newSubmissionState);
+    };
+
+    /**
+     * Notifies both the exercise and participation specific subscribers about a new SubmissionState.
+     *
+     * @param participationId id of ProgrammingExerciseStudentParticipation
+     * @param exerciseId id of ProgrammingExercise
+     * @param newSubmissionState to inform subscribers about.
+     */
+    private notifySubscribers = (participationId: number, exerciseId: number, newSubmissionState: ProgrammingSubmissionStateObj) => {
+        // Inform participation subscribers.
         this.submissionSubjects[participationId].next(newSubmissionState);
+        // Inform exercise subscribers.
         if (!this.exerciseBuildState[exerciseId]) {
             this.exerciseBuildState[exerciseId] = {};
         }
         this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
-        // TODO: This could be refactored into a setter.
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
@@ -248,7 +242,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
      *
-     * @param participationId
+     * @param participationId id of ProgrammingExerciseStudentParticipation
+     * @param exerciseId id of ProgrammingExercise
      */
     public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number) => {
         const subject = this.submissionSubjects[participationId];
@@ -291,12 +286,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.exerciseBuildStateSubjects[exerciseId] = new BehaviorSubject<ExerciseBuildState | undefined>(undefined);
         this.fetchLatestPendingSubmissionByExerciseId(exerciseId)
             .pipe(
-                map(submissions => {
-                    return Object.entries(submissions).map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
-                }),
+                map(Object.entries),
+                map(this.mapParticipationIdToNumber),
                 switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
                     if (!submissions.length) {
-                        throwError('submission information object is empty!');
+                        // This needs to be done as from([]) would stop the stream.
+                        return of([]);
                     }
                     return from(submissions).pipe(
                         switchMap(
@@ -310,10 +305,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         ),
                     );
                 }),
-                reduce((acc, val: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {
-                    const [participationId, submission, submissionState] = val;
-                    return { ...acc, [participationId]: [submissionState, submission] };
-                }, {}),
+                reduce(this.mapToExerciseBuildState, {}),
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseBuildState) => {
@@ -339,6 +331,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', { participationIds });
     }
 
+    /**
+     * Get the count of latest failed submissions (not all failed submissions!) for the given exercise.
+     *
+     * @param exerciseId ProgrammingExercise
+     */
     public getFailedSubmissionParticipationsForExercise(exerciseId: number) {
         const exerciseBuildState = this.exerciseBuildState[exerciseId];
         return Object.entries(exerciseBuildState)
@@ -354,6 +351,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param submissionToBeProcessed to cache and use for the websocket subscriptions
      * @param participationId that serves as an identifier for caching the submission.
+     * @param exerciseId of the given participationId.
      */
     private processPendingSubmission = (
         submissionToBeProcessed: ProgrammingSubmission | null,
@@ -387,5 +385,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.exerciseBuildState[exerciseId][participationId] = [submissionState, submission];
             }),
         );
+    };
+
+    private mapParticipationIdToNumber = (submissions: Array<[string, ProgrammingSubmission | null]>) => {
+        return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
+    };
+
+    private mapToExerciseBuildState = (acc: ExerciseBuildState, val: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {
+        const [participationId, submission, submissionState] = val;
+        return { ...acc, [participationId]: [submissionState, submission] };
     };
 }
