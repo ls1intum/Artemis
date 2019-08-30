@@ -1,8 +1,6 @@
-import { Input, Component, OnChanges, SimpleChanges } from '@angular/core';
-import { tap, map, reduce } from 'rxjs/operators';
-import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasExerciseChanged } from 'app/entities/exercise';
 import { Subscription } from 'rxjs';
 
 /**

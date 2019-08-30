@@ -27,6 +27,8 @@ export interface IProgrammingSubmissionService {
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
+    triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -325,11 +327,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
-        return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build-all', {});
+        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build-all', {});
     }
 
     public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
-        return this.http.post(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', { participationIds });
+        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', { participationIds });
     }
 
     /**
