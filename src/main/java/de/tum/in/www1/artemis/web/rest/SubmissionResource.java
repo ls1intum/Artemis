@@ -12,9 +12,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -37,9 +44,22 @@ public class SubmissionResource {
 
     private ResultRepository resultRepository;
 
-    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+    private CourseService courseService;
+
+    private ParticipationService participationService;
+
+    private AuthorizationCheckService authCheckService;
+
+    private UserService userService;
+
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, CourseService courseService, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, UserService userService) {
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
+        this.courseService = courseService;
+        this.participationService = participationService;
+        this.authCheckService = authCheckService;
+        this.userService = userService;
     }
 
     /**
@@ -120,11 +140,30 @@ public class SubmissionResource {
             return null;
         }
 
+        checkAccessPermissionAtInstructor(submission.get());
+
         if (submission.get().getResult() != null) {
             resultRepository.delete(submission.get().getResult());
         }
         submissionRepository.deleteById(id);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    private void checkAccessPermissionAtInstructor(Submission submission) {
+        Course course = findCourseFromSubmission(submission);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
+    private Course findCourseFromSubmission(Submission submission) {
+        if (submission.getParticipation().getExercise() != null && submission.getParticipation().getExercise().getCourse() != null) {
+            return submission.getParticipation().getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourse();
     }
 }

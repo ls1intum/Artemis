@@ -635,7 +635,9 @@ public class ParticipationResource {
 
     private void checkAccessPermissionAtInstructor(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
