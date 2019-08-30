@@ -1,18 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, map as rxMap, tap } from 'rxjs/operators';
-import { compose, filter, flatten, map, reduce, uniq } from 'lodash/fp';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
-    templateUrl: './programming-exercise-instruction-instructor-analysis.component.html',
+    templateUrl: './programming-exercise-instruction-analysis.component.html',
 })
-export class ProgrammingExerciseInstructionInstructorAnalysisComponent implements OnInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];
     @Input() exerciseHints: ExerciseHint[];
     @Input() problemStatement: string;

@@ -21,7 +21,7 @@ import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-program
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import {
     ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionInstructorAnalysisComponent,
+    ProgrammingExerciseInstructionAnalysisComponent,
 } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 chai.use(sinonChai);
@@ -45,7 +45,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
-            declarations: [MockComponent(ProgrammingExerciseInstructionInstructorAnalysisComponent), MockComponent(MarkdownEditorComponent)],
+            declarations: [MockComponent(ProgrammingExerciseInstructionAnalysisComponent), MockComponent(MarkdownEditorComponent)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
