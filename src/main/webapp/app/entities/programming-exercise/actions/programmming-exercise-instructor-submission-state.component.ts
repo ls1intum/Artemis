@@ -1,7 +1,7 @@
 import { Input, Component, OnChanges, SimpleChanges } from '@angular/core';
 import { tap, map, reduce } from 'rxjs/operators';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ExerciseBuildState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { Subscription } from 'rxjs';
 
@@ -65,7 +65,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 
-    private sumSubmissionStates = (buildState: ExerciseBuildState) =>
+    private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>
         Object.values(buildState).reduce((acc: { [state: string]: number }, [submissionState]) => {
             return { ...acc, [submissionState]: (acc[submissionState] || 0) + 1 };
         }, {});

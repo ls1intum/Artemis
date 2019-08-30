@@ -20,11 +20,11 @@ export enum ProgrammingSubmissionState {
 
 export type ProgrammingSubmissionStateObj = [ProgrammingSubmissionState, ProgrammingSubmission | null];
 
-export type ExerciseBuildState = { [participationId: number]: [ProgrammingSubmissionState, ProgrammingSubmission | null] };
+export type ExerciseSubmissionState = { [participationId: number]: [ProgrammingSubmissionState, ProgrammingSubmission | null] };
 
 export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number) => Observable<ProgrammingSubmissionStateObj>;
-    getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseBuildState>;
+    getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
 }
@@ -41,7 +41,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private submissionTopicsSubscribed: { [participationId: number]: string } = {};
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<[ProgrammingSubmissionState, ProgrammingSubmission | null | undefined]> } = {};
-    private exerciseBuildStateSubjects: { [exerciseId: number]: BehaviorSubject<ExerciseBuildState | undefined> } = {};
+    private exerciseBuildStateSubjects: { [exerciseId: number]: BehaviorSubject<ExerciseSubmissionState | undefined> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
@@ -278,13 +278,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
      */
-    public getSubmissionStateOfExercise = (exerciseId: number): Observable<ExerciseBuildState> => {
+    public getSubmissionStateOfExercise = (exerciseId: number): Observable<ExerciseSubmissionState> => {
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple done.
         const preloadingSubject = this.exerciseBuildStateSubjects[exerciseId];
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseBuildState>;
+            return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseSubmissionState>;
         }
-        this.exerciseBuildStateSubjects[exerciseId] = new BehaviorSubject<ExerciseBuildState | undefined>(undefined);
+        this.exerciseBuildStateSubjects[exerciseId] = new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined);
         this.fetchLatestPendingSubmissionByExerciseId(exerciseId)
             .pipe(
                 map(Object.entries),
@@ -309,11 +309,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 reduce(this.mapToExerciseBuildState, {}),
                 catchError(() => of({})),
             )
-            .subscribe((exerciseBuildState: ExerciseBuildState) => {
+            .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
                 this.exerciseBuildState[exerciseId] = exerciseBuildState;
                 this.exerciseBuildStateSubjects[exerciseId].next(exerciseBuildState);
             });
-        return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseBuildState>;
+        return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
     };
 
     public triggerBuild(participationId: number) {
@@ -392,7 +392,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
     };
 
-    private mapToExerciseBuildState = (acc: ExerciseBuildState, val: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {
+    private mapToExerciseBuildState = (acc: ExerciseSubmissionState, val: [number, ProgrammingSubmission | null, ProgrammingSubmissionState]) => {
+        if (!val.length) {
+            return acc;
+        }
         const [participationId, submission, submissionState] = val;
         return { ...acc, [participationId]: [submissionState, submission] };
     };
