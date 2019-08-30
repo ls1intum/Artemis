@@ -1,12 +1,12 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisOverviewModule, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
+import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CourseExerciseService } from 'app/entities/course';
-import { SinonSpy, SinonStub } from 'sinon';
-import { Exercise } from 'app/entities/exercise';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,6 +19,10 @@ import { IntelliJState } from 'app/intellij/intellij';
 import { BehaviorSubject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
+import { ArtemisSharedModule } from 'app/shared';
+import { IntellijModule } from 'app/intellij/intellij.module';
+import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise';
+import { MockComponent } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,11 +45,13 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisOverviewModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, IntellijModule],
+            declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ProgrammingExerciseUpdateComponent)],
             providers: [
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
+                ExerciseService,
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
