@@ -28,12 +28,13 @@
                 <div *ngIf="currentTourStep.videoUrl">
                     <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
                 </div>
-                <div *ngIf="currentTourStep.externalUrl">
+                <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a
                         [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
                         jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}"
                         [href]="currentTourStep.externalUrl"
                         target="_blank"
+                        rel="noopener noreferrer"
                     ></a>
                 </div>
             </div>

@@ -24,7 +24,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .
     public highlightPadding = 4;
-
+    /**
+     * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
+     * since the build would fail with Property 'x' does not exist on type 'y' when accessing properties of subclasses in the html template
+     * that are not available for all subclasses
+     */
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
 
@@ -81,10 +85,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
         }
-    }
-
-    private isTourStepType(type: TextLinkTourStep | ImageTourStep | VideoTourStep): boolean {
-        return this.currentTourStep ? this.currentTourStep.constructor.name === type.constructor.name : false;
     }
 
     /**
