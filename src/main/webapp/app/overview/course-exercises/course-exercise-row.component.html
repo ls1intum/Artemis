@@ -30,27 +30,19 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-updating-result
-                        [exerciseType]="exercise.type"
-                        [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null"
-                        short="true"
-                    ></jhi-updating-result>
+                    <jhi-updating-result [exercise]="exercise" [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-updating-result
-                        [exerciseType]="exercise.type"
-                        [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null"
-                        short="true"
-                    ></jhi-updating-result>
+                    <jhi-updating-result [exercise]="exercise" [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
                 <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
                     <jhi-programming-exercise-student-trigger-build-button [participation]="exercise.participations[0]"></jhi-programming-exercise-student-trigger-build-button>

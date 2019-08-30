@@ -75,7 +75,7 @@
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                             [showUngradedResults]="true"
                             class="mr-2"
@@ -98,7 +98,7 @@
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingSolutionParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                             [showUngradedResults]="true"
                             class="mr-2"

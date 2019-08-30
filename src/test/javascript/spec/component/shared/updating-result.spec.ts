@@ -165,14 +165,14 @@ describe('UpdatingResultComponent', () => {
     });
 
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
         expect(comp.isBuilding).to.be.false;
     });
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);

@@ -56,12 +56,7 @@
                             </h4>
                         </div>
                         <div class="col text-left">
-                            <jhi-updating-result
-                                [participation]="currentResult?.participation"
-                                [result]="currentResult"
-                                [exerciseType]="exercise.type"
-                                short="true"
-                            ></jhi-updating-result>
+                            <jhi-updating-result [participation]="currentResult?.participation" [result]="currentResult" [exercise]="exercise" short="true"></jhi-updating-result>
                             <jhi-programming-exercise-student-trigger-build-button
                                 *ngIf="exercise.type === PROGRAMMING"
                                 [participation]="currentResult?.participation"
