@@ -20,10 +20,6 @@ export class SubmissionService {
 
     constructor(private http: HttpClient) {}
 
-    find(submissionId: number): Observable<EntityResponseType> {
-        return this.http.get<Submission>(`${this.resourceUrl}/${submissionId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
     delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });

@@ -113,12 +113,18 @@ public class SubmissionResource {
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
 
-        Submission submission = submissionRepository.findById(id).get();
-        if (submission.getResult() != null) {
-            resultRepository.delete(submission.getResult());
+        Optional<Submission> submission = submissionRepository.findById(id);
+
+        if (!submission.isPresent()) {
+            log.error("Submission with id: " + id + " cannot be deleted");
+            return null;
         }
 
+        if (submission.get().getResult() != null) {
+            resultRepository.delete(submission.get().getResult());
+        }
         submissionRepository.deleteById(id);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }
