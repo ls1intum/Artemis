@@ -70,7 +70,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     public openHintsModal() {
         // Open hint modal.
-        this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+        this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { keyboard: true, size: 'lg' });
         this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
         this.ngbModalRef.result.then(
             () => {
