@@ -9,7 +9,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 
 /* application */
-import { FileUploadExercise, FileUploadExerciseService, FileUploadExerciseDeleteDialogComponent, FileUploadExercisePopupService } from '.';
+import { FileUploadExercise } from './file-upload-exercise.model';
+import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
+import { FileUploadExerciseService } from './file-upload-exercise.service';
+import { FileUploadExerciseDeleteDialogComponent } from './file-upload-exercise-delete-dialog.component';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
