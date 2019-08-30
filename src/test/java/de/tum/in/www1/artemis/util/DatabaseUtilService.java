@@ -107,6 +107,9 @@ public class DatabaseUtilService {
     @Autowired
     ObjectMapper mapper;
 
+    @Autowired
+    GroupNotificationRepository groupNotificationRepository;
+
     public void resetDatabase() {
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
@@ -123,6 +126,7 @@ public class DatabaseUtilService {
         solutionProgrammingExerciseParticipationRepo.deleteAll();
         templateProgrammingExerciseParticipationRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
+        groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
@@ -344,6 +348,10 @@ public class DatabaseUtilService {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(fileUploadExercise);
         courseRepo.save(course);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises().size()).as("course contains the exercises").isEqualTo(0);
+
         return fileUploadExercise;
     }
 

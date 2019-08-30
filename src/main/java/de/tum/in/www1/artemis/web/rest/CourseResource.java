@@ -444,9 +444,8 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-        || exercise instanceof FileUploadExercise)
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getExercises().stream()
+                .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise).collect(Collectors.toSet());
 
         course.setExercises(interestingExercises);
 
