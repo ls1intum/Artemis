@@ -1,6 +1,5 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
@@ -23,6 +22,8 @@ import { ArtemisSharedModule } from 'app/shared';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise';
 import { MockComponent } from 'ng-mocks';
+import { ArtemisExerciseModule } from 'app/entities/exercise/exercise.module';
+import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,13 +46,12 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, IntellijModule],
-            declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ProgrammingExerciseUpdateComponent)],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, ArtemisExerciseModule, IntellijModule],
+            declarations: [ProgrammingExerciseStudentIdeActionsComponent],
             providers: [
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
-                ExerciseService,
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
