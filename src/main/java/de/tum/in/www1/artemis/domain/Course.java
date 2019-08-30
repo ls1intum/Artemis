@@ -96,7 +96,7 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Lecture> lectures = new HashSet<>();
 

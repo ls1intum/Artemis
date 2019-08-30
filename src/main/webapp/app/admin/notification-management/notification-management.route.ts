@@ -25,7 +25,7 @@ export const notificationMgmtRoutes1: Route = {
         pagingParams: JhiResolvePagingParams,
     },
     data: {
-        pageTitle: 'notificationManagement.home.title',
+        pageTitle: 'artemisApp.notificationManagement.home.title',
         defaultSort: 'id,asc',
     },
 };
@@ -37,7 +37,7 @@ export const notificationMgmtRoutes2: Route = {
         notification: NotificationMgmtResolve,
     },
     data: {
-        pageTitle: 'notificationManagement.home.title',
+        pageTitle: 'artemisApp.notificationManagement.home.title',
     },
 };
 

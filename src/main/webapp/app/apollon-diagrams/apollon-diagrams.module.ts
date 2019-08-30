@@ -17,7 +17,7 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisResultModule],
     declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent],
-    entryComponents: [ApollonDiagramCreateFormComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent, ResultComponent],
+    entryComponents: [ApollonDiagramCreateFormComponent, ApollonQuizExerciseGenerationComponent],
     providers: [JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisApollonDiagramsModule {

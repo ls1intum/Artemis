@@ -12,7 +12,7 @@ export const notificationRoute: Routes = [
             pagingParams: JhiResolvePagingParams,
         },
         data: {
-            pageTitle: 'notificationManagement.home.title',
+            pageTitle: 'artemisApp.notificationManagement.home.title',
             defaultSort: 'notificationDate,desc',
         },
         canActivate: [UserRouteAccessService],

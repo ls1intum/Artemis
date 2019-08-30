@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper, UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { HomeComponent } from 'app/home';
@@ -62,11 +63,7 @@ const ENTITY_STATES = [
         ExerciseScoresRepoExportPopupComponent,
     ],
     entryComponents: [
-        HomeComponent,
         ExerciseScoresComponent,
-        JhiMainComponent,
-        ResultComponent,
-        ResultDetailComponent,
         ExerciseScoresResultDialogComponent,
         ExerciseScoresResultResultPopupComponent,
         ExerciseScoresRepoExportComponent,

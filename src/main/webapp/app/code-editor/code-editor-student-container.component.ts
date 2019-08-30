@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import { ParticipationService, StudentParticipation } from 'app/entities/participation';
-import { CodeEditorContainer } from './code-editor-mode-container.component';
+import { CodeEditorContainer } from './';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';

@@ -447,6 +447,13 @@ public class Result implements Serializable {
         this.assessmentType = assessmentType;
     }
 
+    public void determineAssessmentType() {
+        setAssessmentType(AssessmentType.MANUAL);
+        if (feedbacks.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
+            setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        }
+    }
+
     public Boolean hasComplaint() {
         return hasComplaint;
     }

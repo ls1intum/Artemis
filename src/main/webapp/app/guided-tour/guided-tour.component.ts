@@ -2,10 +2,10 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsu
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { ContentType, LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -25,13 +25,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     // Sets the highlight padding around the selected .
     public highlightPadding = 4;
 
-    public currentTourStep: TourStep | null;
+    public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly ContentType = ContentType;
     readonly LinkType = LinkType;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
@@ -66,6 +65,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Initial subscriptions for GuidedTourCurrentStepStream, resize event and scroll event
      */
     public ngAfterViewInit(): void {
+        this.guidedTourService.init();
         this.subscribeToGuidedTourCurrentStepStream();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
@@ -83,11 +83,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    private isTourStepType(type: TextLinkTourStep | ImageTourStep | VideoTourStep): boolean {
+        return this.currentTourStep ? this.currentTourStep.constructor.name === type.constructor.name : false;
+    }
+
     /**
      * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
     public subscribeToGuidedTourCurrentStepStream() {
-        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | TextLinkTourStep | ImageTourStep | VideoTourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
                 return;
@@ -290,7 +294,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public getHighlightPadding(): number {
         if (this.currentTourStep) {
-            let paddingAdjustment = this.currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
+            let paddingAdjustment = this.currentTourStep.highlightPadding ? this.highlightPadding : 0;
             if (this.currentTourStep.highlightPadding) {
                 paddingAdjustment = this.currentTourStep.highlightPadding;
             }

@@ -78,9 +78,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
-        encoder.setPbeStringEncryptor(encryptor());
-        return encoder;
+        return new PBEPasswordEncoder(encryptor());
     }
 
     @Bean

@@ -1,8 +1,8 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
+import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -30,7 +30,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionWebsocketService) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -64,7 +64,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmission(this.participation.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id)
             .pipe(
                 tap(([submissionState]) => {
                     switch (submissionState) {

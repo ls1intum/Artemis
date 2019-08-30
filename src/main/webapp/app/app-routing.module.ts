@@ -14,6 +14,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
                 },
+                { path: 'code-editor', loadChildren: () => import('./code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule) },
             ],
             { useHash: true, enableTracing: false },
         ),

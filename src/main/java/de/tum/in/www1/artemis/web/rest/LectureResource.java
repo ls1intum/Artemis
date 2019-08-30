@@ -4,8 +4,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +139,7 @@ public class LectureResource {
     @GetMapping(value = "/courses/{courseId}/lectures")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -164,7 +164,7 @@ public class LectureResource {
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findById(id);
-        if (!optionalLecture.isPresent()) {
+        if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();

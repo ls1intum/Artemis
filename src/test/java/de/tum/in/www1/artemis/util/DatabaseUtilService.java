@@ -15,10 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -146,9 +143,9 @@ public class DatabaseUtilService {
      * @param numberOfTutors
      */
     public void addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser" }, numberOfStudents);
-        LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor" }, numberOfTutors);
-        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor" }, numberOfInstructors);
+        LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
+        LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
+        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
         LinkedList<User> usersToAdd = new LinkedList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
@@ -236,7 +233,7 @@ public class DatabaseUtilService {
         course.addExercises(modelingExercise);
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -249,7 +246,7 @@ public class DatabaseUtilService {
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -262,7 +259,7 @@ public class DatabaseUtilService {
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -278,7 +275,7 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -300,7 +297,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(activityExercise);
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(4);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -335,7 +332,7 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -380,6 +377,28 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    /**
+     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or create a new participation).
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param exercise for which to create the submission/participation/result combination.
+     * @param submission to use for adding to the exercise/participation/result.
+     * @param login of the user to identify the corresponding student participation.
+     * @return the updated programming submission that is linked to all related entities.
+     */
+    @Transactional
+    public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        Result result = resultRepo.save(new Result().participation(participation).submission(submission));
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submission.setResult(result);
+        programmingSubmissionRepo.save(submission);
+        participation.addResult(result);
         participationRepo.save(participation);
         return submission;
     }
@@ -547,6 +566,16 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
+        Result r = addResultToSubmission(submission);
+        r.setAssessmentType(assessmentType);
+        r.completionDate(ZonedDateTime.now());
+        r.setAssessor(user);
+        resultRepo.save(r);
+        return r;
+
     }
 
     public void addHintsToExercise(Exercise exercise) {

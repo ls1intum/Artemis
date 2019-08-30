@@ -11,9 +11,11 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorGridService, CodeEditorInstructionsComponent, CodeEditorRepositoryFileService } from 'app/code-editor';
 import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorRepositoryFileService } from '../../mocks';
-import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { MockCodeEditorGridService } from '../../mocks/mock-code-editor-grid.service';
+import { ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 chai.use(sinonChai);
 const expect = chai.expect;

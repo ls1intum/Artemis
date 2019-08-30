@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -19,7 +18,7 @@ import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArtemisTextAssessmentModule],
+    imports: [ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArtemisTextAssessmentModule],
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],

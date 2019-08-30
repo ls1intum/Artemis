@@ -7,7 +7,7 @@ import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
-import { ProgrammingExercise } from '../programming-exercise.model';
+import { ProgrammingExercise } from '../../programming-exercise.model';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
@@ -105,10 +105,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
                 // Set min and max height
-                restrictSize: {
-                    min: { height: 200 },
-                    max: { height: 1200 },
-                },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: 0, height: 200 },
+                        max: { width: 2000, height: 1200 },
+                    }),
+                ],
                 inertia: true,
             })
             .on('resizestart', function(event: any) {

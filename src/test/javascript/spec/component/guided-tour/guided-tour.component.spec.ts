@@ -10,36 +10,33 @@ import * as sinonChai from 'sinon-chai';
 
 import { ArtemisTestModule } from '../../test.module';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation } from 'app/guided-tour/guided-tour.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Component Tests', () => {
-    const tourStep: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStep = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
-    };
+    });
 
-    const tourStepWithPermission: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStepWithPermission = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
         permission: ['ROLE_ADMIN'],
-    };
+    });
 
-    const tourStepWithHighlightPadding: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStepWithHighlightPadding = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
-    };
+    });
 
     const courseOverviewTour: GuidedTour = {
         settingsKey: 'course_overview_tour',
@@ -87,12 +84,14 @@ describe('Component Tests', () => {
             const currentStepSpy = spyOn(guidedTourComponent, 'subscribeToGuidedTourCurrentStepStream');
             const resizeEventSpy = spyOn(guidedTourComponent, 'subscribeToResizeEvent');
             const scrollEventSpy = spyOn(guidedTourComponent, 'subscribeToScrollEvent');
+            const guidedTourInitSpy = spyOn(guidedTourService, 'init').and.returnValue(of());
 
             guidedTourComponent.ngAfterViewInit();
 
             expect(currentStepSpy.calls.count()).to.equal(1);
             expect(resizeEventSpy.calls.count()).to.equal(1);
             expect(scrollEventSpy.calls.count()).to.equal(1);
+            expect(guidedTourInitSpy.calls.count()).to.equal(1);
         });
 
         it('should handle user permissions', () => {
@@ -106,6 +105,7 @@ describe('Component Tests', () => {
                 // Prepare guided tour service
                 spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                 spyOn(guidedTourService, 'updateGuidedTourSettings');
+                spyOn(guidedTourService, 'init').and.returnValue(of());
 
                 // Prepare guided tour component
                 guidedTourComponent.ngAfterViewInit();

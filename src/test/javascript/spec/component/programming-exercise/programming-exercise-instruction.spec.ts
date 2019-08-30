@@ -16,23 +16,19 @@ import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import {
-    ProgrammingExercise,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTaskStatusComponent,
-    ProgrammingExerciseParticipationService,
-} from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
+import { ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
 
 chai.use(sinonChai);
 const expect = chai.expect;

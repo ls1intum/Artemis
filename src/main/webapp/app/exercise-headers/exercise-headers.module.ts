@@ -8,7 +8,7 @@ import { DifficultyBadgeComponent } from './difficulty-badge.component';
 import { MomentModule } from 'ngx-moment';
 
 @NgModule({
-    imports: [ArtemisSharedCommonModule, MomentModule, ArtemisSharedModule],
+    imports: [MomentModule, ArtemisSharedModule],
     declarations: [HeaderExercisePageWithDetailsComponent, DifficultyBadgeComponent],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

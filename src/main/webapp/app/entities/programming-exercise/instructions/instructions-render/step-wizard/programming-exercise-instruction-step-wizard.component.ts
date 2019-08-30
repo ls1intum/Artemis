@@ -1,10 +1,12 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
-import { TestCaseState } from 'app/entities/programming-exercise';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instructions-result-detail.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { TaskArray } from 'app/entities/programming-exercise/instructions/programming-exercise-task.model';
+import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
+import {
+    ProgrammingExerciseInstructionService,
+    TestCaseState,
+} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',

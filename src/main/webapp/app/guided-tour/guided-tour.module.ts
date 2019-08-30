@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 import { ModuleWithProviders } from '@angular/compiler/src/core';
 import { JhiLanguageService } from 'ng-jhipster';
 
@@ -12,7 +12,6 @@ import { GuidedTourComponent } from './guided-tour.component';
     imports: [ArtemisSharedModule],
     exports: [GuidedTourComponent],
     entryComponents: [GuidedTourComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class GuidedTourModule {
     public static forRoot(): ModuleWithProviders {
