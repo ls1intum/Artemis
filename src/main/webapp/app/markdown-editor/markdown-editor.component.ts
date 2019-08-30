@@ -4,8 +4,9 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import 'brace/mode/latex';
 import 'brace/ext/language_tools';
-import Interactable from '@interactjs/core/Interactable';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
     Command,
@@ -29,8 +30,6 @@ import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/dom
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-
-import 'brace/mode/latex';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
