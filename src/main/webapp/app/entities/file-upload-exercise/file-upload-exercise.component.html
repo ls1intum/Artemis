@@ -4,9 +4,9 @@
         ><span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         <button
-            *ngIf="course"
+            *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
-            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'file-upload-exercise-new'] } }]"
+            [routerLink]="['/course', course.id, 'file-upload-exercise', 'new']"
         >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
@@ -37,7 +37,7 @@
                         <a [routerLink]="['/course', fileUploadExercise.course.id, 'file-upload-exercise', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
                     <td>{{ fileUploadExercise.title }}</td>
-                    <td>{{ fileUploadExercise.problemStatement }}</td>
+                    <td [innerHTML]="fileUploadExercise.problemStatement | htmlForMarkdown"></td>
                     <td>{{ fileUploadExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ fileUploadExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ fileUploadExercise.maxScore }}</td>
@@ -62,7 +62,7 @@
                             </button>
                             <button
                                 type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/' + fileUploadExercise.id + '/edit' } }]"
+                                [routerLink]="['/file-upload-exercise/' + fileUploadExercise.id + '/edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
@@ -72,7 +72,7 @@
                             </button>
                             <button
                                 type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/' + fileUploadExercise.id + '/delete' } }]"
+                                (click)="openDeleteFileUploadExercisePopup(fileUploadExercise.id)"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1"

@@ -2,20 +2,24 @@
     "artemisApp": {
         "fileUploadExercise": {
             "home": {
-                "title": "File Upload Exercises",
-                "createLabel": "File Upload Exercise erstellen",
-                "createOrEditLabel": "File Upload Exercise erstellen oder bearbeiten"
+                "title": "Datei Upload Aufgaben",
+                "createLabel": "Datei Upload Aufgabe erstellen",
+                "editLabel": "Datei Upload Aufgabe bearbeiten"
             },
-            "created": "File Upload Exercise erstellt mit ID {{ param }}",
-            "updated": "File Upload Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "File Upload Exercise gelöscht mit ID {{ param }}",
+            "created": "Datei Upload Aufgabe erstellt mit ID {{ param }}",
+            "updated": "Datei Upload Aufgabe aktualisiert mit ID {{ param }}",
+            "deleted": "Datei Upload Aufgabe gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll File Upload Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Datei Upload Aufgabe{{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "File Upload Exercise"
+                "title": "Datei Upload Aufgabe"
             },
-            "filePattern": "File Pattern"
+            "filePattern": "Dateimuster",
+            "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
+            "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "assessedSubmission": "Deine bewertete Abgabe"
         }
     }
 }
