@@ -17,8 +17,7 @@
         [buttonLoading]="exercise.loading"
         [smallButton]="smallButtons"
         *ngIf="!isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
-    >
-    </jhi-ide-button>
+    ></jhi-ide-button>
     <jhi-ide-button
         (click)="submitChanges()"
         buttonLabel="Submit"

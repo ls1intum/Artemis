@@ -3,8 +3,6 @@ import { Exercise, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { HttpClient } from '@angular/common/http';
-import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { IntelliJState } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
@@ -29,14 +27,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
 
     @Input() smallButtons: boolean;
 
-    constructor(
-        private jhiAlertService: JhiAlertService,
-        private courseExerciseService: CourseExerciseService,
-        private httpClient: HttpClient,
-        private accountService: AccountService,
-        private sourceTreeService: SourceTreeService,
-        private javaBridge: JavaBridgeService,
-    ) {}
+    constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private javaBridge: JavaBridgeService) {}
 
     ngOnInit(): void {
         this.javaBridge.state.subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
