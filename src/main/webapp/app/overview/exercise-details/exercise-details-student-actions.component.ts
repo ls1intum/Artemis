@@ -10,7 +10,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
@@ -36,8 +35,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
-    readonly isIntelliJ = isIntelliJ;
-    isOpenedInIntelliJ = false;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -69,7 +66,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        this.javaBridge.state.subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
     }
 
     participationStatus(): ParticipationStatus {
