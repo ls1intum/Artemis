@@ -6,7 +6,7 @@
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-modeling-exercise"
-            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]"
+            [routerLink]="['modeling-exercise', 'new']"
         >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">
@@ -72,7 +72,7 @@
                             <button
                                 type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/' + modelingExercise.id + '/edit' } }]"
+                                [routerLink]="['/modeling-exercise/' + modelingExercise.id + '/edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"

@@ -1,9 +1,9 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="artemisApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+    <div>
+        <h4 *ngIf="!modelingExercise.id" id="myModelingExerciseLabel" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h4>
+        <h4 *ngIf="modelingExercise.id" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h4>
     </div>
-    <div class="modal-body">
+    <div>
         <jhi-alert-error></jhi-alert-error>
         <div class="form-group-narrow" [hidden]="!modelingExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -154,7 +154,7 @@
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
                     <button
-                        routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/{{ exampleSubmission.id }}"
+                        routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-submission/{{ exampleSubmission.id }}"
                         class="btn btn-link"
                         type="button"
                         jhiTranslate="artemisApp.modelingExercise.exampleSubmission"
@@ -173,7 +173,7 @@
             <button
                 *ngIf="modelingExercise.id"
                 class="btn btn-primary"
-                routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/new"
+                routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-submission/new"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
                 Create example submission
@@ -188,8 +188,8 @@
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
-    <div class="modal-footer">
-        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+    <div>
+        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="button" [disabled]="editForm.form.invalid || isSaving || this.dueDateError || this.assessmentDueDateError" class="btn btn-primary" (click)="save()">

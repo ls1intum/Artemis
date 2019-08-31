@@ -1,32 +1,30 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
-import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
 
-import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { filter } from 'rxjs/operators';
 
 @Component({
-    selector: 'jhi-modeling-exercise-dialog',
-    templateUrl: './modeling-exercise-dialog.component.html',
-    styleUrls: ['./modeling-exercise-dialog.scss'],
+    selector: 'jhi-modeling-exercise-update',
+    templateUrl: './modeling-exercise-update.component.html',
+    styleUrls: ['./modeling-exercise-update.scss'],
 })
-export class ModelingExerciseDialogComponent implements OnInit {
+export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
 
-    modelingExercise: ModelingExercise;
+    modelingExercise: ModelingExercise = new ModelingExercise('ClassDiagram');
     isSaving: boolean;
     dueDateError: boolean;
     assessmentDueDateError: boolean;
@@ -42,16 +40,34 @@ export class ModelingExerciseDialogComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
+        private activatedRoute: ActivatedRoute,
     ) {}
 
     ngOnInit() {
+        this.activatedRoute.params.subscribe(params => {
+            if (params['courseId']) {
+                this.courseService.find(params['courseId']).subscribe(res => {
+                    const course = res.body!;
+                    this.modelingExercise = new ModelingExercise('ClassDiagram');
+                    this.modelingExercise.course = course;
+                    this.initializeCategoriesForCourse();
+                });
+            } else if (params['exerciseId']) {
+                this.modelingExerciseService
+                    .find(params['exerciseId'])
+                    .pipe(filter(res => !!res.body))
+                    .subscribe(res => {
+                        this.modelingExercise = res.body!;
+                        this.initializeCategoriesForCourse();
+                    });
+            }
+        });
         this.isSaving = false;
         this.dueDateError = false;
         this.assessmentDueDateError = false;
@@ -62,6 +78,9 @@ export class ModelingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+    }
+
+    initializeCategoriesForCourse() {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
         this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
             (res: HttpResponse<string[]>) => {
@@ -69,10 +88,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
-    }
-
-    clear() {
-        this.activeModal.dismiss('cancel');
     }
 
     updateCategories(categories: ExerciseCategory[]) {
@@ -114,6 +129,10 @@ export class ModelingExerciseDialogComponent implements OnInit {
         );
     }
 
+    previousState() {
+        window.history.back();
+    }
+
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
         result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
@@ -121,7 +140,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     private onSaveSuccess(result: ModelingExercise) {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.activeModal.dismiss(result);
+        this.previousState();
     }
 
     private onSaveError() {
@@ -134,31 +153,5 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     trackCourseById(index: number, item: Course) {
         return item.id;
-    }
-}
-
-@Component({
-    selector: 'jhi-modeling-exercise-popup',
-    template: '',
-})
-export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-
-    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            if (params['id']) {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
-            } else if (params['courseId']) {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
-            } else {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }
