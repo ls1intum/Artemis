@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -9,7 +8,6 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AccountService } from 'app/core';
 
 @Component({
@@ -28,7 +26,6 @@ export class TextExerciseComponent extends ExerciseComponent {
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
-        private artemisMarkdown: ArtemisMarkdown,
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
