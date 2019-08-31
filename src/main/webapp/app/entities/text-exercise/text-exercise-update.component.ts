@@ -15,7 +15,6 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -50,25 +49,17 @@ export class TextExerciseUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.params.subscribe(params => {
-            if (params['courseId']) {
-                const courseId = params['courseId'];
-                this.courseService
-                    .find(courseId)
-                    .pipe(filter(res => !!res.body))
-                    .subscribe(res => {
-                        const course = res.body!;
-                        this.textExercise.course = course;
-                        this.initializeCategoriesOfCourse();
-                    });
-            } else if (params['exerciseId']) {
-                const exerciseId = params['exerciseId'];
-                this.textExerciseService.find(exerciseId).subscribe(res => {
-                    this.textExercise = res.body!;
-                    this.initializeCategoriesOfCourse();
-                });
-            }
+        this.activatedRoute.data.subscribe(({ textExercise }) => {
+            this.textExercise = textExercise;
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                (categoryRes: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                },
+                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+            );
         });
+
         this.isSaving = false;
         this.notificationText = null;
         this.courseService.query().subscribe(
@@ -76,24 +67,6 @@ export class TextExerciseUpdateComponent implements OnInit {
                 this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
-        );
-
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
-    }
-
-    initializeCategoriesOfCourse() {
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-            (categoryRes: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-            },
-            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
         );
     }
 
