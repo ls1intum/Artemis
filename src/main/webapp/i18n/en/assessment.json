@@ -1,10 +1,18 @@
 {
     "artemisApp": {
         "assessment": {
+            "assessment": "Assessment",
             "generalFeedback": "General Feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
+            },
+            "assessmentLocked": "Assessment locked by: {{otherUser}}",
+            "assessmentLockedCurrentUser": "You have the lock for this assessment",
+            "button": {
+                "overrideAssessment": "Override Assessment",
+                "nextSubmission": "Assess Next Submission",
+                "resolveConflict": "Resolve Conflicts"
             }
         }
     }
