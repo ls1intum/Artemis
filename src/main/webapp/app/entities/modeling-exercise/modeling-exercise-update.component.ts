@@ -14,7 +14,6 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -50,23 +49,15 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.params.subscribe(params => {
-            if (params['courseId']) {
-                this.courseService.find(params['courseId']).subscribe(res => {
-                    const course = res.body!;
-                    this.modelingExercise = new ModelingExercise('ClassDiagram');
-                    this.modelingExercise.course = course;
-                    this.initializeCategoriesForCourse();
-                });
-            } else if (params['exerciseId']) {
-                this.modelingExerciseService
-                    .find(params['exerciseId'])
-                    .pipe(filter(res => !!res.body))
-                    .subscribe(res => {
-                        this.modelingExercise = res.body!;
-                        this.initializeCategoriesForCourse();
-                    });
-            }
+        this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            this.modelingExercise = modelingExercise;
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
+            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
+                (res: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
         });
         this.isSaving = false;
         this.dueDateError = false;
@@ -75,16 +66,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
-    }
-
-    initializeCategoriesForCourse() {
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
