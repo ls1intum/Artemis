@@ -8,18 +8,25 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-uploa
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-update.component';
+import { Course, CourseService } from 'app/entities/course';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
-    constructor(private service: FileUploadExerciseService) {}
-
+    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseService) {}
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : null;
-        if (id) {
-            return this.service.find(id).pipe(map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!));
+        if (route.params['exerciseId']) {
+            return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(
+                filter(res => !!res.body),
+                map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
+            );
+        } else if (route.params['courseId']) {
+            return this.courseService.find(route.params['courseId']).pipe(
+                filter(res => !!res.body),
+                map((course: HttpResponse<Course>) => new FileUploadExercise(course.body!)),
+            );
         }
         return Observable.of(new FileUploadExercise());
     }

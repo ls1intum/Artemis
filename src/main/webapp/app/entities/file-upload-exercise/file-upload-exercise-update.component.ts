@@ -46,30 +46,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
-        });
-        this.activatedRoute.params.subscribe(params => {
-            if (params['courseId']) {
-                const courseId = params['courseId'];
-                this.courseService
-                    .find(courseId)
-                    .pipe(filter(res => !!res.body))
-                    .subscribe(res => {
-                        const course = res.body!;
-                        this.fileUploadExercise.course = course;
-                        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
-                        this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course.id).subscribe(
-                            (categoryRes: HttpResponse<string[]>) => {
-                                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                            },
-                            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                        );
-                    });
-            } else if (params['exerciseId']) {
-                const exerciseId = params['exerciseId'];
-                this.fileUploadExerciseService.find(exerciseId).subscribe(res => {
-                    this.fileUploadExercise = res.body!;
-                });
-            }
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
+            this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id).subscribe(
+                (categoryRes: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                },
+                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+            );
         });
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
