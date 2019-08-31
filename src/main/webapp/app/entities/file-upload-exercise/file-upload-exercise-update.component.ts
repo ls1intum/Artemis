@@ -43,6 +43,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        // This is used to scroll page to the top of the page, because the routing keeps the position for the
+        // new page from previous page.
+        window.scroll(0, 0);
+
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
