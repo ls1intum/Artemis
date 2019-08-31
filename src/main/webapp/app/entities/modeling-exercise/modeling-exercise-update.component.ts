@@ -23,7 +23,7 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
 
-    modelingExercise: ModelingExercise = new ModelingExercise('ClassDiagram');
+    modelingExercise: ModelingExercise;
     isSaving: boolean;
     dueDateError: boolean;
     assessmentDueDateError: boolean;
