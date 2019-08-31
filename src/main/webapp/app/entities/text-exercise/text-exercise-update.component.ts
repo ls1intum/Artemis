@@ -1,51 +1,157 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 
+import { Observable } from 'rxjs/Observable';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+
+import { TextExercise } from './text-exercise.model';
+import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
-import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { Course, CourseService } from '../course';
+
+import { Subscription } from 'rxjs/Subscription';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
+import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { AssessmentType } from 'app/entities/assessment-type';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
+    styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
+    EditorMode = EditorMode;
+    AssessmentType = AssessmentType;
+
     textExercise: TextExercise;
     isSaving: boolean;
+    maxScorePattern = MAX_SCORE_PATTERN;
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+    notificationText: string | null;
 
-    constructor(private textExerciseService: TextExerciseService, private activatedRoute: ActivatedRoute) {}
+    courses: Course[];
+
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
+
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private textExerciseService: TextExerciseService,
+        private exerciseService: ExerciseService,
+        private courseService: CourseService,
+        private eventManager: JhiEventManager,
+        private exampleSubmissionService: ExampleSubmissionService,
+        private activatedRoute: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
-        this.isSaving = false;
-        this.activatedRoute.data.subscribe(({ textExercise }) => {
-            this.textExercise = textExercise;
+        this.activatedRoute.params.subscribe(params => {
+            if (params['courseId']) {
+                const courseId = params['courseId'];
+                this.courseService
+                    .find(courseId)
+                    .pipe(filter(res => !!res.body))
+                    .subscribe(res => {
+                        const course = res.body!;
+                        this.textExercise.course = course;
+                        this.initializeCategoriesOfCourse();
+                    });
+            } else if (params['exerciseId']) {
+                const exerciseId = params['exerciseId'];
+                this.textExerciseService.find(exerciseId).subscribe(res => {
+                    this.textExercise = res.body!;
+                    this.initializeCategoriesOfCourse();
+                });
+            }
         });
+        this.isSaving = false;
+        this.notificationText = null;
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body!;
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
+
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
+    }
+
+    initializeCategoriesOfCourse() {
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+            (categoryRes: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+            },
+            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+        );
     }
 
     previousState() {
         window.history.back();
     }
 
+    updateCategories(categories: ExerciseCategory[]) {
+        this.textExercise.categories = categories.map(el => JSON.stringify(el));
+    }
+
     save() {
         this.isSaving = true;
         if (this.textExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+    deleteExampleSubmission(id: number, index: number) {
+        this.exampleSubmissionService.delete(id).subscribe(
+            () => {
+                this.textExercise.exampleSubmissions.splice(index, 1);
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
-    private onSaveSuccess() {
+    private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
+        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError(res));
+    }
+
+    private onSaveSuccess(result: TextExercise) {
+        this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.previousState();
     }
 
-    private onSaveError() {
+    private onSaveError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message, null, undefined);
         this.isSaving = false;
+    }
+
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
+    }
+
+    trackCourseById(index: number, item: Course) {
+        return item.id;
     }
 }
