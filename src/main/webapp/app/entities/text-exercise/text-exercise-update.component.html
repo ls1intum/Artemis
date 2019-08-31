@@ -113,7 +113,7 @@
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button routerLink="text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
+                    <button routerLink="/text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
                         Example submission {{ i + 1 }}
                     </button>
                     <fa-icon
@@ -132,7 +132,7 @@
             <button
                 *ngIf="textExercise.id"
                 class="btn btn-primary"
-                routerLink="text-exercise/{{ textExercise.id }}/example-submission/new"
+                routerLink="/text-exercise/{{ textExercise.id }}/example-submission/new"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
