@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
@@ -46,6 +46,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -115,7 +116,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     previousState() {
-        window.history.back();
+        if (this.modelingExercise.course) {
+            this.router.navigate(['/course', this.modelingExercise.course.id]);
+        } else {
+            window.history.back();
+        }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
