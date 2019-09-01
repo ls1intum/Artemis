@@ -10,9 +10,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { Result } from 'app/entities/result';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { cloneRepositoryTour } from 'app/guided-tour/tours/programming-exercise-tour';
+import { cloneRepositoryTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

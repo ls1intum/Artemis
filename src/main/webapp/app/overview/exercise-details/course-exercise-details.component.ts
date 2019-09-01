@@ -17,7 +17,6 @@ import {
     StudentParticipation,
 } from 'app/entities/participation';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { courseExerciseTour } from 'app/guided-tour/tours/course-exercise-tour';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 

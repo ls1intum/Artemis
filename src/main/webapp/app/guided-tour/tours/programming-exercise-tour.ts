@@ -7,38 +7,6 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
  * This constant contains the guided tour configuration and steps for the text exercise info page
  */
 
-export const cloneRepositoryTour: GuidedTour = {
-    settingsKey: 'clone_repository_tour',
-    steps: [
-        new TextTourStep({
-            selector: '.clone-repository',
-            headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
-        }),
-        new TextTourStep({
-            selector: '.popover',
-            headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
-            action: () => {
-                clickOnElement('.clone-repository');
-            },
-            closeAction: () => {
-                clickOnElement('.clone-repository');
-            },
-        }),
-        new VideoTourStep({
-            selector: '.popover',
-            headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
-            videoUrl: 'https://www.youtube.com/embed/cyWZFFS9Q1w?start=61',
-        }),
-    ],
-};
-
 export const programmingExerciseTour: GuidedTour = {
     settingsKey: 'programming_exercise_tour',
     steps: [
