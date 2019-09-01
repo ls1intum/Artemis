@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -132,9 +133,9 @@ public class ProgrammingSubmissionResource {
         catch (IllegalStateException ex) {
             return notFound();
         }
-        // notify the user via websocket.
-        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+
+        notifyUserAndTriggerBuildForNewSubmission(submission);
+
         return ResponseEntity.ok().build();
     }
 
@@ -164,9 +165,9 @@ public class ProgrammingSubmissionResource {
         catch (IllegalStateException ex) {
             return notFound();
         }
-        // notify the user via websocket.
-        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+
+        notifyUserAndTriggerBuildForNewSubmission(submission);
+
         return ResponseEntity.ok().build();
     }
 
@@ -190,11 +191,9 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
         List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
                 SubmissionType.INSTRUCTOR);
-        for (ProgrammingSubmission submission : submissions) {
-            // notify the user via websocket.
-            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-        }
+
+        notifyUserTriggerBuildForNewSubmissions(submissions);
+
         return ResponseEntity.ok().build();
     }
 
@@ -225,11 +224,9 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds);
         List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
                 SubmissionType.INSTRUCTOR);
-        for (ProgrammingSubmission submission : submissions) {
-            // notify the user via websocket.
-            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-        }
+
+        notifyUserTriggerBuildForNewSubmissions(submissions);
+
         return ResponseEntity.ok().build();
     }
 
@@ -255,11 +252,24 @@ public class ProgrammingSubmissionResource {
 
         List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
 
-        // notify users via websocket.
-        for (ProgrammingSubmission submission : submissions) {
-            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
-        }
+        notifyUserTriggerBuildForNewSubmissions(submissions);
 
         return ResponseEntity.ok().build();
+    }
+
+    private void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
+        for (ProgrammingSubmission submission : submissions) {
+            notifyUserAndTriggerBuildForNewSubmission(submission);
+        }
+    }
+
+    /**
+     * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
+     *
+     * @param submission ProgrammingSubmission that was just created.
+     */
+    private void notifyUserAndTriggerBuildForNewSubmission(ProgrammingSubmission submission) {
+        messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
+        continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
     }
 }
