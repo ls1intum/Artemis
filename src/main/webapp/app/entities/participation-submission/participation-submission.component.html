@@ -1,4 +1,8 @@
-<h2 *ngIf="participation">Submissions of {{ participation.student.firstName }} for Exercise {{ participation.exercise.title }}</h2>
+<h2
+    *ngIf="participation"
+    jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
+    [translateValues]="{ student: participation.student.name, exercise: participation.exercise.title }"
+></h2>
 <br />
 <jhi-alert></jhi-alert>
 <div class="table-responsive" *ngIf="submissions">
@@ -19,27 +23,42 @@
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Submission Type" prop="type">
+        <ngx-datatable-column prop="type">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.submissionType"></span>
+            </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Submission Date" prop="submissionDate">
+        <ngx-datatable-column prop="submissionDate">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.submissionDate"></span>
+            </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Result" prop="result">
+        <ngx-datatable-column prop="result">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.result"></span>
+            </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 <jhi-result [result]="value"></jhi-result>
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Assessor" prop="result">
+        <ngx-datatable-column prop="result">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.assessor"></span>
+            </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 {{ value && value.assessor ? value.assessor.name : 'n.a' }}
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Action" prop="id">
+        <ngx-datatable-column prop="id">
+            <ng-template ngx-datatable-header-template>
+                <span jhiTranslate="artemisApp.participation.participationSubmission.action"></span>
+            </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 <button class="btn btn-danger btn-sm mr-1" id="deleteButton" [routerLink]="['/', { outlets: { popup: 'participation/submission/' + value + '/delete' } }]">
                     <fa-icon icon="times"></fa-icon>
