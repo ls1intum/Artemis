@@ -1,8 +1,12 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit">{{ 'artemisApp.fileUploadExercise.home.editLabel' | translate }}</h2>
-            <h2 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create">{{ 'artemisApp.fileUploadExercise.home.createLabel' | translate }}</h2>
+            <h2 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">
+                Edit a File Upload Exercise
+            </h2>
+            <h2 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
+                Create a new File Upload Exercise
+            </h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!fileUploadExercise.id">
