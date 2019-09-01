@@ -90,7 +90,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         }
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
-            .pipe(tap(([, pendingSubmission]) => (this.isBuilding = !!pendingSubmission)))
+            .pipe(tap(({ submission: pendingSubmission }) => (this.isBuilding = !!pendingSubmission)))
             .subscribe();
     }
 }

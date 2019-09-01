@@ -63,7 +63,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     }
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>
-        Object.values(buildState).reduce((acc: { [state: string]: number }, [submissionState]) => {
+        Object.values(buildState).reduce((acc: { [state: string]: number }, { submissionState }) => {
             return { ...acc, [submissionState]: (acc[submissionState] || 0) + 1 };
         }, {});
 }

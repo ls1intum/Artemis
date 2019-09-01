@@ -88,7 +88,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should query http endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
         httpGetStub.returns(of(currentSubmission));
         const submission = await new Promise(resolve => submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => resolve(s)));
-        expect(submission).to.deep.equal([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]);
+        expect(submission).to.deep.equal({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId });
         expect(wsSubscribeStub).to.have.been.calledOnceWithExactly(submissionTopic);
         expect(wsReceiveStub).to.have.been.calledOnceWithExactly(submissionTopic);
         expect(participationWsLatestResultStub).to.have.been.calledOnceWithExactly(participationId);
@@ -98,13 +98,13 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
         // Result comes in for submission.
         result.submission = currentSubmission;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([
-            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission],
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
         ]);
     });
 
@@ -112,11 +112,11 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
         // Result comes in for submission.
         result.submission = currentSubmission2;
         wsLatestResultSubject.next(result);
-        expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission]]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
     });
 
     it('should emit the newest submission when it was received through the websocket connection', () => {
@@ -124,20 +124,20 @@ describe('ProgrammingSubmissionService', () => {
         // No latest pending submission found.
         httpGetStub.returns(of(null));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId }]);
         // New submission comes in.
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission2],
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
         // Result comes in for submission.
         result.submission = currentSubmission2;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission2],
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
         ]);
     });
 
@@ -148,18 +148,18 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(null));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([[ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId }]);
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission2],
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
         // Wait 10ms.
         await new Promise(resolve => setTimeout(() => resolve(), 10));
         expect(returnedSubmissions).to.deep.equal([
-            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, currentSubmission2],
-            [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null],
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId },
         ]);
     });
 
@@ -180,7 +180,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // This load the submissions for participation 1 and 2, but not for 3.
         submissionService.getSubmissionStateOfExercise(exerciseId).toPromise();
-        submissionService.getLatestPendingSubmissionByParticipationId(participation1.id, exerciseId).subscribe(([state, sub]) => {
+        submissionService.getLatestPendingSubmissionByParticipationId(participation1.id, exerciseId).subscribe(({ submissionState: state, submission: sub }) => {
             submissionState = state;
             submission = sub;
         });
@@ -213,8 +213,8 @@ describe('ProgrammingSubmissionService', () => {
         const exerciseId = 10;
         const submissionState = { 1: { id: 11, submissionDate: moment().subtract(2, 'hours') } as ProgrammingSubmission, 2: null };
         const expectedSubmissionState = {
-            1: [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submissionState['1']],
-            2: [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
+            1: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: submissionState['1'], participationId: 1 },
+            2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 2 },
         };
         // @ts-ignore
         const fetchLatestPendingSubmissionByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionByExerciseId');

@@ -66,7 +66,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.participation.exercise.id)
             .pipe(
-                tap(([submissionState]) => {
+                tap(({ submissionState }) => {
                     switch (submissionState) {
                         case ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION:
                             this.isBuilding = false;
