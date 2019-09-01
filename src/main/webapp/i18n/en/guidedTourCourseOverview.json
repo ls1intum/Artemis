@@ -40,12 +40,8 @@
             },
             "contact": {
                 "headline": "Contact the Artemis team",
-                "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application."
-            },
-            "team": {
-                "headline": "Meet the team",
-                "content": "Are you curious who is behind Artemis and the LS1 chair? ",
-                "link-text": "Click here"
+                "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application. If you're motivated and want to contribute to Artemis, then head over to our Github and submit your first Pull Requests",
+                "link": "Visit the Artemis Github page"
             }
         }
     }
