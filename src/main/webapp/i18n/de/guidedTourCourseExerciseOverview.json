@@ -32,6 +32,10 @@
             "statistics": {
                 "headline": "Statistiken",
                 "content": "In diesem Reiter kannst du deine bisherigen Ergebnisse und Leistungen in Form von Statisken einsehen."
+            },
+            "startExercise": {
+                "headline": "Beginne mit deiner ersten Programmieraufgabe",
+                "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             }
         }
     }

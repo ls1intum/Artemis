@@ -11,6 +11,8 @@ import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { Result } from 'app/entities/result';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { cloneRepositoryTour } from 'app/guided-tour/tours/programming-exercise-tour';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -57,6 +59,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -161,6 +164,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                        this.guidedTourService.enableTour(cloneRepositoryTour);
+                        this.guidedTourService.startTour();
                     }
                 },
                 error => {

@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { courseExerciseTour } from 'app/guided-tour/tours/course-exercise-tour';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
