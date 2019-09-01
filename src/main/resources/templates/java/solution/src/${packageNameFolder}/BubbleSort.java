@@ -4,7 +4,6 @@ import java.util.*;
 
 public class BubbleSort implements SortStrategy {
 
-    @Override
 	public void performSort(List<Date> input) {
 
 		for (int i = input.size() - 1; i >= 0; i--) {
