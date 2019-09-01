@@ -11,6 +11,8 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AccountService } from 'app/core';
+import { TextExerciseDeleteDialogComponent } from 'app/entities/text-exercise/text-exercise-delete-dialog.component';
+import { TextExercisePopupService } from 'app/entities/text-exercise/text-exercise-popup.service';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -29,6 +31,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         route: ActivatedRoute,
         private accountService: AccountService,
         private artemisMarkdown: ArtemisMarkdown,
+        private textExercisePopupService: TextExercisePopupService,
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
@@ -53,6 +56,14 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     trackId(index: number, item: TextExercise) {
         return item.id;
+    }
+
+    /**
+     * Opens delete text exercise popup
+     * @param exerciseId the id of exercise
+     */
+    openDeleteTextExercisePopup(exerciseId: string) {
+        this.textExercisePopupService.open(TextExerciseDeleteDialogComponent as Component, exerciseId);
     }
 
     protected getChangeEventName(): string {

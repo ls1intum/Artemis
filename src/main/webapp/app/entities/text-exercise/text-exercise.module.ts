@@ -7,7 +7,6 @@ import { ArtemisSharedModule } from 'app/shared';
 import {
     TextExerciseComponent,
     TextExerciseDeleteDialogComponent,
-    TextExerciseDeletePopupComponent,
     TextExerciseDetailComponent,
     TextExerciseDialogComponent,
     TextExercisePopupComponent,
@@ -42,16 +41,8 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDialogComponent,
         TextExerciseDeleteDialogComponent,
         TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent,
     ],
-    entryComponents: [
-        TextExerciseComponent,
-        TextExerciseDialogComponent,
-        TextExerciseUpdateComponent,
-        TextExercisePopupComponent,
-        TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent,
-    ],
+    entryComponents: [TextExerciseComponent, TextExerciseDialogComponent, TextExerciseUpdateComponent, TextExercisePopupComponent, TextExerciseDeleteDialogComponent],
     providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
 })

@@ -16,13 +16,21 @@ import { Subscription } from 'rxjs/Subscription';
 })
 export class TextExerciseDeleteDialogComponent {
     textExercise: TextExercise;
+    confirmExerciseName: string;
 
     constructor(private textExerciseService: TextExerciseService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
+    /**
+     * Closes the dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Deletes specified file upload exercise and closes the dialog
+     * @param exerciseId
+     */
     confirmDelete(id: number) {
         this.textExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
@@ -31,25 +39,5 @@ export class TextExerciseDeleteDialogComponent {
             });
             this.activeModal.dismiss(true);
         });
-    }
-}
-
-@Component({
-    selector: 'jhi-text-exercise-delete-popup',
-    template: '',
-})
-export class TextExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-
-    constructor(private route: ActivatedRoute, private textExercisePopupService: TextExercisePopupService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            this.textExercisePopupService.open(TextExerciseDeleteDialogComponent as Component, params['id']);
-        });
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }
