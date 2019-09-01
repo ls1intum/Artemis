@@ -1,14 +1,14 @@
 [ {
     "class" : {
         "name" : "MergeSort",
-        "package" : "de.tum.in.www1",
+        "package" : "${packageName}",
         "interfaces" : [ "SortStrategy" ],
         "annotations" : [ "Strategy" ]
     }
 }, {
     "class" : {
         "name" : "Context",
-        "package" : "de.tum.in.www1"
+        "package" : "${packageName}"
     },
     "methods" : [ {
         "name" : "getDates",
@@ -45,7 +45,7 @@
 }, {
     "class" : {
         "name" : "Policy",
-        "package" : "de.tum.in.www1"
+        "package" : "${packageName}"
     },
     "methods" : [ {
         "name" : "configure",
@@ -64,7 +64,7 @@
 }, {
     "class" : {
         "name" : "SortStrategy",
-        "package" : "de.tum.in.www1",
+        "package" : "${packageName}",
         "isInterface" : true
     },
     "methods" : [ {
@@ -76,7 +76,7 @@
 }, {
     "class" : {
         "name" : "BubbleSort",
-        "package" : "de.tum.in.www1",
+        "package" : "${packageName}",
         "interfaces" : [ "SortStrategy" ],
         "annotations" : [ "Strategy" ]
     }
