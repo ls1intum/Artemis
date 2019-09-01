@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import {
     ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
-    CodeEditorFileService,
     CodeEditorInstructorContainerComponent,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
@@ -28,15 +27,14 @@ import {
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
+    MockExerciseHintService,
     MockParticipationService,
     MockParticipationWebsocketService,
     MockProgrammingExerciseService,
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArtemisResultModule, Result, ResultService } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { Result, ResultService } from 'app/entities/result';
 import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
@@ -44,7 +42,7 @@ import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,6 +60,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let participationService: ParticipationService;
     let programmingExerciseService: ProgrammingExerciseService;
     let domainService: DomainService;
+    let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
     let router: Router;
 
@@ -76,12 +75,15 @@ describe('CodeEditorInstructorIntegration', () => {
     let findWithLatestResultStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
     let getLatestResultWithFeedbacksStub: SinonStub;
+    let getHintsForExerciseStub: SinonStub;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
+
+    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -106,6 +108,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .compileComponents()
@@ -123,6 +126,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
+                exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
                 router = containerDebugElement.injector.get(Router);
 
@@ -145,6 +149,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
                 findWithLatestResultStub = stub(participationService, 'findWithLatestResult');
+                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
                 findWithParticipationsStub.returns(findWithParticipationsSubject);
@@ -239,9 +244,14 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.instructions.participation.id).to.deep.equal(exercise.templateParticipation.id);
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
+        expect(container.instructions.editableInstructions.exerciseHints).to.deep.equal(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
+
+        // called once by instructions (hints are only visible if assignment repo is selected).
+        expect(getHintsForExerciseStub).to.have.been.calledOnce;
+        expect(getHintsForExerciseStub).to.have.been.calledWithExactly(exercise.id);
     });
 
     it('should go into error state when loading the exercise failed', () => {
