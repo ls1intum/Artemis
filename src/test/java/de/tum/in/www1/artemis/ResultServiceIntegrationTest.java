@@ -17,17 +17,21 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -52,22 +56,36 @@ public class ResultServiceIntegrationTest {
     SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    RequestUtilService request;
 
     private ProgrammingExercise programmingExercise;
 
-    private SolutionProgrammingExerciseParticipation participation;
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    private TemplateProgrammingExerciseParticipation templateParticipation;
+
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+
+    private StudentParticipation studentParticipation;
 
     @BeforeEach
     public void reset() {
-        ProgrammingExercise programmingExerciseBeforeSave = new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise = programmingExerciseRepository.save(programmingExerciseBeforeSave);
-        participation = new SolutionProgrammingExerciseParticipation();
-        participation.setProgrammingExercise(programmingExercise);
-        participation.setId(1L);
-        programmingExercise.setSolutionParticipation(participation);
-        solutionProgrammingExerciseRepository.save(participation);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        database.addUsers(2, 2, 2);
+        database.addCourseWithOneProgrammingExercise();
+        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        solutionParticipation = programmingExercise.getSolutionParticipation();
+        templateParticipation = programmingExercise.getTemplateParticipation();
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findAll().get(0);
+        studentParticipation = database.addParticipationForExercise(modelingExercise, "student2");
     }
 
     @AfterEach
@@ -76,6 +94,7 @@ public class ResultServiceIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws Exception {
         Result result = new Result();
         List<Feedback> feedbacks = new ArrayList<>();
@@ -91,12 +110,60 @@ public class ResultServiceIntegrationTest {
 
         Object requestDummy = new Object();
 
-        when(continuousIntegrationServiceMock.onBuildCompletedNew(participation, requestDummy)).thenReturn(result);
-        resultService.processNewProgrammingExerciseResult(participation, requestDummy);
+        when(continuousIntegrationServiceMock.onBuildCompletedNew(solutionParticipation, requestDummy)).thenReturn(result);
+        resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);
         assertThat(result.getScore()).isEqualTo(100L);
     }
 
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation() throws Exception {
+        Result result = database.addResultToParticipation(programmingExerciseStudentParticipation);
+        result = database.addFeedbacksToResult(result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(value = "student2", roles = "USER")
+    public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result = database.addFeedbacksToResult(result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result = database.addFeedbacksToResult(result);
+
+        request.getList("/api/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
+        Result result = database.addResultToParticipation(solutionParticipation);
+        result = database.addFeedbacksToResult(result);
+
+        request.getList("/api/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnNotFoundForNonExistingResult() throws Exception {
+        Result result = database.addResultToParticipation(solutionParticipation);
+        result = database.addFeedbacksToResult(result);
+
+        request.getList("/api/results/" + 66 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
+    }
 }
