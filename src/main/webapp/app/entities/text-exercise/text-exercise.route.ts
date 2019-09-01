@@ -43,24 +43,6 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/text-exercise',
-        component: TextExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/text-exercise/:id',
-        component: TextExerciseDetailComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'course/:courseId/text-exercise/new',
         component: TextExerciseUpdateComponent,
         resolve: {
@@ -78,6 +60,24 @@ export const textExerciseRoute: Routes = [
         resolve: {
             textExercise: TextExerciseResolver,
         },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/text-exercise',
+        component: TextExerciseComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/text-exercise/:id',
+        component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.textExercise.home.title',
