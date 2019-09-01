@@ -5,6 +5,7 @@ import java.util.*;
 public class MergeSort implements SortStrategy {
 
     // Wrapper method for the real algorithm.
+    @Override
     public void performSort(List<Date> input) {
         mergesort(input, 0, input.size() - 1);
     }

@@ -92,13 +92,31 @@
             "name": "BubbleSort",
             "package": "${packageName}",
             "interfaces": ["SortStrategy"]
-        }
+        },
+        "methods": [
+            {
+                "name": "performSort",
+                "modifiers": ["public"],
+                "parameters": ["List"],
+                "annotations": ["Override"],
+                "returnType": "void"
+            }
+        ]
     },
     {
         "class": {
             "name": "MergeSort",
             "package": "${packageName}",
             "interfaces": ["SortStrategy"]
-        }
+        },
+        "methods": [
+            {
+                "name": "performSort",
+                "modifiers": ["public"],
+                "parameters": ["List"],
+                "annotations": ["Override"],
+                "returnType": "void"
+            }
+        ]
     }
 ]
