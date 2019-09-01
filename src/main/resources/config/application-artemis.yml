@@ -21,9 +21,9 @@ artemis:
         secret: <password>
     bamboo:
         url: https://bamboobruegge.in.tum.de
-        bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
         user: <username>    # e.g. ga12abc
         password: <password>
+        vcs-application-link-name: LS1 Bitbucket Server
         empty-commit-necessary: true
         authentication-token: <secrettoken>
     lti:
