@@ -78,20 +78,19 @@ public class OracleGeneratorClient {
         // If the types, classes or enums are equal, then ignore and continue with the next pair
         for (Map.Entry<JavaClass, JavaClass> entry : solutionToTemplateMapping.entrySet()) {
             JsonObject diffJSON = new JsonObject();
-
             JavaClass solutionType = entry.getKey();
             JavaClass templateType = entry.getValue();
 
             // Initialize the types diff containing various properties as well as methods.
             TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
-            if (typesDiff.typesAreEqual()) {
+            if (typesDiff.classesAreEqual()) {
                 continue;
             }
 
             // If we are dealing with interfaces, the types diff already has all the information we need
             // So we do not need to do anything more
             TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer(typesDiff);
-            diffJSON.add("class", typesDiffSerializer.serializeHierarchy());
+            diffJSON.add("class", typesDiffSerializer.serializeClassProperties());
             if (!typesDiff.methodsDiff.isEmpty()) {
                 diffJSON.add("methods", typesDiffSerializer.serializeMethods());
             }

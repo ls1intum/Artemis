@@ -4,10 +4,7 @@ import java.util.HashSet;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.thoughtworks.qdox.model.JavaClass;
-import com.thoughtworks.qdox.model.JavaConstructor;
-import com.thoughtworks.qdox.model.JavaField;
-import com.thoughtworks.qdox.model.JavaMethod;
+import com.thoughtworks.qdox.model.*;
 
 /**
  * This class is used to serialize the elements that are generally defined in types, e.g. methods and various properties of the types. These properties are defined as the hierarchy
@@ -22,28 +19,35 @@ public class TypesDiffSerializer {
     }
 
     /**
-     * This method is used to serialize the hierarchy properties of each type defined in the types diff into a JSON object containing the following information: - Name of the type
-     * - Package of the type - Interface stereotype - Enum stereotype - Abstract stereotype - Superclass (if any) - Super interfaces (if any)
+     * This method is used to serialize the class properties of each type defined in the types diff into a JSON object containing the following information:
+     * - Name of the type
+     * - Package of the type
+     * - Interface stereotype
+     * - Enum stereotype
+     * - Abstract stereotype
+     * - Superclass (if any)
+     * - Super interfaces (if any)
+     * - Annotations (if any)
      * 
      * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type defined in the types diff.
      */
-    public JsonObject serializeHierarchy() {
-        JsonObject hierarchyJSON = new JsonObject();
+    public JsonObject serializeClassProperties() {
+        JsonObject classJSON = new JsonObject();
 
-        hierarchyJSON.addProperty("name", typesDiff.getName());
-        hierarchyJSON.addProperty("package", typesDiff.getPackageName());
+        classJSON.addProperty("name", typesDiff.getName());
+        classJSON.addProperty("package", typesDiff.getPackageName());
 
         if (typesDiff.isInterfaceDifferent) {
-            hierarchyJSON.addProperty("isInterface", true);
+            classJSON.addProperty("isInterface", true);
         }
         if (typesDiff.isEnumDifferent) {
-            hierarchyJSON.addProperty("isEnum", true);
+            classJSON.addProperty("isEnum", true);
         }
         if (typesDiff.isAbstractDifferent) {
-            hierarchyJSON.addProperty("isAbstract", true);
+            classJSON.addProperty("isAbstract", true);
         }
         if (!typesDiff.superClassNameDiff.isEmpty()) {
-            hierarchyJSON.addProperty("superclass", typesDiff.superClassNameDiff);
+            classJSON.addProperty("superclass", typesDiff.superClassNameDiff);
         }
         if (typesDiff.superInterfacesDiff.size() > 0) {
             JsonArray superInterfaces = new JsonArray();
@@ -51,9 +55,17 @@ public class TypesDiffSerializer {
             for (JavaClass superInterface : typesDiff.superInterfacesDiff) {
                 superInterfaces.add(superInterface.getSimpleName());
             }
-            hierarchyJSON.add("interfaces", superInterfaces);
+            classJSON.add("interfaces", superInterfaces);
         }
-        return hierarchyJSON;
+        if (typesDiff.annotationsDiff.size() > 0) {
+            JsonArray annotations = new JsonArray();
+
+            for (JavaAnnotation annotation : typesDiff.annotationsDiff) {
+                annotations.add(annotation.getType().getSimpleName());
+            }
+            classJSON.add("annotations", annotations);
+        }
+        return classJSON;
     }
 
     /**
@@ -66,7 +78,7 @@ public class TypesDiffSerializer {
         JsonArray attributesJSON = new JsonArray();
 
         for (JavaField attribute : typesDiff.attributesDiff) {
-            JsonObject attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute);
+            JsonObject attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute, attribute.getAnnotations());
             attributeJSON.addProperty("type", attribute.getType().getValue());
             attributesJSON.add(attributeJSON);
         }
@@ -107,6 +119,9 @@ public class TypesDiffSerializer {
             if (!constructor.getParameters().isEmpty()) {
                 constructorJSON.add("parameters", SerializerUtil.serializeParameters(constructor.getParameters()));
             }
+            if (!constructor.getAnnotations().isEmpty()) {
+                constructorJSON.add("annotations", SerializerUtil.serializeAnnotations(constructor.getAnnotations()));
+            }
             constructorsJSON.add(constructorJSON);
         }
         return constructorsJSON;
@@ -122,7 +137,7 @@ public class TypesDiffSerializer {
         JsonArray methodsJSON = new JsonArray();
 
         for (JavaMethod method : typesDiff.methodsDiff) {
-            JsonObject methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method);
+            JsonObject methodJSON = SerializerUtil.createJsonObject(method.getName(), new HashSet<>(method.getModifiers()), method, method.getAnnotations());
             if (!method.getParameters().isEmpty()) {
                 methodJSON.add("parameters", SerializerUtil.serializeParameters(method.getParameters()));
             }
