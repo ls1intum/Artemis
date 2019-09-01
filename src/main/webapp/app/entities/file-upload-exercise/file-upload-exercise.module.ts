@@ -32,7 +32,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisMarkdownEditorModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
-    entryComponents: [FileUploadExerciseComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
+    entryComponents: [FileUploadExerciseDeleteDialogComponent],
     exports: [FileUploadExerciseComponent],
     providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
