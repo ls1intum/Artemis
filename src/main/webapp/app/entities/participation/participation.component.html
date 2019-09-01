@@ -74,6 +74,7 @@
                             <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
                                 <jhi-programming-exercise-instructor-trigger-build-button
                                     *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
+                                    [exercise]="exercise"
                                     [participation]="participation"
                                     [showProgress]="true"
                                     class="mr-1"

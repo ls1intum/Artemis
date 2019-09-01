@@ -116,6 +116,7 @@
             <jhi-programming-exercise-student-trigger-build-button
                 class="mr-3"
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
+                [exercise]="exercise"
                 [participation]="selectedParticipation"
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>

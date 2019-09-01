@@ -89,6 +89,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.templateParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
@@ -112,6 +113,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.solutionParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>

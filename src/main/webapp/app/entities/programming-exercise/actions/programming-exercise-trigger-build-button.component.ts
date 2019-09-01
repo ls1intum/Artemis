@@ -3,6 +3,7 @@ import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { hasParticipationChanged, InitializationState, Participation, StudentParticipation } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export enum ButtonSize {
     SMALL = 'btn-sm',
@@ -18,6 +19,7 @@ export enum ButtonSize {
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     abstract triggerBuild: (event: any) => void;
 
+    @Input() exercise: ProgrammingExercise;
     @Input() participation: StudentParticipation;
     @Input() showProgress: boolean;
     @Input() btnSize = ButtonSize.SMALL;
@@ -64,7 +66,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.participation.exercise.id)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
             .pipe(
                 tap(({ submissionState }) => {
                     switch (submissionState) {
