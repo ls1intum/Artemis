@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
@@ -46,6 +46,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -75,6 +76,9 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     previousState() {
+        if (this.textExercise.course) {
+            this.router.navigate(['/course', this.textExercise.course.id]);
+        }
         window.history.back();
     }
 
