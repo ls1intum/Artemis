@@ -1,0 +1,38 @@
+{
+    "tour": {
+        "courseExerciseOverview": {
+            "exercises": {
+                "headline": "Exercises",
+                "content": "This tab lists all exercises of the selected course."
+            },
+            "exerciseRow": {
+                "headline": "Current week",
+                "content": "The exercises of the current week will be displayed on top of the exercise list."
+            },
+            "exerciseType": {
+                "headline": "Exercise type",
+                "content": "The exercise type can be distinguished by the exercise icon."
+            },
+            "exerciseTags": {
+                "headline": "Exercise tags",
+                "content": "The listed tags will give further information on the exercise classification, e.g. by difficulty"
+            },
+            "courseInformation": {
+                "headline": "Course information",
+                "content": "This box displays general course information, such as the amount of exercises and the start and end time of the course."
+            },
+            "upcomingDeadlines": {
+                "headline": "Upcoming deadlines",
+                "content": "See what exercises have to be completed in the next few days."
+            },
+            "lectures": {
+                "headline": "Lectures",
+                "content": "You can find and download the all lecture slides from this tab."
+            },
+            "statistics": {
+                "headline": "Statistics",
+                "content": "This tab shows your current exercise accomplishments statistics."
+            }
+        }
+    }
+}

@@ -80,11 +80,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     subscribeForGuidedTourAvailability(): void {
         this.router.events.subscribe((event: Event) => {
             if (event instanceof NavigationEnd) {
-                this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
+                this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute().subscribe(isAvailable => {
+                    this.isTourAvailable = isAvailable;
+                });
             }
         });
         // Check availability after first subscribe call since the router event been triggered already
-        this.isTourAvailable = this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute();
+        this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute().subscribe(isAvailable => {
+            this.isTourAvailable = isAvailable;
+        });
     }
 
     changeLanguage(languageKey: string) {

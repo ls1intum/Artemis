@@ -1,0 +1,38 @@
+{
+    "tour": {
+        "courseExerciseOverview": {
+            "exercises": {
+                "headline": "Aufgaben",
+                "content": "In diesem Reiter werden alle freigegebenen Aufgaben dieses Kurses angezeigt."
+            },
+            "exerciseRow": {
+                "headline": "Aktuelle Woche",
+                "content": "Die Aufgaben der aktuellen Woche werden in diesem Reiter an oberster Stelle gelistet."
+            },
+            "exerciseType": {
+                "headline": "Aufgabentyp",
+                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons."
+            },
+            "exerciseTags": {
+                "headline": "Aufgabenkategorien",
+                "content": "Die gelisteten Kategorien klassifieren die Aufgabe beispielsweise durch die Angabe der Schwierigkeitsstufe noch zusätzlich."
+            },
+            "courseInformation": {
+                "headline": "Kursinformation",
+                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf"
+            },
+            "upcomingDeadlines": {
+                "headline": "Bevorstehende Termine",
+                "content": "Hier siehst du welche Kursabgaben demnächst fällig sind."
+            },
+            "lectures": {
+                "headline": "Vorlesungen",
+                "content": "In diesem Reiter findest du die Vorlesungsfolien, die zum Download bereitstehen."
+            },
+            "statistics": {
+                "headline": "Statistiken",
+                "content": "In diesem Reiter kannst du deine bisherigen Ergebnisse und Leistungen in Form von Statisken einsehen."
+            }
+        }
+    }
+}

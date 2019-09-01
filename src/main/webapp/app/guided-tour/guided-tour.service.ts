@@ -1,13 +1,12 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, of, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
@@ -74,14 +73,6 @@ export class GuidedTourService {
     }
 
     /**
-     * Load course overview tour
-     * @return guided tour `courseOverviewTour`
-     */
-    public getOverviewTour(): Observable<GuidedTour> {
-        return of(courseOverviewTour);
-    }
-
-    /**
      * Check if the provided tour step is the currently active one
      * @param tourStep: current tour step of the guided tour
      */
@@ -98,13 +89,14 @@ export class GuidedTourService {
     public backStep(): void {
         if (this.currentTour) {
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+            const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
             if (currentStep.closeAction) {
                 currentStep.closeAction();
             }
-            if (this.currentTour.steps[this.currentTourStepIndex - 1]) {
+            if (previousStep) {
                 this.currentTourStepIndex--;
-                if (currentStep.action) {
-                    currentStep.action();
+                if (previousStep.action) {
+                    previousStep.action();
                 }
                 setTimeout(() => {
                     if (this.checkSelectorValidity()) {
@@ -127,13 +119,14 @@ export class GuidedTourService {
             return;
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
-        if (this.currentTour.steps[this.currentTourStepIndex + 1]) {
+        if (nextStep) {
             this.currentTourStepIndex++;
-            if (currentStep.action) {
-                currentStep.action();
+            if (nextStep.action) {
+                nextStep.action();
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
@@ -200,11 +193,14 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      * @param tour: guided tour
      */
-    private startTour(tour: GuidedTour): void {
-        this.currentTour = cloneDeep(tour);
+    private startTour(): void {
+        // this.currentTour = cloneDeep(tour);
+        if (!this.currentTour) {
+            return;
+        }
 
         // Filter tour steps according to permissions
-        this.currentTour.steps = tour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
+        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
         this.currentTourStepIndex = 0;
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
@@ -244,7 +240,7 @@ export class GuidedTourService {
             if (!selectedElement) {
                 this.errorHandler.handleError(
                     // If error handler is configured this should not block the browser.
-                    new Error(
+                    console.warn(
                         `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
                             this.currentTour.settingsKey
                         }`,
@@ -376,18 +372,18 @@ export class GuidedTourService {
      * that provide tours.
      * @return true if a guided tour is available
      */
-    public checkGuidedTourAvailabilityForCurrentRoute(): boolean {
-        return this.router.url === '/overview';
+    public checkGuidedTourAvailabilityForCurrentRoute(): Observable<boolean> {
+        return Observable.of(this.currentTour !== null);
     }
 
     /**
      * Starts the guided tour of the current component
-     * */
+     */
     public startGuidedTourForCurrentRoute() {
-        if (this.router.url === '/overview') {
-            this.getOverviewTour().subscribe(tour => {
-                this.startTour(tour);
-            });
-        }
+        this.startTour();
+    }
+
+    public enable(guidedTour: GuidedTour) {
+        this.currentTour = cloneDeep(guidedTour);
     }
 }
