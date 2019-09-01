@@ -38,7 +38,7 @@ export class OverviewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.guidedTourService.enable(courseOverviewTour);
+        this.guidedTourService.enableTour(courseOverviewTour);
     }
 
     private onError(error: string) {

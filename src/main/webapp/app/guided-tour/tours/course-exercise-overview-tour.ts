@@ -83,7 +83,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
                 clickOnElement('.tab-item.statistics');
             },
             closeAction: () => {
-                clickOnElement('.tab-item.statistics');
+                clickOnElement('.tab-item.exercises');
             },
         }),
     ],

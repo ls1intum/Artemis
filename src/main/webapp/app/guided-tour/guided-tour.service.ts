@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable } from '@angular/core';
+import { ErrorHandler, Injectable, EventEmitter, Output } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router, NavigationStart } from '@angular/router';
 import { cloneDeep } from 'lodash';
@@ -22,6 +22,7 @@ export class GuidedTourService {
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
+    private guidedTourAvailability = new Subject<boolean>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
 
@@ -42,13 +43,20 @@ export class GuidedTourService {
             this.guidedTourSettings = user ? user.guidedTourSettings : [];
         });
 
+        // Reset guided tour availability on router navigation
+        this.router.events.subscribe(event => {
+            if (event instanceof NavigationStart) {
+                this.guidedTourAvailability.next(false);
+            }
+        });
+
         /**
          * Subscribe to window resize events
          */
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour && this.currentTourStepIndex > -1) {
+                if (this.currentTour && this.currentTourStepIndex > 0) {
                     if (this.currentTour.minimumScreenSize && this.currentTour.minimumScreenSize >= window.innerWidth) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(
@@ -70,6 +78,13 @@ export class GuidedTourService {
      */
     public getGuidedTourCurrentStepStream(): Observable<TourStep | null> {
         return this.guidedTourCurrentStepSubject.asObservable();
+    }
+
+    /**
+     * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
+     */
+    public getGuidedTourAvailabilityStream(): Observable<boolean> {
+        return this.guidedTourAvailability.asObservable();
     }
 
     /**
@@ -184,7 +199,7 @@ export class GuidedTourService {
      */
     public resetTour(): void {
         document.body.classList.remove('tour-open');
-        this.currentTour = null;
+        // this.currentTour = null;
         this.currentTourStepIndex = 0;
         this.guidedTourCurrentStepSubject.next(null);
     }
@@ -193,8 +208,7 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      * @param tour: guided tour
      */
-    private startTour(): void {
-        // this.currentTour = cloneDeep(tour);
+    public startTour(): void {
         if (!this.currentTour) {
             return;
         }
@@ -368,22 +382,19 @@ export class GuidedTourService {
     }
 
     /**
-     * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
-     * that provide tours.
-     * @return true if a guided tour is available
+     * Enable a given tour for the component that calls this method and make the start tour button in the navigation bar availability
+     * by setting the guidedTourAvailability to true
+     *
+     * @param guidedTour
      */
-    public checkGuidedTourAvailabilityForCurrentRoute(): Observable<boolean> {
-        return Observable.of(this.currentTour !== null);
-    }
-
-    /**
-     * Starts the guided tour of the current component
-     */
-    public startGuidedTourForCurrentRoute() {
-        this.startTour();
-    }
-
-    public enable(guidedTour: GuidedTour) {
-        this.currentTour = cloneDeep(guidedTour);
+    public enableTour(guidedTour: GuidedTour) {
+        /**
+         * Set timeout so that the reset of the previous guided tour on the navigation end can be processed first
+         * to prevent ExpressionChangedAfterItHasBeenCheckedError
+         */
+        setTimeout(() => {
+            this.currentTour = cloneDeep(guidedTour);
+            this.guidedTourAvailability.next(true);
+        });
     }
 }

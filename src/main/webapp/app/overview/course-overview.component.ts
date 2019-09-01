@@ -46,7 +46,7 @@ export class CourseOverviewComponent implements OnInit {
             });
         }
         this.adjustCourseDescription();
-        this.guidedTourService.enable(courseExerciseOverviewTour);
+        this.guidedTourService.enableTour(courseExerciseOverviewTour);
     }
 
     adjustCourseDescription() {

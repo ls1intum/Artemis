@@ -78,16 +78,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Check if a guided tour is available for the current route to display the start tour button in the account menu
      */
     subscribeForGuidedTourAvailability(): void {
-        this.router.events.subscribe((event: Event) => {
-            if (event instanceof NavigationEnd) {
-                this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute().subscribe(isAvailable => {
-                    this.isTourAvailable = isAvailable;
-                });
-            }
-        });
         // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.checkGuidedTourAvailabilityForCurrentRoute().subscribe(isAvailable => {
+        this.guidedTourService.getGuidedTourAvailabilityStream().subscribe(isAvailable => {
             this.isTourAvailable = isAvailable;
+            console.log('tour available: ', this.isTourAvailable);
         });
     }
 
