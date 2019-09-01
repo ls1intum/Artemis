@@ -26,7 +26,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExerciseDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
