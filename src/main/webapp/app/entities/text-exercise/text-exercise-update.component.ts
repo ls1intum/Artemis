@@ -78,8 +78,9 @@ export class TextExerciseUpdateComponent implements OnInit {
     previousState() {
         if (this.textExercise.course) {
             this.router.navigate(['/course', this.textExercise.course.id]);
+        } else {
+            window.history.back();
         }
-        window.history.back();
     }
 
     updateCategories(categories: ExerciseCategory[]) {
