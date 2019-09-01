@@ -5,9 +5,9 @@ export interface GuidedTour {
     settingsKey: string;
     /** Steps fo the tour */
     steps: TourStep[];
-    /** Function will be called when tour is skipped */
+    /** The given function will be called when tour is skipped */
     skipCallback?: (stepSkippedOn: number) => void;
-    /** Function will be called when tour is completed */
+    /** The given function will be called when tour is completed */
     completeCallback?: () => void;
     /** Minimum size of screen in pixels before the tour is run, if the tour is resized below this value the user will be told to resize */
     minimumScreenSize?: number;
