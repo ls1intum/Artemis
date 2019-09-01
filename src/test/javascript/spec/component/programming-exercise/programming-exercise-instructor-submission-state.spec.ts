@@ -88,8 +88,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
 
     it('should show & enable the trigger all button and the build state once the build summary is loaded', () => {
         const noPendingSubmissionState = {
-            1: [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            4: [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 2 };
         comp.exerciseId = exercise.id;
@@ -117,8 +117,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', () => {
         const noPendingSubmissionState = {
-            1: [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null],
-            4: [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null],
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 55 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 76 },
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
         comp.exerciseId = exercise.id;
