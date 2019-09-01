@@ -16,6 +16,13 @@ import { Course, CourseService } from 'app/entities/course';
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
     constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseService) {}
+
+    /**
+     * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or
+     * from course id (new exercise)
+     * @param route
+     * @param state
+     */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         if (route.params['exerciseId']) {
             return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(

@@ -52,10 +52,19 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
             );
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a file upload exercise in the collection
+     * @param item current user
+     */
     trackId(index: number, item: FileUploadExercise) {
         return item.id;
     }
 
+    /**
+     * Opens delete file upload exercise popup
+     * @param exerciseId the id of exercise
+     */
     openDeleteFileUploadExercisePopup(exerciseId: string) {
         this.fileUploadExercisePopupService.open(FileUploadExerciseDeleteDialogComponent as Component, exerciseId);
     }

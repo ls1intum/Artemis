@@ -16,10 +16,17 @@ export class FileUploadExerciseDeleteDialogComponent {
 
     constructor(private fileUploadExerciseService: FileUploadExerciseService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
+    /**
+     * Closes the dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Deletes specified file upload exercise and closes the dialog
+     * @param exerciseId
+     */
     confirmDelete(exerciseId: number) {
         this.fileUploadExerciseService.delete(exerciseId).subscribe(response => {
             this.eventManager.broadcast({

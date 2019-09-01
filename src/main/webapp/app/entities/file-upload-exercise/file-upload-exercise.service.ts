@@ -16,6 +16,10 @@ export class FileUploadExerciseService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
+    /**
+     * Sends request to create new file upload exercise
+     * @param fileUploadExercise that will be send to the server
+     */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         return this.http
@@ -23,6 +27,12 @@ export class FileUploadExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    /**
+     * Sends request to update file upload exercise on the server
+     * @param fileUploadExercise that we want to update to
+     * @param exerciseId id of the exercise that will be updated
+     * @param req request options passed to the server
+     */
     update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
@@ -31,12 +41,20 @@ export class FileUploadExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    /**
+     * Sends request to get exercise by its id
+     * @param exerciseId id of the exercise
+     */
+    find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<FileUploadExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    /**
+     * Sends request to get all available file upload exercises
+     * @param req request options passed to the server
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -44,7 +62,11 @@ export class FileUploadExerciseService {
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    /**
+     * Sends request to delete file upload exercise by its id
+     * @param exerciseId id of the exercise
+     */
+    delete(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 }

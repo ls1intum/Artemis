@@ -24,6 +24,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
     ) {}
 
+    /**
+     * Initializes subscription for file upload exercise
+     */
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             this.load(params['exerciseId']);
@@ -31,6 +34,10 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInFileUploadExercises();
     }
 
+    /**
+     * Loads file upload exercise from the server
+     * @param exerciseId the id of the file upload exercise
+     */
     load(exerciseId: number) {
         this.fileUploadExerciseService
             .find(exerciseId)
@@ -43,15 +50,24 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * Returns to previous state (same behaviour as back button in the browser)
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Unsubscribes on component destruction
+     */
     ngOnDestroy() {
         this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * Listens to file upload exercise list modifications
+     */
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id));
     }

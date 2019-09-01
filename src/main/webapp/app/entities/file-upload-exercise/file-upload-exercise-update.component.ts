@@ -37,6 +37,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private router: Router,
     ) {}
 
+    /**
+     * Initializes information relevant to file upload exercise
+     */
     ngOnInit() {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
@@ -61,6 +64,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * Returns to previous state, which should be always the page of selected course
+     */
     previousState() {
         if (this.fileUploadExercise.course) {
             this.router.navigate(['/course', this.fileUploadExercise.course!.id]);
@@ -69,6 +75,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         }
     }
 
+    /**
+     * Creates or updates file upload exercise
+     */
     save() {
         this.isSaving = true;
         if (this.fileUploadExercise.id !== undefined) {
@@ -78,6 +87,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         }
     }
 
+    /**
+     * Updates categories for file upload exercise
+     * @param categories list of exercies categories
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories.map(el => JSON.stringify(el));
     }
@@ -86,6 +99,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a course in the collection
+     * @param item current course
+     */
     trackCourseById(index: number, item: Course) {
         return item.id;
     }
