@@ -74,10 +74,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy, AfterV
         });
     }
 
-    ngAfterViewInit() {
-        this.guidedTourService.enableGuidedTourForExercise(this.exercise, courseExerciseTour);
-    }
-
     loadExercise() {
         this.exercise = null;
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
