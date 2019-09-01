@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -34,6 +34,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -61,7 +62,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     previousState() {
-        window.history.back();
+        if (this.fileUploadExercise.course) {
+            this.router.navigate(['/course', this.fileUploadExercise.course!.id]);
+        } else {
+            window.history.back();
+        }
     }
 
     save() {
