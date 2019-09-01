@@ -73,11 +73,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
+                    <fa-icon icon="question-circle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"></fa-icon>
                     <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
-                </div>
-                <div class="alert alert-info mt-3" *ngIf="!fileUploadExercise.id" jhiTranslate="artemisApp.fileUploadExercise.filePatternInfo">
-                    Add a coma separated list of allowed file extensions
                 </div>
                 <div class="form-group" id="field_problemStatement">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>

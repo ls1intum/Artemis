@@ -26,7 +26,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
             return this.courseService.find(route.params['courseId']).pipe(
                 filter(res => !!res.body),
                 map((course: HttpResponse<Course>) => {
-                    let fileUploadExercise = new FileUploadExercise(course.body!);
+                    const fileUploadExercise = new FileUploadExercise(course.body!);
                     fileUploadExercise.filePattern = 'pdf, png';
                     return fileUploadExercise;
                 }),
