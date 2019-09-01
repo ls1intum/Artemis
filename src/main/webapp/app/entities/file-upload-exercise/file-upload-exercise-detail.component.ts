@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -17,7 +17,12 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private fileUploadExerciseService: FileUploadExerciseService, private route: ActivatedRoute) {}
+    constructor(
+        private eventManager: JhiEventManager,
+        private fileUploadExerciseService: FileUploadExerciseService,
+        private route: ActivatedRoute,
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -30,10 +35,14 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.fileUploadExerciseService
             .find(exerciseId)
             .pipe(filter(res => !!res.body))
-            .subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-                this.fileUploadExercise = fileUploadExerciseResponse.body!;
-            });
+            .subscribe(
+                (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+                    this.fileUploadExercise = fileUploadExerciseResponse.body!;
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
     }
+
     previousState() {
         window.history.back();
     }
@@ -45,5 +54,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
 
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id));
+    }
+
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 }
