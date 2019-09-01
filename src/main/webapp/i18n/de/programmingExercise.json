@@ -53,7 +53,8 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
-                "testCaseCommand": "Testfall einfügen"
+                "testCaseCommand": "Testfall einfügen",
+                "exerciseHintCommand": "Aufgaben spezifischen Hinweis hinzufügen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution Repository oder den Testfällen hinweisen.",
@@ -63,7 +64,14 @@
                 "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
                 "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfall Probleme.",
-                "ok": "Testfälle ok."
+                "ok": "Testfälle ok.",
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test Repository gefunden werden."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
+                "issues": "Hinweis Probleme.",
+                "ok": "Hinweise ok.",
+                "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
             },
             "manageTestCases": {
                 "title": "Verwalte Testfälle",

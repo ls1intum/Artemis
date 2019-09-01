@@ -5,6 +5,7 @@ export class Account {
     public authorities: string[] | null;
     public login: string | null;
     public email: string | null;
+    public name: string | null;
     public firstName: string | null;
     public lastName: string | null;
     public langKey: string | null;
