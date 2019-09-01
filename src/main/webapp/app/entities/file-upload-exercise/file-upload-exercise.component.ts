@@ -1,14 +1,9 @@
-/* angular */
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-
-/* 3rd party */
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
-
-/* application */
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';

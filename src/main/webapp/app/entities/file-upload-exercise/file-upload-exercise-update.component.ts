@@ -1,14 +1,8 @@
-/* angular */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
-/* 3rd party */
 import { Observable } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
-
-/* application */
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { Course, CourseService } from 'app/entities/course';
