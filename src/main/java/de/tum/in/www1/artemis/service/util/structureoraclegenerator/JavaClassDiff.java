@@ -12,7 +12,7 @@ import com.thoughtworks.qdox.model.*;
  * This diff contains information on these structural elements. The ones the diff currently handles is: - Class name, - Package name, - Interface stereotype, - Enum stereotype, -
  * Abstract modifier, - Superclass name, - Superinterfaces names, - Methods.
  */
-public class TypesDiff {
+public class JavaClassDiff {
 
     private JavaClass solutionClass;
 
@@ -42,7 +42,7 @@ public class TypesDiff {
 
     List<JavaMethod> methodsDiff;
 
-    public TypesDiff(JavaClass solutionClass, JavaClass templateClass) {
+    JavaClassDiff(JavaClass solutionClass, JavaClass templateClass) {
         this.solutionClass = solutionClass;
         this.templateClass = templateClass;
         this.name = generateName();
