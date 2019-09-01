@@ -319,6 +319,8 @@ public class DatabaseUtilService {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
+        course.addExercises(programmingExercise);
+        courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -327,8 +329,10 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    @Transactional
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
+        course = courseRepo.findById(course.getId()).get();
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<Exercise>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
