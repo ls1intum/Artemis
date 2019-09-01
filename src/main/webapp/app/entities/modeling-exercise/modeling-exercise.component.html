@@ -83,8 +83,7 @@
                             <button
                                 type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/' + modelingExercise.id + '/delete' } }]"
-                                replaceUrl="true"
+                                (click)="openDeleteModelingExercisePopup(modelingExercise.id)"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1"
                             >

@@ -10,6 +10,8 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ModelingExerciseDeleteDialogComponent } from 'app/entities/modeling-exercise/modeling-exercise-delete-dialog.component';
+import { ModelingExercisePopupService } from 'app/entities/modeling-exercise/modeling-exercise-popup.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -23,6 +25,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        private modelingExercisePopupService: ModelingExercisePopupService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -50,6 +53,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     trackId(index: number, item: ModelingExercise) {
         return item.id;
+    }
+
+    /**
+     * Opens delete modeling exercise popup
+     * @param exerciseId the id of exercise
+     */
+    openDeleteModelingExercisePopup(exerciseId: number) {
+        this.modelingExercisePopupService.open(ModelingExerciseDeleteDialogComponent as Component, exerciseId);
     }
 
     protected getChangeEventName(): string {

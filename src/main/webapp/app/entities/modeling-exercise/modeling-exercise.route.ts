@@ -4,7 +4,6 @@ import { UserRouteAccessService } from '../../core';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExercisePopupComponent } from './modeling-exercise-dialog.component';
-import { ModelingExerciseDeletePopupComponent } from './modeling-exercise-delete-dialog.component';
 
 export const modelingExerciseRoute: Routes = [
     {
@@ -61,16 +60,6 @@ export const modelingExercisePopupRoute: Routes = [
         component: ModelingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'modeling-exercise/:id/delete',
-        component: ModelingExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
