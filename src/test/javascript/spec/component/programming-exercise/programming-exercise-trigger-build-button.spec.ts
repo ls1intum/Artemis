@@ -87,6 +87,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.exercise = { id: 4 };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
@@ -108,6 +109,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.exercise = { id: 5 };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
