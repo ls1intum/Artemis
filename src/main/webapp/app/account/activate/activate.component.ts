@@ -15,6 +15,9 @@ export class ActivateComponent implements OnInit {
 
     constructor(private activateService: ActivateService, private route: ActivatedRoute) {}
 
+    /**
+     * Checks if the user can be activated with ActivateService
+     */
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
             this.activateService.get(params['key']).subscribe(
