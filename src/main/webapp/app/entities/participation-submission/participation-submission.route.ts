@@ -18,7 +18,7 @@ export const participationSubmissionRoute: Routes = [
 
 export const participationSubmissionPopupRoute: Routes = [
     {
-        path: 'participation/submission/:id/delete',
+        path: 'participation/:participationId/submission/:submissionId/delete',
         component: ParticipationSubmissionDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

@@ -60,7 +60,11 @@
                 <span jhiTranslate="artemisApp.participation.participationSubmission.action"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
-                <button class="btn btn-danger btn-sm mr-1" id="deleteButton" [routerLink]="['/', { outlets: { popup: 'participation/submission/' + value + '/delete' } }]">
+                <button
+                    class="btn btn-danger btn-sm mr-1"
+                    id="deleteButton"
+                    [routerLink]="['/', { outlets: { popup: 'participation/' + participationId + '/submission/' + value + '/delete' } }]"
+                >
                     <fa-icon icon="times"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                 </button>

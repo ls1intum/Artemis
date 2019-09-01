@@ -10,21 +10,22 @@ export class ParticipationSubmissionPopupService {
         this.ngbModalRef = null;
     }
 
-    open(component: Component, id?: number | any): Promise<NgbModalRef> {
+    open(component: Component, participationId?: number | any, submissionId?: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
             if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 
-            if (id) {
-                this.ngbModalRef = this.participationModalRef(component, id);
+            if (participationId && submissionId) {
+                this.ngbModalRef = this.participationModalRef(component, participationId, submissionId);
                 resolve(this.ngbModalRef);
             }
         });
     }
 
-    participationModalRef(component: Component, submissionId: number): NgbModalRef {
+    participationModalRef(component: Component, participationId: number, submissionId: number): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.participationId = participationId;
         modalRef.componentInstance.submissionId = submissionId;
         modalRef.result.then(
             result => {
