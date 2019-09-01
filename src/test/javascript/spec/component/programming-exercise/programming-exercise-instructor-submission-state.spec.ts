@@ -143,4 +143,37 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getTriggerFailedButton().disabled).to.be.false;
         expect(getBuildState()).to.exist;
     });
+
+    it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', () => {
+        const failedSubmissionParticipationIds = [333];
+        const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
+        triggerAllStub.returns(triggerInstructorBuildForParticipationsOfExerciseSubject);
+        const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getFailedSubmissionParticipationsForExercise').returns(failedSubmissionParticipationIds);
+        // Component must have at least one failed submission for the button to be enabled.
+        comp.exerciseId = exercise.id;
+        comp.buildingSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
+        comp.hasFailedSubmissions = true;
+
+        fixture.detectChanges();
+
+        const triggerButton = getTriggerFailedButton();
+        expect(triggerButton).to.exist;
+        expect(triggerButton.disabled).to.be.false;
+
+        // Button is clicked.
+        triggerButton.click();
+
+        expect(comp.isBuildingFailedSubmissions).to.be.true;
+        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exerciseId);
+        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exerciseId, failedSubmissionParticipationIds);
+
+        fixture.detectChanges();
+
+        // Now the request returns a response.
+        triggerInstructorBuildForParticipationsOfExerciseSubject.next(undefined);
+
+        fixture.detectChanges();
+
+        expect(comp.isBuildingFailedSubmissions).to.be.false;
+    });
 });

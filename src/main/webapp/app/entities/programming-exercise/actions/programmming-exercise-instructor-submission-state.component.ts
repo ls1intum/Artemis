@@ -59,7 +59,6 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
         const failedSubmissionParticipations = this.programmingSubmissionService.getFailedSubmissionParticipationsForExercise(this.exerciseId);
         this.programmingSubmissionService
             .triggerInstructorBuildForParticipationsOfExercise(this.exerciseId, failedSubmissionParticipations)
-            .pipe()
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 
