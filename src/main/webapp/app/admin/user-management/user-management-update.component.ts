@@ -17,7 +17,7 @@ export class UserManagementUpdateComponent implements OnInit {
     constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute) {}
 
     /**
-     * Enable subscriptions to retrieve the user based on the actived route, all authorities and all languages on init
+     * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init
      */
     ngOnInit() {
         this.isSaving = false;
