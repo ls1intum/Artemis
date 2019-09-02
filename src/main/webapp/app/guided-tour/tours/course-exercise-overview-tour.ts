@@ -101,10 +101,10 @@ export const cloneRepositoryTour: GuidedTour = {
         }),
         new TextTourStep({
             selector: '.popover',
-            headlineTranslateKey: 'tour.courseExerciseOverview.useSourceTree.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.useSourceTree.content',
+            headlineTranslateKey: 'tour.cloneRepository.useSourceTree.headline',
+            contentTranslateKey: 'tour.cloneRepository.useSourceTree.content',
             highlightPadding: 10,
-            orientation: Orientation.RIGHT,
+            orientation: Orientation.TOP,
             action: () => {
                 clickOnElement('.clone-repository');
             },
@@ -113,9 +113,8 @@ export const cloneRepositoryTour: GuidedTour = {
             },
         }),
         new VideoTourStep({
-            selector: '.popover',
-            headlineTranslateKey: 'tour.courseExerciseOverview.sourceTreeTutorial.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.sourceTreeTutorial.content',
+            headlineTranslateKey: 'tour.cloneRepository.sourceTreeTutorial.headline',
+            contentTranslateKey: 'tour.cloneRepository.sourceTreeTutorial.content',
             videoUrl: 'https://www.youtube.com/embed/cyWZFFS9Q1w?start=61',
         }),
     ],

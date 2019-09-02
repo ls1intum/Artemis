@@ -164,7 +164,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                         this.guidedTourService.enableTour(cloneRepositoryTour);
-                        this.guidedTourService.startTour();
+                        setTimeout(() => {
+                            this.guidedTourService.startTour();
+                        }, 100);
                     }
                 },
                 error => {
