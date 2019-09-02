@@ -42,7 +42,8 @@ describe('ProgrammingSubmissionService', () => {
     const submissionTopic = `/topic/participation/${participationId}/newSubmission`;
     const currentSubmission = { id: 11, submissionDate: moment().subtract(20, 'seconds') } as any;
     const currentSubmission2 = { id: 12, submissionDate: moment().subtract(20, 'seconds') } as any;
-    const result = { id: 31 } as any;
+    const result = { id: 31, submission: currentSubmission } as any;
+    const result2 = { id: 32, submission: currentSubmission2 } as any;
 
     beforeEach(() => {
         websocketService = new MockWebsocketService();
@@ -141,7 +142,7 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
-    it('should emit a null value when the result waiting timer runs out.', async () => {
+    it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
         // Set the timer to 10ms for testing purposes.
         // @ts-ignore
         submissionService.EXPECTED_RESULT_CREATION_TIME_MS = 10;
@@ -159,7 +160,16 @@ describe('ProgrammingSubmissionService', () => {
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+        ]);
+
+        // Now the result for the submission in - should be accepted even though technically too late!
+        wsLatestResultSubject.next(result2);
+        expect(returnedSubmissions).to.deep.equal([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
         ]);
     });
 

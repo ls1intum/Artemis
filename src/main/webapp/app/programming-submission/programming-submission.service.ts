@@ -116,10 +116,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .subscribe();
     };
 
-    private onError = (participationId: number, exerciseId: number) => {
-        this.emitFailedSubmission(participationId, exerciseId);
-    };
-
     private resetResultWaitingTimer = (participationId: number) => {
         if (this.resultTimerSubscriptions[participationId]) {
             this.resultTimerSubscriptions[participationId].unsubscribe();
@@ -143,7 +139,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 .pipe(
                     tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                         if (checkIfSubmissionIsError(submission)) {
-                            this.emitFailedSubmission(participationId, exerciseId);
+                            this.emitFailedSubmission(participationId, exerciseId, null);
                             return;
                         }
                         this.emitBuildingSubmission(participationId, exerciseId, submission);
@@ -185,7 +181,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // If the timer runs out, we will emit an error as we assume the result is lost.
         const timerObservable = this.resultTimerSubjects[participationId].pipe(
             tap(() => {
-                this.onError(participationId, exerciseId);
+                this.emitFailedSubmission(participationId, exerciseId);
             }),
         );
 
@@ -211,7 +207,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     private emitFailedSubmission = (participationId: number, exerciseId: number) => {
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null };
+        const { submission } = this.exerciseBuildState[exerciseId][participationId];
+        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
 
@@ -387,7 +384,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                     }
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
-                    this.onError(participationId, exerciseId);
+                    this.emitFailedSubmission(participationId, exerciseId);
                     return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
                 }
                 this.emitNoPendingSubmission(participationId, exerciseId);
