@@ -3,7 +3,7 @@ import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
-import { ParticipationWebsocketService } from 'app/participation-websocket/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
