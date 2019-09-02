@@ -13,7 +13,7 @@ export class UserManagementDetailComponent implements OnInit {
     constructor(private route: ActivatedRoute) {}
 
     /**
-     * Retrieve the user from the user management activated route data {@class UserMgmtResolve} subscription
+     * Retrieve the user from the user management activated route data {@link UserMgmtResolve} subscription
      * and get the user based on the login string
      */
     ngOnInit() {
