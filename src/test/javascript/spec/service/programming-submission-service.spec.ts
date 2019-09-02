@@ -261,6 +261,6 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.getResultEtaInMs().subscribe(eta => (resultEta = eta));
 
         // With 340 submissions, the eta should now be 5 minutes
-        expect(resultEta).to.equal(5 * 1000 * 60);
+        expect(resultEta).to.equal(2000 * 60 + 3 * 2000 * 60);
     });
 });
