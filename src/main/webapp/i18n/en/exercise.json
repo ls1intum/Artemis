@@ -11,7 +11,8 @@
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Exercise {{ id }}?"
+                "question": "Are you sure you want to delete Exercise {{ title }}?",
+                "typeNameToConfirm": "Please type in the name of the Exercise to confirm."
             },
             "detail": {
                 "title": "Exercise"

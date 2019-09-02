@@ -9,9 +9,6 @@
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
             "deleted": "Modellierungsaufgabe gelöscht mit ID {{ param }}",
-            "delete": {
-                "question": "Soll die Modellierungsaufgabe {{ title }} wirklich dauerhaft gelöscht werden?"
-            },
             "detail": {
                 "title": "Modellierungsaufgabe"
             },

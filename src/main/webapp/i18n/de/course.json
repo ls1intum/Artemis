@@ -11,7 +11,8 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der Kurs {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll der Kurs {{ title }} wirklich dauerhaft gelöscht werden?",
+                "typeNameToConfirm": "Bitte gibst du den Namen der Kurs zur Bestätigung ein."
             },
             "detail": {
                 "title": "Kurs"
