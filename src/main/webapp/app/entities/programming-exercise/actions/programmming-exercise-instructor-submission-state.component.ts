@@ -112,8 +112,8 @@ export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
         this.programmingSubmissionService
             .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
             .pipe(catchError(() => of(null)))
-            .subscribe(() => {
-                this.cancel();
-            });
+            .subscribe();
+
+        this.cancel();
     }
 }
