@@ -580,7 +580,7 @@ public class CompassService {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
         }
-        compassCalculationEngines.get(exerciseId)
-            .printStatistic(exerciseId, resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
+        compassCalculationEngines.get(exerciseId).printStatistic(exerciseId,
+                resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
     }
 }
