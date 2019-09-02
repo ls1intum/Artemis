@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
@@ -86,7 +86,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getBuildState()).to.be.null;
     });
 
-    it('should show & enable the trigger all button and the build state once the build summary is loaded', () => {
+    it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
         const noPendingSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
@@ -99,6 +99,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         comp.ngOnChanges(changes);
 
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
+
+        // Wait for a second as the view is updated with a debounce.
+        tick(1000);
 
         fixture.detectChanges();
 
@@ -113,9 +116,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getTriggerFailedButton()).to.exist;
         expect(getTriggerFailedButton().disabled).to.be.true;
         expect(getBuildState()).to.exist;
-    });
+    }));
 
-    it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', () => {
+    it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', fakeAsync(() => {
         const noPendingSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 55 },
             4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 76 },
@@ -128,6 +131,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         comp.ngOnChanges(changes);
 
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
+
+        // Wait for a second as the view is updated with a debounce.
+        tick(1000);
 
         fixture.detectChanges();
 
@@ -142,7 +148,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getTriggerFailedButton()).to.exist;
         expect(getTriggerFailedButton().disabled).to.be.false;
         expect(getBuildState()).to.exist;
-    });
+    }));
 
     it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', () => {
         const failedSubmissionParticipationIds = [333];

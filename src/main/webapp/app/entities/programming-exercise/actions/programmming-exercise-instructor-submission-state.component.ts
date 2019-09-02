@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { of, Subscription } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -46,6 +46,8 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
                 .getSubmissionStateOfExercise(this.exerciseId)
                 .pipe(
                     map(this.sumSubmissionStates),
+                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
+                    debounceTime(1000),
                     tap((buildingSummary: { [submissionState: string]: number }) => {
                         this.buildingSummary = buildingSummary;
                         this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
