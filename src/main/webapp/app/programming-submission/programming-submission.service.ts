@@ -44,7 +44,7 @@ export interface IProgrammingSubmissionService {
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
     public SUBMISSION_RESOURCE_URL = SERVER_API_URL + 'api/programming-submissions/';
     public PROGRAMMING_EXERCISE_RESOURCE_URL = SERVER_API_URL + 'api/programming-exercises/';
-    // Current value: 2 minutes.
+    // Default value: 2 minutes.
     private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
@@ -56,7 +56,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
-    private exerciseBuildState: { [exerciseId: number]: { [participationId: number]: ProgrammingSubmissionStateObj } } = {};
+    private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
 
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -64,6 +64,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
         Object.values(this.submissionTopicsSubscribed).forEach(topic => this.websocketService.unsubscribe(topic));
+    }
+
+    get exerciseBuildState() {
+        return this.exerciseBuildStateValue;
+    }
+
+    set exerciseBuildState(exerciseBuildState: { [exerciseId: number]: ExerciseSubmissionState }) {
+        this.exerciseBuildStateValue = exerciseBuildState;
     }
 
     /**
@@ -227,10 +235,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // Inform participation subscribers.
         this.submissionSubjects[participationId].next(newSubmissionState);
         // Inform exercise subscribers.
-        if (!this.exerciseBuildState[exerciseId]) {
-            this.exerciseBuildState[exerciseId] = {};
-        }
-        this.exerciseBuildState[exerciseId][participationId] = newSubmissionState;
+        this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
@@ -268,9 +273,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const subject = this.submissionSubjects[participationId];
         if (subject) {
             return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
-        }
-        if (!this.exerciseBuildState[exerciseId]) {
-            this.exerciseBuildState[exerciseId] = {};
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
@@ -322,7 +324,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
-                this.exerciseBuildState[exerciseId] = exerciseBuildState;
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
                 this.exerciseBuildStateSubjects[exerciseId].next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
@@ -371,9 +373,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         participationId: number,
         exerciseId: number,
     ): Observable<ProgrammingSubmissionStateObj> => {
-        if (!this.exerciseBuildState[exerciseId]) {
-            this.exerciseBuildState[exerciseId] = {};
-        }
         return of(submissionToBeProcessed).pipe(
             tap(() => {
                 this.setupWebsocketSubscription(participationId, exerciseId);
@@ -396,6 +395,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
                 this.exerciseBuildState[exerciseId][participationId] = submissionStateObj;
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { [participationId]: submissionStateObj, ...(this.exerciseBuildState[exerciseId] || {}) } };
             }),
         );
     };
