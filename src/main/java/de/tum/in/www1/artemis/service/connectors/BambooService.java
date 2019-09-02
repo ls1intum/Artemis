@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +215,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -226,6 +227,7 @@ public class BambooService implements ContinuousIntegrationService {
                 Map.class);
         } catch (Exception e) {
             log.error("HttpError while triggering build", e);
+            throw new HttpException("Communication failed when trying to trigger the Bamboo build for participationId " + participation.getId() + " with the following error: " + e.getMessage());
         }
     }
 

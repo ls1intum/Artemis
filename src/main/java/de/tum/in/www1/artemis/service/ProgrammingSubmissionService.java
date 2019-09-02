@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,8 +82,13 @@ public class ProgrammingSubmissionService {
                 && ((ProgrammingExerciseStudentParticipation) peParticipation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             participationService.resumeExercise(peParticipation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) peParticipation);
-            // in addition we need to trigger a build so that we receive a result in a few seconds
-            continuousIntegrationService.get().triggerBuild(peParticipation);
+
+            try {
+                continuousIntegrationService.get().triggerBuild(peParticipation);
+            }
+            catch (HttpException ex) {
+                // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
+            }
         }
 
         String lastCommitHash;

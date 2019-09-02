@@ -44,7 +44,7 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
                     tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                 )
                 .subscribe();
-        } else {
+        } else if (domainType === DomainType.TEST_REPOSITORY) {
             // There are no submissions for the test repository, so it is never building.
             this.isBuildingSubject.next(false);
         }

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.BuildTriggerDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -84,8 +86,8 @@ public class ProgrammingSubmissionResource {
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setExercise(null);
             submission.getParticipation().setSubmissions(null);
-            // notify the user via websocket.
-            messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
+
+            notifyUserAboutSubmission(submission);
         }
         catch (IllegalArgumentException ex) {
             log.error(
@@ -134,7 +136,7 @@ public class ProgrammingSubmissionResource {
             return notFound();
         }
 
-        notifyUserAndTriggerBuildForNewSubmission(submission);
+        triggerBuildAndNotifyUser(submission);
 
         return ResponseEntity.ok().build();
     }
@@ -166,7 +168,7 @@ public class ProgrammingSubmissionResource {
             return notFound();
         }
 
-        notifyUserAndTriggerBuildForNewSubmission(submission);
+        triggerBuildAndNotifyUser(submission);
 
         return ResponseEntity.ok().build();
     }
@@ -259,17 +261,34 @@ public class ProgrammingSubmissionResource {
 
     private void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
         for (ProgrammingSubmission submission : submissions) {
-            notifyUserAndTriggerBuildForNewSubmission(submission);
+            triggerBuildAndNotifyUser(submission);
         }
     }
 
     /**
      * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
+     * Will send an error object in the case that the communication with the CI failed.
      *
      * @param submission ProgrammingSubmission that was just created.
      */
-    private void notifyUserAndTriggerBuildForNewSubmission(ProgrammingSubmission submission) {
-        messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-        continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+    private void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
+        try {
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            notifyUserAboutSubmission(submission);
+        }
+        catch (HttpException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
+            notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
+    private void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, submission);
+    }
+
+    private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, error);
     }
 }

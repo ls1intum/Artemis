@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, throwError, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -20,6 +20,16 @@ export enum ProgrammingSubmissionState {
 export type ProgrammingSubmissionStateObj = { participationId: number; submissionState: ProgrammingSubmissionState; submission: ProgrammingSubmission | null };
 
 export type ExerciseSubmissionState = { [participationId: number]: ProgrammingSubmissionStateObj };
+
+type ProgrammingSubmissionError = { error: string; participationId: number };
+
+/**
+ * Type guard for checking if the submission received through the websocket is an error object.
+ * @param toBeDetermined either a ProgrammingSubmission or a ProgrammingSubmissionError.
+ */
+const checkIfSubmissionIsError = (toBeDetermined: ProgrammingSubmission | ProgrammingSubmissionError): toBeDetermined is ProgrammingSubmissionError => {
+    return !!(toBeDetermined as ProgrammingSubmissionError).error;
+};
 
 export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number) => Observable<ProgrammingSubmissionStateObj>;
@@ -131,7 +141,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             this.websocketService
                 .receive(newSubmissionTopic)
                 .pipe(
-                    tap((submission: ProgrammingSubmission) => {
+                    tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
+                        if (checkIfSubmissionIsError(submission)) {
+                            this.emitFailedSubmission(participationId, exerciseId);
+                            return;
+                        }
                         this.emitBuildingSubmission(participationId, exerciseId, submission);
                         // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                         this.startResultWaitingTimer(participationId);
