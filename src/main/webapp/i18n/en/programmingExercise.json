@@ -91,6 +91,7 @@
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
             "resubmitAll": "Trigger all",
             "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
+            "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!",
             "resubmitFailed": "Trigger failed",
             "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. The results will be rated.",
             "buildingSubmissions": "Building submissions: {{number}}",
