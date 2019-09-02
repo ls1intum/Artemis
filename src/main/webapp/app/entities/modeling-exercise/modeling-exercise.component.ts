@@ -57,10 +57,9 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     /**
      * Opens delete modeling exercise popup
-     * @param exerciseId the id of exercise
+     * @param modelingExercise exercise that will be deleted
      */
-    openDeleteModelingExercisePopup(exerciseId: number) {
-        const modelingExercise = this.modelingExercises.find(exercise => exercise.id === exerciseId);
+    openDeleteModelingExercisePopup(modelingExercise: ModelingExercise) {
         if (!modelingExercise) {
             return;
         }
@@ -70,7 +69,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         modalRef.componentInstance.deleteConfirmationText = 'Please type in the name of the Exercise to confirm.';
         modalRef.result.then(
             result => {
-                this.modelingExerciseService.delete(exerciseId).subscribe(response => {
+                this.modelingExerciseService.delete(modelingExercise.id).subscribe(response => {
                     this.eventManager.broadcast({
                         name: 'modelingExerciseListModification',
                         content: 'Deleted an modelingExercise',

@@ -60,10 +60,9 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     /**
      * Opens delete text exercise popup
-     * @param exerciseId the id of exercise
+     * @param textExercise exercise that will be deleted
      */
-    openDeleteTextExercisePopup(exerciseId: number) {
-        const textExercise = this.textExercises.find(exercise => exercise.id === exerciseId);
+    openDeleteTextExercisePopup(textExercise: TextExercise) {
         if (!textExercise) {
             return;
         }
@@ -73,7 +72,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         modalRef.componentInstance.deleteConfirmationText = 'Please type in the name of the Exercise to confirm.';
         modalRef.result.then(
             result => {
-                this.textExerciseService.delete(exerciseId).subscribe(response => {
+                this.textExerciseService.delete(textExercise.id).subscribe(response => {
                     this.eventManager.broadcast({
                         name: 'textExerciseListModification',
                         content: 'Deleted an textExercise',
