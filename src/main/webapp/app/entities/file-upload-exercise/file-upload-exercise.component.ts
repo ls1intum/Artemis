@@ -55,7 +55,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     /**
      * Returns the unique identifier for items in the collection
      * @param index of a file upload exercise in the collection
-     * @param item current user
+     * @param item current file upload exercise
      */
     trackId(index: number, item: FileUploadExercise) {
         return item.id;
