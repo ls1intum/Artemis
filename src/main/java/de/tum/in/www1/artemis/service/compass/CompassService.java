@@ -130,10 +130,6 @@ public class CompassService {
             return new ArrayList<>();
         }
 
-        // Print statistics of the current modeling exercise for internal analysis. Disabled by default due to performance reasons.
-        // compassCalculationEngines.get(exerciseId)
-        // .printStatistic(exerciseId, resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
-
         List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
 
         if (optimalModelIds.size() < OPTIMAL_MODEL_THRESHOLD) {
@@ -573,5 +569,18 @@ public class CompassService {
                 .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
+    }
+
+    /**
+     * Print statistics of the modeling exercise with the given id for internal analysis.
+     *
+     * @param exerciseId the id of the modeling exercise for which the statistic should be printed
+     */
+    public void printStatistic(Long exerciseId) {
+        if (!loadExerciseIfSuspended(exerciseId)) {
+            return;
+        }
+        compassCalculationEngines.get(exerciseId)
+            .printStatistic(exerciseId, resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
     }
 }

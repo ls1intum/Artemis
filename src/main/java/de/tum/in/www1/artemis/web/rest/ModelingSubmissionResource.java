@@ -365,6 +365,27 @@ public class ModelingSubmissionResource {
     }
 
     /**
+     * Return the Compass statistic regarding the automatic assessment of the modeling exercise with the given id.
+     *
+     * @param exerciseId the id of the modeling exercise for which we want to get the Compass statistic
+     * @return the statistic as key-value pairs in json
+     */
+    @GetMapping("/exercises/{exerciseId}/compass-statistic")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        if (!authCheckService.isAdmin()) {
+            throw new AccessForbiddenException("Insufficient permission for exercise: " + modelingExercise);
+        }
+
+        compassService.printStatistic(modelingExercise.getId());
+
+        // TODO: In the future, this endpoint should return the statistics to the client as well.
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
      * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
@@ -393,7 +414,7 @@ public class ModelingSubmissionResource {
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }
