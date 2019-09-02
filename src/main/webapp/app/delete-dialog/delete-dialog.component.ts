@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -6,8 +6,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent {
-    entity: any;
     confirmExerciseName: string;
+    entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
 
@@ -21,10 +21,9 @@ export class DeleteDialogComponent {
     }
 
     /**
-     * Deletes specified modeling exercise and closes the dialog
-     * @param id
+     * Deletes specified entity and closes the dialog
      */
-    confirmDelete(id: number) {
-        this.activeModal.close(id);
+    confirmDelete() {
+        this.activeModal.close();
     }
 }

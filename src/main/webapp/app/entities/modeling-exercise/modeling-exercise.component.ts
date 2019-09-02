@@ -61,12 +61,17 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * @param exerciseId the id of exercise
      */
     openDeleteModelingExercisePopup(exerciseId: number) {
-        const modalRef = this.modalService.open(DeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.entity = this.modelingExercises.find(exercise => exercise.id === exerciseId);
+        const modelingExercise = this.modelingExercises.find(exercise => exercise.id === exerciseId);
+        if (!modelingExercise) {
+            return;
+        }
+        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.entityTitle = modelingExercise.title;
+        modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.modelingExercise.delete.question', { title: modelingExercise.title });
+        modalRef.componentInstance.deleteConfirmationText = 'Please type in the name of the Exercise to confirm.';
         modalRef.result.then(
             result => {
                 this.modelingExerciseService.delete(exerciseId).subscribe(response => {
-                    // @ts-ignore
                     this.eventManager.broadcast({
                         name: 'modelingExerciseListModification',
                         content: 'Deleted an modelingExercise',
