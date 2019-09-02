@@ -174,10 +174,8 @@ public class ProgrammingSubmissionIntegrationTest {
 
         // We only trigger two participations here: 1 and 3.
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
-        BuildTriggerDTO buildTriggerDTO = new BuildTriggerDTO();
-        buildTriggerDTO.setParticipationIds(participationsToTrigger);
 
-        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build", buildTriggerDTO, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build", participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(2);
@@ -202,16 +200,12 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void triggerBuildForParticipations_tutorForbidden() throws Exception {
-        BuildTriggerDTO buildTriggerDTO = new BuildTriggerDTO();
-        buildTriggerDTO.setParticipationIds(new ArrayList<>());
-        request.postWithoutLocation("/api/programming-exercises/" + 1L + "/trigger-instructor-build", buildTriggerDTO, HttpStatus.FORBIDDEN, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-exercises/" + 1L + "/trigger-instructor-build", new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildForParticipations_studentForbidden() throws Exception {
-        BuildTriggerDTO buildTriggerDTO = new BuildTriggerDTO();
-        buildTriggerDTO.setParticipationIds(new ArrayList<>());
-        request.postWithoutLocation("/api/programming-exercises/" + 1L + "/trigger-instructor-build", buildTriggerDTO, HttpStatus.FORBIDDEN, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-exercises/" + 1L + "/trigger-instructor-build", new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 }
