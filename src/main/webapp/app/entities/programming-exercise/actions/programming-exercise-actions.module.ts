@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { MomentModule } from 'ngx-moment';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
@@ -11,7 +12,7 @@ import {
 } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, MomentModule],
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,

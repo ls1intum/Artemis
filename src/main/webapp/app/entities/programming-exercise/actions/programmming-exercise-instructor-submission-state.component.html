@@ -1,4 +1,8 @@
 <div *ngIf="buildingSummary" class="d-flex">
+    <div id="result-eta" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
+        <fa-icon icon="clock"></fa-icon>
+        <span>Result ETA: {{ resultEtaInMs | amDuration: 'milliseconds' }}</span>
+    </div>
     <div id="build-state" class="d-flex flex-column justify-content-between">
         <span
             id="build-state-building"

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { of, Subscription } from 'rxjs';
@@ -15,7 +15,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programmming-exercise-instructor-submission-state.component.html',
 })
-export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges {
+export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exerciseId: number;
@@ -24,9 +24,16 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     buildingSummary: { [submissionState: string]: number };
     isBuildingFailedSubmissions = false;
 
+    resultEtaInMs: number;
+
     submissionStateSubscription: Subscription;
+    resultEtaSubscription: Subscription;
 
     constructor(private programmingSubmissionService: ProgrammingSubmissionService, private modalService: NgbModal) {}
+
+    ngOnInit(): void {
+        this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe(resultEta => (this.resultEtaInMs = resultEta));
+    }
 
     /**
      * When the selected exercise changes, create a subscription to the complete submission state of the exercise.

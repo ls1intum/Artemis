@@ -34,6 +34,7 @@ const checkIfSubmissionIsError = (toBeDetermined: ProgrammingSubmission | Progra
 export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
+    getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
@@ -55,6 +56,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private exerciseBuildStateSubjects: { [exerciseId: number]: BehaviorSubject<ExerciseSubmissionState | undefined> } = {};
     private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
+    private resultEtaSubject = new BehaviorSubject<number>(this.DEFAULT_EXPECTED_RESULT_ETA);
 
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
@@ -73,14 +75,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     set exerciseBuildState(exerciseBuildState: { [exerciseId: number]: ExerciseSubmissionState }) {
         this.exerciseBuildStateValue = exerciseBuildState;
-        this.updatedResultETA();
+        this.updateResultEta();
     }
 
     /**
      * Based on the number of building submissions, calculate the result eta.
      *
      */
-    private updatedResultETA() {
+    private updateResultEta() {
         const buildingSubmissionCount = Object.values(this.exerciseBuildStateValue).reduce((acc, exerciseSubmissionState) => {
             const buildingSubmissionsOfExercise = exerciseSubmissionState
                 ? Object.values(exerciseSubmissionState).filter(({ submissionState }) => submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION).length
@@ -90,6 +92,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
         // For every 100 submissions, we increase the expected time by 1 minute.
         this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100);
+        this.resultEtaSubject.next(this.currentExpectedResultETA);
     }
 
     /**
@@ -346,6 +349,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.exerciseBuildStateSubjects[exerciseId].next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
+    };
+
+    getResultEtaInMs = () => {
+        return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     };
 
     public triggerBuild(participationId: number) {

@@ -145,7 +145,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
         // Set the timer to 10ms for testing purposes.
         // @ts-ignore
-        submissionService.EXPECTED_RESULT_CREATION_TIME_MS = 10;
+        submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
         const returnedSubmissions: Array<Submission | null> = [];
         httpGetStub.returns(of(null));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => returnedSubmissions.push(s));
