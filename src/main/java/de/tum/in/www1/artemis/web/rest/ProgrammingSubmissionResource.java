@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.web.rest.dto.BuildTriggerDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -206,13 +206,12 @@ public class ProgrammingSubmissionResource {
      * Note: If a participationId does not belong to the exercise, it will be ignored!
      *
      * @param exerciseId to identify the programming exercise.
-     * @param buildTriggerDTO list of participation ids.
+     * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody BuildTriggerDTO buildTriggerDTO) {
-        List<Long> participationIds = buildTriggerDTO.getParticipationIds();
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
             return badRequest();
         }

@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.BuildTriggerDTO;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

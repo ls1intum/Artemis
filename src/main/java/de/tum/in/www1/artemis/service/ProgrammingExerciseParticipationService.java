@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -74,7 +75,7 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
-    public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, List<Long> participationIds) {
+    public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, Set<Long> participationIds) {
         return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
     }
 
