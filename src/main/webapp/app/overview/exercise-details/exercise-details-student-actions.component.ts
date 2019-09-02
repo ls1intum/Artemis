@@ -164,9 +164,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                         this.guidedTourService.enableTour(cloneRepositoryTour);
+                        // Set timeout for clone repository button to render
                         setTimeout(() => {
                             this.guidedTourService.startTour();
-                        }, 100);
+                        }, 1000);
                     }
                 },
                 error => {

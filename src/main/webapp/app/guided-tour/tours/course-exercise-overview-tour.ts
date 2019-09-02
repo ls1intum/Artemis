@@ -83,6 +83,16 @@ export const courseExerciseOverviewTour: GuidedTour = {
                 clickOnElement('.tab-item.statistics');
             },
             closeAction: () => {
+                clickOnElement('.tab-item.statistics');
+            },
+        }),
+        new TextTourStep({
+            selector: '.start-exercise',
+            headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
+            contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
+            highlightPadding: 10,
+            orientation: Orientation.RIGHT,
+            action: () => {
                 clickOnElement('.tab-item.exercises');
             },
         }),
