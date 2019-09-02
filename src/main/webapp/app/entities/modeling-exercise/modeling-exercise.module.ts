@@ -6,7 +6,6 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArtemisSharedModule } from 'app/shared';
 import {
     ModelingExerciseComponent,
-    ModelingExerciseDeleteDialogComponent,
     ModelingExerciseDetailComponent,
     ModelingExerciseDialogComponent,
     ModelingExercisePopupComponent,
@@ -20,6 +19,8 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
@@ -32,15 +33,10 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
         ArtemisMarkdownEditorModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
+        ArtemisDeleteDialogModule,
     ],
-    declarations: [
-        ModelingExerciseComponent,
-        ModelingExerciseDetailComponent,
-        ModelingExerciseDialogComponent,
-        ModelingExerciseDeleteDialogComponent,
-        ModelingExercisePopupComponent,
-    ],
-    entryComponents: [ModelingExerciseComponent, ModelingExerciseDialogComponent, ModelingExercisePopupComponent, ModelingExerciseDeleteDialogComponent],
+    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseDialogComponent, ModelingExercisePopupComponent],
+    entryComponents: [ModelingExerciseComponent, ModelingExerciseDialogComponent, ModelingExercisePopupComponent, DeleteDialogComponent],
     providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
 })

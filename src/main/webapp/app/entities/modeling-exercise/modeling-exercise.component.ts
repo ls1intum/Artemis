@@ -10,8 +10,8 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ModelingExerciseDeleteDialogComponent } from 'app/entities/modeling-exercise/modeling-exercise-delete-dialog.component';
-import { ModelingExercisePopupService } from 'app/entities/modeling-exercise/modeling-exercise-popup.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -19,13 +19,14 @@ import { ModelingExercisePopupService } from 'app/entities/modeling-exercise/mod
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
-        private modelingExercisePopupService: ModelingExercisePopupService,
+        private modalService: NgbModal,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -60,7 +61,23 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * @param exerciseId the id of exercise
      */
     openDeleteModelingExercisePopup(exerciseId: number) {
-        this.modelingExercisePopupService.open(ModelingExerciseDeleteDialogComponent as Component, exerciseId);
+        const modalRef = this.modalService.open(DeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.entity = this.modelingExercises.find(exercise => exercise.id === exerciseId);
+        modalRef.result.then(
+            result => {
+                this.modelingExerciseService.delete(exerciseId).subscribe(response => {
+                    // @ts-ignore
+                    this.eventManager.broadcast({
+                        name: 'modelingExerciseListModification',
+                        content: 'Deleted an modelingExercise',
+                    });
+                });
+                this.ngbModalRef = null;
+            },
+            reason => {
+                this.ngbModalRef = null;
+            },
+        );
     }
 
     protected getChangeEventName(): string {
