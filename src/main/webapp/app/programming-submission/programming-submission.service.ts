@@ -139,7 +139,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 .pipe(
                     tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                         if (checkIfSubmissionIsError(submission)) {
-                            this.emitFailedSubmission(participationId, exerciseId, null);
+                            this.emitFailedSubmission(participationId, exerciseId);
                             return;
                         }
                         this.emitBuildingSubmission(participationId, exerciseId, submission);
@@ -207,8 +207,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     private emitFailedSubmission = (participationId: number, exerciseId: number) => {
-        const { submission } = this.exerciseBuildState[exerciseId][participationId];
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission };
+        const submissionStateObj = this.exerciseBuildState[exerciseId] && this.exerciseBuildState[exerciseId][participationId];
+        const newSubmissionState = {
+            participationId,
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+            submission: submissionStateObj ? submissionStateObj.submission : null,
+        };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
 
@@ -337,7 +341,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
-        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', { participationIds });
+        return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
     }
 
     /**
