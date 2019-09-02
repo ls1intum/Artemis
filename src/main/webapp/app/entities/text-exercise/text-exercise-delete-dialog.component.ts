@@ -1,14 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
-import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
-
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-text-exercise-delete-dialog',
