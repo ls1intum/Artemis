@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, Renderer, ElementRef } from '@angular/core';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { isIntelliJ } from 'app/intellij/intellij';
+import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
 
 @Component({
     selector: 'jhi-home',
@@ -38,6 +39,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
         private javaBridge: JavaBridgeService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -90,8 +92,16 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
 
                 // Log in to IntelliJ
-                if (isIntelliJ) {
-                    this.javaBridge.login(this.username, this.password);
+                if (true) {
+                    const modalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+                    modalRef.componentInstance.text = 'login.ide.confirmation';
+                    modalRef.componentInstance.title = 'login.ide.title';
+                    modalRef.result.then(
+                        result => {
+                            this.javaBridge.login(this.username, this.password);
+                        },
+                        reason => {},
+                    );
                 }
             })
             .catch((error: HttpErrorResponse) => {
