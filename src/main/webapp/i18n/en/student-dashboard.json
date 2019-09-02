@@ -27,8 +27,8 @@
                 "lectures": "Lectures"
             },
             "exerciseList": {
-                "fullScore": "Full score",
-                "overdue": "Overdue",
+                "fullScore": "Hide full score",
+                "overdue": "Hide overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
                 "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
