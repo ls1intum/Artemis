@@ -11,7 +11,7 @@
             "updated": "A Course was updated with title {{ param }}",
             "deleted": "A Course was deleted with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the course <strong>{{ param }}</strong>?"
+                "question": "Are you sure you want to delete the course {{ title }}?"
             },
             "detail": {
                 "title": "Course"

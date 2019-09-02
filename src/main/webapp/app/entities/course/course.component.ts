@@ -5,6 +5,9 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-course',
@@ -19,7 +22,13 @@ export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+    constructor(
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private eventManager: JhiEventManager,
+        private modalService: NgbModal,
+        private translateService: TranslateService,
+    ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;
@@ -49,6 +58,27 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
+    }
+
+    openDeleteCoursePopup(course: Course) {
+        if (!course) {
+            return;
+        }
+        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.entityTitle = course.title;
+        modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.course.delete.question', { title: course.title });
+        modalRef.componentInstance.deleteConfirmationText = 'Please type in the name of the Course to confirm.';
+        modalRef.result.then(
+            result => {
+                this.courseService.delete(course.id).subscribe(response => {
+                    this.eventManager.broadcast({
+                        name: 'courseListModification',
+                        content: 'Deleted an course',
+                    });
+                });
+            },
+            reason => {},
+        );
     }
 
     private onError(error: HttpErrorResponse) {

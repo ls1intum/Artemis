@@ -10,26 +10,17 @@ import { ArtemisModelingExerciseModule } from '../modeling-exercise/modeling-exe
 import { ArtemisFileUploadExerciseModule } from '../file-upload-exercise/file-upload-exercise.module';
 import { ArtemisProgrammingExerciseModule } from '../programming-exercise/programming-exercise.module';
 
-import {
-    CourseComponent,
-    CourseDeleteDialogComponent,
-    CourseDeletePopupComponent,
-    CourseDetailComponent,
-    CourseExerciseService,
-    coursePopupRoute,
-    courseRoute,
-    CourseService,
-    CourseExercisesOverviewComponent,
-    CourseUpdateComponent,
-} from './';
+import { CourseComponent, CourseDetailComponent, CourseExerciseService, courseRoute, CourseService, CourseExercisesOverviewComponent, CourseUpdateComponent } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
 import { MomentModule } from 'ngx-moment';
+import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
-const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
+const ENTITY_STATES = [...courseRoute];
 
 @NgModule({
     imports: [
@@ -46,17 +37,10 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
+        ArtemisDeleteDialogModule,
     ],
-    declarations: [
-        CourseComponent,
-        CourseDetailComponent,
-        CourseDeleteDialogComponent,
-        CourseUpdateComponent,
-        CourseDeletePopupComponent,
-        CourseExerciseCardComponent,
-        CourseExercisesOverviewComponent,
-    ],
-    entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent, CourseExerciseCardComponent, CourseDeletePopupComponent],
+    declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
+    entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent, DeleteDialogComponent],
     providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisCourseModule {
