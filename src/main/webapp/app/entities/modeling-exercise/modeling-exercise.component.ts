@@ -10,7 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
 @Component({
@@ -19,7 +19,6 @@ import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -77,11 +76,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                         content: 'Deleted an modelingExercise',
                     });
                 });
-                this.ngbModalRef = null;
             },
-            reason => {
-                this.ngbModalRef = null;
-            },
+            reason => {},
         );
     }
 

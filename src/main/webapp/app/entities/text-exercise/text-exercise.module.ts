@@ -6,7 +6,6 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArtemisSharedModule } from 'app/shared';
 import {
     TextExerciseComponent,
-    TextExerciseDeleteDialogComponent,
     TextExerciseDetailComponent,
     TextExerciseDialogComponent,
     TextExercisePopupComponent,
@@ -21,6 +20,8 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
 const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
@@ -33,16 +34,10 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisMarkdownEditorModule,
+        ArtemisDeleteDialogModule,
     ],
-    declarations: [
-        TextExerciseComponent,
-        TextExerciseDetailComponent,
-        TextExerciseUpdateComponent,
-        TextExerciseDialogComponent,
-        TextExerciseDeleteDialogComponent,
-        TextExercisePopupComponent,
-    ],
-    entryComponents: [TextExerciseComponent, TextExerciseDialogComponent, TextExerciseUpdateComponent, TextExercisePopupComponent, TextExerciseDeleteDialogComponent],
+    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseDialogComponent, TextExercisePopupComponent],
+    entryComponents: [TextExerciseComponent, TextExerciseDialogComponent, TextExerciseUpdateComponent, TextExercisePopupComponent, DeleteDialogComponent],
     providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
 })

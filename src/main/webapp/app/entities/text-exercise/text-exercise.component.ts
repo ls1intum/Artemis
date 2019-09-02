@@ -11,8 +11,8 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AccountService } from 'app/core';
-import { TextExerciseDeleteDialogComponent } from 'app/entities/text-exercise/text-exercise-delete-dialog.component';
-import { TextExercisePopupService } from 'app/entities/text-exercise/text-exercise-popup.service';
+import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -31,7 +31,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         route: ActivatedRoute,
         private accountService: AccountService,
         private artemisMarkdown: ArtemisMarkdown,
-        private textExercisePopupService: TextExercisePopupService,
+        private modalService: NgbModal,
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
@@ -62,8 +62,26 @@ export class TextExerciseComponent extends ExerciseComponent {
      * Opens delete text exercise popup
      * @param exerciseId the id of exercise
      */
-    openDeleteTextExercisePopup(exerciseId: string) {
-        this.textExercisePopupService.open(TextExerciseDeleteDialogComponent as Component, exerciseId);
+    openDeleteTextExercisePopup(exerciseId: number) {
+        const textExercise = this.textExercises.find(exercise => exercise.id === exerciseId);
+        if (!textExercise) {
+            return;
+        }
+        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.entityTitle = textExercise.title;
+        modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.textExercise.delete.question', { title: textExercise.title });
+        modalRef.componentInstance.deleteConfirmationText = 'Please type in the name of the Exercise to confirm.';
+        modalRef.result.then(
+            result => {
+                this.textExerciseService.delete(exerciseId).subscribe(response => {
+                    this.eventManager.broadcast({
+                        name: 'textExerciseListModification',
+                        content: 'Deleted an textExercise',
+                    });
+                });
+            },
+            reason => {},
+        );
     }
 
     protected getChangeEventName(): string {
