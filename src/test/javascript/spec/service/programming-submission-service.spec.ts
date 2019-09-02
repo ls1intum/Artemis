@@ -2,6 +2,7 @@ import * as chai from 'chai';
 import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of, Subject } from 'rxjs';
+import { range as _range } from 'lodash';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
@@ -234,5 +235,32 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe(state => (receivedSubmissionState = state));
         expect(fetchLatestPendingSubmissionByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
         expect(receivedSubmissionState).to.deep.equal(expectedSubmissionState);
+    });
+
+    it('should recalculate the result eta based on the number of open submissions', () => {
+        const exerciseId = 10;
+        // Simulate 340 participations with one pending submission each.
+        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: moment().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
+        const expectedSubmissionState = Object.entries(submissionState).reduce(
+            (acc, [participationID, submission]: [string, ProgrammingSubmission]) => ({
+                ...acc,
+                [participationID]: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: parseInt(participationID, 10) },
+            }),
+            {},
+        );
+        // @ts-ignore
+        const fetchLatestPendingSubmissionByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionByExerciseId');
+        httpGetStub.withArgs(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`).returns(of(submissionState));
+
+        let receivedSubmissionState: ExerciseSubmissionState;
+        submissionService.getSubmissionStateOfExercise(exerciseId).subscribe(state => (receivedSubmissionState = state));
+        expect(fetchLatestPendingSubmissionByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(receivedSubmissionState).to.deep.equal(expectedSubmissionState);
+
+        let resultEta: number;
+        submissionService.getResultEtaInMs().subscribe(eta => (resultEta = eta));
+
+        // With 340 submissions, the eta should now be 5 minutes
+        expect(resultEta).to.equal(5 * 1000 * 60);
     });
 });
