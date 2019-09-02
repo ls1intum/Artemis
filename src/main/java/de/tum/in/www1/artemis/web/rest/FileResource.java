@@ -20,6 +20,8 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -50,13 +53,16 @@ public class FileResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TokenProvider tokenProvider;
+
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository) {
+            LectureRepository lectureRepository, TokenProvider tokenProvider) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.lectureRepository = lectureRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -210,29 +216,44 @@ public class FileResource {
     }
 
     /**
+     * GET /files/attachments/access-token/{filename:.+} : Generates an access token that is valid for 30 seconds and given filename
+     *
+     * @param filename name of the file, the access token is for
+     * @return The generated access token
+     */
+    @GetMapping("files/attachments/access-token/{filename:.+}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (filename == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
+        return ResponseEntity.ok(temporaryAccessToken);
+    }
+
+    /**
      * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
      *
      * @param lectureId ID of the lecture, the attachment belongs to
      * @param filename  the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    // @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
+    public ResponseEntity getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
+            log.info("Attachment with invalid token was accessed");
+            return ResponseEntity.status(403)
+                    .body("You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture");
+        }
         Lecture lecture = optionalLecture.get();
-        // User user = userService.getUserWithGroupsAndAuthorities();
-        // Course course = lecture.getCourse();
-        // if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course,
-        // user)
-        // && !authCheckService.isAdmin()) {
-        // return forbidden();
-        // }
         try {
             byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
             if (file == null) {

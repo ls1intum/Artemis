@@ -4,7 +4,9 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import Interactable from '@interactjs/core/Interactable';
+import 'brace/mode/latex';
+import 'brace/ext/language_tools';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
     Command,
@@ -28,8 +30,6 @@ import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/dom
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-
-import 'brace/mode/latex';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -76,6 +76,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
     @Input() editorMode = EditorMode.NONE;
+    @Input() showLineNumbers = false;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<SafeHtml | null>();
 
@@ -217,7 +218,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     setupMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
-        this.aceEditorContainer.getEditor().renderer.setShowGutter(false);
+        this.aceEditorContainer.getEditor().renderer.setShowGutter(this.showLineNumbers);
         this.aceEditorContainer.getEditor().renderer.setPadding(10);
         this.aceEditorContainer.getEditor().renderer.setScrollMargin(8, 8);
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);

@@ -40,12 +40,8 @@
             },
             "contact": {
                 "headline": "Kontaktiere das Artemis Team",
-                "content": "Du kannst dich gerne an uns wenden, um Feedback zu hinterlassen, neue Features vorzuschlagen oder Fehler zu melden."
-            },
-            "team": {
-                "headline": "Lerne das Team kennen",
-                "content": "Willst du wissen wer hinter Artemis und dem LS1 Lehrstuhl steckt? ",
-                "link-text": "Klick hier"
+                "content": "Du kannst dich gerne an uns wenden, um Feedback zu hinterlassen, neue Features vorzuschlagen oder Fehler zu melden. Wenn du motiviert bist und einen Beitrag zu Artemis leisten willst, dann schaue auf unserer Github Seite vorbei und erstelle deinen ersten Pull Request",
+                "link": "Schau auf der Artemis Github Seite"
             }
         }
     }

@@ -376,6 +376,15 @@ public class ParticipationService {
         return participation;
     }
 
+    /*
+     * Get all submissions of a participationId
+     * @param participationId of submission
+     * @return List<submission>
+     */
+    public List<Submission> getSubmissionsWithParticipationId(long participationId) {
+        return submissionRepository.findAllByParticipationId(participationId);
+    }
+
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *

@@ -6,10 +6,12 @@ import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
-import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render';
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    public exerciseHints: ExerciseHint[] = [];
     private latestResult: Result | null = null;
 
     private testsForTaskSubject = new Subject<TaskArray>();
@@ -39,8 +41,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ taskName, tests }, index: number) => {
+        tasks.forEach(({ taskName, tests, hints }, index: number) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
+            componentRef.instance.exerciseHints = this.exerciseHints.filter(({ id }) => hints.includes(id.toString(10)));
             componentRef.instance.taskName = taskName;
             componentRef.instance.latestResult = this.latestResult;
             componentRef.instance.tests = tests;
@@ -61,9 +64,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
                 const idPlaceholder = '%idPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
-                const taskRegex = /\[task\]\[.*\]\(.*\)/g;
+                const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
                 // E.g. Implement BubbleSort, testBubbleSort
-                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)/;
+                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
                 // Without class="d-flex" the injected components height would be 0.
                 const taskContainer = `<div id="task-${idPlaceholder}" class="d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
@@ -71,9 +74,15 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     .map(task => {
                         return task.match(innerTaskRegex);
                     })
-                    .filter(testMatch => !!testMatch && testMatch.length === 3)
+                    // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
+                    .filter(testMatch => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
-                        return { completeString: testMatch[0], taskName: testMatch[1], tests: testMatch[2].split(',').map(s => s.trim()) };
+                        return {
+                            completeString: testMatch[0],
+                            taskName: testMatch[1],
+                            tests: testMatch[2].split(',').map(s => s.trim()),
+                            hints: testMatch[4] ? testMatch[4].split(',').map(s => s.trim()) : [],
+                        };
                     });
                 this.testsForTaskSubject.next(testsForTask);
                 // Emit new found elements that need to be injected into html after it is rendered.
