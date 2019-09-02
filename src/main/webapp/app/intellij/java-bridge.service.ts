@@ -1,12 +1,25 @@
 import { Injectable } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IntelliJState, JavaDowncallBridge } from 'app/intellij/intellij';
+import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
 
+/**
+ * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
+ * installed (https://github.com/ls1intum/Orion), this service will be used for communication between the
+ * IDE Artemis itself.
+ *
+ * The communication itself is bidirectional, meaning that the IDE can call Typescript code
+ * using the by the JavaUpcallBridge interface defined methods. On the other side, the Angular app can execute
+ * Kotlin/Java coode inside the IDE by calling the JavaDowncallBridge interface.
+ *
+ * In order to be always available, it is essential that this service gets instantiated right after loading the app
+ * in the browser. This service has to always be available in the native window object, so that if an IDE is connected,
+ * it can find the object during the integrated IDE browser instantiation.
+ */
 @Injectable({
     providedIn: 'root',
 })
-export class JavaBridgeService implements JavaDowncallBridge {
+export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     private intellijState: IntelliJState;
     private intellijStateSubject: BehaviorSubject<IntelliJState>;
 
