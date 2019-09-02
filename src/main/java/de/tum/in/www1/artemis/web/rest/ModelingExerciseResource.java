@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -196,6 +197,27 @@ public class ModelingExerciseResource {
         else {
             return notFound();
         }
+    }
+
+    /**
+     * Return the Compass statistic regarding the automatic assessment of the modeling exercise with the given id.
+     *
+     * @param exerciseId the id of the modeling exercise for which we want to get the Compass statistic
+     * @return the statistic as key-value pairs in json
+     */
+    @GetMapping("/exercises/{exerciseId}/compass-statistic")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        if (!authCheckService.isAdmin()) {
+            throw new AccessForbiddenException("Insufficient permission for exercise: " + modelingExercise);
+        }
+
+        compassService.printStatistic(modelingExercise.getId());
+
+        // TODO: In the future, this endpoint should return the statistics to the client as well.
+
+        return ResponseEntity.ok().build();
     }
 
     /**
