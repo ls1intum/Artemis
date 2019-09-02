@@ -28,6 +28,9 @@ public class UserDTO {
     private String login;
 
     @Size(max = 50)
+    private String name;
+
+    @Size(max = 50)
     private String firstName;
 
     @Size(max = 50)
@@ -66,17 +69,18 @@ public class UserDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
                 user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getLastNotificationRead(),
                 user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
     }
 
-    public UserDTO(Long id, String login, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
+    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
             Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, Set<String> groups,
             Set<GuidedTourSetting> guidedTourSettings) {
 
         this.id = id;
         this.login = login;
+        this.name = name;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -107,6 +111,14 @@ public class UserDTO {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getFirstName() {
@@ -228,5 +240,4 @@ public class UserDTO {
                 + lastModifiedBy + '\'' + ", lastModifiedDate=" + lastModifiedDate + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities
                 + ",guidedTourSettings=" + guidedTourSettings + "}";
     }
-
 }
