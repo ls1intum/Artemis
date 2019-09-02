@@ -6,24 +6,35 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
-type EntityResponseType = HttpResponse<ExerciseHint>;
-type EntityArrayResponseType = HttpResponse<ExerciseHint[]>;
+export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
+
+export interface IExerciseHintService {
+    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
+
+    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
+
+    find(id: number): Observable<ExerciseHintResponse>;
+
+    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
+
+    delete(id: number): Observable<HttpResponse<any>>;
+}
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseHintService {
+export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = SERVER_API_URL + 'api/exercise-hints';
 
     constructor(protected http: HttpClient) {}
 
-    create(exerciseHint: ExerciseHint): Observable<EntityResponseType> {
+    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return this.http.post<ExerciseHint>(this.resourceUrl, exerciseHint, { observe: 'response' });
     }
 
-    update(exerciseHint: ExerciseHint): Observable<EntityResponseType> {
+    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(id: number): Observable<ExerciseHintResponse> {
         return this.http.get<ExerciseHint>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
