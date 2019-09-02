@@ -148,7 +148,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         const failedSubmissionParticipationIds = [333];
         const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
         triggerAllStub.returns(triggerInstructorBuildForParticipationsOfExerciseSubject);
-        const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getFailedSubmissionParticipationsForExercise').returns(failedSubmissionParticipationIds);
+        const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getSubmissionCountByType').returns(failedSubmissionParticipationIds);
         // Component must have at least one failed submission for the button to be enabled.
         comp.exerciseId = exercise.id;
         comp.buildingSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
@@ -164,7 +164,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         triggerButton.click();
 
         expect(comp.isBuildingFailedSubmissions).to.be.true;
-        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exerciseId);
+        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exerciseId, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exerciseId, failedSubmissionParticipationIds);
 
         fixture.detectChanges();

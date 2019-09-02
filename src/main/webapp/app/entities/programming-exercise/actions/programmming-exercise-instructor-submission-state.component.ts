@@ -58,7 +58,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions = true;
-        const failedSubmissionParticipations = this.programmingSubmissionService.getFailedSubmissionParticipationsForExercise(this.exerciseId);
+        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exerciseId, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
             .triggerInstructorBuildForParticipationsOfExercise(this.exerciseId, failedSubmissionParticipations)
             .subscribe(() => (this.isBuildingFailedSubmissions = false));

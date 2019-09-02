@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, throwError, timer } from 'rxjs';
+import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -45,7 +45,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public SUBMISSION_RESOURCE_URL = SERVER_API_URL + 'api/programming-submissions/';
     public PROGRAMMING_EXERCISE_RESOURCE_URL = SERVER_API_URL + 'api/programming-exercises/';
     // Default value: 2 minutes.
-    private EXPECTED_RESULT_CREATION_TIME_MS = 2 * 60 * 1000;
+    private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
@@ -57,6 +57,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
 
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
+    private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
 
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -72,13 +73,30 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     set exerciseBuildState(exerciseBuildState: { [exerciseId: number]: ExerciseSubmissionState }) {
         this.exerciseBuildStateValue = exerciseBuildState;
+        this.updatedResultETA();
+    }
+
+    /**
+     * Based on the number of building submissions, calculate the result eta.
+     *
+     */
+    private updatedResultETA() {
+        const buildingSubmissionCount = Object.values(this.exerciseBuildStateValue).reduce((acc, exerciseSubmissionState) => {
+            const buildingSubmissionsOfExercise = exerciseSubmissionState
+                ? Object.values(exerciseSubmissionState).filter(({ submissionState }) => submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION).length
+                : 0;
+            return acc + buildingSubmissionsOfExercise;
+        }, 0);
+
+        // For every 100 submissions, we increase the expected time by 1 minute.
+        this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100);
     }
 
     /**
      * Fetch the latest pending submission for a participation, which means:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than EXPECTED_RESULT_CREATION_TIME_MS (in this case it could be that never a result will come due to an error)
+     * - Submission is not older than DEFAULT_EXPECTED_RESULT_ETA (in this case it could be that never a result will come due to an error)
      *
      * This method is private on purpose as subscribers should not try to load initial data!
      * A separate initial fetch is not necessary as this service takes care of it and provides a BehaviorSubject.
@@ -113,7 +131,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      * @param time
      */
-    private startResultWaitingTimer = (participationId: number, time = this.EXPECTED_RESULT_CREATION_TIME_MS) => {
+    private startResultWaitingTimer = (participationId: number, time = this.currentExpectedResultETA) => {
         this.resetResultWaitingTimer(participationId);
         this.resultTimerSubscriptions[participationId] = timer(time)
             .pipe(
@@ -249,7 +267,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @return the expected rest time to wait for the build.
      */
     private getExpectedRemainingTimeForBuild = (submission: ProgrammingSubmission): number => {
-        return this.EXPECTED_RESULT_CREATION_TIME_MS - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedResultETA - (Date.now() - Date.parse(submission.submissionDate as any));
     };
 
     /**
@@ -257,7 +275,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * A latest pending submission is characterized by the following properties:
      * - Submission is the newest one (by submissionDate)
      * - Submission does not have a result (yet)
-     * - Submission is not older than EXPECTED_RESULT_CREATION_TIME_MS (in this case it could be that never a result will come due to an error)
+     * - Submission is not older than DEFAULT_EXPECTED_RESULT_ETA (in this case it could be that never a result will come due to an error)
      *
      * Will emit:
      * - A submission if a last pending submission exists.
@@ -347,16 +365,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Get the count of latest failed submissions (not all failed submissions!) for the given exercise.
+     * Get the count of submission state type for exercise.
      *
      * @param exerciseId ProgrammingExercise
      */
-    public getFailedSubmissionParticipationsForExercise(exerciseId: number) {
+    public getSubmissionCountByType(exerciseId: number, state: ProgrammingSubmissionState) {
         const exerciseBuildState = this.exerciseBuildState[exerciseId];
         return Object.entries(exerciseBuildState)
             .filter(([, buildState]) => {
                 const { submissionState } = buildState;
-                return submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+                return submissionState === state;
             })
             .map(([participationId]) => parseInt(participationId, 10));
     }
