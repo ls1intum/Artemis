@@ -60,10 +60,10 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Opens delete modeling exercise popup
+     * Opens delete modeling exercise dialog
      * @param modelingExercise exercise that will be deleted
      */
-    openDeleteModelingExercisePopup(modelingExercise: ModelingExercise) {
+    openDeleteModelingExerciseDialog(modelingExercise: ModelingExercise) {
         if (!modelingExercise) {
             return;
         }

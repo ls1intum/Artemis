@@ -60,10 +60,10 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Opens delete text exercise popup
+     * Opens delete text exercise dialog
      * @param textExercise exercise that will be deleted
      */
-    openDeleteTextExercisePopup(textExercise: TextExercise) {
+    openDeleteTextExerciseDialog(textExercise: TextExercise) {
         if (!textExercise) {
             return;
         }

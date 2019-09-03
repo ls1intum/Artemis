@@ -15,8 +15,8 @@ export class DeleteDialogService {
     constructor(private modalService: NgbModal) {}
 
     /**
-     * Opens delete dialog and returns a promise
-     * @param deleteDialogData with which the dialog will be instantiated
+     * Opens delete dialog and returns a result after dialog is closed
+     * @param deleteDialogData data that is used in dialog
      */
     openDeleteDialog(deleteDialogData: DeleteDialogData): Promise<any> {
         const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });

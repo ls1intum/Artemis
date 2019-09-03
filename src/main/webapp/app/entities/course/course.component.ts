@@ -56,7 +56,11 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
     }
 
-    openDeleteCoursePopup(course: Course) {
+    /**
+     * Opens delete course dialog
+     * @param course that will be deleted
+     */
+    openDeleteCourseDialog(course: Course) {
         if (!course) {
             return;
         }
