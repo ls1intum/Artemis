@@ -492,8 +492,8 @@ public class ResultResource {
      * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
      * or build errors)
      *
-     * @param resultId the id of the result to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
+     * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
