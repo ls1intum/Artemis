@@ -66,8 +66,8 @@ export class CourseComponent implements OnInit, OnDestroy {
         }
         const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.entityTitle = course.title;
-        modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.course.delete.question', { title: course.title });
-        modalRef.componentInstance.deleteConfirmationText = this.translateService.instant('artemisApp.course.delete.typeNameToConfirm');
+        modalRef.componentInstance.deleteQuestion = 'artemisApp.course.delete.question';
+        modalRef.componentInstance.deleteConfirmationText = 'artemisApp.course.delete.typeNameToConfirm';
         modalRef.result.then(() => {
             this.courseService.delete(course.id).subscribe(response => {
                 this.eventManager.broadcast({

@@ -70,8 +70,8 @@ export class TextExerciseComponent extends ExerciseComponent {
         }
         const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.entityTitle = textExercise.title;
-        modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.exercise.delete.question', { title: textExercise.title });
-        modalRef.componentInstance.deleteConfirmationText = this.translateService.instant('artemisApp.exercise.delete.typeNameToConfirm');
+        modalRef.componentInstance.deleteQuestion = 'artemisApp.exercise.delete.question';
+        modalRef.componentInstance.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
         modalRef.result.then(() => {
             this.textExerciseService.delete(textExercise.id).subscribe(response => {
                 this.eventManager.broadcast({

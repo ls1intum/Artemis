@@ -8,7 +8,6 @@ import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [DeleteDialogComponent],
-    entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [DeleteDialogComponent],
 })

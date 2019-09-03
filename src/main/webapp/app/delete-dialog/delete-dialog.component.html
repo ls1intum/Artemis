@@ -5,9 +5,9 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p>{{ deleteQuestion }}</p>
+        <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
         <div class="form-group" *ngIf="deleteConfirmationText">
-            <label class="text-danger">{{ deleteConfirmationText }}</label>
+            <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
             <input type="text" class="form-control" name="confirmExerciseName" value="" [(ngModel)]="confirmExerciseName" />
         </div>
     </div>
