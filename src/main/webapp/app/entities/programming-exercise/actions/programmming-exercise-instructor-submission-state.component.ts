@@ -1,7 +1,7 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import { catchError, debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { of, Subscription } from 'rxjs';
+import { of, Subscription, Subject } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 /**
@@ -23,6 +23,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     hasFailedSubmissions = false;
     buildingSummary: { [submissionState: string]: number };
     isBuildingFailedSubmissions = false;
+    isTriggeringBuildAll = false;
 
     resultEtaInMs: number;
 
@@ -65,6 +66,15 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.result.then(() => {
+            this.isTriggeringBuildAll = true;
+            this.programmingSubmissionService
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
+                .pipe(catchError(() => of(null)))
+                .subscribe(() => {
+                    this.isTriggeringBuildAll = false;
+                });
+        });
     }
 
     /**
@@ -101,7 +111,10 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" class="btn btn-danger"><fa-icon [icon]="'times'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.confirm">Confirm</span></button>
+                <button type="submit" class="btn btn-danger">
+                    <fa-icon [icon]="'times'"></fa-icon>&nbsp;
+                    <span jhiTranslate="entity.action.confirm">Confirm</span>
+                </button>
             </div>
         </form>
     `,
@@ -109,18 +122,13 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;
 
-    constructor(private activeModal: NgbActiveModal, private programmingSubmissionService: ProgrammingSubmissionService) {}
+    constructor(private activeModal: NgbActiveModal) {}
 
     cancel() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmTrigger() {
-        this.programmingSubmissionService
-            .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
-            .pipe(catchError(() => of(null)))
-            .subscribe();
-
-        this.cancel();
+        this.activeModal.close();
     }
 }
