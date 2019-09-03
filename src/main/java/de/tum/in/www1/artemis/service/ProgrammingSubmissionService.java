@@ -216,10 +216,8 @@ public class ProgrammingSubmissionService {
     public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
             SubmissionType submissionType) {
         return participations.stream().map(participation -> {
-            ProgrammingSubmission submission;
             try {
-                submission = createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
-                return submission;
+                return createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
             }
             catch (IllegalStateException ex) {
                 // The exception is already logged, we just return null here.
