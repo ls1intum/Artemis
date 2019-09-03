@@ -2,12 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
+import { DeleteDialogData, DeleteDialogService } from 'app/delete-dialog';
 
 @Component({
     selector: 'jhi-course',
@@ -26,8 +23,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
+        private deleteDialogService: DeleteDialogService,
     ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
@@ -64,12 +60,13 @@ export class CourseComponent implements OnInit, OnDestroy {
         if (!course) {
             return;
         }
-        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.entityTitle = course.title;
-        modalRef.componentInstance.deleteQuestion = 'artemisApp.course.delete.question';
-        modalRef.componentInstance.deleteConfirmationText = 'artemisApp.course.delete.typeNameToConfirm';
-        modalRef.result.then(() => {
-            this.courseService.delete(course.id).subscribe(response => {
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: course.title,
+            deleteQuestion: 'artemisApp.course.delete.question',
+            deleteConfirmationText: 'artemisApp.course.delete.typeNameToConfirm',
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
+            this.courseService.delete(course.id).subscribe(() => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
                     content: 'Deleted an course',

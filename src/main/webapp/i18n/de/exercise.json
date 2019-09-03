@@ -11,7 +11,7 @@
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Übung {{ title }} wirklich dauerhaft gelöscht werden?",
+                "question": "Soll Übung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
                 "typeNameToConfirm": "Bitte gibst du den Namen der Übung zur Bestätigung ein."
             },
             "detail": {

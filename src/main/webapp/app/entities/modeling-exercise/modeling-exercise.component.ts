@@ -10,8 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { DeleteDialogData, DeleteDialogService } from 'app/delete-dialog';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -25,7 +24,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
-        private modalService: NgbModal,
+        private deleteDialogService: DeleteDialogService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -68,11 +67,12 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         if (!modelingExercise) {
             return;
         }
-        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.entityTitle = modelingExercise.title;
-        modalRef.componentInstance.deleteQuestion = 'artemisApp.exercise.delete.question';
-        modalRef.componentInstance.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
-        modalRef.result.then(() => {
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: modelingExercise.title,
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
             this.modelingExerciseService.delete(modelingExercise.id).subscribe(response => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',

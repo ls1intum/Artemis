@@ -4,12 +4,12 @@ import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { DeleteDialogService } from 'app/delete-dialog/delete-dialog-service';
 
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [DeleteDialogComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    exports: [DeleteDialogComponent],
+    providers: [DeleteDialogService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisDeleteDialogModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -9,8 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteDialogData, DeleteDialogService } from 'app/delete-dialog';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -28,7 +27,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
-        private modalService: NgbModal,
+        private deleteDialogService: DeleteDialogService,
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
@@ -68,11 +67,12 @@ export class TextExerciseComponent extends ExerciseComponent {
         if (!textExercise) {
             return;
         }
-        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.entityTitle = textExercise.title;
-        modalRef.componentInstance.deleteQuestion = 'artemisApp.exercise.delete.question';
-        modalRef.componentInstance.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
-        modalRef.result.then(() => {
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: textExercise.title,
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
             this.textExerciseService.delete(textExercise.id).subscribe(response => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
