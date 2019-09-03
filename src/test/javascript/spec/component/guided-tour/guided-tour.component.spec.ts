@@ -103,20 +103,19 @@ describe('Component Tests', () => {
         describe('Keydown Element', () => {
             beforeEach(async () => {
                 // Prepare guided tour service
-                spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                 spyOn(guidedTourService, 'updateGuidedTourSettings');
                 spyOn(guidedTourService, 'init').and.returnValue(of());
+                spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                    guidedTourService.currentTour = courseOverviewTour;
+                });
 
                 // Prepare guided tour component
                 guidedTourComponent.ngAfterViewInit();
 
-                await guidedTourComponentFixture.ngZone!.run(() => {
-                    router.navigateByUrl('/overview');
-                });
-
                 // Start course overview tour
                 expect(guidedTourComponent.currentTourStep).to.not.exist;
-                guidedTourService.startGuidedTourForCurrentRoute();
+                guidedTourService.enableTour(courseOverviewTour);
+                guidedTourService.startTour();
                 guidedTourComponentFixture.detectChanges();
                 expect(guidedTourComponent.currentTourStep).to.exist;
             });

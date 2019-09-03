@@ -393,7 +393,7 @@ public class ModelingSubmissionResource {
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }
