@@ -7,6 +7,10 @@ import { SERVER_API_URL } from '../../app.constants';
 export class ActivateService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Sends request to the server to activate the user
+     * @param key the activation key
+     */
     get(key: string): Observable<void> {
         return this.http.get<void>(SERVER_API_URL + 'api/activate', {
             params: new HttpParams().set('key', key),

@@ -32,6 +32,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         this.renderer.invokeElementMethod(this.elementRef.nativeElement.querySelector('#login'), 'focus', []);
     }
 
+    /**
+     * Registers a new user in Artemis. This is only possible if the passwords match and there is no user with the same
+     * e-mail or username. For the language the current browser language is selected.
+     */
     register() {
         if (this.registerAccount.password !== this.confirmPassword) {
             this.doNotMatch = 'ERROR';

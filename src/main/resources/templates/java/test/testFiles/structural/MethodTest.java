@@ -3,6 +3,7 @@ package ${packageName};
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -13,11 +14,10 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
- *
- * This test evaluates if the specified methods in the structure oracle
- * are correctly implemented with the expected name, return type, parameter types
- * and visibility modifiers (in case these are specified).
+ * @version 2.2 (01.09.2019)
+ * <br><br>
+ * This test evaluates if the specified methods in the structure oracle are correctly implemented with the expected name, return type, parameter types, visibility modifiers
+ * and annotations, based on its definition in the structure oracle (test.json)
  */
 @RunWith(Parameterized.class)
 public class MethodTest extends StructuralTest {
@@ -43,10 +43,10 @@ public class MethodTest extends StructuralTest {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
             // Only test the classes that have methods defined in the structure oracle.
-            if (expectedClassJSON.has("class") && expectedClassJSON.has("methods")) {
-                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
-                String expectedClassName = expectedClassPropertiesJSON.getString("name");
-                String expectedPackageName = expectedClassPropertiesJSON.getString("package");
+            if (expectedClassJSON.has(JSON_PROPERTY_CLASS) && expectedClassJSON.has(JSON_PROPERTY_METHODS)) {
+                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
+                String expectedClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_NAME);
+                String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
         }
@@ -61,8 +61,8 @@ public class MethodTest extends StructuralTest {
     public void testMethods() {
         Class<?> observedClass = findClassForTestType("method");
 
-        if (expectedClassJSON.has("methods")) {
-            JSONArray methodsJSON = expectedClassJSON.getJSONArray("methods");
+        if (expectedClassJSON.has(JSON_PROPERTY_METHODS)) {
+            JSONArray methodsJSON = expectedClassJSON.getJSONArray(JSON_PROPERTY_METHODS);
 
             checkMethods(observedClass, methodsJSON);
         }
@@ -77,21 +77,24 @@ public class MethodTest extends StructuralTest {
     private void checkMethods(Class<?> observedClass, JSONArray expectedMethods) {
         for(int i = 0; i < expectedMethods.length(); i++) {
             JSONObject expectedMethod = expectedMethods.getJSONObject(i);
-            String expectedName = expectedMethod.getString("name");
-            JSONArray expectedParameters = expectedMethod.has("parameters") ? expectedMethod.getJSONArray("parameters") : new JSONArray();
-            JSONArray expectedModifiers = expectedMethod.has("modifiers") ? expectedMethod.getJSONArray("modifiers") : new JSONArray();
-            String expectedReturnType = expectedMethod.getString("returnType");
+            String expectedName = expectedMethod.getString(JSON_PROPERTY_NAME);
+            JSONArray expectedParameters = expectedMethod.has(JSON_PROPERTY_PARAMETERS) ? expectedMethod.getJSONArray(JSON_PROPERTY_PARAMETERS) : new JSONArray();
+            JSONArray expectedModifiers = expectedMethod.has(JSON_PROPERTY_MODIFIERS) ? expectedMethod.getJSONArray(JSON_PROPERTY_MODIFIERS) : new JSONArray();
+            JSONArray expectedAnnotations = expectedMethod.has(JSON_PROPERTY_ANNOTATIONS) ? expectedMethod.getJSONArray(JSON_PROPERTY_ANNOTATIONS) : new JSONArray();
+            String expectedReturnType = expectedMethod.getString(JSON_PROPERTY_RETURN_TYPE);
 
             boolean nameIsRight = false;
             boolean parametersAreRight = false;
             boolean modifiersAreRight = false;
             boolean returnTypeIsRight = false;
+            boolean annotationsAreRight = false;
 
             for(Method observedMethod : observedClass.getDeclaredMethods()) {
                 String observedName = observedMethod.getName();
                 Class<?>[] observedParameters = observedMethod.getParameterTypes();
                 String[] observedModifiers = Modifier.toString(observedMethod.getModifiers()).split(" ");
                 String observedReturntype = observedMethod.getReturnType().getSimpleName();
+                Annotation[] observedAnnotations = observedMethod.getAnnotations();
 
                 // If the names don't match, then proceed to the next observed method
                 if(!expectedName.equals(observedName)) {
@@ -102,17 +105,13 @@ public class MethodTest extends StructuralTest {
                     nameIsRight = true;
                 }
 
-                // Then check the parameters
                 parametersAreRight = checkParameters(observedParameters, expectedParameters);
-
-                // Then the modifiers
                 modifiersAreRight = checkModifiers(observedModifiers, expectedModifiers);
-
-                // And then the return type
+                annotationsAreRight = checkAnnotations(observedAnnotations, expectedAnnotations);
                 returnTypeIsRight = expectedReturnType.equals(observedReturntype);
 
                 // If all are correct, then we found our method and we can break the loop
-                if(nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight) {
+                if(nameIsRight && parametersAreRight && modifiersAreRight && annotationsAreRight && returnTypeIsRight) {
                     break;
                 }
             }
@@ -123,9 +122,9 @@ public class MethodTest extends StructuralTest {
             assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.", nameIsRight);
             assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.", parametersAreRight);
             assertTrue("Problem: the modifiers (access type, abstract, etc.) of " + expectedMethodInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the annotation(s) of " + expectedMethodInformation + " are not implemented as expected.", annotationsAreRight);
             assertTrue("Problem: the return type of " + expectedMethodInformation + " is not implemented as expected.", returnTypeIsRight);
             assertTrue("Problem: the method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.", nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight);
         }
     }
-
 }
