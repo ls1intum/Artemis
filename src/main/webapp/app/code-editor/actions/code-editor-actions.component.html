@@ -23,7 +23,7 @@
             commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
             commitState === CommitState.UNDEFINED
         "
-        (click)="saveChangedFiles().toPromise()"
+        (click)="onSave()"
         data-toggle="tooltip"
         data-placement="left"
         title="Save all unsaved changes in your files."
