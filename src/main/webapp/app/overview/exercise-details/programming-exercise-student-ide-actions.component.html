@@ -1,0 +1,28 @@
+<jhi-alert></jhi-alert>
+
+<div class="btn-group">
+    <button
+        jhi-exercise-action-button
+        buttonIcon="play-circle"
+        [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+        [buttonLoading]="exercise.loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        *ngIf="participationStatus() === UNINITIALIZED"
+        (click)="startExercise()"
+    ></button>
+    <jhi-ide-button
+        (click)="importIntoIntelliJ()"
+        [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
+        [buttonLoading]="exercise.loading"
+        [smallButton]="smallButtons"
+        *ngIf="!isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+    ></jhi-ide-button>
+    <jhi-ide-button
+        (click)="submitChanges()"
+        buttonLabel="Submit"
+        [buttonLoading]="exercise.loading"
+        [smallButton]="smallButtons"
+        *ngIf="isOpenedInIntelliJ && exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
+    ></jhi-ide-button>
+</div>

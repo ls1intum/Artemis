@@ -1,17 +1,17 @@
 import { LinkType, Orientation, OrientationConfiguration } from 'app/guided-tour/guided-tour.constants';
 
 export abstract class TourStep {
-    // Selector for element that will be highlighted
+    /** Selector for element that will be highlighted */
     selector?: string | undefined;
-    // Where the tour step will appear next to the selected element
+    /** Where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
-    // Action that is performed when the step is opened
+    /** Action that happens when the step is opened */
     action?: () => void;
-    // Action that is performed when the step is closed
+    /** Action that happens when the step is closed */
     closeAction?: () => void;
-    // This configuration allows you to skip this step so that you don't have to create multiple tours for multiple scenarios
+    /** Skips this step, this is so you do not have create multiple tour configurations based on user settings/configuration */
     skipStep?: boolean;
-    // Adds some padding for elements such as sticky headers when scrolling to an element */
+    /** Adds some padding for things like sticky headers when scrolling to an element */
     scrollAdjustment?: number;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;

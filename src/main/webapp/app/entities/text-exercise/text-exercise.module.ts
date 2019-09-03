@@ -4,17 +4,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
-import {
-    TextExerciseComponent,
-    TextExerciseDetailComponent,
-    TextExerciseDialogComponent,
-    TextExercisePopupComponent,
-    textExercisePopupRoute,
-    TextExercisePopupService,
-    textExerciseRoute,
-    TextExerciseService,
-    TextExerciseUpdateComponent,
-} from './';
+import { TextExerciseComponent, TextExerciseDetailComponent, TextExercisePopupService, textExerciseRoute, TextExerciseService, TextExerciseUpdateComponent } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
@@ -23,7 +13,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
 import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
-const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
+const ENTITY_STATES = [...textExerciseRoute];
 
 @NgModule({
     imports: [
@@ -36,8 +26,8 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         ArtemisMarkdownEditorModule,
         ArtemisDeleteDialogModule,
     ],
-    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseDialogComponent, TextExercisePopupComponent],
-    entryComponents: [TextExerciseComponent, TextExerciseDialogComponent, TextExerciseUpdateComponent, TextExercisePopupComponent, DeleteDialogComponent],
+    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
+    entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],
     providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
 })

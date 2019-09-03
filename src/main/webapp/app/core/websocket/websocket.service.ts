@@ -178,14 +178,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 this.myListeners[channel] = this.createListener(channel);
             }
             this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
-                const res = JSON.parse(data.body);
-                if (!res.error) {
-                    this.listenerObservers[channel].next(JSON.parse(data.body));
-                } else {
-                    // Response objects with error properties will be counted as a reason to fail
-                    // The response objects needs to be prepared accordingly on the server
-                    this.listenerObservers[channel].error(res);
-                }
+                this.listenerObservers[channel].next(JSON.parse(data.body));
             });
         });
     }

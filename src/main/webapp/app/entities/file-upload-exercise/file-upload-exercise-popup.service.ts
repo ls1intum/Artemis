@@ -5,52 +5,40 @@ import { HttpResponse } from '@angular/common/http';
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { DatePipe } from '@angular/common';
-import { CourseService } from '../course';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExercisePopupService {
     private ngbModalRef: NgbModalRef | null;
 
-    constructor(
-        private datePipe: DatePipe,
-        private modalService: NgbModal,
-        private router: Router,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private courseService: CourseService,
-    ) {
+    constructor(private datePipe: DatePipe, private modalService: NgbModal, private router: Router, private fileUploadExerciseService: FileUploadExerciseService) {
         this.ngbModalRef = null;
     }
 
-    open(component: Component, id?: number | any, courseId?: number): Promise<NgbModalRef> {
+    /**
+     * Opens a modal and resolves the data passed
+     * @param component that will be created
+     * @param exerciseId the id of the exercise
+     */
+    open(component: Component, exerciseId: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
             if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
-
-            if (id) {
-                this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+            if (exerciseId) {
+                this.fileUploadExerciseService.find(exerciseId).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     const fileUploadExercise: FileUploadExercise = fileUploadExerciseResponse.body!;
                     this.ngbModalRef = this.fileUploadExerciseModalRef(component, fileUploadExercise);
                     resolve(this.ngbModalRef);
                 });
-            } else {
-                // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
-                setTimeout(() => {
-                    if (courseId) {
-                        this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body!;
-                            this.ngbModalRef = this.fileUploadExerciseModalRef(component, new FileUploadExercise(course));
-                            resolve(this.ngbModalRef);
-                        });
-                    } else {
-                        this.ngbModalRef = this.fileUploadExerciseModalRef(component, new FileUploadExercise());
-                        resolve(this.ngbModalRef);
-                    }
-                }, 0);
             }
         });
     }
 
+    /**
+     * Opens modal for file upload exercise
+     * @param component which will be used for modal
+     * @param fileUploadExercise for which modal will be opened
+     */
     fileUploadExerciseModalRef(component: Component, fileUploadExercise: FileUploadExercise): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.fileUploadExercise = fileUploadExercise;

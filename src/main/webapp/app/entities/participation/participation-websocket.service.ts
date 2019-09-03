@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
-
+import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from './participation.model';
 import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';

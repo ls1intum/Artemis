@@ -44,6 +44,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
     ) {}
 
+    /**
+     * Initializes Apollon Editor and sets auto save timer
+     */
     ngOnInit() {
         this.route.params.subscribe(params => {
             const id = Number(params['id']);
@@ -71,6 +74,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Clears auto save interval and destroys Apollon Editor
+     */
     ngOnDestroy() {
         clearInterval(this.autoSaveInterval);
         if (this.apollonEditor !== null) {
@@ -78,6 +84,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Initializes Apollon Editor with UML Model
+     * @param initialModel
+     */
     initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
@@ -91,6 +101,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Saves the diagram
+     */
     saveDiagram() {
         if (this.apollonDiagram === null) {
             return;

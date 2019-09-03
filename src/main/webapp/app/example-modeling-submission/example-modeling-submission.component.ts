@@ -302,7 +302,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
             await this.router.navigate([`/course/${courseId}/`]);
-            this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
+            this.router.navigate(['/modeling-exercise/' + this.exerciseId + '/edit']);
         }
     }
 

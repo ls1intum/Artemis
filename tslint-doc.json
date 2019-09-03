@@ -10,7 +10,6 @@
         "completed-docs": [
             true,
             {
-                "properties": { "privacies": ["public"] },
                 "enums": { "visibilities": ["all"] },
                 "functions": { "visibilities": ["all"] },
                 "methods": { "privacies": ["public"]}

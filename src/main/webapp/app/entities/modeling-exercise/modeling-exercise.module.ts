@@ -7,9 +7,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import {
     ModelingExerciseComponent,
     ModelingExerciseDetailComponent,
-    ModelingExerciseDialogComponent,
-    ModelingExercisePopupComponent,
-    modelingExercisePopupRoute,
+    ModelingExerciseUpdateComponent,
     ModelingExercisePopupService,
     modelingExerciseRoute,
     ModelingExerciseService,
@@ -22,7 +20,7 @@ import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
 import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
-const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
+const ENTITY_STATES = [...modelingExerciseRoute];
 
 @NgModule({
     imports: [
@@ -35,8 +33,8 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
         ArtemisDifficultyPickerModule,
         ArtemisDeleteDialogModule,
     ],
-    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseDialogComponent, ModelingExercisePopupComponent],
-    entryComponents: [ModelingExerciseComponent, ModelingExerciseDialogComponent, ModelingExercisePopupComponent, DeleteDialogComponent],
+    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
+    entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],
     providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
 })

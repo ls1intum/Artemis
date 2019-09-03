@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -9,7 +8,6 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AccountService } from 'app/core';
 import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -30,7 +28,6 @@ export class TextExerciseComponent extends ExerciseComponent {
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
-        private artemisMarkdown: ArtemisMarkdown,
         private modalService: NgbModal,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -54,6 +51,11 @@ export class TextExerciseComponent extends ExerciseComponent {
         );
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a text exercise in the collection
+     * @param item current text exercise
+     */
     trackId(index: number, item: TextExercise) {
         return item.id;
     }
@@ -91,5 +93,8 @@ export class TextExerciseComponent extends ExerciseComponent {
         this.jhiAlertService.error(error.message);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

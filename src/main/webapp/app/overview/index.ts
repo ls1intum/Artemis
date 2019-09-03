@@ -5,6 +5,7 @@ export * from './course-exercises/course-exercise-row.component';
 export * from './course-exercises/course-exercises.component';
 export * from './exercise-details/course-exercise-details.component';
 export * from './exercise-details/exercise-details-student-actions.component';
+export * from './exercise-details/programming-exercise-student-ide-actions.component';
 export * from './exercise-details/exercise-action-button.component';
 export * from './course-lectures/course-lectures.component';
 export * from './course-lectures/course-lecture-details.component';

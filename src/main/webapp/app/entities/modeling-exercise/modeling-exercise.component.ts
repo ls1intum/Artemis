@@ -51,6 +51,11 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         );
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a modeling exercise in the collection
+     * @param item current modeling exercise
+     */
     trackId(index: number, item: ModelingExercise) {
         return item.id;
     }
@@ -89,5 +94,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         console.log('Error: ' + error);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

@@ -18,10 +18,19 @@ export class LogsComponent implements OnInit {
         this.reverse = false;
     }
 
+    /**
+     * Subscribe to the logsService to retrieve all logs
+     */
     ngOnInit() {
         this.logsService.findAll().subscribe(response => (this.loggers = response.body!));
     }
 
+    /**
+     * Changes the log level for the log with the name {@param name}
+     *
+     * @param name  name of the log
+     * @param level log level (TRACE, DEBUG, INFO, WARN, ERROR)
+     */
     changeLevel(name: string, level: string) {
         const log = new Log(name, level);
         this.logsService.changeLevel(log).subscribe(() => {
