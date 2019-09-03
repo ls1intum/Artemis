@@ -34,15 +34,6 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
 export const modelingExerciseRoute: Routes = [
     {
-        path: 'modeling-exercise',
-        component: ModelingExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'modeling-exercise/:id',
         component: ModelingExerciseDetailComponent,
         data: {
