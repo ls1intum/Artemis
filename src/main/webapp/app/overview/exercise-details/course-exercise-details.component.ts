@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';
@@ -16,6 +16,7 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -54,6 +55,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {

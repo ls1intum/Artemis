@@ -1,18 +1,18 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Observable, of, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
+import { filter } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -23,6 +23,7 @@ export class GuidedTourService {
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
+    private guidedTourAvailability = new Subject<boolean>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
 
@@ -43,13 +44,20 @@ export class GuidedTourService {
             this.guidedTourSettings = user ? user.guidedTourSettings : [];
         });
 
+        // Reset guided tour availability on router navigation
+        this.router.events.subscribe(event => {
+            if (event instanceof NavigationStart) {
+                this.guidedTourAvailability.next(false);
+            }
+        });
+
         /**
          * Subscribe to window resize events
          */
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour && this.currentTourStepIndex > -1) {
+                if (this.currentTour && this.currentTourStepIndex > 0) {
                     if (this.currentTour.minimumScreenSize && this.currentTour.minimumScreenSize >= window.innerWidth) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(
@@ -74,11 +82,10 @@ export class GuidedTourService {
     }
 
     /**
-     * Load course overview tour
-     * @return guided tour `courseOverviewTour`
+     * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
      */
-    public getOverviewTour(): Observable<GuidedTour> {
-        return of(courseOverviewTour);
+    public getGuidedTourAvailabilityStream(): Observable<boolean> {
+        return this.guidedTourAvailability.asObservable();
     }
 
     /**
@@ -96,26 +103,29 @@ export class GuidedTourService {
      * Navigate to previous tour step
      */
     public backStep(): void {
-        if (this.currentTour) {
-            const currentStep = this.currentTour.steps[this.currentTourStepIndex];
-            if (currentStep.closeAction) {
-                currentStep.closeAction();
+        if (!this.currentTour) {
+            return;
+        }
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        if (currentStep.closeAction) {
+            currentStep.closeAction();
+        }
+        if (previousStep) {
+            this.currentTourStepIndex--;
+            if (previousStep.action) {
+                previousStep.action();
             }
-            if (this.currentTour.steps[this.currentTourStepIndex - 1]) {
-                this.currentTourStepIndex--;
-                if (currentStep.action) {
-                    currentStep.action();
+            setTimeout(() => {
+                if (this.checkSelectorValidity()) {
+                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
+                } else {
+                    this.backStep();
                 }
-                setTimeout(() => {
-                    if (this.checkSelectorValidity()) {
-                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                    } else {
-                        this.backStep();
-                    }
-                });
-            } else {
-                this.resetTour();
-            }
+            });
+        } else {
+            this.resetTour();
         }
     }
 
@@ -127,13 +137,14 @@ export class GuidedTourService {
             return;
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
-        if (this.currentTour.steps[this.currentTourStepIndex + 1]) {
+        if (nextStep) {
             this.currentTourStepIndex++;
-            if (currentStep.action) {
-                currentStep.action();
+            if (nextStep.action) {
+                nextStep.action();
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
@@ -160,12 +171,7 @@ export class GuidedTourService {
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.FINISHED).subscribe(guidedTourSettings => {
-            if (guidedTourSettings.body) {
-                this.guidedTourSettings = guidedTourSettings.body;
-            }
-        });
-        this.resetTour();
+        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
     }
 
     /**
@@ -176,13 +182,26 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
-            this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.STARTED).subscribe(guidedTourSettings => {
-                if (guidedTourSettings.body) {
-                    this.guidedTourSettings = guidedTourSettings.body;
-                }
-            });
-            this.resetTour();
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
+    }
+
+    /**
+     * Subscribe to the update method call
+     * @param guidedTourState GuidedTourState.FINISHED if the tour is closed on the last step, otherwise GuidedTourState.STARTED
+     */
+    private subscribeToAndUpdateGuidedTourSettings(guidedTourState: GuidedTourState) {
+        if (!this.currentTour) {
+            return;
+        }
+
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
+            .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
+            .subscribe(guidedTourSettings => {
+                this.guidedTourSettings = guidedTourSettings.body!;
+            });
+
+        this.resetTour();
     }
 
     /**
@@ -191,7 +210,6 @@ export class GuidedTourService {
      */
     public resetTour(): void {
         document.body.classList.remove('tour-open');
-        this.currentTour = null;
         this.currentTourStepIndex = 0;
         this.guidedTourCurrentStepSubject.next(null);
     }
@@ -200,11 +218,13 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      * @param tour: guided tour
      */
-    private startTour(tour: GuidedTour): void {
-        this.currentTour = cloneDeep(tour);
+    public startTour(): void {
+        if (!this.currentTour) {
+            return;
+        }
 
         // Filter tour steps according to permissions
-        this.currentTour.steps = tour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
+        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
         this.currentTourStepIndex = 0;
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
@@ -244,7 +264,7 @@ export class GuidedTourService {
             if (!selectedElement) {
                 this.errorHandler.handleError(
                     // If error handler is configured this should not block the browser.
-                    new Error(
+                    console.warn(
                         `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
                             this.currentTour.settingsKey
                         }`,
@@ -372,22 +392,19 @@ export class GuidedTourService {
     }
 
     /**
-     * Checks if the current component has a guided tour by comparing the current router url to manually defined urls
-     * that provide tours.
-     * @return true if a guided tour is available
+     * Enable a given tour for the component that calls this method and make the start tour button in the navigation bar availability
+     * by setting the guidedTourAvailability to true
+     *
+     * @param guidedTour
      */
-    public checkGuidedTourAvailabilityForCurrentRoute(): boolean {
-        return this.router.url === '/overview';
-    }
-
-    /**
-     * Starts the guided tour of the current component
-     * */
-    public startGuidedTourForCurrentRoute() {
-        if (this.router.url === '/overview') {
-            this.getOverviewTour().subscribe(tour => {
-                this.startTour(tour);
-            });
-        }
+    public enableTour(guidedTour: GuidedTour) {
+        /**
+         * Set timeout so that the reset of the previous guided tour on the navigation end can be processed first
+         * to prevent ExpressionChangedAfterItHasBeenCheckedError
+         */
+        setTimeout(() => {
+            this.currentTour = cloneDeep(guidedTour);
+            this.guidedTourAvailability.next(true);
+        });
     }
 }

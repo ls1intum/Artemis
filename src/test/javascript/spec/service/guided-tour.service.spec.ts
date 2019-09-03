@@ -112,9 +112,11 @@ describe('Service Tests', () => {
             describe('Start tour method', () => {
                 beforeEach(async () => {
                     // Prepare GuidedTourService and GuidedTourComponent
-                    spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
                     spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
                     spyOn(guidedTourService, 'init').and.returnValue(of());
+                    spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                        guidedTourService.currentTour = courseOverviewTour;
+                    });
                     guidedTourComponent.ngAfterViewInit();
 
                     await guidedTourComponentFixture.ngZone!.run(() => {
@@ -123,8 +125,8 @@ describe('Service Tests', () => {
 
                     // Start course overview tour
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-                    expect(guidedTourService.checkGuidedTourAvailabilityForCurrentRoute()).to.be.true;
-                    guidedTourService.startGuidedTourForCurrentRoute();
+                    guidedTourService.enableTour(courseOverviewTour);
+                    guidedTourService.startTour();
                     guidedTourComponentFixture.detectChanges();
                     expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
                     expect(guidedTourService.isOnFirstStep).to.be.true;
