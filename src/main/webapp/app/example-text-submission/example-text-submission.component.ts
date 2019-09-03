@@ -375,7 +375,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
             await this.router.navigate([`/course/${courseId}/text-exercise/`]);
-            this.router.navigate(['/', { outlets: { popup: 'text-exercise/' + this.exerciseId + '/edit' } }]);
+            this.router.navigate(['/text-exercise/' + this.exerciseId + '/edit']);
         }
     }
 

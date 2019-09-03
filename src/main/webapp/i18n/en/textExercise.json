@@ -3,8 +3,8 @@
         "textExercise": {
             "home": {
                 "title": "Text Exercises",
-                "createLabel": "Create a new Text Exercise",
-                "createOrEditLabel": "Create or edit a Text Exercise"
+                "createLabel": "Create new Text Exercise",
+                "editLabel": "Edit Text Exercise"
             },
             "created": "A new Text Exercise is created with identifier {{ param }}",
             "updated": "A Text Exercise is updated with identifier {{ param }}",
