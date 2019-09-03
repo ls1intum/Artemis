@@ -1,9 +1,9 @@
-import { ErrorHandler, Injectable, EventEmitter, Output } from '@angular/core';
+import { ErrorHandler, Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Router, NavigationStart } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Observable, of, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -12,6 +12,7 @@ import { GuidedTourState, Orientation, OrientationConfiguration } from './guided
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
+import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -168,12 +169,7 @@ export class GuidedTourService {
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.FINISHED).subscribe(guidedTourSettings => {
-            if (guidedTourSettings.body) {
-                this.guidedTourSettings = guidedTourSettings.body;
-            }
-        });
-        this.resetTour();
+        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
     }
 
     /**
@@ -184,13 +180,26 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
-            this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, GuidedTourState.STARTED).subscribe(guidedTourSettings => {
-                if (guidedTourSettings.body) {
-                    this.guidedTourSettings = guidedTourSettings.body;
-                }
-            });
-            this.resetTour();
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
+    }
+
+    /**
+     * Subscribe to the update method call
+     * @param guidedTourState GuidedTourState.FINISHED if the tour is closed on the last step, otherwise GuidedTourState.STARTED
+     */
+    private subscribeToAndUpdateGuidedTourSettings(guidedTourState: GuidedTourState) {
+        if (!this.currentTour) {
+            return;
+        }
+
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState).subscribe(guidedTourSettings => {
+            if (guidedTourSettings.body) {
+                this.guidedTourSettings = guidedTourSettings.body;
+            }
+        });
+
+        this.resetTour();
     }
 
     /**
