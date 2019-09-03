@@ -14,6 +14,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { WindowRef } from 'app/core';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -47,12 +48,13 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private $window: WindowRef,
     ) {}
 
     ngOnInit() {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
-        window.scroll(0, 0);
+        this.$window.nativeWindow.scroll(0, 0);
 
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
