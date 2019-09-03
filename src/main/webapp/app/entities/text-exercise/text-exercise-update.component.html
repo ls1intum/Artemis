@@ -1,7 +1,7 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div>
-        <h4 *ngIf="!textExercise.id" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createLabel">Create Text Exercise</h4>
-        <h4 *ngIf="textExercise.id" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4>
+        <h4 *ngIf="!textExercise.id; else editExercise" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createLabel">Create Text Exercise</h4>
+        <ng-template #editExercise><h4 *ngIf="textExercise.id" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4></ng-template>
     </div>
     <div>
         <jhi-alert-error></jhi-alert-error>

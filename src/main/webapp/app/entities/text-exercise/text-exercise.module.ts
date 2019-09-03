@@ -34,7 +34,7 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         ArtemisMarkdownEditorModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseDeleteDialogComponent, TextExerciseDeletePopupComponent],
-    entryComponents: [TextExerciseComponent, TextExerciseDeleteDialogComponent, TextExerciseDeletePopupComponent],
+    entryComponents: [TextExerciseDeleteDialogComponent, TextExerciseDeletePopupComponent],
     providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
 })
