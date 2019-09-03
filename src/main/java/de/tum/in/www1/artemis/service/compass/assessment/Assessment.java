@@ -66,6 +66,15 @@ public class Assessment {
     }
 
     /**
+     * Used for statistic
+     *
+     * @return the context to score mapping
+     */
+    public Map<Context, Score> getContextScoreList() {
+        return this.contextScoreMapping;
+    }
+
+    /**
      * Calculates a score for a given list of feedback elements. The score contains points, a collection of feedback comments and the confidence. Points: the credits that the
      * maximum amount of feedback elements share. Feedback comments: the collected feedback texts of all feedback elements that share the credits from above. Confidence: the
      * maximum percentage of feedback elements that share the same credits.

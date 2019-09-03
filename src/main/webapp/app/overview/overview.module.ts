@@ -20,6 +20,7 @@ import {
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
+    ProgrammingExerciseStudentIdeActionsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
     OverviewCourseCardComponent,
@@ -29,6 +30,7 @@ import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.mod
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -45,6 +47,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisCourseRegistrationSelector,
+        IntellijModule,
     ],
     declarations: [
         OverviewComponent,
@@ -59,11 +62,12 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         CourseLectureDetailsComponent,
         ExerciseActionButtonComponent,
         ExerciseDetailsStudentActionsComponent,
+        ProgrammingExerciseStudentIdeActionsComponent,
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 
-    exports: [],
+    exports: [ExerciseActionButtonComponent],
 })
 export class ArtemisOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

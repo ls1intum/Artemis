@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { Observable, Subscription, throwError, of } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
@@ -92,11 +92,17 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
     }
 
+    onSave() {
+        this.saveChangedFiles()
+            .pipe(catchError(() => of()))
+            .subscribe();
+    }
+
     /**
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles() {
+    saveChangedFiles(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));

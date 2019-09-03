@@ -40,6 +40,8 @@ import {
     faAngleUp,
     faSortAmountUp,
     faSortAmountDown,
+    faSortNumericUp,
+    faSortNumericDown,
     faUndo,
     faEraser,
     faExclamationCircle,
@@ -188,6 +190,8 @@ export class ArtemisIconsModule {
         library.addIcons(faAngleDown);
         library.addIcons(faSortAmountUp);
         library.addIcons(faSortAmountDown);
+        library.addIcons(faSortNumericUp);
+        library.addIcons(faSortNumericDown);
         library.addIcons(faChalkboardTeacher);
         library.addIcons(faCheckCircle);
         library.addIcons(faFileExport);

@@ -74,6 +74,6 @@ export class ExampleModelingSolutionComponent implements OnInit {
     async back() {
         const courseId = this.exercise.course!.id;
         await this.router.navigate([`/course/${courseId}/`]);
-        this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
+        this.router.navigate(['modeling-exercise/' + this.exerciseId + '/edit']);
     }
 }

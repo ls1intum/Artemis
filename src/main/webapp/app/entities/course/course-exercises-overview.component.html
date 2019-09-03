@@ -23,9 +23,9 @@
         <jhi-text-exercise [embedded]="true" [course]="course" (exerciseCount)="textExercisesCount = $event"></jhi-text-exercise>
     </jhi-course-exercise-card>
 
-    <!--  <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.fileUploadExercises">
-                <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
-          </jhi-course-exercise-card> -->
+    <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.fileUploadExercises">
+        <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
+    </jhi-course-exercise-card>
 </ng-container>
 
 <ng-template #loading>

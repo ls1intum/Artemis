@@ -50,6 +50,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Initializes current account and system notifications
+     */
     ngOnInit() {
         this.accountService.identity().then(user => {
             this.currentAccount = user!;
@@ -58,14 +61,24 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe from routeData on component destruction
+     */
     ngOnDestroy() {
         this.routeData.unsubscribe();
     }
 
+    /**
+     * Reloads notifications changes whenever notification list is modified
+     */
     registerChangeInUsers() {
         this.eventManager.subscribe('notificationListModification', () => this.loadAll());
     }
 
+    /**
+     * Deletes notification
+     * @param notification that we want to delete
+     */
     deleteNotification(notification: SystemNotification) {
         const modalRef = this.modalService.open(NotificationMgmtDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.notification = notification;
@@ -79,6 +92,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Loads system notifications
+     */
     loadAll() {
         this.systemNotificationService
             .query({
@@ -89,14 +105,26 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
             .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a user in the collection
+     * @param item current user
+     */
     trackIdentity(index: number, item: User) {
         return item.id;
     }
 
+    /**
+     * Checks if notification is still relevant
+     * @param systemNotification which relevance will be checked
+     */
     isNotificationActive(systemNotification: SystemNotification) {
         return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
     }
 
+    /**
+     * Sorts parameters by specified order
+     */
     sort() {
         const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
         if (this.predicate !== 'id') {
@@ -105,6 +133,10 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         return result;
     }
 
+    /**
+     * Loads specified page, if it is not the same as previous one
+     * @param page number of the page that will be loaded
+     */
     loadPage(page: number) {
         if (page !== this.previousPage) {
             this.previousPage = page;
@@ -112,6 +144,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Transitions to another page and/or sorting order
+     */
     transition() {
         this.router.navigate(['/admin/notification-management'], {
             queryParams: {

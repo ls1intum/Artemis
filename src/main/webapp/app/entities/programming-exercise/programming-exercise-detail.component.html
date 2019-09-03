@@ -75,7 +75,7 @@
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                             [showUngradedResults]="true"
                             class="mr-2"
@@ -89,6 +89,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.templateParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
@@ -98,7 +99,7 @@
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingSolutionParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                             [showUngradedResults]="true"
                             class="mr-2"
@@ -112,6 +113,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.solutionParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
