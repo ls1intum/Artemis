@@ -570,4 +570,17 @@ public class CompassService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
     }
+
+    /**
+     * Print statistics of the modeling exercise with the given id for internal analysis.
+     *
+     * @param exerciseId the id of the modeling exercise for which the statistic should be printed
+     */
+    public void printStatistic(Long exerciseId) {
+        if (!loadExerciseIfSuspended(exerciseId)) {
+            return;
+        }
+        compassCalculationEngines.get(exerciseId).printStatistic(exerciseId,
+                resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
+    }
 }
