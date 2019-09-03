@@ -23,6 +23,9 @@ export class SettingsComponent implements OnInit {
         });
     }
 
+    /**
+     * Saves the current user account, writing all changes made to the database.
+     */
     save() {
         this.account.save(this.settingsAccount).subscribe(
             () => {
@@ -44,6 +47,12 @@ export class SettingsComponent implements OnInit {
         );
     }
 
+    /**
+     * Creates a copy of the given account. Note, that this copy is not written to the database. It rather just
+     * creates a copy of the JS object for convenience purposes.
+     *
+     * @param account The account, for which to create an identical copy (object)
+     */
     copyAccount(account: Account): Account {
         return new Account(
             account.activated || undefined,

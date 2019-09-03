@@ -27,6 +27,9 @@ export class ApollonDiagramListComponent implements OnInit {
         this.reverse = true;
     }
 
+    /**
+     * Initializes Apollon diagrams from the server
+     */
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
             response => {
@@ -38,12 +41,20 @@ export class ApollonDiagramListComponent implements OnInit {
         );
     }
 
+    /**
+     * Navigates to details pages of specified Apollon diagram
+     * @param id of the Apolon Diagram
+     */
     goToDetailsPage(id: number) {
         this.router.navigate([id], {
             relativeTo: this.route,
         });
     }
 
+    /**
+     * Deletes specified Apollon diagram
+     * @param apollonDiagram
+     */
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
             response => {
@@ -58,10 +69,17 @@ export class ApollonDiagramListComponent implements OnInit {
         );
     }
 
+    /**
+     * Returns the title for Apollon diagram
+     * @param diagram
+     */
     getTitleForApollonDiagram(diagram: ApollonDiagram): string {
         return diagram.title && diagram.title.trim().length ? diagram.title.trim() : `#${diagram.id}`;
     }
 
+    /**
+     * Opens dialog for creating a new diagram
+     */
     openCreateDiagramDialog() {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
@@ -69,9 +87,17 @@ export class ApollonDiagramListComponent implements OnInit {
         formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram);
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a diagram in the collection
+     * @param item current diagram
+     */
     trackId(index: number, item: ApollonDiagram) {
         return item.id;
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

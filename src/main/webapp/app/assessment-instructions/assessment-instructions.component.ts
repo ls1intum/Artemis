@@ -18,11 +18,17 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
+    /**
+     * Assigns formatted problem statement and formatted grading criteria on component initialization
+     */
     ngOnInit() {
         this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         this.formattedGradingCriteria = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
     }
 
+    /**
+     * Configures interact to make instructions expandable
+     */
     ngAfterViewInit(): void {
         interact('.expanded-instructions')
             .resizable({

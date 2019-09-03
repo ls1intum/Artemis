@@ -17,10 +17,16 @@ export class JhiMetricsMonitoringComponent implements OnInit {
         this.JCACHE_KEY = 'jcache.statistics';
     }
 
+    /**
+     * Calls the refresh method on init
+     */
     ngOnInit() {
         this.refresh();
     }
 
+    /**
+     * Refreshes the metrics by retrieving all metrics and thread dumps
+     */
     refresh() {
         this.updatingMetrics = true;
         this.metricsService.getMetrics().subscribe(metrics => {
@@ -32,10 +38,20 @@ export class JhiMetricsMonitoringComponent implements OnInit {
         });
     }
 
+    /**
+     * Checks if the metric with the key {@param key} exists
+     * @param metrics json with metrics objects
+     * @param key string identifier of a metric
+     */
     isObjectExisting(metrics: any, key: string) {
         return metrics && metrics[key];
     }
 
+    /**
+     * Checks if the metric with the key {@param key} exists and is not empty
+     * @param metrics json with metrics objects
+     * @param key key string identifier of a metric
+     */
     isObjectExistingAndNotEmpty(metrics: any, key: string) {
         return this.isObjectExisting(metrics, key) && JSON.stringify(metrics[key]) !== '{}';
     }

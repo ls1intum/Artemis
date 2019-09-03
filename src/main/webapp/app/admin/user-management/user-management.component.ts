@@ -47,6 +47,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
+     */
     ngOnInit() {
         this.accountService.identity().then(user => {
             this.currentAccount = user!;
@@ -55,14 +58,25 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe from routeData
+     */
     ngOnDestroy() {
         this.routeData.unsubscribe();
     }
 
+    /**
+     * Subscribe to event 'userListModification' and call {@link loadAll} on event broadcast
+     */
     registerChangeInUsers() {
         this.eventManager.subscribe('userListModification', () => this.loadAll());
     }
 
+    /**
+     * Update the user's activation status
+     * @param user whose activation status should be changed
+     * @param isActivated true if user should be activated, otherwise false
+     */
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
 
@@ -78,6 +92,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
+     */
     loadAll() {
         this.userService
             .query({
@@ -88,10 +105,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a user in the collection
+     * @param item current user
+     */
     trackIdentity(index: number, item: User) {
         return item.id;
     }
 
+    /**
+     * Sorts parameters by specified order
+     */
     sort() {
         const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
         if (this.predicate !== 'id') {
@@ -100,6 +125,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         return result;
     }
 
+    /**
+     * Loads specified page, if it is not the same as previous one
+     * @param page number of the page that will be loaded
+     */
     loadPage(page: number) {
         if (page !== this.previousPage) {
             this.previousPage = page;
@@ -107,6 +136,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Transitions to another page and/or sorting order
+     */
     transition() {
         this.router.navigate(['/admin/user-management'], {
             queryParams: {
@@ -117,6 +149,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.loadAll();
     }
 
+    /**
+     * Opens a delete dialog to delete a user
+     * @param user that should be deleted
+     */
     deleteUser(user: User) {
         const modalRef = this.modalService.open(UserManagementDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.user = user;
