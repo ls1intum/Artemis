@@ -12,10 +12,17 @@ export class NotificationMgmtDeleteDialogComponent {
 
     constructor(private systemNotificationService: SystemNotificationService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
+    /**
+     * Closes the dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Calls SystemNotificationService to delete notification and closes the dialog
+     * @param id of the notification
+     */
     confirmDelete(id: number) {
         this.systemNotificationService.delete(id).subscribe(response => {
             this.eventManager.broadcast({

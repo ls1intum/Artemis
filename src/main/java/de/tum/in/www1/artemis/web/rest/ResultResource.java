@@ -68,7 +68,7 @@ public class ResultResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -76,7 +76,7 @@ public class ResultResource {
 
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             SimpMessageSendingOperations messagingTemplate, LtiService ltiService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -86,7 +86,7 @@ public class ResultResource {
         this.feedbackService = feedbackService;
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingTemplate = messagingTemplate;
         this.ltiService = ltiService;
     }
@@ -492,8 +492,8 @@ public class ResultResource {
      * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
      * or build errors)
      *
-     * @param resultId the id of the result to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
+     * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -501,18 +501,31 @@ public class ResultResource {
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> result = resultRepository.findByIdWithEagerFeedbacks(resultId);
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             return notFound();
         }
-        StudentParticipation participation = (StudentParticipation) result.get().getParticipation();
+        Participation participation = result.get().getParticipation();
 
-        if (!participationService.canAccessParticipation(participation)) {
+        // The permission check depends on the participation type (normal participations vs. programming exercise participations).
+        if (participation instanceof StudentParticipation) {
+            if (!participationService.canAccessParticipation((StudentParticipation) participation)) {
+                return forbidden();
+            }
+        }
+        else if (participation instanceof ProgrammingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+                return forbidden();
+            }
+        }
+        else {
+            // This would be the case that a new participation type is introduced, without this the user would have access to it regardless of the permissions.
             return forbidden();
         }
 
         try {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
-            // TODO: send an empty list to the client and do not send a 404
+            // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
+            // (= e.g. build error in programming exercises) is different from there being an empty feedback list
             return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(notFound());
         }
         catch (Exception e) {

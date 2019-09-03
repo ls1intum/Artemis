@@ -431,7 +431,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
-        const result = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
+        const result = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).to.be.empty;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -440,7 +440,11 @@ describe('CodeEditorStudentIntegration', () => {
         // commit
         expect(container.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         commitStub.returns(of(null));
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, {} as ProgrammingSubmission]);
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission: {} as ProgrammingSubmission,
+            participationId: result!.participation!.id,
+        });
         container.actions.commit();
         containerFixture.detectChanges();
 
@@ -448,7 +452,11 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.buildOutput.isBuilding).to.be.true;
 
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            submission: null,
+            participationId: result!.participation!.id,
+        });
         subscribeForLatestResultOfParticipationSubject.next(result);
         containerFixture.detectChanges();
 
@@ -459,7 +467,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should first save unsaved files before triggering commit', () => {
         cleanInitialize();
-        const succesfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
@@ -487,8 +495,12 @@ describe('CodeEditorStudentIntegration', () => {
         expect(commitStub).to.have.been.calledOnce;
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.editorState).to.equal(EditorState.CLEAN);
-        subscribeForLatestResultOfParticipationSubject.next(succesfulResult);
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, {} as ProgrammingSubmission]);
+        subscribeForLatestResultOfParticipationSubject.next(successfulResult);
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission: {} as ProgrammingSubmission,
+            participationId: successfulResult!.participation!.id,
+        });
         commitSubject.next(null);
         containerFixture.detectChanges();
 
@@ -496,7 +508,11 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.buildOutput.isBuilding).to.be.true;
 
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            submission: null,
+            participationId: successfulResult!.participation!.id,
+        });
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).to.be.false;
@@ -547,7 +563,8 @@ describe('CodeEditorStudentIntegration', () => {
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 1, exercise, results: [result] } as Participation;
+        const result = { id: 3, successful: false };
+        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();

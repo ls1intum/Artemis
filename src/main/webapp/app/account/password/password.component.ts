@@ -24,6 +24,10 @@ export class PasswordComponent implements OnInit {
         });
     }
 
+    /**
+     * Changes the current user's password. It will only try to change it if the values in both the new password field
+     * and the confirmation of the new password are the same.
+     */
     changePassword() {
         if (this.newPassword !== this.confirmPassword) {
             this.error = null;

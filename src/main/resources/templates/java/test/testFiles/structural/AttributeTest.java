@@ -1,30 +1,23 @@
 package ${packageName};
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.lang.reflect.Type;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
- *
- * This test evaluates if the specified attributes in the structure oracle
- * are correctly implemented with the expected types and visibility modifiers
- * (in case these are specified).
+ * @version 2.2 (01.09.2019)
+ * <br><br>
+ * This test evaluates if the specified attributes in the structure oracle are correctly implemented with the expected type, visibility modifiers and annotations,
+ * based on its definition in the structure oracle (test.json).
  */
 @RunWith(Parameterized.class)
 public class AttributeTest extends StructuralTest {
@@ -50,10 +43,10 @@ public class AttributeTest extends StructuralTest {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
             // Only test the classes that have attributes defined in the oracle.
-            if(expectedClassJSON.has("class") && (expectedClassJSON.has("attributes") || expectedClassJSON.has("enumValues"))) {
-                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
-                String expectedClassName = expectedClassPropertiesJSON.getString("name");
-                String expectedPackageName = expectedClassPropertiesJSON.getString("package");
+            if(expectedClassJSON.has(JSON_PROPERTY_CLASS) && (expectedClassJSON.has(JSON_PROPERTY_ATTRIBUTES) || expectedClassJSON.has("enumValues"))) {
+                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
+                String expectedClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_NAME);
+                String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[]{ expectedClassName, expectedPackageName, expectedClassJSON });
             }
         }
@@ -68,8 +61,8 @@ public class AttributeTest extends StructuralTest {
     public void testAttributes() {
         Class<?> observedClass = findClassForTestType("attribute");
 
-        if(expectedClassJSON.has("attributes")) {
-            JSONArray expectedAttributes = expectedClassJSON.getJSONArray("attributes");
+        if(expectedClassJSON.has(JSON_PROPERTY_ATTRIBUTES)) {
+            JSONArray expectedAttributes = expectedClassJSON.getJSONArray(JSON_PROPERTY_ATTRIBUTES);
             checkAttributes(observedClass, expectedAttributes);
         }
         if(expectedClassJSON.has("enumValues")) {
@@ -87,18 +80,21 @@ public class AttributeTest extends StructuralTest {
     private void checkAttributes(Class<?> observedClass, JSONArray expectedAttributes) {
         for(int i = 0; i < expectedAttributes.length(); i++) {
             JSONObject expectedAttribute = expectedAttributes.getJSONObject(i);
-            String expectedName = expectedAttribute.getString("name");
-            String expectedTypeName= expectedAttribute.getString("type");
-            JSONArray expectedModifiers = expectedAttribute.has("modifiers") ? expectedAttribute.getJSONArray("modifiers") : new JSONArray();
+            String expectedName = expectedAttribute.getString(JSON_PROPERTY_NAME);
+            String expectedTypeName = expectedAttribute.getString(JSON_PROPERTY_TYPE);
+            JSONArray expectedModifiers = expectedAttribute.has(JSON_PROPERTY_MODIFIERS) ? expectedAttribute.getJSONArray(JSON_PROPERTY_MODIFIERS) : new JSONArray();
+            JSONArray expectedAnnotations = expectedAttribute.has(JSON_PROPERTY_ANNOTATIONS) ? expectedAttribute.getJSONArray(JSON_PROPERTY_ANNOTATIONS) : new JSONArray();
 
             // We check for each expected attribute if the name and the type is right.
             boolean nameIsRight = false;
             boolean typeIsRight = false;
             boolean modifiersAreRight = false;
+            boolean annotationsAreRight = false;
 
             for(Field observedAttribute : observedClass.getDeclaredFields()) {
                 String observedName = observedAttribute.getName();
                 String[] observedModifiers = Modifier.toString(observedAttribute.getModifiers()).split(" ");
+                Annotation[] observedAnnotations = observedAttribute.getAnnotations();
 
                 // If the names don't match, then proceed to the next observed attribute
                 if(!expectedName.equals(observedName)) {
@@ -108,14 +104,12 @@ public class AttributeTest extends StructuralTest {
                     nameIsRight = true;
                 }
 
-                // Then check the parameters
                 typeIsRight = checkType(observedAttribute, expectedTypeName);
-
-                // And then the modifiers
                 modifiersAreRight = checkModifiers(observedModifiers, expectedModifiers);
+                annotationsAreRight = checkAnnotations(observedAnnotations, expectedAnnotations);
 
                 // If all are correct, then we found our attribute and we can break the loop
-                if(nameIsRight && typeIsRight && modifiersAreRight) {
+                if(nameIsRight && typeIsRight && modifiersAreRight && annotationsAreRight) {
                     break;
                 }
             }
@@ -124,7 +118,8 @@ public class AttributeTest extends StructuralTest {
 
             assertTrue("Problem: the name of " + expectedAttributeInformation + " is not implemented as expected.", nameIsRight);
             assertTrue("Problem: the type of " + expectedAttributeInformation + " is not implemented as expected.", typeIsRight);
-            assertTrue("Problem: the modifiers (access type, abstract, etc.) of " + expectedAttributeInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the modifier(s) (access type, abstract, etc.) of " + expectedAttributeInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the annotation(s) of " + expectedAttributeInformation + " are not implemented as expected.", annotationsAreRight);
         }
     }
 
@@ -193,5 +188,4 @@ public class AttributeTest extends StructuralTest {
             return expectedTypeName.equals(observedTypeName);
         }
     }
-
 }

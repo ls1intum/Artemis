@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,8 +82,13 @@ public class ProgrammingSubmissionService {
                 && ((ProgrammingExerciseStudentParticipation) peParticipation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             participationService.resumeExercise(peParticipation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) peParticipation);
-            // in addition we need to trigger a build so that we receive a result in a few seconds
-            continuousIntegrationService.get().triggerBuild(peParticipation);
+
+            try {
+                continuousIntegrationService.get().triggerBuild(peParticipation);
+            }
+            catch (HttpException ex) {
+                // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
+            }
         }
 
         String lastCommitHash;
@@ -196,5 +202,27 @@ public class ProgrammingSubmissionService {
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
         return programmingSubmissionRepository.save(newSubmission);
+    }
+
+    /**
+     * Uses {@link #createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation, SubmissionType)} but for multiple participations.
+     * Will ignore exceptions that are raised by this method and just not create a submission for the concerned participations.
+     *
+     * @param participations for which to create new submissions.
+     * @param submissionType the type for the submissions to be created.
+     * @return list of created submissions (might be smaller as the list of provided participations!).
+     */
+    @Transactional
+    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
+            SubmissionType submissionType) {
+        return participations.stream().map(participation -> {
+            try {
+                return createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
+            }
+            catch (IllegalStateException ex) {
+                // The exception is already logged, we just return null here.
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

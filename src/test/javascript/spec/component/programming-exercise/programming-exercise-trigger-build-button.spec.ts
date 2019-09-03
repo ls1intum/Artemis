@@ -87,6 +87,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.exercise = { id: 4 };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
@@ -99,7 +100,7 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerButton).not.to.exist;
 
         // After a failed submission is sent, the button should be displayed.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
 
         fixture.detectChanges();
         triggerButton = getTriggerButton();
@@ -108,12 +109,13 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.exercise = { id: 5 };
         const changes: SimpleChanges = {
             participation: new SimpleChange(undefined, comp.participation, true),
         };
         comp.ngOnChanges(changes);
 
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
 
         fixture.detectChanges();
 
@@ -125,13 +127,13 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerBuildStub).to.have.been.calledOnce;
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: comp.participation.id });
         expect(comp.isBuilding).to.be.true;
         fixture.detectChanges();
         expect(triggerButton.disabled).to.be.true;
 
         // Now the server signals that the build is done, the button should now be removed.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: comp.participation.id });
         expect(comp.isBuilding).to.be.false;
         fixture.detectChanges();
         triggerButton = getTriggerButton();

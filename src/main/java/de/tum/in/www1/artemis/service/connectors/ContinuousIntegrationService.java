@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.net.URL;
 import java.util.List;
 
+import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -47,8 +48,9 @@ public interface ContinuousIntegrationService {
      * triggers a build for the build plan in the given participation
      * 
      * @param participation the participation with the id of the build plan that should be triggered
+     * @throws HttpException if the request to the CI failed.
      */
-    public void triggerBuild(ProgrammingExerciseParticipation participation);
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException;
 
     /**
      * Delete project with given identifier from CI system.
