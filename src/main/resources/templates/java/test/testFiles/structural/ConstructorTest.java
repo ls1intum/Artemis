@@ -1,26 +1,22 @@
 package ${packageName};
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
- *
- * This test evaluates if the specified constructors in the structure oracle
- * are correctly implemented with the expected parameter types
- * (in case these are specified).
+ * @version 2.2 (01.09.2019)
+ * <br><br>
+ * This test evaluates if the specified constructors in the structure oracle are correctly implemented with the expected parameter types and annotations,
+ * based on its definition in the structure oracle (test.json).
  */
 @RunWith(Parameterized.class)
 public class ConstructorTest extends StructuralTest {
@@ -46,10 +42,10 @@ public class ConstructorTest extends StructuralTest {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
             // Only test the constructors if they are specified in the structure diff
-            if (expectedClassJSON.has("class") && expectedClassJSON.has("constructors")) {
-                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
-                String expectedClassName = expectedClassPropertiesJSON.getString("name");
-                String expectedPackageName = expectedClassPropertiesJSON.getString("package");
+            if (expectedClassJSON.has(JSON_PROPERTY_CLASS) && expectedClassJSON.has(JSON_PROPERTY_CONSTRUCTORS)) {
+                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
+                String expectedClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_NAME);
+                String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
         }
@@ -64,8 +60,8 @@ public class ConstructorTest extends StructuralTest {
     public void testConstructors() {
         Class<?> actualClass = findClassForTestType("constructor");
 
-        if (expectedClassJSON.has("constructors")) {
-            JSONArray expectedConstructors = expectedClassJSON.getJSONArray("constructors");
+        if (expectedClassJSON.has(JSON_PROPERTY_CONSTRUCTORS)) {
+            JSONArray expectedConstructors = expectedClassJSON.getJSONArray(JSON_PROPERTY_CONSTRUCTORS);
 
             checkConstructors(actualClass, expectedConstructors);
         }
@@ -80,30 +76,25 @@ public class ConstructorTest extends StructuralTest {
     private void checkConstructors(Class<?> observedClass, JSONArray expectedConstructors) {
         for (int i = 0; i < expectedConstructors.length(); i++) {
             JSONObject expectedConstructor = expectedConstructors.getJSONObject(i);
-            JSONArray expectedParameters = new JSONArray();
-            if (expectedConstructor.has("parameters")) {
-                expectedParameters = expectedConstructor.getJSONArray("parameters");
-            }
-            JSONArray expectedModifiers = new JSONArray();
-            if (expectedConstructor.has("modifiers")) {
-                expectedModifiers = expectedConstructor.getJSONArray("modifiers");
-            }
+            JSONArray expectedParameters = expectedConstructor.has(JSON_PROPERTY_PARAMETERS) ? expectedConstructor.getJSONArray(JSON_PROPERTY_PARAMETERS) : new JSONArray();
+            JSONArray expectedModifiers = expectedConstructor.has(JSON_PROPERTY_MODIFIERS) ? expectedConstructor.getJSONArray(JSON_PROPERTY_MODIFIERS) : new JSONArray();
+            JSONArray expectedAnnotations = expectedConstructor.has(JSON_PROPERTY_ANNOTATIONS) ? expectedConstructor.getJSONArray(JSON_PROPERTY_ANNOTATIONS) : new JSONArray();
 
             boolean parametersAreRight = false;
             boolean modifiersAreRight = false;
+            boolean annotationsAreRight = false;
 
             for (Constructor<?> observedConstructor : observedClass.getDeclaredConstructors()) {
                 Class<?>[] observedParameters = observedConstructor.getParameterTypes();
                 String[] observedModifiers = Modifier.toString(observedConstructor.getModifiers()).split(" ");
+                Annotation[] observedAnnotations = observedConstructor.getAnnotations();
 
-                // First check the parameters
                 parametersAreRight = checkParameters(observedParameters, expectedParameters);
-
-                // Then the modifiers
                 modifiersAreRight = checkModifiers(observedModifiers, expectedModifiers);
+                annotationsAreRight = checkAnnotations(observedAnnotations, expectedAnnotations);
 
                 // If both are correct, then we found our constructor and we can break the loop
-                if (parametersAreRight && modifiersAreRight) {
+                if (parametersAreRight && modifiersAreRight && annotationsAreRight) {
                     break;
                 }
             }
@@ -113,8 +104,7 @@ public class ConstructorTest extends StructuralTest {
 
             assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.", parametersAreRight);
             assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.", modifiersAreRight);
-            assertTrue("Problem: the constructor of the class " + expectedClassName + " is not implemented as expected.", parametersAreRight && modifiersAreRight);
+            assertTrue("Problem: the annotation(s) of " + expectedConstructorInformation + " are not implemented as expected.", annotationsAreRight);
         }
     }
-
 }
