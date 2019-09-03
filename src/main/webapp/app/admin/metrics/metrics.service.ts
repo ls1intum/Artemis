@@ -8,10 +8,16 @@ import { SERVER_API_URL } from 'app/app.constants';
 export class JhiMetricsService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Send GET request to retrieve all metrics
+     */
     getMetrics(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/jhimetrics');
     }
 
+    /**
+     * Send GET request to retrieve all thread dumps
+     */
     threadDump(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/threaddump');
     }
