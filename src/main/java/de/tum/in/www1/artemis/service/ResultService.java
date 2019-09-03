@@ -167,6 +167,9 @@ public class ResultService {
         }
 
         if (result != null) {
+            // TODO: There is a design issue here: As the participation was not loaded in this session (= Transaction), getExercise will fail when the participation was not loaded
+            // in a transaction above this method invocation.
+            // The alternative would be to pass the participationId to this method, but this could result in multiple database calls for the same participation object.
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
