@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -82,8 +86,8 @@ public class ProgrammingSubmissionResource {
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setExercise(null);
             submission.getParticipation().setSubmissions(null);
-            // notify the user via websocket.
-            messagingTemplate.convertAndSend("/topic/participation/" + participationId + "/newSubmission", submission);
+
+            notifyUserAboutSubmission(submission);
         }
         catch (IllegalArgumentException ex) {
             log.error(
@@ -131,9 +135,9 @@ public class ProgrammingSubmissionResource {
         catch (IllegalStateException ex) {
             return notFound();
         }
-        // notify the user via websocket.
-        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+
+        triggerBuildAndNotifyUser(submission);
+
         return ResponseEntity.ok().build();
     }
 
@@ -163,9 +167,67 @@ public class ProgrammingSubmissionResource {
         catch (IllegalStateException ex) {
             return notFound();
         }
-        // notify the user via websocket.
-        messagingTemplate.convertAndSend("/topic/participation/" + participationId + Constants.PROGRAMMING_SUBMISSION_TOPIC, submission);
-        continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
+
+        triggerBuildAndNotifyUser(submission);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the CI of all participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     */
+    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (programmingExercise == null) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
+        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
+                SubmissionType.INSTRUCTOR);
+
+        notifyUserTriggerBuildForNewSubmissions(submissions);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the CI of the provided participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * Note: If a participationId does not belong to the exercise, it will be ignored!
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @param participationIds list of participation ids.
+     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     */
+    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
+        if (participationIds.isEmpty()) {
+            return badRequest();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (programmingExercise == null) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds);
+        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
+                SubmissionType.INSTRUCTOR);
+
+        notifyUserTriggerBuildForNewSubmissions(submissions);
+
         return ResponseEntity.ok().build();
     }
 
@@ -191,11 +253,41 @@ public class ProgrammingSubmissionResource {
 
         List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
 
-        // notify users via websocket.
-        for (ProgrammingSubmission submission : submissions) {
-            messagingTemplate.convertAndSend("/topic/participation/" + submission.getParticipation().getId() + "/newSubmission", submission);
-        }
+        notifyUserTriggerBuildForNewSubmissions(submissions);
 
         return ResponseEntity.ok().build();
+    }
+
+    private void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
+        for (ProgrammingSubmission submission : submissions) {
+            triggerBuildAndNotifyUser(submission);
+        }
+    }
+
+    /**
+     * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
+     * Will send an error object in the case that the communication with the CI failed.
+     *
+     * @param submission ProgrammingSubmission that was just created.
+     */
+    private void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
+        try {
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            notifyUserAboutSubmission(submission);
+        }
+        catch (HttpException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
+            notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
+    private void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, submission);
+    }
+
+    private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, error);
     }
 }

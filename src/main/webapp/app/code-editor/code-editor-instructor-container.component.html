@@ -106,7 +106,7 @@
         <div class="ml-auto d-flex align-items-center">
             <jhi-updating-result
                 *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
-                [exerciseType]="PROGRAMMING"
+                [exercise]="exercise"
                 [participation]="selectedParticipation"
                 [showUngradedResults]="true"
                 [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
@@ -116,6 +116,7 @@
             <jhi-programming-exercise-student-trigger-build-button
                 class="mr-3"
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
+                [exercise]="exercise"
                 [participation]="selectedParticipation"
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>

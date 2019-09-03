@@ -16,6 +16,9 @@ export class NotificationMgmtUpdateComponent implements OnInit {
 
     constructor(private userService: UserService, private systemNotificationService: SystemNotificationService, private route: ActivatedRoute) {}
 
+    /**
+     * Loads notification from route data
+     */
     ngOnInit() {
         this.isSaving = false;
         this.route.data.subscribe(({ notification }) => {
@@ -23,10 +26,16 @@ export class NotificationMgmtUpdateComponent implements OnInit {
         });
     }
 
+    /**
+     * Returns to previous state (same as back button in the browser)
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Either creates or updates the notification, when the form is submitted
+     */
     save() {
         this.isSaving = true;
         if (this.notification.id) {

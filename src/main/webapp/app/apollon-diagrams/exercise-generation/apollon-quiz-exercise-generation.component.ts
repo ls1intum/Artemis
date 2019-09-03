@@ -24,6 +24,9 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         private quizExerciseService: QuizExerciseService,
     ) {}
 
+    /**
+     * Initializes courses from the server and assigns selected course
+     */
     ngOnInit() {
         this.courseService.query().subscribe(response => {
             this.courses = response.body!;
@@ -31,6 +34,9 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         });
     }
 
+    /**
+     * Generates quiz exercise from Apollon diagram model
+     */
     async save() {
         if (this.selectedCourse === undefined) {
             return;
@@ -46,6 +52,9 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         }
     }
 
+    /**
+     * Closes the dialog
+     */
     dismiss() {
         this.activeModal.close();
     }

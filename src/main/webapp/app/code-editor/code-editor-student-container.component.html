@@ -17,7 +17,7 @@
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
             *ngIf="participation"
-            [exerciseType]="PROGRAMMING"
+            [exercise]="exercise"
             [showUngradedResults]="true"
             [showGradedBadge]="true"
             [participation]="participation"
@@ -26,6 +26,7 @@
         ></jhi-updating-result>
         <jhi-programming-exercise-student-trigger-build-button
             class="mr-2"
+            [exercise]="exercise"
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
