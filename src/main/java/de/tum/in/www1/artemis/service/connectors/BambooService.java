@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.Base;
@@ -225,7 +226,7 @@ public class BambooService implements ContinuousIntegrationService {
                 HttpMethod.POST,
                 entity,
                 Map.class);
-        } catch (Exception e) {
+        } catch (RestClientException e) {
             log.error("HttpError while triggering build", e);
             throw new HttpException("Communication failed when trying to trigger the Bamboo build for participationId " + participation.getId() + " with the following error: " + e.getMessage());
         }
