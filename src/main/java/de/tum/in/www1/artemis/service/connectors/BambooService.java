@@ -668,7 +668,7 @@ public class BambooService implements ContinuousIntegrationService {
                 final StringBuilder errorMessageString = new StringBuilder();
                 errors.forEach(error -> {
                     final String message = (String) error.get("message");
-                    errorMessageString.append(processErrorMessage(programmingLanguage, message)).append("\\n");
+                    errorMessageString.append(processResultErrorMessage(programmingLanguage, message)).append("\\n");
                 });
 
                 createAutomaticFeedback(result, methodName, false, errorMessageString.toString());
@@ -680,7 +680,7 @@ public class BambooService implements ContinuousIntegrationService {
         return result.getFeedbacks();
     }
 
-    private String processErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             return message.split("\\n", 2)[0]
                 .replace("java.lang.AssertionError: ", "");
@@ -732,7 +732,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                     List<String> errors = (List<String>) failedTest.get("errors");
                     final StringBuilder errorMessageString = new StringBuilder();
-                    errors.forEach(error -> errorMessageString.append(processErrorMessage(programmingLanguage, error)));
+                    errors.forEach(error -> errorMessageString.append(processResultErrorMessage(programmingLanguage, error)));
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
