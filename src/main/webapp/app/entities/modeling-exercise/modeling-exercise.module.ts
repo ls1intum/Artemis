@@ -40,7 +40,7 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
         ModelingExerciseDeleteDialogComponent,
         ModelingExerciseDeletePopupComponent,
     ],
-    entryComponents: [ModelingExerciseComponent, ModelingExerciseDeleteDialogComponent, ModelingExerciseDeletePopupComponent],
+    entryComponents: [ModelingExerciseDeleteDialogComponent, ModelingExerciseDeletePopupComponent],
     providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
 })
