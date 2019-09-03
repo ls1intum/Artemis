@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
@@ -14,7 +14,6 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -24,7 +23,7 @@ import { filter } from 'rxjs/operators';
 export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
 
-    modelingExercise: ModelingExercise = new ModelingExercise('ClassDiagram');
+    modelingExercise: ModelingExercise;
     isSaving: boolean;
     dueDateError: boolean;
     assessmentDueDateError: boolean;
@@ -47,26 +46,23 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.params.subscribe(params => {
-            if (params['courseId']) {
-                this.courseService.find(params['courseId']).subscribe(res => {
-                    const course = res.body!;
-                    this.modelingExercise = new ModelingExercise('ClassDiagram');
-                    this.modelingExercise.course = course;
-                    this.initializeCategoriesForCourse();
-                });
-            } else if (params['exerciseId']) {
-                this.modelingExerciseService
-                    .find(params['exerciseId'])
-                    .pipe(filter(res => !!res.body))
-                    .subscribe(res => {
-                        this.modelingExercise = res.body!;
-                        this.initializeCategoriesForCourse();
-                    });
-            }
+        // This is used to scroll page to the top of the page, because the routing keeps the position for the
+        // new page from previous page.
+        window.scroll(0, 0);
+
+        this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            this.modelingExercise = modelingExercise;
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
+            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
+                (res: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
         });
         this.isSaving = false;
         this.dueDateError = false;
@@ -75,16 +71,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
-    }
-
-    initializeCategoriesForCourse() {
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -130,7 +116,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     previousState() {
-        window.history.back();
+        if (this.modelingExercise.course) {
+            this.router.navigate(['/course', this.modelingExercise.course.id]);
+        } else {
+            window.history.back();
+        }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {

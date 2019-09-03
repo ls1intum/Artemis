@@ -16,10 +16,11 @@ import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, GuidedTourState, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState, Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -66,18 +67,15 @@ describe('Service Tests', () => {
                 settingsKey: 'course_overview_tour',
                 preventBackdropFromAdvancing: true,
                 steps: [
-                    {
-                        contentType: ContentType.IMAGE,
+                    new TextTourStep({
                         headlineTranslateKey: '',
-                        subHeadlineTranslateKey: '',
                         contentTranslateKey: '',
-                    },
-                    {
-                        contentType: ContentType.TEXT,
+                    }),
+                    new TextTourStep({
                         headlineTranslateKey: '',
                         contentTranslateKey: '',
                         orientation: Orientation.TOPLEFT,
-                    },
+                    }),
                 ],
             };
 
