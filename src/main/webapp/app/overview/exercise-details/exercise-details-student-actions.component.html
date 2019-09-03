@@ -201,7 +201,6 @@
             [hideLabelMobile]="false"
             *ngIf="participationStatus() === INACTIVE"
             (click)="resumeProgrammingExercise()"
-            (load)="startCloneRepositoryGuidedTour()"
         ></button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>

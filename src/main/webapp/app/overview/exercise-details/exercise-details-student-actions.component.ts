@@ -164,6 +164,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                        this.startCloneRepositoryGuidedTour();
                     }
                 },
                 error => {
@@ -219,7 +220,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             // Set timeout for clone repository button to render
             setTimeout(() => {
                 this.guidedTourService.startTour();
-            });
+            }, 1000);
         }
     }
 }
