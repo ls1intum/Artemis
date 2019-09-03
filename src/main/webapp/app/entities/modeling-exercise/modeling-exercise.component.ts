@@ -72,17 +72,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         modalRef.componentInstance.entityTitle = modelingExercise.title;
         modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.exercise.delete.question', { title: modelingExercise.title });
         modalRef.componentInstance.deleteConfirmationText = this.translateService.instant('artemisApp.exercise.delete.typeNameToConfirm');
-        modalRef.result.then(
-            result => {
-                this.modelingExerciseService.delete(modelingExercise.id).subscribe(response => {
-                    this.eventManager.broadcast({
-                        name: 'modelingExerciseListModification',
-                        content: 'Deleted an modelingExercise',
-                    });
+        modalRef.result.then(() => {
+            this.modelingExerciseService.delete(modelingExercise.id).subscribe(response => {
+                this.eventManager.broadcast({
+                    name: 'modelingExerciseListModification',
+                    content: 'Deleted an modelingExercise',
                 });
-            },
-            reason => {},
-        );
+            });
+        });
     }
 
     protected getChangeEventName(): string {

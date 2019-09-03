@@ -68,17 +68,14 @@ export class CourseComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.entityTitle = course.title;
         modalRef.componentInstance.deleteQuestion = this.translateService.instant('artemisApp.course.delete.question', { title: course.title });
         modalRef.componentInstance.deleteConfirmationText = this.translateService.instant('artemisApp.course.delete.typeNameToConfirm');
-        modalRef.result.then(
-            result => {
-                this.courseService.delete(course.id).subscribe(response => {
-                    this.eventManager.broadcast({
-                        name: 'courseListModification',
-                        content: 'Deleted an course',
-                    });
+        modalRef.result.then(() => {
+            this.courseService.delete(course.id).subscribe(response => {
+                this.eventManager.broadcast({
+                    name: 'courseListModification',
+                    content: 'Deleted an course',
                 });
-            },
-            reason => {},
-        );
+            });
+        });
     }
 
     private onError(error: HttpErrorResponse) {
