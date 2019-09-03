@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -14,6 +14,7 @@ import {
     ParticipationPopupService,
     participationRoute,
     ParticipationService,
+    ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
@@ -46,5 +47,12 @@ export class ArtemisParticipationModule {
                 this.languageService.changeLanguage(languageKey);
             }
         });
+    }
+
+    static forRoot(): ModuleWithProviders {
+        return {
+            ngModule: ArtemisParticipationModule,
+            providers: [ParticipationWebsocketService],
+        };
     }
 }

@@ -69,7 +69,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
-import { ArtemisParticipationWebsocketModule } from 'app/participation-websocket/participation-websocket.module';
+import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
 
 @NgModule({
     imports: [
@@ -98,7 +98,7 @@ import { ArtemisParticipationWebsocketModule } from 'app/participation-websocket
         ArtemisCoreModule,
         ArtemisHomeModule,
         ArtemisLegalModule,
-        ArtemisParticipationWebsocketModule.forRoot(),
+        ArtemisParticipationModule.forRoot(),
         ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
