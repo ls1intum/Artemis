@@ -10,7 +10,7 @@
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult">
         </jhi-exercise-details-student-actions>
         <div class="col-auto d-flex align-items-center">
-            <jhi-updating-result class="mr-2" [result]="currentResult" [participation]="currentResult?.participation" [exerciseType]="exercise.type" [showGradedBadge]="true">
+            <jhi-updating-result class="mr-2" [result]="currentResult" [participation]="currentResult?.participation" [exercise]="exercise" [showGradedBadge]="true">
             </jhi-updating-result>
         </div>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
