@@ -59,7 +59,8 @@
         </div>
         <div class="row">
             <jhi-programming-exercise-student-ide-actions
-                *ngIf="isIntelliJ"
+                jhiIdeFilter
+                [showInIDE]="true"
                 [smallButtons]="true"
                 [courseId]="course.id"
                 [smallColumns]="true"
@@ -69,7 +70,8 @@
             >
             </jhi-programming-exercise-student-ide-actions>
             <jhi-exercise-details-student-actions
-                *ngIf="!isIntelliJ"
+                jhiIdeFilter
+                [showInIDE]="false"
                 [actionsOnly]="true"
                 [smallButtons]="true"
                 [courseId]="course.id"

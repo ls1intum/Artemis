@@ -92,7 +92,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
 
                 // Log in to IntelliJ
-                if (true) {
+                if (isIntelliJ) {
                     const modalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
                     modalRef.componentInstance.text = 'login.ide.confirmation';
                     modalRef.componentInstance.title = 'login.ide.title';

@@ -16,7 +16,6 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
-import { isIntelliJ } from 'app/intellij/intellij';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -31,7 +30,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly isIntelliJ = isIntelliJ;
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
