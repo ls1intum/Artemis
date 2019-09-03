@@ -44,6 +44,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     readonly filterType = ExerciseFilter;
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
+    numberOfExercises: number;
 
     constructor(
         private courseService: CourseService,
@@ -57,10 +58,18 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        const filters = localStorage.getItem(SortFilterStorageKey.FILTER);
-        this.activeFilters = new Set(filters ? filters.split(',').map(filter => ExerciseFilter[filter]) : []);
-        const order = localStorage.getItem(SortFilterStorageKey.ORDER);
-        this.sortingOrder = !order || order === ExerciseSortingOrder.DUE_DATE_ASC.toString() ? ExerciseSortingOrder.DUE_DATE_ASC : ExerciseSortingOrder.DUE_DATE_DESC;
+        this.numberOfExercises = 0;
+        const filters = localStorage.getItem(SortFilterStorageKey.FILTER) || null;
+        const filtersInStorage = filters
+            ? filters
+                  .split(',')
+                  .map(filter => ExerciseFilter[filter])
+                  .filter(Boolean)
+            : [];
+        this.activeFilters = new Set(filtersInStorage);
+        const orderInStorage = localStorage.getItem(SortFilterStorageKey.ORDER);
+        const parsedOrderInStorage = Object.keys(ExerciseSortingOrder).find(exerciseOrder => exerciseOrder === orderInStorage);
+        this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as ExerciseSortingOrder) : ExerciseSortingOrder.DUE_DATE_ASC;
         this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -85,11 +94,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
-    /**
-     * Return the total number of exercises for the logged in user
-     */
-    getNrOfExercises(): number {
-        return sum(Array.from(this.exerciseCountMap.values()));
+    private calcNumberOfExercises() {
+        this.numberOfExercises = sum(Array.from(this.exerciseCountMap.values()));
     }
 
     /**
@@ -106,7 +112,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * @param filters The filters which should be applied
      * @param active Should the activeFilters be active or inactive
      */
-    filterUpdate(filters: ExerciseFilter[]) {
+    toggleFilters(filters: ExerciseFilter[]) {
         filters.forEach(filter => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
         localStorage.setItem(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
         this.applyFiltersAndOrder();
@@ -117,20 +123,19 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * @param exercise The exercise which should get checked
      */
     private needsWork(exercise: Exercise): boolean {
-        return (
-            exercise.participations.some(participation => participation.results && participation.results.some(result => result.score !== 100)) ||
-            exercise.participations.every(participation => participation.results.length === 0)
-        );
+        const notFullPoints = exercise.participations.some(participation => participation.results && participation.results.some(result => result.score !== 100));
+        const notStartedYet = exercise.participations.every(participation => !participation.results.length);
+        return notFullPoints || notStartedYet;
     }
 
     /**
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
+        const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
+        const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const filtered = this.course!.exercises.filter(
-            exercise =>
-                (!this.activeFilters.has(ExerciseFilter.NEEDS_WORK) || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !this.activeFilters.has(ExerciseFilter.OVERDUE) || exercise.dueDate.isAfter(moment(new Date()))),
+            exercise => (!needsWorkFilterActive || this.needsWork(exercise)) && (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))),
         );
         this.groupExercises(filtered);
     }
@@ -200,6 +205,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.weeklyExercisesGrouped = groupedExercises;
             this.weeklyIndexKeys = indexKeys;
         }
+        this.calcNumberOfExercises();
     }
 
     private sortExercises(exercises: Exercise[]) {
