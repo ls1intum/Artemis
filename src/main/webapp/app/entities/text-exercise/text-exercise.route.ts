@@ -16,6 +16,12 @@ import { map, filter } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
     constructor(private textExerciseService: TextExerciseService, private courseService: CourseService) {}
+
+    /**
+     * Resolves the route and initializes text exercise
+     * @param route
+     * @param state
+     */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         if (route.params['exerciseId']) {
             return this.textExerciseService.find(route.params['exerciseId']).pipe(

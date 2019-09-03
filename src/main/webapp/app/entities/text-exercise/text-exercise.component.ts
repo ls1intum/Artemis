@@ -48,6 +48,11 @@ export class TextExerciseComponent extends ExerciseComponent {
         );
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a text exercise in the collection
+     * @param item current text exercise
+     */
     trackId(index: number, item: TextExercise) {
         return item.id;
     }
@@ -60,5 +65,8 @@ export class TextExerciseComponent extends ExerciseComponent {
         this.jhiAlertService.error(error.message);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }
