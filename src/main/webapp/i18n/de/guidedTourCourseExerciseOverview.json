@@ -1,0 +1,56 @@
+{
+    "tour": {
+        "courseExerciseOverview": {
+            "exercises": {
+                "headline": "Aufgaben",
+                "content": "In diesem Reiter werden alle freigegebenen Aufgaben dieses Kurses angezeigt."
+            },
+            "exerciseRow": {
+                "headline": "Aktuelle Woche",
+                "content": "Die Aufgaben der aktuellen Woche werden in diesem Reiter an oberster Stelle gelistet."
+            },
+            "exerciseType": {
+                "headline": "Aufgabentyp",
+                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons."
+            },
+            "exerciseTags": {
+                "headline": "Aufgabenkategorien",
+                "content": "Die gelisteten Kategorien klassifieren die Aufgabe beispielsweise durch die Angabe der Schwierigkeitsstufe noch zusätzlich."
+            },
+            "courseInformation": {
+                "headline": "Kursinformation",
+                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf"
+            },
+            "upcomingDeadlines": {
+                "headline": "Bevorstehende Termine",
+                "content": "Hier siehst du welche Kursabgaben demnächst fällig sind."
+            },
+            "lectures": {
+                "headline": "Vorlesungen",
+                "content": "In diesem Reiter findest du die Vorlesungsfolien, die zum Download bereitstehen."
+            },
+            "statistics": {
+                "headline": "Statistiken",
+                "content": "In diesem Reiter kannst du deine bisherigen Ergebnisse und Leistungen in Form von Statisken einsehen."
+            },
+            "startExercise": {
+                "headline": "Beginne mit deiner ersten Programmieraufgabe",
+                "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
+            }
+        },
+        "cloneRepository": {
+            "clone": {
+                "headline": "Repository klonen",
+                "content": "Klicke auf den Button 'Repository klonen' um das Repository für the aktuelle Aufgabe zu klonen."
+            },
+            "useSourceTree": {
+                "headline": "In SourceTree klonen",
+                "content": "Klicke auf den Button 'In SourceTree klonen' um das Repository in SourceTree zu klonen. Als Alternative kannst du auch die angegebene URL kopieren und es in deiner git Anwendung zu verwenden."
+            },
+            "sourceTreeTutorial": {
+                "headline": "SourceTree Anleitung",
+                "content": "Wenn du mit SourceTree noch nicht vertraut bist, dann werfe doch einen Blick in unser Anleitungsvideo für SourceTree."
+            }
+        }
+    }
+}

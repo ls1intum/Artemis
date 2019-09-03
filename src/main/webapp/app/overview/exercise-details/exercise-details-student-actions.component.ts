@@ -10,7 +10,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { Result } from 'app/entities/result';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { cloneRepositoryTour, courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
+import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -57,6 +59,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -161,6 +164,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
+                        this.startCloneRepositoryGuidedTour();
                     }
                 },
                 error => {
@@ -204,5 +208,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
+    }
+
+    /**
+     * Start the clone repository guided tour if the user has not viewed and finished the tour yet
+     */
+    startCloneRepositoryGuidedTour() {
+        const tourSetting = this.guidedTourService.guidedTourSettings.filter(setting => setting.guidedTourKey === courseExerciseOverviewTour.settingsKey);
+        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
+            this.guidedTourService.enableTour(cloneRepositoryTour);
+            // Set timeout for clone repository button to render
+            setTimeout(() => {
+                this.guidedTourService.startTour();
+            }, 1000);
+        }
     }
 }
