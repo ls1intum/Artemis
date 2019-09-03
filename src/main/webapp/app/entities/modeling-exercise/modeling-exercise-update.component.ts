@@ -51,6 +51,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private $window: WindowRef,
     ) {}
 
+    /**
+     * Initializes all relevant data for creating or editing modeling exercise
+     */
     ngOnInit() {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
@@ -78,10 +81,17 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * Updates the exercise categories
+     * @param categories list of exercise categories
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
+    /**
+     * Validates if the date is correct
+     */
     validateDate() {
         this.dueDateError = this.modelingExercise.releaseDate && this.modelingExercise.dueDate ? !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate) : false;
 
@@ -93,6 +103,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 : false;
     }
 
+    /**
+     * Sends a request to either update or create a modeling exercise
+     */
     save() {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
@@ -106,6 +119,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         }
     }
 
+    /**
+     * Deletes the example submission
+     * @param id of the submission that will be deleted
+     * @param index in the example submissions array
+     */
     deleteExampleSubmission(id: number, index: number) {
         this.exampleSubmissionService.delete(id).subscribe(
             () => {
@@ -117,6 +135,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * Returns to previous state, which is always exercise page
+     */
     previousState() {
         if (this.modelingExercise.course) {
             this.router.navigate(['/course', this.modelingExercise.course.id]);
@@ -143,6 +164,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.jhiAlertService.error(error.message);
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a course in the collection
+     * @param item current course
+     */
     trackCourseById(index: number, item: Course) {
         return item.id;
     }
