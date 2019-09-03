@@ -41,6 +41,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
     readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
+    readonly filterType = ExerciseFilter;
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
 
@@ -84,15 +85,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
-    get filterType() {
-        return ExerciseFilter;
-    }
-
     /**
      * Return the total number of exercises for the logged in user
      */
     getNrOfExercises(): number {
-        return sum([...this.exerciseCountMap.values()]);
+        return sum(Array.from(this.exerciseCountMap.values()));
     }
 
     /**
