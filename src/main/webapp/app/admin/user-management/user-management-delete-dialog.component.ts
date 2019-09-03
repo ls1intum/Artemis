@@ -13,10 +13,17 @@ export class UserManagementDeleteDialogComponent {
 
     constructor(private userService: UserService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
+    /**
+     * Cancels and closes the user management delete dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Confirms and deletes the user with the given login string
+     * @param login string of the user that should be deleted
+     */
     confirmDelete(login: string) {
         this.userService.delete(login).subscribe(response => {
             this.eventManager.broadcast({

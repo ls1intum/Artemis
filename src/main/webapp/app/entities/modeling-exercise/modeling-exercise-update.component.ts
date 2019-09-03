@@ -1,29 +1,27 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
-import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
 
-import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { WindowRef } from 'app/core';
 
 @Component({
-    selector: 'jhi-modeling-exercise-dialog',
-    templateUrl: './modeling-exercise-dialog.component.html',
-    styleUrls: ['./modeling-exercise-dialog.scss'],
+    selector: 'jhi-modeling-exercise-update',
+    templateUrl: './modeling-exercise-update.component.html',
+    styleUrls: ['./modeling-exercise-update.scss'],
 })
-export class ModelingExerciseDialogComponent implements OnInit {
+export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
 
     modelingExercise: ModelingExercise;
@@ -42,16 +40,35 @@ export class ModelingExerciseDialogComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private $window: WindowRef,
     ) {}
 
+    /**
+     * Initializes all relevant data for creating or editing modeling exercise
+     */
     ngOnInit() {
+        // This is used to scroll page to the top of the page, because the routing keeps the position for the
+        // new page from previous page.
+        this.$window.nativeWindow.scroll(0, 0);
+
+        this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            this.modelingExercise = modelingExercise;
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
+            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
+                (res: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
+        });
         this.isSaving = false;
         this.dueDateError = false;
         this.assessmentDueDateError = false;
@@ -62,23 +79,19 @@ export class ModelingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
-    clear() {
-        this.activeModal.dismiss('cancel');
-    }
-
+    /**
+     * Updates the exercise categories
+     * @param categories list of exercise categories
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
+    /**
+     * Validates if the date is correct
+     */
     validateDate() {
         this.dueDateError = this.modelingExercise.releaseDate && this.modelingExercise.dueDate ? !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate) : false;
 
@@ -90,6 +103,9 @@ export class ModelingExerciseDialogComponent implements OnInit {
                 : false;
     }
 
+    /**
+     * Sends a request to either update or create a modeling exercise
+     */
     save() {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
@@ -103,6 +119,11 @@ export class ModelingExerciseDialogComponent implements OnInit {
         }
     }
 
+    /**
+     * Deletes the example submission
+     * @param id of the submission that will be deleted
+     * @param index in the example submissions array
+     */
     deleteExampleSubmission(id: number, index: number) {
         this.exampleSubmissionService.delete(id).subscribe(
             () => {
@@ -114,6 +135,17 @@ export class ModelingExerciseDialogComponent implements OnInit {
         );
     }
 
+    /**
+     * Returns to previous state, which is always exercise page
+     */
+    previousState() {
+        if (this.modelingExercise.course) {
+            this.router.navigate(['/course', this.modelingExercise.course.id]);
+        } else {
+            window.history.back();
+        }
+    }
+
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
         result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
@@ -121,7 +153,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     private onSaveSuccess(result: ModelingExercise) {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.activeModal.dismiss(result);
+        this.previousState();
     }
 
     private onSaveError() {
@@ -132,33 +164,12 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.jhiAlertService.error(error.message);
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a course in the collection
+     * @param item current course
+     */
     trackCourseById(index: number, item: Course) {
         return item.id;
-    }
-}
-
-@Component({
-    selector: 'jhi-modeling-exercise-popup',
-    template: '',
-})
-export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-
-    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            if (params['id']) {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
-            } else if (params['courseId']) {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
-            } else {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }

@@ -379,7 +379,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByCourseId(Long courseId) {
@@ -388,7 +388,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
