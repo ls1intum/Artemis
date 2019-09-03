@@ -15,6 +15,10 @@
         },
         "password": {
             "forgot": "Du hast dein Passwort vergessen?"
+        },
+        "ide": {
+            "confirmation": "Wills du deinen Nutzername und Passwort in IntelliJ speichern?\nDas wird das Importieren deiner Programmieraufgaben sehr vereinfachen!",
+            "title": "IntelliJ Login"
         }
     },
     "logout": {
