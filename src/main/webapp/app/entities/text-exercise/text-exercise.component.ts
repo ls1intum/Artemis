@@ -72,14 +72,20 @@ export class TextExerciseComponent extends ExerciseComponent {
             deleteQuestion: 'artemisApp.exercise.delete.question',
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
-            this.textExerciseService.delete(textExercise.id).subscribe(response => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted an textExercise',
-                });
-            });
-        });
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(
+            () => {
+                this.textExerciseService.delete(textExercise.id).subscribe(
+                    response => {
+                        this.eventManager.broadcast({
+                            name: 'textExerciseListModification',
+                            content: 'Deleted an textExercise',
+                        });
+                    },
+                    error => this.onError(error),
+                );
+            },
+            () => {},
+        );
     }
 
     protected getChangeEventName(): string {

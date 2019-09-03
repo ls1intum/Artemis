@@ -65,14 +65,20 @@ export class CourseComponent implements OnInit, OnDestroy {
             deleteQuestion: 'artemisApp.course.delete.question',
             deleteConfirmationText: 'artemisApp.course.delete.typeNameToConfirm',
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
-            this.courseService.delete(course.id).subscribe(() => {
-                this.eventManager.broadcast({
-                    name: 'courseListModification',
-                    content: 'Deleted an course',
-                });
-            });
-        });
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(
+            () => {
+                this.courseService.delete(course.id).subscribe(
+                    () => {
+                        this.eventManager.broadcast({
+                            name: 'courseListModification',
+                            content: 'Deleted an course',
+                        });
+                    },
+                    error => this.onError(error),
+                );
+            },
+            () => {},
+        );
     }
 
     private onError(error: HttpErrorResponse) {

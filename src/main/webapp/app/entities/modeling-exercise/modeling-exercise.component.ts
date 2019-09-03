@@ -72,14 +72,20 @@ export class ModelingExerciseComponent extends ExerciseComponent {
             deleteQuestion: 'artemisApp.exercise.delete.question',
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(() => {
-            this.modelingExerciseService.delete(modelingExercise.id).subscribe(response => {
-                this.eventManager.broadcast({
-                    name: 'modelingExerciseListModification',
-                    content: 'Deleted an modelingExercise',
-                });
-            });
-        });
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(
+            () => {
+                this.modelingExerciseService.delete(modelingExercise.id).subscribe(
+                    response => {
+                        this.eventManager.broadcast({
+                            name: 'modelingExerciseListModification',
+                            content: 'Deleted an modelingExercise',
+                        });
+                    },
+                    error => this.onError(error),
+                );
+            },
+            () => {},
+        );
     }
 
     protected getChangeEventName(): string {
