@@ -164,14 +164,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
-                        const tourSetting = this.guidedTourService.guidedTourSettings.filter(setting => setting.guidedTourKey === courseExerciseOverviewTour.settingsKey);
-                        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
-                            this.guidedTourService.enableTour(cloneRepositoryTour);
-                            // Set timeout for clone repository button to render
-                            setTimeout(() => {
-                                this.guidedTourService.startTour();
-                            }, 1000);
-                        }
                     }
                 },
                 error => {
@@ -215,5 +207,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
+    }
+
+    /**
+     * Start the clone repository guided tour if the user has not viewed and finished the tour yet
+     */
+    startCloneRepositoryGuidedTour() {
+        const tourSetting = this.guidedTourService.guidedTourSettings.filter(setting => setting.guidedTourKey === courseExerciseOverviewTour.settingsKey);
+        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
+            this.guidedTourService.enableTour(cloneRepositoryTour);
+            // Set timeout for clone repository button to render
+            setTimeout(() => {
+                this.guidedTourService.startTour();
+            });
+        }
     }
 }

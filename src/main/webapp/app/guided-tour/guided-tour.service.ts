@@ -12,7 +12,7 @@ import { GuidedTourState, Orientation, OrientationConfiguration } from './guided
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
+import { filter } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -103,27 +103,29 @@ export class GuidedTourService {
      * Navigate to previous tour step
      */
     public backStep(): void {
-        if (this.currentTour) {
-            const currentStep = this.currentTour.steps[this.currentTourStepIndex];
-            const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
-            if (currentStep.closeAction) {
-                currentStep.closeAction();
+        if (!this.currentTour) {
+            return;
+        }
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        if (currentStep.closeAction) {
+            currentStep.closeAction();
+        }
+        if (previousStep) {
+            this.currentTourStepIndex--;
+            if (previousStep.action) {
+                previousStep.action();
             }
-            if (previousStep) {
-                this.currentTourStepIndex--;
-                if (previousStep.action) {
-                    previousStep.action();
+            setTimeout(() => {
+                if (this.checkSelectorValidity()) {
+                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
+                } else {
+                    this.backStep();
                 }
-                setTimeout(() => {
-                    if (this.checkSelectorValidity()) {
-                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                    } else {
-                        this.backStep();
-                    }
-                });
-            } else {
-                this.resetTour();
-            }
+            });
+        } else {
+            this.resetTour();
         }
     }
 
@@ -193,11 +195,11 @@ export class GuidedTourService {
             return;
         }
 
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState).subscribe(guidedTourSettings => {
-            if (guidedTourSettings.body) {
-                this.guidedTourSettings = guidedTourSettings.body;
-            }
-        });
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
+            .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
+            .subscribe(guidedTourSettings => {
+                this.guidedTourSettings = guidedTourSettings.body!;
+            });
 
         this.resetTour();
     }
@@ -208,7 +210,6 @@ export class GuidedTourService {
      */
     public resetTour(): void {
         document.body.classList.remove('tour-open');
-        // this.currentTour = null;
         this.currentTourStepIndex = 0;
         this.guidedTourCurrentStepSubject.next(null);
     }
