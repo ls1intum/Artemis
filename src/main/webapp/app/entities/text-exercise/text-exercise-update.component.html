@@ -1,8 +1,9 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div>
-        <h4 class="modal-title" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createOrEditLabel">Create or edit a Text Exercise</h4>
+        <h4 *ngIf="!textExercise.id" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createLabel">Create Text Exercise</h4>
+        <h4 *ngIf="textExercise.id" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4>
     </div>
-    <div class="modal-body">
+    <div>
         <jhi-alert-error></jhi-alert-error>
         <div class="form-group" [hidden]="!textExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -113,7 +114,7 @@
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button routerLink="text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
+                    <button routerLink="/text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
                         Example submission {{ i + 1 }}
                     </button>
                     <fa-icon
@@ -132,7 +133,7 @@
             <button
                 *ngIf="textExercise.id"
                 class="btn btn-primary"
-                routerLink="text-exercise/{{ textExercise.id }}/example-submission/new"
+                routerLink="/text-exercise/{{ textExercise.id }}/example-submission/new"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
@@ -147,8 +148,8 @@
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+    <div>
+        <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">

@@ -1,24 +1,20 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
-import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
 import { Course, CourseService } from '../course';
 
-import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -50,28 +46,25 @@ export class TextExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.params.subscribe(params => {
-            if (params['courseId']) {
-                const courseId = params['courseId'];
-                this.courseService
-                    .find(courseId)
-                    .pipe(filter(res => !!res.body))
-                    .subscribe(res => {
-                        const course = res.body!;
-                        this.textExercise.course = course;
-                        this.initializeCategoriesOfCourse();
-                    });
-            } else if (params['exerciseId']) {
-                const exerciseId = params['exerciseId'];
-                this.textExerciseService.find(exerciseId).subscribe(res => {
-                    this.textExercise = res.body!;
-                    this.initializeCategoriesOfCourse();
-                });
-            }
+        // This is used to scroll page to the top of the page, because the routing keeps the position for the
+        // new page from previous page.
+        window.scroll(0, 0);
+
+        this.activatedRoute.data.subscribe(({ textExercise }) => {
+            this.textExercise = textExercise;
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
+                (categoryRes: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                },
+                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+            );
         });
+
         this.isSaving = false;
         this.notificationText = null;
         this.courseService.query().subscribe(
@@ -80,28 +73,14 @@ export class TextExerciseUpdateComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
-
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-            (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
-    }
-
-    initializeCategoriesOfCourse() {
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-            (categoryRes: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-            },
-            (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-        );
     }
 
     previousState() {
-        window.history.back();
+        if (this.textExercise.course) {
+            this.router.navigate(['/course', this.textExercise.course.id]);
+        } else {
+            window.history.back();
+        }
     }
 
     updateCategories(categories: ExerciseCategory[]) {
