@@ -15,7 +15,7 @@ import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Result } from 'app/entities/result';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
-import { TextExercise, TextExercisePopupService } from 'app/entities/text-exercise';
+import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -71,7 +71,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private location: Location,
         private artemisMarkdown: ArtemisMarkdown,
         private $window: WindowRef,
-        private textExercisePopupService: TextExercisePopupService,
     ) {}
 
     ngOnInit(): void {
@@ -87,10 +86,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         } else {
             this.exampleSubmissionId = +exampleSubmissionId!;
         }
-
-        // Be sure to close the text exercise popup
-        this.textExercisePopupService.close();
-
         this.loadAll();
     }
 
