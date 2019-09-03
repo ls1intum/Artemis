@@ -8,22 +8,21 @@ import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-
-@Component({
-    selector: 'jhi-updating-result',
-    templateUrl: './updating-result.component.html',
-    providers: [ResultService, RepositoryService],
-})
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
  * If the participation changes, the newest result from its result array will be used.
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
+@Component({
+    selector: 'jhi-updating-result',
+    templateUrl: './updating-result.component.html',
+    providers: [ResultService, RepositoryService],
+})
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    @Input() exerciseType: ExerciseType;
+    @Input() exercise: Exercise;
     @Input() participation: Participation;
     @Input() short = false;
     @Input() result: Result | null;
@@ -49,7 +48,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exerciseType === ExerciseType.PROGRAMMING) {
+            if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
         }
@@ -90,8 +89,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id)
-            .pipe(tap(([, pendingSubmission]) => (this.isBuilding = !!pendingSubmission)))
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
+            .pipe(tap(({ submission: pendingSubmission }) => (this.isBuilding = !!pendingSubmission)))
             .subscribe();
     }
 }
