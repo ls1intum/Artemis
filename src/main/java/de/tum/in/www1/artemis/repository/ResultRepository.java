@@ -92,6 +92,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
+    @EntityGraph(attributePaths = { "feedbacks" })
+    List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
+
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(long exerciseId, boolean rated,
             List<AssessmentType> assessmentType);
 
