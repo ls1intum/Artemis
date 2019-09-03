@@ -201,7 +201,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
         // TODO: This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
         setTimeout(() => {
             this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        }, 0);
+        });
         return this.fileUpdateSubject.asObservable();
     };
 
