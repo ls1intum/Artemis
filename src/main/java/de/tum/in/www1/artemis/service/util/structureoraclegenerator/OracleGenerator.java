@@ -54,9 +54,9 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  *    <li>Assemble the JSON objects into a JSON array of all the types of the structure diff.</li>
  * </ol>
  */
-public class OracleGeneratorClient {
+public class OracleGenerator {
 
-    private static final Logger log = LoggerFactory.getLogger(OracleGeneratorClient.class);
+    private static final Logger log = LoggerFactory.getLogger(OracleGenerator.class);
 
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
@@ -78,34 +78,33 @@ public class OracleGeneratorClient {
         // If the types, classes or enums are equal, then ignore and continue with the next pair
         for (Map.Entry<JavaClass, JavaClass> entry : solutionToTemplateMapping.entrySet()) {
             JsonObject diffJSON = new JsonObject();
-
             JavaClass solutionType = entry.getKey();
             JavaClass templateType = entry.getValue();
 
             // Initialize the types diff containing various properties as well as methods.
-            TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
-            if (typesDiff.typesAreEqual()) {
+            JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
+            if (javaClassDiff.classesAreEqual()) {
                 continue;
             }
 
             // If we are dealing with interfaces, the types diff already has all the information we need
             // So we do not need to do anything more
-            TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer(typesDiff);
-            diffJSON.add("class", typesDiffSerializer.serializeHierarchy());
-            if (!typesDiff.methodsDiff.isEmpty()) {
-                diffJSON.add("methods", typesDiffSerializer.serializeMethods());
+            JavaClassDiffSerializer serializer = new JavaClassDiffSerializer(javaClassDiff);
+            diffJSON.add("class", serializer.serializeClassProperties());
+            if (!javaClassDiff.methodsDiff.isEmpty()) {
+                diffJSON.add("methods", serializer.serializeMethods());
             }
 
-            if (!typesDiff.attributesDiff.isEmpty()) {
-                diffJSON.add("attributes", typesDiffSerializer.serializeAttributes());
+            if (!javaClassDiff.attributesDiff.isEmpty()) {
+                diffJSON.add("attributes", serializer.serializeAttributes());
             }
 
-            if (!typesDiff.enumsDiff.isEmpty()) {
-                diffJSON.add("enumValues", typesDiffSerializer.serializeEnums());
+            if (!javaClassDiff.enumsDiff.isEmpty()) {
+                diffJSON.add("enumValues", serializer.serializeEnums());
             }
 
-            if (!typesDiff.constructorsDiff.isEmpty()) {
-                diffJSON.add("constructors", typesDiffSerializer.serializeConstructors());
+            if (!javaClassDiff.constructorsDiff.isEmpty()) {
+                diffJSON.add("constructors", serializer.serializeConstructors());
             }
 
             log.debug("Generated JSON for '" + solutionType.getCanonicalName() + "'.");
@@ -153,7 +152,7 @@ public class OracleGeneratorClient {
         List<JavaClass> templateClasses = getClassesFromFiles(templateFiles);
         List<JavaClass> solutionClasses = getClassesFromFiles(solutionFiles);
 
-        Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<JavaClass, JavaClass>();
+        Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<>();
 
         for (JavaClass solutionClass : solutionClasses) {
             // Put an empty template class as a default placeholder.
@@ -204,8 +203,10 @@ public class OracleGeneratorClient {
 
         if (file.isDirectory()) {
             String[] subFiles = file.list();
-            for (String subFile : subFiles) {
-                walkProjectFileStructure(new File(file, subFile), foundFiles);
+            if (subFiles != null) {
+                for (String subFile : subFiles) {
+                    walkProjectFileStructure(new File(file, subFile), foundFiles);
+                }
             }
         }
     }
