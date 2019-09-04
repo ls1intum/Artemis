@@ -2,6 +2,7 @@ import { Course } from '../course';
 import { Exercise, ExerciseType } from '../exercise';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingExerciseOptions } from 'app/entities/programming-exercise/programming-exercise-options.model';
 
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -19,6 +20,8 @@ export class ProgrammingExercise extends Exercise {
     public packageName: string;
     public problemStatement: string;
     public sequentialTestRuns: boolean | null;
+
+    public programmingExerciseOptions: ProgrammingExerciseOptions;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
