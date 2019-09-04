@@ -21,16 +21,16 @@ public class ProgrammingExerciseOptions implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
 
     @Column(name = "automatic_submission_run_after_due_date")
     private boolean automaticSubmissionRunAfterDueDate;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @OneToOne
+    @JoinColumn(name = "id")
     @JsonIgnoreProperties("programmingExerciseOptions")
-    @JoinColumn(unique = true, name = "programming_exercise_id")
     private ProgrammingExercise programmingExercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

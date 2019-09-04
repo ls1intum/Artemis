@@ -10,17 +10,11 @@
     -->
     <changeSet id="20190904072713-1" author="behnke">
         <createTable tableName="programming_exercise_options">
-            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+            <column name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="automatic_submission_run_after_due_date" type="boolean">
                 <constraints nullable="true" />
-            </column>
-            <!--
-                Column for exercise foreign key constraint
-            -->
-            <column name="programming_exercise_id" type="BIGINT">
-                <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
@@ -28,7 +22,7 @@
         Added foreign key constraint for exercise.
     -->
     <changeSet id="20190904072713-2" author="behnke">
-        <addForeignKeyConstraint baseColumnNames="programming_exercise_id"
+        <addForeignKeyConstraint baseColumnNames="id"
                                  baseTableName="programming_exercise_options"
                                  constraintName="fk_programming_exercise_options_programming_exercise_id"
                                  referencedColumnNames="id"
