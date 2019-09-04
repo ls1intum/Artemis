@@ -47,6 +47,10 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("programmingExercise")
+    private ProgrammingExerciseOptions programmingExerciseOptions;
+
     // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
@@ -224,6 +228,13 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    public ProgrammingExerciseOptions getProgrammingExerciseOptions() {
+        return programmingExerciseOptions;
+    }
+
+    public void setProgrammingExerciseOptions(ProgrammingExerciseOptions programmingExerciseOptions) {
+        this.programmingExerciseOptions = programmingExerciseOptions;
+    }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
