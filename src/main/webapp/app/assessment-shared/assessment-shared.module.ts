@@ -3,12 +3,12 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from 'app/shared';
 
-import { AssessmentHeaderComponent, AssessmentComplaintAlertComponent } from '.';
+import { AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentLayoutComponent } from '.';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent],
-    exports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent],
+    declarations: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
+    exports: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
     providers: [JhiAlertService],
 })
 export class ArtemisAssessmentSharedModule {}

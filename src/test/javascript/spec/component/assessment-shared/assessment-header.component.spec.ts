@@ -7,10 +7,13 @@ import { AssessmentHeaderComponent } from 'app/assessment-shared';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result';
+import { AccountService } from 'app/core';
+import { MockAccountService } from '../../helpers/mock-account.service';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
+    let mockAuth: MockAccountService;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -23,6 +26,8 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);
         component = fixture.componentInstance;
+        mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
+        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(false);
         fixture.detectChanges();
     });
 
@@ -58,14 +63,14 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should emit event on back button', () => {
-        spyOn(component.goBack, 'emit');
+        spyOn(component.navigateBack, 'emit');
         component.showBackButton = true;
         fixture.detectChanges();
 
         const backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
 
         backButton.nativeElement.click();
-        expect(component.goBack.emit).toHaveBeenCalledTimes(1);
+        expect(component.navigateBack.emit).toHaveBeenCalledTimes(1);
     });
 
     it('should hide right side row-container if loading', () => {
@@ -175,7 +180,6 @@ describe('AssessmentHeaderComponent', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
-        component.isAtLeastInstructor = false;
         component.hasComplaint = false;
         fixture.detectChanges();
 
@@ -188,7 +192,8 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        component.isAtLeastInstructor = true;
+        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(true);
+        component.ngOnInit();
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
@@ -198,7 +203,8 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        component.isAtLeastInstructor = false;
+        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(false);
+        component.ngOnInit();
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
