@@ -66,15 +66,17 @@ public class ProgrammingExerciseService {
 
     private final GitService gitService;
 
+    private final ExerciseHintService exerciseHintService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
-    private final SubmissionRepository submissionRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -94,20 +96,21 @@ public class ProgrammingExerciseService {
     private String ARTEMIS_BASE_URL;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
+            ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationService participationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
+        this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resourceLoader = resourceLoader;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -747,44 +750,24 @@ public class ProgrammingExerciseService {
         programmingExerciseRepository.delete(programmingExercise);
     }
 
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findById(toBeImportedId).get();
+    @Transactional
+    public ProgrammingExercise importProgrammingExercise(final ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
+        ProgrammingExercise templateExercise = programmingExerciseRepository.findById(toBeImportedId).get();
         final Course targetCourse = courseRepository.findById(targetCourseId).get();
-        final String sourceProjectKey = exercise.getProjectKey();
-        final List<String> sourcePorjectRepoNames = List.of(exercise.getTemplateRepositoryName(), exercise.getSolutionRepositoryName(), exercise.getTestRepositoryName());
-        newExercise.setCourse(targetCourse);
-        newExercise.setAllowOnlineEditor(exercise.isAllowOnlineEditor());
-        newExercise.setPackageName(exercise.getPackageName());
-        newExercise.setCategories(Set.copyOf(exercise.getCategories()));
-        newExercise.setAssessmentType(exercise.getAssessmentType());
-        newExercise.setDifficulty(exercise.getDifficulty());
-        newExercise.setGradingInstructions(exercise.getGradingInstructions());
-        newExercise.setMaxScore(exercise.getMaxScore());
-        newExercise.setProblemStatement(exercise.getProblemStatement());
-        newExercise.setSequentialTestRuns(exercise.hasSequentialTestRuns());
-
+        copyBasicExerciseProperties(newExercise, templateExercise, targetCourse);
+        final String sourceProjectKey = templateExercise.getProjectKey();
+        final List<String> sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
+                templateExercise.getTestRepositoryName());
+        final String projectKey = newExercise.getProjectKey();
         final String templatePlanName = RepositoryType.TEMPLATE.getName();
         final String solutionPlanName = RepositoryType.SOLUTION.getName();
-        final String projectKey = newExercise.getProjectKey();
-        final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
-        final String solutionRepoName = projectKey.toLowerCase() + "-solution";
-        final String testRepoName = projectKey.toLowerCase() + "-tests";
-        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        newExercise.setTemplateParticipation(templateParticipation);
-        newExercise.setSolutionParticipation(solutionParticipation);
-        initParticipations(newExercise);
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
-        // Save participations to get the ids required for the webhooks
-        templateParticipation.setProgrammingExercise(newExercise);
-        solutionParticipation.setProgrammingExercise(newExercise);
-        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey,
+                solutionPlanName);
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey,
+                templatePlanName);
+        setupTestRepository(newExercise, projectKey);
+        initParticipations(newExercise);
 
         versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
 
@@ -793,24 +776,34 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
-        final Map<RepositoryType, String> sourcePlans = continuousIntegrationService.get().getBaseBuildPlanIDs(exercise.getProjectKey());
+        final Map<RepositoryType, String> sourcePlans = continuousIntegrationService.get().getBaseBuildPlanIDs(templateExercise.getProjectKey());
         continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
         continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
         continuousIntegrationService.get().configureBuildPlan(templateParticipation);
         continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
 
-        programmingExerciseRepository.save(newExercise);
-
         // Hints
-        newExercise.setExerciseHints(exercise.getExerciseHints().stream().map(hint -> {
-            final ExerciseHint copiedHint = new ExerciseHint();
-            copiedHint.setExercise(newExercise);
-            copiedHint.setContent(hint.getContent());
-            copiedHint.setTitle(hint.getTitle());
-            return copiedHint;
-        }).collect(Collectors.toSet()));
+        exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
 
         return newExercise;
+    }
+
+    private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
+        final String testRepoName = projectKey.toLowerCase() + "-tests";
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+    }
+
+    private void copyBasicExerciseProperties(ProgrammingExercise newExercise, ProgrammingExercise templateExercise, Course targetCourse) {
+        newExercise.setCourse(targetCourse);
+        newExercise.setAllowOnlineEditor(templateExercise.isAllowOnlineEditor());
+        newExercise.setPackageName(templateExercise.getPackageName());
+        newExercise.setCategories(Set.copyOf(templateExercise.getCategories()));
+        newExercise.setAssessmentType(templateExercise.getAssessmentType());
+        newExercise.setDifficulty(templateExercise.getDifficulty());
+        newExercise.setGradingInstructions(templateExercise.getGradingInstructions());
+        newExercise.setMaxScore(templateExercise.getMaxScore());
+        newExercise.setProblemStatement(templateExercise.getProblemStatement());
+        newExercise.setSequentialTestRuns(templateExercise.hasSequentialTestRuns());
     }
 }

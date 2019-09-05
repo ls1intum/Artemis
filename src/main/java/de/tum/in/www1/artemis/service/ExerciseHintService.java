@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 
@@ -80,5 +82,17 @@ public class ExerciseHintService {
     public void delete(Long id) {
         log.debug("Request to delete ExerciseHint : {}", id);
         exerciseHintRepository.deleteById(id);
+    }
+
+    public void copyExerciseHints(final Exercise template, final Exercise target) {
+        target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
+            final ExerciseHint copiedHint = new ExerciseHint();
+            copiedHint.setExercise(target);
+            copiedHint.setContent(hint.getContent());
+            copiedHint.setTitle(hint.getTitle());
+            return copiedHint;
+        }).collect(Collectors.toSet()));
+
+        exerciseHintRepository.saveAll(target.getExerciseHints());
     }
 }
