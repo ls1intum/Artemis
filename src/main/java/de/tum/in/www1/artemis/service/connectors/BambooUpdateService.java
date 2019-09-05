@@ -82,17 +82,17 @@ public class BambooUpdateService {
                 // workaround to pass additional fields
                 bambooClient.doWork(args);
 
-                log.debug("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName,
-                        bambooProject + "-" + bambooPlan, false);
+                log.debug("Update plan repository for build plan " + bambooPlan);
+                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, bambooPlan,
+                        false);
                 // Workaround for old exercises which used a different repositoryName
                 if (bambooRemoteRepository == null) {
                     bambooRepositoryName = "Assignment";
                 }
 
-                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, bambooProject + "-" + bambooPlan,
-                        "BITBUCKET_SERVER", null, false, true, true);
-                log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful: " + message);
+                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, bambooPlan, "BITBUCKET_SERVER",
+                        null, false, true, true);
+                log.info("Update plan repository for build plan " + bambooPlan + " was successful: " + message);
                 return message;
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {

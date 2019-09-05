@@ -3,10 +3,14 @@ package de.tum.in.www1.artemis.service.connectors;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -14,11 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -35,14 +35,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
@@ -132,7 +130,7 @@ public class BambooService implements ContinuousIntegrationService {
         wantedPlanKey = getCleanPlanKey(wantedPlanKey);
         String projectKey = getProjectKeyFromBuildPlanId(templateBuildPlanId);
         try {
-            return clonePlan(projectKey, getPlanKeyFromBuildPlanId(templateBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
+            return clonePlan(templateBuildPlanId, projectKey + "-" + wantedPlanKey, wantedPlanKey); // Save the new plan in the same project
         } catch (BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
                 log.info("Build Plan already exists. Going to recover build plan information...");
@@ -165,14 +163,16 @@ public class BambooService implements ContinuousIntegrationService {
         String assignmentRepoName = ASSIGNMENT_REPO_NAME;
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+        String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
+        String planKey = participation.getBuildPlanId();
         updatePlanRepository(
-            getProjectKeyFromBuildPlanId(buildPlanId),
-            getPlanKeyFromBuildPlanId(buildPlanId),
+            planProject,
+            planKey,
             assignmentRepoName,
             getProjectKeyFromUrl(repositoryUrl),
             versionControlService.get().getRepositoryName(repositoryUrl)
         );
-        enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        enablePlan(planKey);
         // We need to trigger an initial update in order for Gitlab to work correctly
         continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
 
@@ -239,7 +239,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void deleteBuildPlan(String buildPlanId) {
-        deletePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        deletePlan(buildPlanId);
     }
 
     /**
@@ -324,23 +324,12 @@ public class BambooService implements ContinuousIntegrationService {
         return BAMBOO_SERVER_URL;
     }
 
-    /**
-     * Clones an existing Bamboo plan.
-     *
-     * @param templateProject The Bamboo project in which the plan is contained.
-     * @param templatePlan    The plan's name.
-     * @param toProject       The Bamboo project in which the new plan should be contained.
-     * @param name            The name to give the cloned plan.
-     * @return The name of the new build plan
-     * @throws BambooException if a communication issue occurs or the plan already exists.
-     */
-    public String clonePlan(String templateProject, String templatePlan, String toProject, String name) throws BambooException {
-
-        String toPlan = toProject + "-" + name;
+    @Override
+    public String clonePlan(String templatePlan, String planKey, String planName) throws BambooException {
         try {
-            log.debug("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
-            String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
-            log.info("Clone build plan " + toPlan + " was successful." + message);
+            log.debug("Clone build plan " + templatePlan + " to " + planKey);
+            String message = getBambooClient().getPlanHelper().clonePlan(templatePlan, planKey, planName, "", "", true);
+            log.info("Clone build plan " + templatePlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
                 throw new BambooException(clientException.getMessage());
@@ -351,22 +340,37 @@ public class BambooService implements ContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while cloning build plan", e);
         }
-        return toPlan;
+
+        return planKey;
+    }
+
+    @Override
+    public Map<RepositoryType, String> getBaseBuildPlanIDs(String projectKey) {
+        final String plans;
+        try {
+            plans = getBambooClient().getPlanHelper().getPlanList(projectKey, false, false, false, null, 0, null, 99, Pattern.compile(".*"));
+            return Arrays.stream(plans.split("\\n"))
+                .filter(planInfo -> planInfo.matches(".*-(BASE|SOLUTION).*http://.*"))
+                .map(planInfo -> planInfo.split(",")[2].replace("\"", ""))
+                .collect(Collectors.toMap(plan -> plan.contains("BASE") ? RepositoryType.TEMPLATE : RepositoryType.SOLUTION, Function.identity()));
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Unable to fetch build plans for project " + projectKey);
+        }
     }
 
     /**
      * Enables the given build plan.
      *
-     * @param projectKey to identify the Bamboo project.
      * @param planKey to identify the Bamboo plan.
      * @return the message indicating the result of the enabling operation.
      * @throws BambooException if a communication issue occurs.
      */
-    public String enablePlan(String projectKey, String planKey) throws BambooException {
+    public String enablePlan(String planKey) throws BambooException {
         try {
-            log.debug("Enable build plan " + projectKey + "-" + planKey);
-            String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
-            log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
+            log.debug("Enable build plan " + planKey);
+            String message = getBambooClient().getPlanHelper().enablePlan(planKey, true);
+            log.info("Enable build plan " + planKey + " was successful. " + message);
             return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
@@ -378,7 +382,7 @@ public class BambooService implements ContinuousIntegrationService {
      * Updates the configured repository for a given plan to the given Bamboo Server repository.
      *
      * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
-     * @param bambooPlan            The key of the plan, which is usually the name, e.g. 'ga56hur'.
+     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
@@ -392,13 +396,12 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Deletes the given plan.
      *
-     * @param projectKey to identify the Bamboo project.
      * @param planKey to identify the Bamboo plan to delete
      */
-    private void deletePlan(String projectKey, String planKey) {
+    private void deletePlan(String planKey) {
         try {
-            log.info("Delete build plan " + projectKey + "-" + planKey);
-            String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
+            log.info("Delete build plan " + planKey);
+            String message = getBambooClient().getPlanHelper().deletePlan(planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
@@ -1085,10 +1088,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     private String getProjectKeyFromBuildPlanId(String buildPlanId) {
         return buildPlanId.split("-")[0];
-    }
-
-    private String getPlanKeyFromBuildPlanId(String buildPlanId) {
-        return buildPlanId.split("-")[1];
     }
 
     private String getCleanPlanKey(String name) {

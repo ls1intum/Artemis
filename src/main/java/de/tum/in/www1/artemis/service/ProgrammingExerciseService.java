@@ -318,9 +318,11 @@ public class ProgrammingExerciseService {
 
         initParticipations(programmingExercise);
 
-        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        String templatePlanName = RepositoryType.TEMPLATE.getName();
+        String solutionPlanName = RepositoryType.SOLUTION.getName();
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
@@ -374,10 +376,10 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName); // template build
-                                                                                                                                                               // plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName); // solution build
-                                                                                                                                                               // plan
+        // template build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoName, testRepoName);
+        // solution build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -761,8 +763,8 @@ public class ProgrammingExerciseService {
         newExercise.setProblemStatement(exercise.getProblemStatement());
         newExercise.setSequentialTestRuns(exercise.hasSequentialTestRuns());
 
-        programmingExerciseRepository.save(newExercise);
-
+        final String templatePlanName = RepositoryType.TEMPLATE.getName();
+        final String solutionPlanName = RepositoryType.SOLUTION.getName();
         final String projectKey = newExercise.getProjectKey();
         final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
         final String solutionRepoName = projectKey.toLowerCase() + "-solution";
@@ -772,9 +774,9 @@ public class ProgrammingExerciseService {
         newExercise.setTemplateParticipation(templateParticipation);
         newExercise.setSolutionParticipation(solutionParticipation);
         initParticipations(newExercise);
-        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
@@ -790,6 +792,14 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
+
+        final Map<RepositoryType, String> sourcePlans = continuousIntegrationService.get().getBaseBuildPlanIDs(exercise.getProjectKey());
+        continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
+        continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
+        continuousIntegrationService.get().configureBuildPlan(templateParticipation);
+        continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
+
+        programmingExerciseRepository.save(newExercise);
 
         return newExercise;
     }
