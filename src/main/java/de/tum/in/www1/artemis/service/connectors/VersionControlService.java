@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.List;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
@@ -111,4 +112,6 @@ public interface VersionControlService {
      * @return true if the project exists, false otherwise
      */
     public String checkIfProjectExists(String projectKey, String projectName);
+
+    void forkRepositoryForExerciseImport(ProgrammingExercise exercise, String sourceProjectKey, List<String> sourceProjectSlugs);
 }

@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,6 +80,11 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    @JsonIgnore
+    public String getTemplateRepositoryName() {
+        return getRepositoryNameFor(getTemplateRepositoryUrl(), "exercise");
+    }
+
     @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
     public String getSolutionRepositoryUrl() {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
@@ -90,6 +97,11 @@ public class ProgrammingExercise extends Exercise {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         }
+    }
+
+    @JsonIgnore
+    public String getSolutionRepositoryName() {
+        return getRepositoryNameFor(getSolutionRepositoryUrl(), "solution");
     }
 
     public void setTestRepositoryUrl(String testRepositoryUrl) {
@@ -106,11 +118,16 @@ public class ProgrammingExercise extends Exercise {
      * @return the test repository name if a valid test repository url is set. Otherwise returns null!
      */
     public String getTestRepositoryName() {
-        if (getTestRepositoryUrl() == null)
-            return null;
+        return getRepositoryNameFor(getTestRepositoryUrl(), "tests");
+    }
 
-        Pattern p = Pattern.compile(".*/(.*-tests)\\.git");
-        Matcher m = p.matcher(getTestRepositoryUrl());
+    private String getRepositoryNameFor(final String repoUrl, final String suffix) {
+        if (repoUrl == null) {
+            return null;
+        }
+
+        Pattern p = Pattern.compile(".*/(.*-" + suffix + ")\\.git");
+        Matcher m = p.matcher(repoUrl);
         if (!m.matches() || m.groupCount() != 1)
             return null;
 

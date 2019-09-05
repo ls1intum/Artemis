@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +154,21 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
+    @Override
+    public void forkRepositoryForExerciseImport(final ProgrammingExercise exercise, final String sourceProjectKey, final List<String> sourceProjectRepoNames) {
+        final String projectKey = exercise.getProjectKey();
+        final String targetSlugPrefix = projectKey.toLowerCase();
+        final Pattern suffixPattern = Pattern.compile("^(.+)(-[^\\-]+)$");
+        final Map<String, String> slugs = sourceProjectRepoNames.stream().collect(Collectors.toMap(String::toLowerCase, slug -> {
+            Matcher m = suffixPattern.matcher(slug);
+            m.matches();
+            return m.group(m.groupCount());
+        }));
+
+        createProjectForExercise(exercise);
+        slugs.forEach((sourceSlug, targetSuffix) -> forkRepository(sourceProjectKey, projectKey, sourceSlug, targetSlugPrefix + targetSuffix));
+    }
+
     /**
      * Gets the project key from the given URL
      *
@@ -194,23 +214,15 @@ public class BitbucketService implements VersionControlService {
      *
      * @param baseProjectKey     The project key of the base project.
      * @param baseRepositorySlug The repository slug of the base repository.
-     * @param username           The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
     @SuppressWarnings("unchecked")
     private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
         String forkName = String.format("%s-%s", baseRepositorySlug, username);
         Map<String, Object> body = new HashMap<>();
-        body.put("name", forkName);
-        body.put("project", new HashMap<>());
-        ((Map) body.get("project")).put("key", baseProjectKey);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response;
         try {
-            response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug, HttpMethod.POST, entity,
-                    Map.class);
+            response = forkRepository(baseProjectKey, baseProjectKey, baseRepositorySlug, forkName);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
@@ -224,12 +236,14 @@ public class BitbucketService implements VersionControlService {
             }
             else {
                 throw e;
+
             }
         }
         catch (Exception emAll) {
             log.error("Could not fork base repository for user " + username, emAll);
             throw new BitbucketException("Error while forking repository");
         }
+
         if (response.getStatusCode().equals(HttpStatus.CREATED)) {
             String slug = (String) response.getBody().get("slug");
             String cloneUrl = buildCloneUrl(baseProjectKey, forkName, username).toString();
@@ -239,6 +253,24 @@ public class BitbucketService implements VersionControlService {
             return result;
         }
         return null;
+    }
+
+    private ResponseEntity<Map> forkRepository(String baseProjectKey, String targetProjectKey, String baseRepositorySlug, String targetRepositorySlug) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", targetRepositorySlug);
+        body.put("project", new HashMap<>());
+        ((Map) body.get("project")).put("key", targetProjectKey);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+
+        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug;
+        try {
+            return restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+        }
+        catch (URISyntaxException e) {
+            throw new BitbucketException("Invalid repository URL built while trying to fork: " + repoUrl);
+        }
     }
 
     /**

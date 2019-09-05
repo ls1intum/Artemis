@@ -21,7 +21,10 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -77,6 +80,8 @@ public class ProgrammingExerciseService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final CourseRepository courseRepository;
+
     private final ParticipationService participationService;
 
     private final UserService userService;
@@ -94,7 +99,7 @@ public class ProgrammingExerciseService {
             ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -109,6 +114,7 @@ public class ProgrammingExerciseService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -737,5 +743,54 @@ public class ProgrammingExerciseService {
         participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation);
         // This will also delete the template & solution participation.
         programmingExerciseRepository.delete(programmingExercise);
+    }
+
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findById(toBeImportedId).get();
+        final Course targetCourse = courseRepository.findById(targetCourseId).get();
+        final String sourceProjectKey = exercise.getProjectKey();
+        final List<String> sourcePorjectRepoNames = List.of(exercise.getTemplateRepositoryName(), exercise.getSolutionRepositoryName(), exercise.getTestRepositoryName());
+        newExercise.setCourse(targetCourse);
+        newExercise.setAllowOnlineEditor(exercise.isAllowOnlineEditor());
+        newExercise.setPackageName(exercise.getPackageName());
+        newExercise.setCategories(Set.copyOf(exercise.getCategories()));
+        newExercise.setAssessmentType(exercise.getAssessmentType());
+        newExercise.setDifficulty(exercise.getDifficulty());
+        newExercise.setGradingInstructions(exercise.getGradingInstructions());
+        newExercise.setMaxScore(exercise.getMaxScore());
+        newExercise.setProblemStatement(exercise.getProblemStatement());
+        newExercise.setSequentialTestRuns(exercise.hasSequentialTestRuns());
+
+        programmingExerciseRepository.save(newExercise);
+
+        final String projectKey = newExercise.getProjectKey();
+        final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
+        final String solutionRepoName = projectKey.toLowerCase() + "-solution";
+        final String testRepoName = projectKey.toLowerCase() + "-tests";
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        newExercise.setTemplateParticipation(templateParticipation);
+        newExercise.setSolutionParticipation(solutionParticipation);
+        initParticipations(newExercise);
+        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+
+        // Save participations to get the ids required for the webhooks
+        templateParticipation.setProgrammingExercise(newExercise);
+        solutionParticipation.setProgrammingExercise(newExercise);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
+
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
+
+        return newExercise;
     }
 }
