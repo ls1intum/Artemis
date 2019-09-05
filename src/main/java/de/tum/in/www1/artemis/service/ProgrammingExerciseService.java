@@ -801,6 +801,16 @@ public class ProgrammingExerciseService {
 
         programmingExerciseRepository.save(newExercise);
 
+        // Hints
+        newExercise.setExerciseHints(exercise.getExerciseHints().stream().map(hint -> {
+            final ExerciseHint copiedHint = new ExerciseHint();
+            copiedHint.setExercise(newExercise);
+            copiedHint.setContent(hint.getContent());
+            copiedHint.setTitle(hint.getTitle());
+            return copiedHint;
+        }).collect(Collectors.toSet()));
+        programmingExerciseRepository.save(newExercise);
+
         return newExercise;
     }
 }
