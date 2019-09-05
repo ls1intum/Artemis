@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -164,28 +163,24 @@ public class ProgrammingExerciseParticipationService {
     }
 
     @NotNull
-    @Transactional
-    public SolutionProgrammingExerciseParticipation setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
+    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
         final String solutionRepoName = projectKey.toLowerCase() + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
-        solutionParticipation = solutionParticipationRepository.save(solutionParticipation);
-        return solutionParticipation;
+        solutionParticipationRepository.save(solutionParticipation);
     }
 
     @NotNull
-    @Transactional
-    public TemplateProgrammingExerciseParticipation setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
+    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
         final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
-        templateParticipation = templateParticipationRepository.save(templateParticipation);
-        return templateParticipation;
+        templateParticipationRepository.save(templateParticipation);
     }
 }

@@ -751,42 +751,44 @@ public class ProgrammingExerciseService {
     }
 
     @Transactional
-    public ProgrammingExercise importProgrammingExercise(final ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
         ProgrammingExercise templateExercise = programmingExerciseRepository.findById(toBeImportedId).get();
         final Course targetCourse = courseRepository.findById(targetCourseId).get();
         copyBasicExerciseProperties(newExercise, templateExercise, targetCourse);
-        final String sourceProjectKey = templateExercise.getProjectKey();
-        final List<String> sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
-                templateExercise.getTestRepositoryName());
         final String projectKey = newExercise.getProjectKey();
         final String templatePlanName = RepositoryType.TEMPLATE.getName();
         final String solutionPlanName = RepositoryType.SOLUTION.getName();
 
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey,
-                solutionPlanName);
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey,
-                templatePlanName);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
+        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
         setupTestRepository(newExercise, projectKey);
         initParticipations(newExercise);
-
-        versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
-
-        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-
-        final Map<RepositoryType, String> sourcePlans = continuousIntegrationService.get().getBaseBuildPlanIDs(templateExercise.getProjectKey());
-        continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
-        continuousIntegrationService.get().clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
-        continuousIntegrationService.get().configureBuildPlan(templateParticipation);
-        continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
 
         // Hints
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
 
-        return newExercise;
+        return templateExercise;
+    }
+
+    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        final List<String> sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
+                templateExercise.getTestRepositoryName());
+        final String sourceProjectKey = templateExercise.getProjectKey();
+        final TemplateProgrammingExerciseParticipation templateParticipation = newExercise.getTemplateParticipation();
+        final SolutionProgrammingExerciseParticipation solutionParticipation = newExercise.getSolutionParticipation();
+
+        versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(newExercise.getTemplateRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+                "Artemis Tests WebHook");
+    }
+
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        continuousIntegrationService.get().importBuildPlans(templateExercise, newExercise);
     }
 
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {

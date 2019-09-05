@@ -2,13 +2,11 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.BambooException;
 
 /**
@@ -169,5 +167,5 @@ public interface ContinuousIntegrationService {
      */
     String checkIfProjectExists(String projectKey, String projectName);
 
-    Map<RepositoryType, String> getBaseBuildPlanIDs(String projectKey);
+    void importBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise targetExercise);
 }

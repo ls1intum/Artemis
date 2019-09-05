@@ -217,6 +217,9 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
+        if (!isPlanActive(participation.getBuildPlanId())) {
+            return;
+        }
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -229,6 +232,15 @@ public class BambooService implements ContinuousIntegrationService {
         } catch (RestClientException e) {
             log.error("HttpError while triggering build", e);
             throw new HttpException("Communication failed when trying to trigger the Bamboo build for participationId " + participation.getId() + " with the following error: " + e.getMessage());
+        }
+    }
+
+    private boolean isPlanActive(final String planId) {
+        try {
+            return getBambooClient().getPlanHelper().getPlan(planId).matches("(?s)^.*Enabled[. ]*: Yes.*$");
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Unable to get plan status (enabled true/false) for build plan " + planId);
         }
     }
 
@@ -344,7 +356,6 @@ public class BambooService implements ContinuousIntegrationService {
         return planKey;
     }
 
-    @Override
     public Map<RepositoryType, String> getBaseBuildPlanIDs(String projectKey) {
         final String plans;
         try {
@@ -580,6 +591,20 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
         }
+    }
+
+    @Override
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        final Map<RepositoryType, String> sourcePlans = getBaseBuildPlanIDs(templateExercise.getProjectKey());
+        final TemplateProgrammingExerciseParticipation templateParticipation = targetExercise.getTemplateParticipation();
+        final SolutionProgrammingExerciseParticipation solutionParticipation = targetExercise.getSolutionParticipation();
+        final String templatePlanName = RepositoryType.TEMPLATE.getName();
+        final String solutionPlanName = RepositoryType.SOLUTION.getName();
+
+        clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
+        clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
+        configureBuildPlan(templateParticipation);
+        configureBuildPlan(solutionParticipation);
     }
 
     /**
