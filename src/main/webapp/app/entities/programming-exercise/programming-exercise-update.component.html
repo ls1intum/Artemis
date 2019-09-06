@@ -211,10 +211,18 @@
                                 type="checkbox"
                                 name="automaticSubmissionRunAfterDueDate"
                                 id="field_automaticSubmissionRunAfterDueDate"
-                                [(ngModel)]="programmingExercise.programmingExerciseOptions.automaticSubmissionRunAfterDueDate"
+                                [disabled]="!programmingExercise.dueDate"
+                                [ngModel]="!!programmingExercise.automaticSubmissionRunDate"
+                                (ngModelChange)="toggleAutomaticSubmissionRun()"
                                 checked
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate">Automatic Submission Run After Due Date Passed</span>
+                            <fa-icon
+                                icon="question-circle"
+                                class="text-secondary"
+                                placement="top"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate.description' | translate }}"
+                            ></fa-icon>
                         </label>
                     </div>
                 </div>
