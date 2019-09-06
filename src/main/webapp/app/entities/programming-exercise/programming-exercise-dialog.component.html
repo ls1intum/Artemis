@@ -156,6 +156,12 @@
             </div>
         </div>
         <div class="form-group-narrow">
+            <jhi-programming-exercise-automatic-submission-run-option
+                [programmingExercise]="programmingExercise"
+                (onProgrammingExerciseUpdate)="onProgrammingExerciseUpdate($event)"
+            ></jhi-programming-exercise-automatic-submission-run-option>
+        </div>
+        <div class="form-group-narrow">
             <div class="form-check">
                 <label class="form-check-label" for="field_publishBuildPlanUrl">
                     <input

@@ -193,14 +193,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * We currently don't allow the free setting of the automatic submission run date setting, but set it to one hour after the due date.
-     * The method will return immediately if there is no dueDate set.
-     */
-    public toggleAutomaticSubmissionRun() {
-        if (!this.programmingExercise.dueDate) {
-            return;
-        }
-        this.programmingExercise.automaticSubmissionRunDate = this.programmingExercise.automaticSubmissionRunDate ? null : this.programmingExercise.dueDate.add(1, 'hours');
+    public onProgrammingExerciseUpdate(programmingExercise: ProgrammingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 }
