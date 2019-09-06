@@ -85,6 +85,16 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    public static FileUploadSubmission generateFileUploadSubmission(String filePath, boolean submitted) {
+        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setSubmitted(submitted);
+        if (submitted) {
+            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return fileUploadSubmission;
+    }
+
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
         submission.setModel(model);
