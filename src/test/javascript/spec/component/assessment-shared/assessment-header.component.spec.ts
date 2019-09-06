@@ -1,4 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, ActivatedRouteSnapshot } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
@@ -9,6 +10,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result';
 import { AccountService } from 'app/core';
 import { MockAccountService } from '../../helpers/mock-account.service';
+import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
+import { Mutable } from '../../helpers/mutable';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -19,7 +22,7 @@ describe('AssessmentHeaderComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule],
             declarations: [AssessmentHeaderComponent],
-            providers: [JhiAlertService],
+            providers: [JhiAlertService, mockedActivatedRoute({}, { showBackButton: 'false' })],
         }).compileComponents();
     }));
 
@@ -51,12 +54,17 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should show or hide a back button', () => {
-        component.showBackButton = true;
+        const routeSnapshot = fixture.debugElement.injector.get(ActivatedRoute).snapshot as Mutable<ActivatedRouteSnapshot>;
+        routeSnapshot.queryParamMap = convertToParamMap({ showBackButton: 'true' });
+        component.ngOnInit();
+        expect(component.showBackButton).toBeTruthy();
         fixture.detectChanges();
         let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeTruthy();
 
-        component.showBackButton = false;
+        routeSnapshot.queryParamMap = convertToParamMap({ showBackButton: 'false' });
+        component.ngOnInit();
+        expect(component.showBackButton).toBeFalsy();
         fixture.detectChanges();
         backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeFalsy();
@@ -64,7 +72,9 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should emit event on back button', () => {
         spyOn(component.navigateBack, 'emit');
-        component.showBackButton = true;
+        const routeSnapshot = fixture.debugElement.injector.get(ActivatedRoute).snapshot as Mutable<ActivatedRouteSnapshot>;
+        routeSnapshot.queryParamMap = convertToParamMap({ showBackButton: 'true' });
+        component.ngOnInit();
         fixture.detectChanges();
 
         const backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));

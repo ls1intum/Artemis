@@ -3,7 +3,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { AccountService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
-import { ActivatedRoute } from '@angular/router';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
@@ -12,7 +11,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
     styleUrls: ['./assessment-layout.component.scss'],
 })
 export class AssessmentLayoutComponent implements OnInit {
-    showBackButton: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
@@ -35,10 +33,9 @@ export class AssessmentLayoutComponent implements OnInit {
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
 
-    constructor(private route: ActivatedRoute, private accountService: AccountService) {}
+    constructor(private accountService: AccountService) {}
 
     ngOnInit() {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.showBackButton = this.route.snapshot.queryParamMap.get('showBackButton') === 'true';
     }
 }

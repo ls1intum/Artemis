@@ -1,6 +1,5 @@
 <div class="assessment-container">
     <jhi-assessment-header
-        [showBackButton]="showBackButton"
         (navigateBack)="navigateBack.emit()"
         [isLoading]="isLoading"
         [busy]="busy"
@@ -19,7 +18,7 @@
 
     <jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>
 
-    <ng-content select="assessment-editor"></ng-content>
+    <ng-content></ng-content>
 </div>
 
 <div class="mt-3" *ngIf="complaint">

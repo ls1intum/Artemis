@@ -4,9 +4,10 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisSharedModule } from 'app/shared';
 
 import { AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentLayoutComponent } from '.';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule],
     declarations: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
     exports: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
     providers: [JhiAlertService],
