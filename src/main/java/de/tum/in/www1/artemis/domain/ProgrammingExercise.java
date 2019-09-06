@@ -11,6 +11,7 @@ import javax.persistence.*;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@SecondaryTable(name = "programming_exercise_details")
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -46,6 +48,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
+
+    @Nullable
+    @Column(name = "automatic_submission_run_date", table = "programming_exercise_details")
+    private Date automaticSubmissionRunDate;
 
     // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -321,6 +327,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    public Date getAutomaticSubmissionRunDate() {
+        return automaticSubmissionRunDate;
+    }
+
+    public void setAutomaticSubmissionRunDate(Date automaticSubmissionRunDate) {
+        this.automaticSubmissionRunDate = automaticSubmissionRunDate;
     }
 
     /**
