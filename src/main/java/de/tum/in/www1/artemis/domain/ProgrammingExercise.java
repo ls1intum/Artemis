@@ -47,7 +47,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
-    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseOptions programmingExerciseOptions;
 
