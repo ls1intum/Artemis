@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from '../programming-exercise.model';
 
+/**
+ * Checkbox to toggle an automatic submission run after the due date passes.
+ */
 @Component({
     selector: 'jhi-programming-exercise-automatic-submission-run-option',
     template: `
