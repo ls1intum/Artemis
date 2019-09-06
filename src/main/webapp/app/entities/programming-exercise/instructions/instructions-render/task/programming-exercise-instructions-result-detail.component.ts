@@ -17,7 +17,6 @@ export class ProgrammingExerciseInstructionResultDetailComponent implements OnIn
     @Input() tests: string[];
     isLoading: boolean;
     feedbackList: Feedback[];
-    isAtLeastTutor: boolean;
     buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
