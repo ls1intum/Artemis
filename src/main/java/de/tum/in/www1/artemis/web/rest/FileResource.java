@@ -26,8 +26,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -53,16 +56,19 @@ public class FileResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
     private final TokenProvider tokenProvider;
 
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository, TokenProvider tokenProvider) {
+            LectureRepository lectureRepository, TokenProvider tokenProvider, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
+        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
 
     /**
@@ -202,6 +208,42 @@ public class FileResource {
     }
 
     /**
+     * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
+     *
+     * @param submissionId ID of the submission, the attachment belongs to
+     * @param filename  the filename of the file
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("/files/file-upload-submission/{submissionId}/{filename:.+}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Resource> getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
+        if (!optionalSubmission.isPresent()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Submission submission = optionalSubmission.get();
+        try {
+            byte[] file = fileService.getFileForPath(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + submission.getId() + '/' + filename);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            ByteArrayResource resource = new ByteArrayResource(file);
+
+            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(contentDisposition);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
+        }
+        catch (IOException ex) {
+            log.error("File upload submission download let to the following exception", ex);
+            return ResponseEntity.status(500).build();
+        }
+
+    }
+
+    /**
      * GET /files/course/icons/:courseId/:filename : Get the course image
      *
      * @param courseId ID of the course, the image belongs to
@@ -276,7 +318,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
-            log.error("Lecture attachement download lef to the following exception", ex);
+            log.error("Lecture attachment download let to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
 

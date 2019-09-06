@@ -179,6 +179,9 @@ public class FileService {
         if (actualPath.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
+        if (actualPath.contains(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH)) {
+            return "/api/files/file-upload-submission/" + id + "/" + filename;
+        }
 
         // path is unknown => cannot convert
         throw new RuntimeException("Unknown Filepath: " + actualPath);
