@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,7 +52,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Nullable
     @Column(name = "automatic_submission_run_date", table = "programming_exercise_details")
-    private Date automaticSubmissionRunDate;
+    private ZonedDateTime automaticSubmissionRunDate;
 
     // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -329,11 +330,12 @@ public class ProgrammingExercise extends Exercise {
         this.sequentialTestRuns = sequentialTestRuns;
     }
 
-    public Date getAutomaticSubmissionRunDate() {
+    @Nullable
+    public ZonedDateTime getAutomaticSubmissionRunDate() {
         return automaticSubmissionRunDate;
     }
 
-    public void setAutomaticSubmissionRunDate(Date automaticSubmissionRunDate) {
+    public void setAutomaticSubmissionRunDate(@Nullable ZonedDateTime automaticSubmissionRunDate) {
         this.automaticSubmissionRunDate = automaticSubmissionRunDate;
     }
 
