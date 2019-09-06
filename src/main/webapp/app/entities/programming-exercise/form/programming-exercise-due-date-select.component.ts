@@ -6,7 +6,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
  * Checkbox to toggle an automatic submission run after the due date passes.
  */
 @Component({
-    selector: 'jhi-programming-exercise-automatic-submission-run-option',
+    selector: 'jhi-programming-exercise-due-date-select',
     template: `
         <jhi-date-time-picker
             labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
@@ -37,7 +37,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
         </div>
     `,
 })
-export class ProgrammingExerciseAutomaticSubmissionRunOptionComponent {
+export class ProgrammingExerciseDueDateSelectComponent {
     @Input() programmingExercise: ProgrammingExercise;
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
 

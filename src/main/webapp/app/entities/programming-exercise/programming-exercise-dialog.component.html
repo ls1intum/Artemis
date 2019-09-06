@@ -39,10 +39,10 @@
             <div class="form-group-narrow flex-grow-1 ml-3">
                 <jhi-date-time-picker labelName="{{ 'artemisApp.exercise.dueDate' | translate }}" [(ngModel)]="programmingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
                 <div class="form-group-narrow mt-1" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
-                    <jhi-programming-exercise-automatic-submission-run-option
+                    <jhi-programming-exercise-due-date-select
                         [programmingExercise]="programmingExercise"
                         (onProgrammingExerciseUpdate)="onProgrammingExerciseUpdate($event)"
-                    ></jhi-programming-exercise-automatic-submission-run-option>
+                    ></jhi-programming-exercise-due-date-select>
                 </div>
             </div>
         </div>

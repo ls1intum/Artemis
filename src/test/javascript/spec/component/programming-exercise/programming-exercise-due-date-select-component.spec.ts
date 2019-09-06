@@ -12,14 +12,14 @@ import { SinonSpy, spy } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
-import { ProgrammingExerciseAutomaticSubmissionRunOptionComponent } from 'app/entities/programming-exercise/form';
+import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingExerciseAutomaticSubmissionRunOption', () => {
-    let comp: ProgrammingExerciseAutomaticSubmissionRunOptionComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseAutomaticSubmissionRunOptionComponent>;
+describe('ProgrammingExerciseDueDateSelectComponent', () => {
+    let comp: ProgrammingExerciseDueDateSelectComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseDueDateSelectComponent>;
     let debugElement: DebugElement;
 
     let programmingExerciseEmitSpy: SinonSpy;
@@ -29,12 +29,12 @@ describe('ProgrammingExerciseAutomaticSubmissionRunOption', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, FormsModule],
-            declarations: [ProgrammingExerciseAutomaticSubmissionRunOptionComponent],
+            declarations: [ProgrammingExerciseDueDateSelectComponent],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseAutomaticSubmissionRunOptionComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseDueDateSelectComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 

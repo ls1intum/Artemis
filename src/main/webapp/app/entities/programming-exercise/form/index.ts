@@ -1,1 +1,1 @@
-export * from './programming-exercise-automatic-submission-run-option.component';
+export * from './programming-exercise-due-date-select.component';

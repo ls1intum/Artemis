@@ -35,7 +35,7 @@ import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseAutomaticSubmissionRunOptionComponent } from 'app/entities/programming-exercise/form';
+import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -71,7 +71,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseManageTestCasesComponent,
         // Form components
-        ProgrammingExerciseAutomaticSubmissionRunOptionComponent,
+        ProgrammingExerciseDueDateSelectComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
