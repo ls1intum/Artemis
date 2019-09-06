@@ -16,7 +16,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
                     (ngModelChange)="toggleAutomaticSubmissionRun()"
                     checked
                 />
-                <span jhiTranslate="artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate">Automatic Submission Run After Due Date Passed</span>
+                <span jhiTranslate="artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate.title">Automatic Submission Run After Due Date Passed</span>
                 <fa-icon
                     icon="question-circle"
                     class="text-secondary"
