@@ -768,6 +768,8 @@ public class ProgrammingExerciseService {
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
 
+        importTestCases(templateExercise, newExercise);
+
         return templateExercise;
     }
 
@@ -791,6 +793,18 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().importBuildPlans(templateExercise, newExercise);
     }
 
+    private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
+            final ProgrammingExerciseTestCase copy = new ProgrammingExerciseTestCase();
+            copy.setActive(testCase.isActive());
+            copy.setAfterDueDate(testCase.isAfterDueDate());
+            copy.setTestName(testCase.getTestName());
+            copy.setWeight(testCase.getWeight());
+            copy.setExercise(targetExercise);
+            return copy;
+        }).collect(Collectors.toSet()));
+    }
+
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final String testRepoName = projectKey.toLowerCase() + "-tests";
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
@@ -807,5 +821,6 @@ public class ProgrammingExerciseService {
         newExercise.setMaxScore(templateExercise.getMaxScore());
         newExercise.setProblemStatement(templateExercise.getProblemStatement());
         newExercise.setSequentialTestRuns(templateExercise.hasSequentialTestRuns());
+        newExercise.setPublishBuildPlanUrl(templateExercise.isPublishBuildPlanUrl());
     }
 }

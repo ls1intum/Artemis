@@ -603,6 +603,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
         clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
+        enablePlan(templateParticipation.getBuildPlanId());
+        enablePlan(solutionParticipation.getBuildPlanId());
         configureBuildPlan(templateParticipation);
         configureBuildPlan(solutionParticipation);
     }
