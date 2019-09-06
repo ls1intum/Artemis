@@ -50,18 +50,6 @@ export class CourseService {
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)));
     }
 
-    /**
-     * Get the course for a result including basic information about it. Child entities like exercises and lectures are not included
-     * in this result, since some components might just need the basic course info, especially if only a student is
-     * currently logged in.
-     *
-     * @param resultId The ID of a result
-     * @return Observable containing a course object with only basic information, e.g. title, shortName, authorizations
-     */
-    findWithBasicInformation(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`api/results/${resultId}/basic-course-for-result`, { observe: 'response' });
-    }
-
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })

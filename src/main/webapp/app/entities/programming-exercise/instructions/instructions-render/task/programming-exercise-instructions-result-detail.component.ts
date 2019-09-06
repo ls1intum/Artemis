@@ -5,8 +5,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
-import { CourseService } from 'app/entities/course';
-import { AccountService } from 'app/core';
 
 // Modal -> Result details view
 @Component({
@@ -22,7 +20,7 @@ export class ProgrammingExerciseInstructionResultDetailComponent implements OnIn
     isAtLeastTutor: boolean;
     buildLogs: BuildLogEntryArray;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private courseService: CourseService, private accountService: AccountService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
 
     ngOnInit(): void {
         of(this.result.feedbacks)
@@ -37,8 +35,6 @@ export class ProgrammingExerciseInstructionResultDetailComponent implements OnIn
                 tap(feedbacks => (this.feedbackList = feedbacks)),
             )
             .subscribe();
-
-        this.courseService.findWithBasicInformation(this.result.id).subscribe(resp => (this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(resp.body!)));
     }
 
     loadResultDetails(result: Result): Observable<Feedback[]> {

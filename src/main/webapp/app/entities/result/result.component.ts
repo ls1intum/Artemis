@@ -33,6 +33,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
+    @Input() showTestNames = false;
 
     textColorClass: string;
     hasFeedback: boolean;
@@ -128,6 +129,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
+        modalRef.componentInstance.showTestNames = this.showTestNames;
     }
 
     downloadBuildResult(participationId: number) {

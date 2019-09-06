@@ -27,6 +27,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() short = false;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
+    @Input() showTestNames = false;
 
     result: Result | null;
     isBuilding: boolean;
