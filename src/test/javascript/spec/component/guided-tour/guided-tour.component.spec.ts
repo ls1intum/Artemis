@@ -103,7 +103,7 @@ describe('Component Tests', () => {
         describe('Keydown Element', () => {
             beforeEach(async () => {
                 // Prepare guided tour service
-                spyOn(guidedTourService, 'updateGuidedTourSettings');
+                spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
                 spyOn(guidedTourService, 'init').and.returnValue(of());
                 spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                     guidedTourService.currentTour = courseOverviewTour;
@@ -118,6 +118,15 @@ describe('Component Tests', () => {
                 guidedTourService.startTour();
                 guidedTourComponentFixture.detectChanges();
                 expect(guidedTourComponent.currentTourStep).to.exist;
+            });
+
+            it('should not trigger the guided tour with the right arrow key', () => {
+                guidedTourComponent.currentTourStep = null;
+                const nextStep = spyOn(guidedTourService, 'nextStep');
+                const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                guidedTourComponent.handleKeyboardEvent(eventMock);
+                expect(nextStep.calls.count()).to.equal(0);
+                nextStep.calls.reset();
             });
 
             it('should navigate next with the right arrow key', () => {
