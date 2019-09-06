@@ -117,9 +117,8 @@ public class BambooBuildPlanService {
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
             return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
-                    new ScriptTask().description("Builds and tests the structural tests")
-                            .inlineBody("pytest tests/structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
-                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest tests/behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the structural tests").inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
         }
 
