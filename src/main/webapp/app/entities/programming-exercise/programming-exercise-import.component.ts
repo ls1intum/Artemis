@@ -3,12 +3,11 @@ import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services';
-import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExercisePopupService } from 'app/entities/programming-exercise/programming-exercise-popup.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface SearchResult {
-    elements: ProgrammingExercise[];
-    totalPages: number;
+    exercisesOnPage: ProgrammingExercise[];
+    numberOfPages: number;
 }
 
 export enum SortingOrder {
@@ -46,6 +45,8 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     constructor(private pagingService: ProgrammingExercisePagingService) {}
 
     ngOnInit() {
+        this.content = { exercisesOnPage: [], numberOfPages: 1 };
+
         this.search
             .pipe(
                 tap(() => (this.loading = true)),
@@ -53,17 +54,20 @@ export class ProgrammingExerciseImportComponent implements OnInit {
                 switchMap(() => this.pagingService.searchForExercises(this.state)),
             )
             .subscribe(resp => {
+                console.log('RESP = ' + resp);
                 this.content = resp;
-                this.total = resp.totalPages * this.state.pageSize;
+                this.loading = false;
+                this.total = resp.numberOfPages * this.state.pageSize;
             });
     }
 
     set page(page: number) {
+        page = page - 1;
         this.setSearchParam({ page });
     }
 
     get page(): number {
-        return this.state.page;
+        return this.state.page + 1;
     }
 
     set searchTerm(partialTitle: string) {
@@ -110,12 +114,10 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 export class PorgrammingExerciseImportPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private programmingExercisePopupService: ProgrammingExercisePopupService) {}
+    constructor(private modalRef: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe(() => {
-            this.programmingExercisePopupService.open(ProgrammingExerciseImportComponent as Component);
-        });
+        this.modalRef.open(ProgrammingExerciseImportComponent as Component, { size: 'lg', backdrop: 'static' });
     }
 
     ngOnDestroy() {

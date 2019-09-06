@@ -26,7 +26,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let exercise of content.elements | sortBy: sortedColumn:listSorting; trackBy: trackId">
+            <tr *ngFor="let exercise of content.exercisesOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
                 <td>
                     <span>{{ exercise.id }}</span>
                 </td>
