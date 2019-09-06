@@ -45,7 +45,7 @@
                             #fileInput
                             id="fileUploadInput"
                             type="file"
-                            accept="application/pdf"
+                            [accept]="fileUploadExercise.filePattern"
                             class="custom-file-input"
                             [disabled]="submission && submission.submitted"
                             (change)="setFileSubmissionForExercise($event)"
