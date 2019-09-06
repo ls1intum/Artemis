@@ -135,23 +135,11 @@ export class LectureAttachmentsComponent implements OnInit {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.isDownloadingAttachmentLink = downloadUrl;
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
-            response => {
-                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename')!);
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-                this.isDownloadingAttachmentLink = null;
-            },
-            error => {
-                this.isDownloadingAttachmentLink = null;
-            },
-        );
+        if (!this.isDownloadingAttachmentLink) {
+            this.isDownloadingAttachmentLink = downloadUrl;
+            this.attachmentService.downloadAttachment(downloadUrl);
+            this.isDownloadingAttachmentLink = null;
+        }
     }
 
     /**

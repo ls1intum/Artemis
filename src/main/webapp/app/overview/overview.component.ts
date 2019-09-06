@@ -1,17 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
-import { TUM_USERNAME_REGEX } from 'app/app.constants';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 
 @Component({
     selector: 'jhi-overview',
     templateUrl: './overview.component.html',
     styles: [],
 })
-export class OverviewComponent {
+export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
 
@@ -21,6 +22,7 @@ export class OverviewComponent {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
+        private guidedTourService: GuidedTourService,
     ) {
         this.loadAndFilterCourses();
     }
@@ -33,6 +35,10 @@ export class OverviewComponent {
             },
             (response: string) => this.onError(response),
         );
+    }
+
+    ngOnInit(): void {
+        this.guidedTourService.enableTour(courseOverviewTour);
     }
 
     private onError(error: string) {

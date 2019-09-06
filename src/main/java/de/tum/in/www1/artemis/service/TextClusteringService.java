@@ -43,17 +43,21 @@ public class TextClusteringService {
 
     private final TextEmbeddingService textEmbeddingService;
 
+    private final TextAssessmentQueueService textAssessmentQueueService;
+
     @Value("${artemis.automatic-text.embedding-chunk-size}")
     private int embeddingChunkSize;
 
     public TextClusteringService(TextBlockService textBlockService, TextSubmissionService textSubmissionService, TextClusterRepository textClusterRepository,
-            TextBlockRepository textBlockRepository, TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService) {
+            TextBlockRepository textBlockRepository, TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
+            TextAssessmentQueueService textAssessmentQueueService) {
         this.textBlockService = textBlockService;
         this.textSubmissionService = textSubmissionService;
         this.textClusterRepository = textClusterRepository;
         this.textBlockRepository = textBlockRepository;
         this.textSimilarityClusteringService = textSimilarityClusteringService;
         this.textEmbeddingService = textEmbeddingService;
+        this.textAssessmentQueueService = textAssessmentQueueService;
     }
 
     private List<TextEmbedding> computeEmbeddings(List<TextBlock> blocks) {
@@ -109,6 +113,9 @@ public class TextClusteringService {
             cluster.setExercise(exercise);
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
                     .collect(toList());
+
+            textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
+
             updatedBlockReferences = textBlockRepository.saveAll(updatedBlockReferences);
             cluster.setBlocks(updatedBlockReferences);
         }

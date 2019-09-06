@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -19,11 +19,20 @@ import {
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisExerciseScoresModule, ArtemisProgrammingExerciseActionsModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArtemisExerciseScoresModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisParticipationSubmissionModule,
+    ],
+
     declarations: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
@@ -38,7 +47,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
-    providers: [ParticipationService, ParticipationWebsocketService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ParticipationService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisParticipationModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
@@ -47,5 +56,12 @@ export class ArtemisParticipationModule {
                 this.languageService.changeLanguage(languageKey);
             }
         });
+    }
+
+    static forRoot(): ModuleWithProviders {
+        return {
+            ngModule: ArtemisParticipationModule,
+            providers: [ParticipationWebsocketService],
+        };
     }
 }

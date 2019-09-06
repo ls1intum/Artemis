@@ -1,6 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { Subject } from 'rxjs';
@@ -15,15 +14,15 @@ import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
-import { ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise/services/programming-exercise-test-case.service';
-import { ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
-import { ProgrammingExerciseInstructionTestcaseStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instruction-testcase-status.component';
+import {
+    ProgrammingExerciseEditableInstructionComponent,
+    ProgrammingExerciseInstructionAnalysisComponent,
+} from 'app/entities/programming-exercise/instructions/instructions-editor';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,8 +44,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
-            declarations: [MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent), MockComponent(MarkdownEditorComponent)],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
+            declarations: [MockComponent(ProgrammingExerciseInstructionAnalysisComponent), MockComponent(MarkdownEditorComponent)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },

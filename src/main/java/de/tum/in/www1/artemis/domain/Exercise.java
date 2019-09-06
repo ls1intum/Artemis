@@ -9,6 +9,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
+@DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -82,8 +84,10 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> categories = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
+    @Column(name = "categories")
+    private Set<String> categories = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
@@ -286,11 +290,11 @@ public abstract class Exercise implements Serializable {
         this.difficulty = difficulty;
     }
 
-    public List<String> getCategories() {
+    public Set<String> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<String> categories) {
+    public void setCategories(Set<String> categories) {
         this.categories = categories;
     }
 
@@ -464,7 +468,8 @@ public abstract class Exercise implements Serializable {
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
                 }
-                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
+                        || participation.getExercise() instanceof FileUploadExercise) {
                     return participation;
                 }
             }

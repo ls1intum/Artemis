@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.util;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import com.google.common.collect.Sets;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -23,6 +25,11 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
+    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
+    }
+
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -35,7 +42,7 @@ public class ModelFactory {
         exercise.setExampleSubmissions(new HashSet<>());
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setCategories(new LinkedList<>());
+        exercise.setCategories(new HashSet<>());
         return exercise;
     }
 
@@ -43,7 +50,7 @@ public class ModelFactory {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
-            student.setGroups(Arrays.asList(groups));
+            student.setGroups(Sets.newHashSet(groups));
             generatedUsers.add(student);
         }
         return generatedUsers;
@@ -58,9 +65,8 @@ public class ModelFactory {
         user.setEmail(login + "@test.de");
         user.setActivated(true);
         user.setLangKey("en");
-        user.setGroups(new LinkedList<>());
+        user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
-        user.setPersistentTokens(new HashSet<>());
         return user;
     }
 

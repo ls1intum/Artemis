@@ -10,36 +10,33 @@ import * as sinonChai from 'sinon-chai';
 
 import { ArtemisTestModule } from '../../test.module';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ContentType, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation } from 'app/guided-tour/guided-tour.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Component Tests', () => {
-    const tourStep: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStep = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
-    };
+    });
 
-    const tourStepWithPermission: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStepWithPermission = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
         permission: ['ROLE_ADMIN'],
-    };
+    });
 
-    const tourStepWithHighlightPadding: TourStep = {
-        contentType: ContentType.TEXT,
+    const tourStepWithHighlightPadding = new TextTourStep({
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
-    };
+    });
 
     const courseOverviewTour: GuidedTour = {
         settingsKey: 'course_overview_tour',
@@ -87,12 +84,14 @@ describe('Component Tests', () => {
             const currentStepSpy = spyOn(guidedTourComponent, 'subscribeToGuidedTourCurrentStepStream');
             const resizeEventSpy = spyOn(guidedTourComponent, 'subscribeToResizeEvent');
             const scrollEventSpy = spyOn(guidedTourComponent, 'subscribeToScrollEvent');
+            const guidedTourInitSpy = spyOn(guidedTourService, 'init').and.returnValue(of());
 
             guidedTourComponent.ngAfterViewInit();
 
             expect(currentStepSpy.calls.count()).to.equal(1);
             expect(resizeEventSpy.calls.count()).to.equal(1);
             expect(scrollEventSpy.calls.count()).to.equal(1);
+            expect(guidedTourInitSpy.calls.count()).to.equal(1);
         });
 
         it('should handle user permissions', () => {
@@ -104,21 +103,30 @@ describe('Component Tests', () => {
         describe('Keydown Element', () => {
             beforeEach(async () => {
                 // Prepare guided tour service
-                spyOn(guidedTourService, 'getOverviewTour').and.returnValue(of(courseOverviewTour));
-                spyOn(guidedTourService, 'updateGuidedTourSettings');
+                spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+                spyOn(guidedTourService, 'init').and.returnValue(of());
+                spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                    guidedTourService.currentTour = courseOverviewTour;
+                });
 
                 // Prepare guided tour component
                 guidedTourComponent.ngAfterViewInit();
 
-                await guidedTourComponentFixture.ngZone!.run(() => {
-                    router.navigateByUrl('/overview');
-                });
-
                 // Start course overview tour
                 expect(guidedTourComponent.currentTourStep).to.not.exist;
-                guidedTourService.startGuidedTourForCurrentRoute();
+                guidedTourService.enableTour(courseOverviewTour);
+                guidedTourService.startTour();
                 guidedTourComponentFixture.detectChanges();
                 expect(guidedTourComponent.currentTourStep).to.exist;
+            });
+
+            it('should not trigger the guided tour with the right arrow key', () => {
+                guidedTourComponent.currentTourStep = null;
+                const nextStep = spyOn(guidedTourService, 'nextStep');
+                const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                guidedTourComponent.handleKeyboardEvent(eventMock);
+                expect(nextStep.calls.count()).to.equal(0);
+                nextStep.calls.reset();
             });
 
             it('should navigate next with the right arrow key', () => {

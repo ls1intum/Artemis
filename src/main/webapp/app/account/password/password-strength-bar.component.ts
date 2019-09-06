@@ -21,6 +21,13 @@ export class PasswordStrengthBarComponent {
 
     constructor(private renderer: Renderer, private elementRef: ElementRef) {}
 
+    /**
+     * Calculates the strenght of a password. The strength depends on lower case letter, upper case letters, numbers,
+     * symbols and the length of the whole string as well as the variety of all characters.
+     *
+     * @param p The password to check the strength for
+     * @return The strength of the password
+     */
     measureStrength(p: string): number {
         let force = 0;
         const regex = /[$-/:-?{-~!"^_`\[\]]/g; // "
@@ -48,6 +55,13 @@ export class PasswordStrengthBarComponent {
         return force;
     }
 
+    /**
+     * Get the color code for the strength of a password. A score above 40 results in a good evaluation, a score below
+     * 10 results in the worst evaluation.
+     *
+     * @param s The score of the checked password
+     * @return The color matching the score
+     */
     getColor(s: number): any {
         let idx = 0;
         if (s <= 10) {

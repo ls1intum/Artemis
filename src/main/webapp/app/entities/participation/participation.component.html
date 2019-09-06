@@ -1,7 +1,14 @@
 <div *ngIf="participations">
-    <h2>
-        <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
-    </h2>
+    <div class="d-flex">
+        <h2>
+            <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+        </h2>
+        <jhi-programming-exercise-instructor-submission-state
+            class="ml-auto"
+            *ngIf="exercise?.isAtLeastInstructor && exercise?.type === PROGRAMMING"
+            [exerciseId]="exercise.id"
+        ></jhi-programming-exercise-instructor-submission-state>
+    </div>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
     <br />
@@ -43,7 +50,12 @@
             <tbody>
                 <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a routerLink="/participation/{{ participation.id }}">{{ participation.id }}</a>
+                        <div *ngIf="exercise.isAtLeastInstructor; else displayId">
+                            <a routerLink="/participation/{{ participation.id }}/submissions">{{ participation.id }}</a>
+                        </div>
+                        <ng-template #displayId>
+                            {{ participation.id }}
+                        </ng-template>
                     </td>
                     <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                     <td *ngIf="exercise?.type == PROGRAMMING">
@@ -64,6 +76,27 @@
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
+                            <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
+                                <jhi-programming-exercise-instructor-trigger-build-button
+                                    *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
+                                    [exercise]="exercise"
+                                    [participation]="participation"
+                                    [showProgress]="true"
+                                    class="mr-1"
+                                ></jhi-programming-exercise-instructor-trigger-build-button>
+                                <ng-template #triggerLoading>
+                                    <fa-icon icon="circle-notch" [spin]="true" class="text-secondary"></fa-icon>
+                                </ng-template>
+                            </ng-container>
+                            <button
+                                type="submit"
+                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
+                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
+                                class="btn btn-warning btn-sm mr-1"
+                            >
+                                <fa-icon icon="asterisk"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
+                            </button>
                             <button
                                 type="submit"
                                 *ngIf="exercise.isAtLeastInstructor"
@@ -74,15 +107,6 @@
                             >
                                 <fa-icon icon="times"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                            </button>
-                            <button
-                                type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
-                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
-                                class="btn btn-warning btn-sm mr-1"
-                            >
-                                <fa-icon icon="asterisk"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
                             </button>
                             <button
                                 type="submit"
@@ -109,16 +133,6 @@
                                 <fa-icon icon="file-powerpoint"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
-                            <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
-                                <jhi-programming-exercise-instructor-trigger-build-button
-                                    *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
-                                    [participation]="participation"
-                                    [showProgress]="true"
-                                ></jhi-programming-exercise-instructor-trigger-build-button>
-                                <ng-template #triggerLoading>
-                                    <fa-icon icon="circle-notch" [spin]="true" class="text-secondary"></fa-icon>
-                                </ng-template>
-                            </ng-container>
                         </div>
                     </td>
                 </tr>

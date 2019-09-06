@@ -3,10 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs';
-
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
-
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';

@@ -72,10 +72,20 @@ public class ModelIndex {
 
     /**
      * Used for evaluation
-     * @return the nuber of Unique Model Elements
+     *
+     * @return the number of unique model elements
      */
     public int getNumberOfUniqueElements() {
         return this.uniqueModelElementList.size();
+    }
+
+    /**
+     * Used for evaluation
+     *
+     * @return the model element to similarity id mapping
+     */
+    public Map<UMLElement, Integer> getModelElementMapping() {
+        return this.modelElementMapping;
     }
 
     public Collection<UMLElement> getUniqueElements() {

@@ -1,0 +1,48 @@
+<div *ngIf="buildingSummary" class="d-flex">
+    <div id="result-eta" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
+        <fa-icon icon="clock"></fa-icon>
+        <span
+            [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | translate"
+            [innerHTML]="'artemisApp.programmingExercise.resultETA' | translate: { eta: resultEtaInMs | amDuration: 'milliseconds' }"
+            >Result ETA: {{ resultEtaInMs | amDuration: 'milliseconds' }}</span
+        >
+    </div>
+    <div id="build-state" class="d-flex flex-column justify-content-between">
+        <span
+            id="build-state-building"
+            class="badge badge-primary flex-grow-0"
+            [innerHTML]="
+                'artemisApp.programmingExercise.buildingSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
+            "
+        >
+            Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
+        </span>
+        <span
+            id="build-state-failed"
+            [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'badge-danger' : 'badge-success', 'flex-grow-0']"
+            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
+        >
+            Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
+        </span>
+    </div>
+    <button
+        id="trigger-all-button"
+        class="btn btn-danger ml-3"
+        [disabled]="isTriggeringBuildAll"
+        (click)="openTriggerAllModal()"
+        [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate"
+    >
+        <fa-icon icon="redo"></fa-icon>
+        <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
+    </button>
+    <button
+        id="trigger-failed-button"
+        class="btn btn-primary ml-3"
+        [disabled]="!hasFailedSubmissions"
+        (click)="triggerBuildOfFailedSubmissions()"
+        [ngbTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | translate"
+    >
+        <fa-icon icon="redo" [spin]="isBuildingFailedSubmissions"></fa-icon>
+        <span jhiTranslate="artemisApp.programmingExercise.resubmitFailed">Trigger failed</span>
+    </button>
+</div>

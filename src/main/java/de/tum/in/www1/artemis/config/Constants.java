@@ -34,6 +34,8 @@ public final class Constants {
 
     public static final String FILEPATH_COMPASS = "compass";
 
+    public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
+
     public static final String RESULT_RESOURCE_API_PATH = "/api/results/";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";

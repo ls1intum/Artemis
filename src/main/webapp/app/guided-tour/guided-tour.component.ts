@@ -2,10 +2,10 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsu
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { ContentType, LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -24,14 +24,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .
     public highlightPadding = 4;
-
-    public currentTourStep: TourStep | null;
+    /**
+     * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
+     * since the build would fail with Property 'x' does not exist on type 'y' when accessing properties of subclasses in the html template
+     * that are not available for all subclasses
+     */
+    public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly ContentType = ContentType;
     readonly LinkType = LinkType;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
@@ -44,7 +47,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     handleKeyboardEvent(event: KeyboardEvent) {
         switch (event.code) {
             case 'ArrowRight': {
-                if (this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                // Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
                     this.guidedTourService.nextStep();
                 }
                 break;
@@ -66,6 +70,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Initial subscriptions for GuidedTourCurrentStepStream, resize event and scroll event
      */
     public ngAfterViewInit(): void {
+        this.guidedTourService.init();
         this.subscribeToGuidedTourCurrentStepStream();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
@@ -87,7 +92,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
     public subscribeToGuidedTourCurrentStepStream() {
-        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TourStep) => {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | TextLinkTourStep | ImageTourStep | VideoTourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
                 return;
@@ -290,7 +295,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public getHighlightPadding(): number {
         if (this.currentTourStep) {
-            let paddingAdjustment = this.currentTourStep.useHighlightPadding ? this.highlightPadding : 0;
+            let paddingAdjustment = this.currentTourStep.highlightPadding ? this.highlightPadding : 0;
             if (this.currentTourStep.highlightPadding) {
                 paddingAdjustment = this.currentTourStep.highlightPadding;
             }

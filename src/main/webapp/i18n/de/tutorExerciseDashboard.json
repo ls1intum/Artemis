@@ -55,6 +55,8 @@
             "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
+            "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
+            "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
             "language": "Sprache",
             "languages": {

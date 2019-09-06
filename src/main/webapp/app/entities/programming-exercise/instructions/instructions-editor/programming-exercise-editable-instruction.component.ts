@@ -1,39 +1,45 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, filter as rxFilter, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
-import { compose, filter, map, sortBy } from 'lodash/fp';
-import { ProgrammingExercise } from '../../programming-exercise.model';
+import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { Result, ResultService } from 'app/entities/result';
+import { Result } from 'app/entities/result';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { KatexCommand } from 'app/markdown-editor/commands';
+import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
+import { ExerciseHintService } from 'app/entities/exercise-hint';
+import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
+    exerciseHints: ExerciseHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
+    taskHintCommand = new TaskHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -88,6 +94,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -96,6 +103,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
+            if (this.exercise.id) {
+                this.loadExerciseHints(this.exercise.id);
+            }
         }
     }
 
@@ -131,9 +141,24 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
     }
 
-    /* Save the problem statement on the server.
-     * @param $event
+    /**
+     * Load the exercise hints and assign them to the task hint command.
+     *
+     * @param exerciseId for which to load the exercise hints.
      */
+    loadExerciseHints(exerciseId: number) {
+        this.exerciseHintService
+            .findByExerciseId(exerciseId)
+            .pipe(rxMap(({ body }) => body || []))
+            .subscribe((exerciseHints: ExerciseHint[]) => {
+                this.exerciseHints = exerciseHints;
+                this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id.toString(10), value: title })));
+            });
+    }
+
+    /** Save the problem statement on the server.
+     * @param $event
+     **/
     saveInstructions($event: any) {
         $event.stopPropagation();
         this.savingInstructions = true;
@@ -195,7 +220,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     }),
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
-                        this.testCaseCommand.setValues(this.exerciseTestCases);
+                        this.testCaseCommand.setValues(this.exerciseTestCases.map(value => ({ value, id: value })));
                     }),
                     catchError(() => of()),
                 )
@@ -220,5 +245,37 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             ),
             catchError(() => of([])),
         );
+    };
+
+    /**
+     * On every update of the problem statement analysis, update the appropriate line numbers of the editor with the resuls of the analysis.
+     * Will show warning symbols for every item.
+     *
+     * @param analysis that contains the resulting issues of the problem statement.
+     */
+    onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
+        const mapIssuesToAnnotations = ([lineNumber, issues]: [number, { [issueType: string]: string[] }]) =>
+            compose(
+                map((analysisIssues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + analysisIssues.join('\n - '), type: 'warning' })),
+                values,
+            )(issues);
+
+        const lineWarnings = compose(
+            flatten,
+            map(mapIssuesToAnnotations),
+            toPairs,
+        )(analysis);
+
+        this.markdownEditor.aceEditorContainer
+            .getEditor()
+            .getSession()
+            .clearAnnotations();
+        // We need to wait for the annotations to be removed before we can set the new annotations. Otherwise changes in the editor will trigger the update of the existing annotations.
+        setTimeout(() => {
+            this.markdownEditor.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .setAnnotations(lineWarnings);
+        }, 0);
     };
 }
