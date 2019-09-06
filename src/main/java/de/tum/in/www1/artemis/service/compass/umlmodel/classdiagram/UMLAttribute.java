@@ -12,11 +12,11 @@ public class UMLAttribute extends UMLElement {
 
     private String name;
 
-    private String type;
+    private String attributeType;
 
-    public UMLAttribute(String name, String type, String jsonElementID) {
+    public UMLAttribute(String name, String attributeType, String jsonElementID) {
         this.name = name;
-        this.type = type;
+        this.attributeType = attributeType;
         this.setJsonElementID(jsonElementID);
     }
 
@@ -42,18 +42,18 @@ public class UMLAttribute extends UMLElement {
 
         similarity += NameSimilarity.namePartiallyEqualsSimilarity(name, other.name) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(type, other.type) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
+        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, other.attributeType) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
         return similarity;
     }
 
     @Override
-    public String getName() {
-        return "Attribute " + name + (type != null && !type.equals("") ? ": " + type : "") + " in class " + parentClass.getValue();
+    public String toString() {
+        return "Attribute " + name + (attributeType != null && !attributeType.equals("") ? ": " + attributeType : "") + " in class " + parentClass.getName();
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return name;
     }
 

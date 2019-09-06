@@ -302,8 +302,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             feedbackList.add(feedback);
         }
 
-        // TODO: in the future we want to store this information as well, but for now we
-        // ignore it.
+        // TODO: in the future we want to store this information as well, but for now we ignore it.
         // jsonObject.addProperty(JSONMapping.assessmentElementConfidence,
         // grade.getConfidence());
         // jsonObject.addProperty(JSONMapping.assessmentElementCoverage,
@@ -338,7 +337,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         int numberOfConflicts = 0;
         for (UMLElement umlElement : modelIndex.getUniqueElements()) {
             JsonObject uniqueElement = new JsonObject();
-            uniqueElement.addProperty("name", umlElement.getName());
+            uniqueElement.addProperty("name", umlElement.toString());
             uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
             boolean hasConflict = hasConflict(umlElement.getSimilarityID());
             if (hasConflict) {
@@ -469,7 +468,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 }
             }
         }
-        else if (UMLRelationship.UMLRelationType.getTypesAsList().contains(umlElementType)) {
+        else if (UMLRelationship.UMLRelationshipType.getTypesAsList().contains(umlElementType)) {
             for (UMLRelationship umlRelationship : model.getRelationshipList()) {
                 if (umlRelationship.getJSONElementID().equals(jsonElementID)) {
                     return true;

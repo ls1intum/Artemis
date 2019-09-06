@@ -65,12 +65,12 @@ public class UMLMethod extends UMLElement {
     }
 
     @Override
-    public String getName() {
-        return "Method " + completeName + " in class " + parentClass.getValue();
+    public String toString() {
+        return "Method " + completeName + " in class " + parentClass.getName();
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return name;
     }
 

@@ -9,23 +9,17 @@ public class UMLControlFlow extends UMLElement {
 
     private final String CONTROL_FLOW_SYMBOL = " --> ";
 
-    private UMLActivity source;
+    private UMLActivityNode source; // TODO CZ: should UMLActivity be possible source and target as well?
 
-    private UMLActivity target;
+    private UMLActivityNode target;
 
-    public UMLControlFlow(UMLActivity source, UMLActivity target, String jsonElementID) {
+    public UMLControlFlow(UMLActivityNode source, UMLActivityNode target, String jsonElementID) {
         this.source = source;
         this.target = target;
 
         this.setJsonElementID(jsonElementID);
     }
 
-    /**
-     * Compare this with another element to calculate the similarity
-     *
-     * @param element the element to compare with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(UMLElement element) {
         if (element.getClass() != UMLControlFlow.class) {
@@ -35,21 +29,20 @@ public class UMLControlFlow extends UMLElement {
         UMLControlFlow reference = (UMLControlFlow) element;
 
         double similarity = 0;
-        double weight = 1;
 
         similarity += reference.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
         similarity += reference.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        return similarity / weight;
+        return similarity;
+    }
+
+    @Override
+    public String toString() {
+        return "Control Flow " + getSource().getName() + CONTROL_FLOW_SYMBOL + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override
     public String getName() {
-        return "Control Flow " + getSource().getValue() + CONTROL_FLOW_SYMBOL + getTarget().getValue() + " (" + getType() + ")";
-    }
-
-    @Override
-    public String getValue() {
         return getType();
     }
 
@@ -58,11 +51,11 @@ public class UMLControlFlow extends UMLElement {
         return UML_CONTROL_FLOW_TYPE;
     }
 
-    public UMLActivity getSource() {
+    public UMLActivityNode getSource() {
         return source;
     }
 
-    public UMLActivity getTarget() {
+    public UMLActivityNode getTarget() {
         return target;
     }
 

@@ -34,10 +34,10 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
-    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
+    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, String type) {
         this.name = name;
         this.attributes = attributes;
-        this.methods = methodList;
+        this.methods = methods;
         this.setJsonElementID(jsonElementID);
         this.type = UMLClassType.valueOf(type);
     }
@@ -159,12 +159,12 @@ public class UMLClass extends UMLElement {
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Class " + name;
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return name;
     }
 

@@ -32,12 +32,12 @@ public class UMLPackage extends UMLElement {
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Package " + name;
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return name;
     }
 

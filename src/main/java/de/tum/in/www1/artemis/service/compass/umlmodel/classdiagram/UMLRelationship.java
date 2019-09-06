@@ -11,12 +11,11 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLRelationship extends UMLElement {
 
-    public enum UMLRelationType {
-        // class diagram relations
+    public enum UMLRelationshipType {
         CLASS_BIDIRECTIONAL, CLASS_UNIDIRECTIONAL, CLASS_INHERITANCE, CLASS_REALIZATION, CLASS_DEPENDENCY, CLASS_AGGREGATION, CLASS_COMPOSITION;
 
         public static List<String> getTypesAsList() {
-            return Arrays.stream(UMLRelationType.values()).map(umlRelationType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationType.name()))
+            return Arrays.stream(UMLRelationshipType.values()).map(umlRelationshipType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationshipType.name()))
                     .collect(Collectors.toList());
         }
 
@@ -58,7 +57,7 @@ public class UMLRelationship extends UMLElement {
 
     private String targetMultiplicity;
 
-    private UMLRelationType type;
+    private UMLRelationshipType type;
 
     public UMLRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
                            String targetMultiplicity) {
@@ -71,7 +70,7 @@ public class UMLRelationship extends UMLElement {
 
         this.setJsonElementID(jsonElementID);
 
-        this.type = UMLRelationType.valueOf(type.toUpperCase());
+        this.type = UMLRelationshipType.valueOf(type.toUpperCase());
     }
 
     /**
@@ -120,7 +119,7 @@ public class UMLRelationship extends UMLElement {
         }
 
         // bidirectional associations can be swapped
-        if (type == UMLRelationType.CLASS_BIDIRECTIONAL) {
+        if (type == UMLRelationshipType.CLASS_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
             if (reference.targetRole.equals(this.sourceRole)) {
@@ -150,12 +149,12 @@ public class UMLRelationship extends UMLElement {
     }
 
     @Override
-    public String getName() {
-        return "Relationship " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + getType() + ")";
+    public String toString() {
+        return "Relationship " + getSource().getName() + type.toSymbol() + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return getType();
     }
 

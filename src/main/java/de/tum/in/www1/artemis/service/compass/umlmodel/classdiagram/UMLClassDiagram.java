@@ -21,15 +21,16 @@ public class UMLClassDiagram extends UMLDiagram {
         this.relationshipList = relationshipList;
     }
 
-    /**
-     * Compare this with another model to calculate the similarity
-     *
-     * @param reference the uml model to compare with
-     * @return the similarity as number [0-1]
-     */
-    public double similarity(UMLClassDiagram reference) {
-        double sim1 = reference.similarityScore(this);
-        double sim2 = this.similarityScore(reference);
+    @Override
+    public double similarity(UMLDiagram reference) {
+        if (reference.getClass() != UMLClassDiagram.class) {
+            return 0;
+        }
+
+        UMLClassDiagram referenceClassDiagram = (UMLClassDiagram) reference;
+
+        double sim1 = referenceClassDiagram.similarityScore(this);
+        double sim2 = this.similarityScore(referenceClassDiagram);
 
         return sim1 * sim2;
     }
@@ -96,14 +97,6 @@ public class UMLClassDiagram extends UMLDiagram {
         return relationshipList.stream().mapToDouble(umlRelation -> umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
 
-    public String getName() {
-        return "Model " + modelSubmissionId;
-    }
-
-    public boolean isUnassessed() {
-        return lastAssessmentCompassResult == null;
-    }
-
     /**
      * check if all model elements have been assessed
      *
@@ -151,39 +144,7 @@ public class UMLClassDiagram extends UMLDiagram {
         return classList.stream().mapToInt(UMLClass::getElementCount).sum() + relationshipList.size();
     }
 
-    /**
-     * Get the confidence of the last assessed compass result
-     *
-     * @return The confidence of the last compass result
-     */
-    @SuppressWarnings("unused")
-    public double getLastAssessmentConfidence() {
-        if (isUnassessed()) {
-            return -1;
-        }
-
-        return lastAssessmentCompassResult.getConfidence();
-    }
-
-    /**
-     * Get the coverage for the last assessed compass result
-     *
-     * @return The coverage of the last compass results
-     */
-    public double getLastAssessmentCoverage() {
-        if (isUnassessed()) {
-            return -1;
-        }
-
-        return lastAssessmentCompassResult.getCoverage();
-    }
-
-    /**
-     * Gets an UML element of the UML model with the given id.
-     *
-     * @param jsonElementId the id of the UML element
-     * @return the UML element if one could be found for the given id, null otherwise
-     */
+    @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
         UMLElement element;
 
@@ -219,15 +180,5 @@ public class UMLClassDiagram extends UMLDiagram {
 
     public List<UMLPackage> getPackageList() {
         return packageList;
-    }
-
-    /**
-     * Checks if the model contains an element with the given elementId.
-     *
-     * @param jsonElementId the id of the UML element
-     * @return true if the element was found, false otherwise
-     */
-    public boolean containsElement(String jsonElementId) {
-        return getElementByJSONID(jsonElementId) != null;
     }
 }

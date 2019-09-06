@@ -20,13 +20,19 @@ public abstract class UMLElement {
      */
     public abstract double similarity(UMLElement element);
 
-    // TODO: this is the printable name for debugging and statistics purposes
+    /**
+     * Get the name of the UML element. If the element type has no name (e.g. UMLRelationship), the element type is returned instead.
+     *
+     * @return the name of the UML element, or the type of the element if no name attribute exists for the element type
+     */
     public abstract String getName();
 
-    // TODO: this is the element Name (or if not available something else, that identifies the
-    // concrete object)
-    public abstract String getValue();
-
+    /**
+     * Get the type of the UML element as string. IMPORTANT: It should be the same as the type attribute of the respective UML elements used in the JSON representation of the
+     * models created by Apollon.
+     *
+     * @return the type of the UML element
+     */
     public abstract String getType();
 
     public int getSimilarityID() {
@@ -52,6 +58,9 @@ public abstract class UMLElement {
     public void setContext(Context context) {
         this.context = context;
     }
+
+    @Override
+    public abstract String toString();
 
     @Override
     public boolean equals(Object obj) {
