@@ -286,7 +286,7 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    @PostMapping("/files/attachments/programming-exercises/import/{sourceExerciseId}/{targetCourseId}")
+    @PostMapping("/programming-exercises/import/{sourceExerciseId}/{targetCourseId}")
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @PathVariable long targetCourseId,
             @RequestBody ProgrammingExercise newExercise) {
         final ProgrammingExercise templateExercise = programmingExerciseService.importProgrammingExerciseBasis(newExercise, sourceExerciseId, targetCourseId);
