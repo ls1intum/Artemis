@@ -120,7 +120,7 @@ describe('Component Tests', () => {
                 expect(guidedTourComponent.currentTourStep).to.exist;
             });
 
-            it('should navigate next with the right arrow key', () => {
+            it('should not trigger the guided tour with the right arrow key', () => {
                 guidedTourComponent.currentTourStep = null;
                 const nextStep = spyOn(guidedTourService, 'nextStep');
                 const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
