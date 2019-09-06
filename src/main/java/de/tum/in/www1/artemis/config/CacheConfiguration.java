@@ -158,7 +158,6 @@ public class CacheConfiguration {
             createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
-            createIfNotExists(cm, de.tum.in.www1.artemis.domain.ProgrammingExerciseOptions.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };
