@@ -9,7 +9,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule],
     declarations: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
-    exports: [AssessmentHeaderComponent, AssessmentLayoutComponent, AssessmentComplaintAlertComponent],
+    exports: [AssessmentLayoutComponent],
     providers: [JhiAlertService],
 })
 export class ArtemisAssessmentSharedModule {}
