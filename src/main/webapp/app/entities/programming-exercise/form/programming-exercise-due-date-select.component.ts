@@ -4,7 +4,8 @@ import { ProgrammingExercise } from '../programming-exercise.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 /**
- * Checkbox to toggle an automatic submission run after the due date passes.
+ * Due date select for programming exercises.
+ * When a due date is set, a checkbox appears that allows the activation of an automatic submission run after the due date passes.
  */
 @Component({
     selector: 'jhi-programming-exercise-due-date-select',
@@ -15,7 +16,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div id="automatic-submission-after-due-date" class="form-check ml-2" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
+        <div id="automatic-submission-after-due-date" class="form-check mt-1" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
             <label class="form-check-label" for="field_automaticSubmissionRunAfterDueDate">
                 <input
                     class="form-check-input"
@@ -45,9 +46,14 @@ export class ProgrammingExerciseDueDateSelectComponent {
     @HostBinding('class') class = 'form-group-narrow flex-grow-1 ml-3';
     @ViewChild(FormDateTimePickerComponent, { static: false }) dateTimePicker: FormDateTimePickerComponent;
 
+    /**
+     * Set the due date. When the due date is set it needs to be checked if the automatic submission date is also set - this should then be updated, too.
+     * @param dueDate of the programming exercise.
+     */
     public updateDueDate(dueDate: string) {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
-        const updatedSubmissionRunDate = this.programmingExercise.automaticSubmissionRunDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.add(1, 'hours') : null;
+        const updatedSubmissionRunDate =
+            this.programmingExercise.automaticSubmissionRunDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.clone().add(1, 'hours') : null;
         const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, automaticSubmissionRunDate: updatedSubmissionRunDate };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
@@ -64,7 +70,7 @@ export class ProgrammingExerciseDueDateSelectComponent {
         }
         const updatedProgrammingExercise = {
             ...this.programmingExercise,
-            automaticSubmissionRunDate: this.programmingExercise.automaticSubmissionRunDate ? null : this.programmingExercise.dueDate.add(1, 'hours'),
+            automaticSubmissionRunDate: this.programmingExercise.automaticSubmissionRunDate ? null : this.programmingExercise.dueDate.clone().add(1, 'hours'),
         };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
