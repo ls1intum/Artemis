@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -25,7 +26,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -308,6 +311,34 @@ public class CourseResource {
     }
 
     /**
+     * Get basic information about a course, s.a. the authorization info, or just the title/shortName, etc.
+     * Necessary, because other endpoints which return a single course often include
+     *
+     * @param courseId The ID of the course
+     * @return The course with only the basic information, i.e. without exercises, or lectures
+     */
+    @GetMapping("/courses/{courseId}/for-basic-information")
+    @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
+    public ResponseEntity<Course> gatBasicCourseInformation(@PathVariable Long courseId) {
+        log.debug("REST request to get authorization information about course");
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+
+        if (optionalCourse.isEmpty()) {
+            return notFound();
+        }
+
+        Course course = optionalCourse.get();
+        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
+            return forbidden();
+        }
+
+        course.setExercises(null);
+        course.setLectures(null);
+
+        return ResponseEntity.ok(course);
+    }
+
+    /**
      * GET /courses/:id/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
@@ -400,12 +431,13 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
         if (!userHasPermission(course))
             return forbidden();
+
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 

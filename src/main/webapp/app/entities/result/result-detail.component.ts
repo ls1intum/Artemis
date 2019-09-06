@@ -4,6 +4,8 @@ import { RepositoryService } from 'app/entities/repository';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
+import { AccountService } from 'app/core';
+import { Course } from 'app/entities/course';
 
 // Modal -> Result details view
 @Component({
@@ -15,8 +17,9 @@ export class ResultDetailComponent implements OnInit {
     isLoading: boolean;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
+    isAtLeastTutor: boolean;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService, private accountService: AccountService) {}
 
     ngOnInit(): void {
         if (this.result.feedbacks && this.result.feedbacks.length > 0) {
@@ -39,5 +42,12 @@ export class ResultDetailComponent implements OnInit {
             }
         });
         this.isLoading = false;
+    }
+
+    @Input()
+    set course(course: Course) {
+        console.log(course);
+        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        console.log(this.isAtLeastTutor);
     }
 }

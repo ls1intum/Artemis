@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -7,7 +7,9 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService, JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core';
+import { Course, CourseService } from 'app/entities/course';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-result',
@@ -32,6 +34,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
 
+    course: Course;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];
@@ -44,10 +47,11 @@ export class ResultComponent implements OnInit, OnChanges {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
+        private courseService: CourseService,
+        private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
@@ -91,6 +95,11 @@ export class ResultComponent implements OnInit, OnChanges {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
         }
+
+        // Get the course ID either from the regular route, or from the parent for children
+        const routeSnap = this.route.snapshot;
+        const courseId = Number((routeSnap.paramMap.has('courseId') ? routeSnap : routeSnap.parent!).paramMap.get('courseId'));
+        this.courseService.findWithBasicInformation(courseId).subscribe(resp => (this.course = resp.body!));
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -127,6 +136,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
+        modalRef.componentInstance.course = this.course;
     }
 
     downloadBuildResult(participationId: number) {

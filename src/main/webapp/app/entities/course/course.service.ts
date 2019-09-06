@@ -5,11 +5,9 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
 import { Course } from './course.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
-import { Participation } from '../participation/participation.model';
 import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
@@ -19,7 +17,6 @@ import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -51,6 +48,18 @@ export class CourseService {
             .get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)));
+    }
+
+    /**
+     * Get a course including basic information about it. Child entities like exercises and lectures are not included
+     * in this result, since some components might just need the basic course info, especially if only a student is
+     * currently logged in.
+     *
+     * @param courseId The ID of the course
+     * @return Observable containing a course object with only basic information, e.g. title, shortName, authorizations
+     */
+    findWithBasicInformation(courseId: number): Observable<EntityResponseType> {
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-basic-information`, { observe: 'response' });
     }
 
     findWithExercises(courseId: number): Observable<EntityResponseType> {
