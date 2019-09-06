@@ -110,10 +110,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        // If there is no due date set, the automatic submission run date must also be removed.
-        if (!this.programmingExercise.dueDate) {
-            this.programmingExercise.automaticSubmissionRunDate = null;
-        }
         if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
