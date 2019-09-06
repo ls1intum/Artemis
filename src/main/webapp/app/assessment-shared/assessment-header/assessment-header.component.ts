@@ -4,7 +4,7 @@ import { Result } from 'app/entities/result';
 import { AccountService } from 'app/core';
 
 /**
- * The <jhi-assessment-header> component is shared between the modeling and text assessment interfaces.
+ * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
  * This guarantees a unified look and feel for both interfaces.
  * Depending Components need to perform actions based on the save/submit/cancel/resolveConflict/nextSubmission/navigateBack outputs.

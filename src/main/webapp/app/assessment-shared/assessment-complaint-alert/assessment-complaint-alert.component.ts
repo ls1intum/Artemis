@@ -1,6 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 
+/**
+ * This shows an alert, notifying the assessor on possible complaints at the bottom of the page.
+ */
 @Component({
     selector: 'jhi-assessment-complaint-alert',
     templateUrl: './assessment-complaint-alert.component.html',
