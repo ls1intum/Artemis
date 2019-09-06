@@ -53,6 +53,13 @@
                         <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile.name : '' }}</label>
                     </div>
                 </div>
+                <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
+                <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern.split(',')">
+                    <span class="ml-1 badge badge-info">
+                        {{ extension | uppercase }}
+                    </span>
+                </div>
+
                 <ng-container *ngIf="erroredFile">
                     <div id="too-large-file-alert" class="alert alert-danger">
                         {{ 'artemisApp.lecture.attachments.error' | translate: { fileName: erroredFile.name } }}
