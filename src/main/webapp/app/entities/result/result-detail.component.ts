@@ -46,8 +46,6 @@ export class ResultDetailComponent implements OnInit {
 
     @Input()
     set course(course: Course) {
-        console.log(course);
         this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-        console.log(this.isAtLeastTutor);
     }
 }

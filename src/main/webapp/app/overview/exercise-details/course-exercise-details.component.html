@@ -9,8 +9,7 @@
         <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult">
         </jhi-exercise-details-student-actions>
-        <jhi-updating-result class="mr-2" [result]="currentResult" [participation]="currentResult?.participation" [exercise]="exercise" [showGradedBadge]="true">
-        </jhi-updating-result>
+        <jhi-updating-result class="mr-2" [participation]="currentResult?.participation" [exercise]="exercise" [showGradedBadge]="true"> </jhi-updating-result>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -60,7 +59,7 @@
                             </h4>
                         </div>
                         <div class="col text-left">
-                            <jhi-updating-result [participation]="currentResult?.participation" [result]="currentResult" [exercise]="exercise" short="true"></jhi-updating-result>
+                            <jhi-updating-result [participation]="currentResult?.participation" [exercise]="exercise" short="true"></jhi-updating-result>
                             <jhi-programming-exercise-student-trigger-build-button
                                 *ngIf="exercise.type === PROGRAMMING"
                                 [exercise]="exercise"

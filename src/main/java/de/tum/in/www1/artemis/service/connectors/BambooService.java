@@ -665,13 +665,12 @@ public class BambooService implements ContinuousIntegrationService {
                 Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
                 List<Map<String, Object>> errors = (List<Map<String, Object>>) errorsMap.get("error");
 
-                final StringBuilder errorMessageString = new StringBuilder();
-                errors.forEach(error -> {
-                    final String message = (String) error.get("message");
-                    errorMessageString.append(processResultErrorMessage(programmingLanguage, message)).append("\\n");
-                });
+                final String errorMessageString = errors.stream()
+                    .map(error -> (String) error.get("message"))
+                    .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                    .reduce("", String::concat);
 
-                createAutomaticFeedback(result, methodName, false, errorMessageString.toString());
+                createAutomaticFeedback(result, methodName, false, errorMessageString);
             }
         } catch (Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
@@ -680,8 +679,17 @@ public class BambooService implements ContinuousIntegrationService {
         return result.getFeedbacks();
     }
 
+    /**
+     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
+     * the programming language, or just reformatting it to only show the most important details.
+     *
+     * @param programmingLanguage The programming language for which the feedback was generated
+     * @param message The raw error message in the feedback
+     * @return A filtered and better formatted error message
+     */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            // Splitting string at the first linebreak to only get the first line of the Exception
             return message.split("\\n", 2)[0]
                 .replace("java.lang.AssertionError: ", "");
         }
@@ -731,12 +739,13 @@ public class BambooService implements ContinuousIntegrationService {
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     List<String> errors = (List<String>) failedTest.get("errors");
-                    final StringBuilder errorMessageString = new StringBuilder();
-                    errors.forEach(error -> errorMessageString.append(processResultErrorMessage(programmingLanguage, error)));
+                    final String errorMessageString = errors.stream()
+                        .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                        .reduce("", String::concat);
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
-                    createAutomaticFeedback(result, methodName, false, errorMessageString.toString());
+                    createAutomaticFeedback(result, methodName, false, errorMessageString);
                 }
 
                 // 2) add feedback for passed test cases

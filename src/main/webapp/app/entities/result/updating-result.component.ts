@@ -25,10 +25,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exercise: Exercise;
     @Input() participation: Participation;
     @Input() short = false;
-    @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
+    result: Result | null;
     isBuilding: boolean;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
