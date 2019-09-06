@@ -1,6 +1,7 @@
 import * as moment from 'moment';
-import { Component, EventEmitter, Input, Output, HostBinding } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostBinding, ViewChild } from '@angular/core';
 import { ProgrammingExercise } from '../programming-exercise.model';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 /**
  * Checkbox to toggle an automatic submission run after the due date passes.
@@ -14,7 +15,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div class="form-check ml-2" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
+        <div id="automatic-submission-after-due-date" class="form-check ml-2" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
             <label class="form-check-label" for="field_automaticSubmissionRunAfterDueDate">
                 <input
                     class="form-check-input"
@@ -42,11 +43,12 @@ export class ProgrammingExerciseDueDateSelectComponent {
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
 
     @HostBinding('class') class = 'form-group-narrow flex-grow-1 ml-3';
+    @ViewChild(FormDateTimePickerComponent, { static: false }) dateTimePicker: FormDateTimePickerComponent;
 
     public updateDueDate(dueDate: string) {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
         const updatedSubmissionRunDate = this.programmingExercise.automaticSubmissionRunDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.add(1, 'hours') : null;
-        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, updatedSubmissionRunDate };
+        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, automaticSubmissionRunDate: updatedSubmissionRunDate };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
