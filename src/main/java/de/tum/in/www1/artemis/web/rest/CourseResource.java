@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -308,34 +307,6 @@ public class CourseResource {
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
                 + " exercises for user " + user.getLogin());
         return courses;
-    }
-
-    /**
-     * Get basic information about a course, s.a. the authorization info, or just the title/shortName, etc.
-     * Necessary, because other endpoints which return a single course often include
-     *
-     * @param courseId The ID of the course
-     * @return The course with only the basic information, i.e. without exercises, or lectures
-     */
-    @GetMapping("/courses/{courseId}/for-basic-information")
-    @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<Course> gatBasicCourseInformation(@PathVariable Long courseId) {
-        log.debug("REST request to get authorization information about course");
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
-
-        if (optionalCourse.isEmpty()) {
-            return notFound();
-        }
-
-        Course course = optionalCourse.get();
-        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
-            return forbidden();
-        }
-
-        course.setExercises(null);
-        course.setLectures(null);
-
-        return ResponseEntity.ok(course);
     }
 
     /**

@@ -581,4 +581,34 @@ public class ResultResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         return userHasPermissions(course, user);
     }
+
+    /**
+     * Get basic information about a course, s.a. the authorization info, or just the title/shortName, etc.
+     * Necessary, because other endpoints which return a single course often include sensitive information which is
+     * only accessible to tutors or instructors. Although, there are cases where students need to know which course
+     * belongs to a given result.
+     *
+     * @param resultId The ID of the result
+     * @return The course with only the basic information, i.e. without exercises, or lectures
+     */
+    @GetMapping("/results/{resultId}/basic-course-for-result")
+    @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
+    public ResponseEntity<Course> gatBasicCourseInformationForResult(@PathVariable Long resultId) {
+        log.debug("REST request to get basic course information by resultId");
+        Optional<Result> optionalResult = resultRepository.findById(resultId);
+
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        Course course = optionalResult.get().getParticipation().getExercise().getCourse();
+        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
+            return forbidden();
+        }
+
+        course.setExercises(null);
+        course.setLectures(null);
+
+        return ResponseEntity.ok(course);
+    }
 }

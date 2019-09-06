@@ -159,7 +159,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     showDetails(result: Result) {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
-        modalRef.componentInstance.course = this.course;
     }
 
     refresh() {

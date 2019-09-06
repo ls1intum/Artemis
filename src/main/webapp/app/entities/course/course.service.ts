@@ -51,15 +51,15 @@ export class CourseService {
     }
 
     /**
-     * Get a course including basic information about it. Child entities like exercises and lectures are not included
+     * Get the course for a result including basic information about it. Child entities like exercises and lectures are not included
      * in this result, since some components might just need the basic course info, especially if only a student is
      * currently logged in.
      *
-     * @param courseId The ID of the course
+     * @param resultId The ID of a result
      * @return Observable containing a course object with only basic information, e.g. title, shortName, authorizations
      */
-    findWithBasicInformation(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-basic-information`, { observe: 'response' });
+    findWithBasicInformation(resultId: number): Observable<EntityResponseType> {
+        return this.http.get<Course>(`api/results/${resultId}/basic-course-for-result`, { observe: 'response' });
     }
 
     findWithExercises(courseId: number): Observable<EntityResponseType> {
