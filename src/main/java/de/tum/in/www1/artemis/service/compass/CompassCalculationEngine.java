@@ -329,9 +329,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      *
      * @return statistics about the UML model
      */
-    // TODO: I don't think we should expose JSONObject to this internal server
-    // class. It would be
-    // better to return Java objects here
+    // TODO: I don't think we should expose JSONObject to this internal server class. It would be better to return Java objects here
     @Override
     public JsonObject getStatistics() {
         JsonObject jsonObject = new JsonObject();
@@ -364,7 +362,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             int numberOfModelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>();
             elements.addAll(modelEntry.getValue().getClassList());
-            elements.addAll(modelEntry.getValue().getAssociationList());
+            elements.addAll(modelEntry.getValue().getRelationshipList());
             for (UMLClass umlClass : modelEntry.getValue().getClassList()) {
                 elements.addAll(umlClass.getAttributes());
                 elements.addAll(umlClass.getMethods());
@@ -380,7 +378,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof UMLClass).count());
             model.addProperty("attributes", elements.stream().filter(umlElement -> umlElement instanceof UMLAttribute).count());
             model.addProperty("methods", elements.stream().filter(umlElement -> umlElement instanceof UMLMethod).count());
-            model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLClassRelationship).count());
+            model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLRelationship).count());
             models.add(modelEntry.getKey().toString(), model);
         }
         jsonObject.add("models", models);
@@ -471,9 +469,9 @@ public class CompassCalculationEngine implements CalculationEngine {
                 }
             }
         }
-        else if (UMLClassRelationship.UMLRelationType.getTypesAsList().contains(umlElementType)) {
-            for (UMLClassRelationship umlClassRelationship : model.getAssociationList()) {
-                if (umlClassRelationship.getJSONElementID().equals(jsonElementID)) {
+        else if (UMLRelationship.UMLRelationType.getTypesAsList().contains(umlElementType)) {
+            for (UMLRelationship umlRelationship : model.getRelationshipList()) {
+                if (umlRelationship.getJSONElementID().equals(jsonElementID)) {
                     return true;
                 }
             }
@@ -520,7 +518,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         long numberOfAssessedClasses = 0;
         long numberOfAssessedAttrbutes = 0;
         long numberOfAssessedMethods = 0;
-        long numberOfAssessedAssociations = 0;
+        long numberOfAssessedRelationships = 0;
         long numberOfAssessedPackages = 0;
 
         long totalLengthOfFeedback = 0;
@@ -545,7 +543,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                     .count();
             numberOfAssessedAttrbutes += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("ClassAttribute")).count();
             numberOfAssessedMethods += referenceFeedback.stream().filter(feedback -> feedback.getReferenceElementType().equals("ClassMethod")).count();
-            numberOfAssessedAssociations += referenceFeedback.stream()
+            numberOfAssessedRelationships += referenceFeedback.stream()
                     .filter(feedback -> feedback.getReferenceElementType().equals("ClassBidirectional") || feedback.getReferenceElementType().equals("ClassUnidirectional")
                             || feedback.getReferenceElementType().equals("ClassAggregation") || feedback.getReferenceElementType().equals("ClassInheritance")
                             || feedback.getReferenceElementType().equals("ClassDependency") || feedback.getReferenceElementType().equals("ClassComposition")
@@ -583,7 +581,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         long numberOfClasses = 0;
         long numberOfAttrbutes = 0;
         long numberOfMethods = 0;
-        long numberOfAssociations = 0;
+        long numberOfRelationships = 0;
         long numberOfPackages = 0;
 
         for (UMLElement element : modelElementMapping.keySet()) {
@@ -596,8 +594,8 @@ public class CompassCalculationEngine implements CalculationEngine {
             else if (element instanceof UMLMethod) {
                 numberOfMethods++;
             }
-            else if (element instanceof UMLClassRelationship) {
-                numberOfAssociations++;
+            else if (element instanceof UMLRelationship) {
+                numberOfRelationships++;
             }
             else if (element instanceof UMLPackage) {
                 numberOfPackages++;
@@ -612,7 +610,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Number of classes: " + numberOfClasses + "\n");
         log.debug("Number of attributes: " + numberOfAttrbutes + "\n");
         log.debug("Number of methods: " + numberOfMethods + "\n");
-        log.debug("Number of associations: " + numberOfAssociations + "\n");
+        log.debug("Number of relationships: " + numberOfRelationships + "\n");
         log.debug("Number of packages: " + numberOfPackages + "\n");
         double elementsPerModel = numberOfModelElements * 1.0 / numberOfModels;
         log.debug("Average number of elements per model: " + elementsPerModel + "\n");
@@ -622,7 +620,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         log.debug("Number of assessed classes: " + numberOfAssessedClasses + " (" + Math.round(numberOfAssessedClasses * 10000.0 / numberOfClasses) / 100.0 + "%)" + "\n");
         log.debug("Number of assessed attributes: " + numberOfAssessedAttrbutes + " (" + Math.round(numberOfAssessedAttrbutes * 10000.0 / numberOfAttrbutes) / 100.0 + "%)" + "\n");
         log.debug("Number of assessed methods: " + numberOfAssessedMethods + " (" + Math.round(numberOfAssessedMethods * 10000.0 / numberOfMethods) / 100.0 + "%)" + "\n");
-        log.debug("Number of assessed associations: " + numberOfAssessedAssociations + " (" + Math.round(numberOfAssessedAssociations * 10000.0 / numberOfAssociations) / 100.0
+        log.debug("Number of assessed relationships: " + numberOfAssessedRelationships + " (" + Math.round(numberOfAssessedRelationships * 10000.0 / numberOfRelationships) / 100.0
                 + "%)" + "\n");
         log.debug("Number of assessed packages: " + numberOfAssessedPackages + " (" + Math.round(numberOfAssessedPackages * 10000.0 / numberOfPackages) / 100.0 + "%)" + "\n");
         double feedbackPerAssessment = totalNumberOfFeedback * 1.0 / finishedResults.size();

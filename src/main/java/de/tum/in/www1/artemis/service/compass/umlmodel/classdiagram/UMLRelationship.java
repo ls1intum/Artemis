@@ -9,7 +9,7 @@ import com.google.common.base.CaseFormat;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLClassRelationship extends UMLElement {
+public class UMLRelationship extends UMLElement {
 
     public enum UMLRelationType {
         // class diagram relations
@@ -21,8 +21,8 @@ public class UMLClassRelationship extends UMLElement {
         }
 
         /**
-         * Converts the UMLClassRelationShip to a representing string
-         * @return the String which represents the RelationShip
+         * Converts the UMLRelationship to a representing string
+         * @return the String which represents the relationship
          */
         public String toSymbol() {
             switch (this) {
@@ -60,8 +60,8 @@ public class UMLClassRelationship extends UMLElement {
 
     private UMLRelationType type;
 
-    public UMLClassRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
-            String targetMultiplicity) {
+    public UMLRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
+                           String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;
@@ -82,11 +82,11 @@ public class UMLClassRelationship extends UMLElement {
      */
     @Override
     public double similarity(UMLElement element) {
-        if (element.getClass() != UMLClassRelationship.class) {
+        if (element.getClass() != UMLRelationship.class) {
             return 0;
         }
 
-        UMLClassRelationship reference = (UMLClassRelationship) element;
+        UMLRelationship reference = (UMLRelationship) element;
 
         double similarity = 0;
         double weight = 1;
@@ -151,7 +151,7 @@ public class UMLClassRelationship extends UMLElement {
 
     @Override
     public String getName() {
-        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + getType() + ")";
+        return "Relationship " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + getType() + ")";
     }
 
     @Override

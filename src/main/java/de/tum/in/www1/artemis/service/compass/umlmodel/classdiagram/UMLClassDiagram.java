@@ -12,13 +12,13 @@ public class UMLClassDiagram extends UMLDiagram {
 
     private final List<UMLClass> classList;
 
-    private final List<UMLClassRelationship> associationList;
+    private final List<UMLRelationship> relationshipList;
 
-    public UMLClassDiagram(long modelSubmissionId, List<UMLClass> classList, List<UMLClassRelationship> associationList, List<UMLPackage> packageList) {
+    public UMLClassDiagram(long modelSubmissionId, List<UMLClass> classList, List<UMLRelationship> relationshipList, List<UMLPackage> packageList) {
         super(modelSubmissionId);
         this.packageList = packageList;
         this.classList = classList;
-        this.associationList = associationList;
+        this.relationshipList = relationshipList;
     }
 
     /**
@@ -37,7 +37,7 @@ public class UMLClassDiagram extends UMLDiagram {
     private double similarityScore(UMLClassDiagram reference) {
         double similarity = 0;
 
-        int elementCount = classList.size() + associationList.size();
+        int elementCount = classList.size() + relationshipList.size();
 
         if (elementCount == 0) {
             return 0;
@@ -57,7 +57,7 @@ public class UMLClassDiagram extends UMLDiagram {
             }
         }
 
-        for (UMLClassRelationship relationship : associationList) {
+        for (UMLRelationship relationship : relationshipList) {
             double similarityValue = reference.similarUMLRelationScore(relationship);
             similarity += weight * similarityValue;
 
@@ -69,7 +69,7 @@ public class UMLClassDiagram extends UMLDiagram {
 
         // Punish missing classes (on either side)
         int referenceMissingCount = Math.max(reference.classList.size() - classList.size(), 0);
-        referenceMissingCount += Math.max(reference.associationList.size() - associationList.size(), 0);
+        referenceMissingCount += Math.max(reference.relationshipList.size() - relationshipList.size(), 0);
 
         missingCount += referenceMissingCount;
 
@@ -92,8 +92,8 @@ public class UMLClassDiagram extends UMLDiagram {
         return classList.stream().mapToDouble(connectableElement -> connectableElement.overallSimilarity(referenceConnectable)).max().orElse(0);
     }
 
-    private double similarUMLRelationScore(UMLClassRelationship referenceRelation) {
-        return associationList.stream().mapToDouble(umlRelation -> umlRelation.similarity(referenceRelation)).max().orElse(0);
+    private double similarUMLRelationScore(UMLRelationship referenceRelation) {
+        return relationshipList.stream().mapToDouble(umlRelation -> umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
 
     public String getName() {
@@ -138,7 +138,7 @@ public class UMLClassDiagram extends UMLDiagram {
             }
         }
 
-        for (UMLClassRelationship relation : associationList) {
+        for (UMLRelationship relation : relationshipList) {
             if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.getJSONElementID())) {
                 return false;
             }
@@ -148,7 +148,7 @@ public class UMLClassDiagram extends UMLDiagram {
     }
 
     private int getModelElementCount() {
-        return classList.stream().mapToInt(UMLClass::getElementCount).sum() + associationList.size();
+        return classList.stream().mapToInt(UMLClass::getElementCount).sum() + relationshipList.size();
     }
 
     /**
@@ -200,7 +200,7 @@ public class UMLClassDiagram extends UMLDiagram {
             }
         }
 
-        for (UMLClassRelationship relationship : associationList) {
+        for (UMLRelationship relationship : relationshipList) {
             if (relationship.getJSONElementID().equals(jsonElementId)) {
                 return relationship;
             }
@@ -213,8 +213,8 @@ public class UMLClassDiagram extends UMLDiagram {
         return classList;
     }
 
-    public List<UMLClassRelationship> getAssociationList() {
-        return associationList;
+    public List<UMLRelationship> getRelationshipList() {
+        return relationshipList;
     }
 
     public List<UMLPackage> getPackageList() {

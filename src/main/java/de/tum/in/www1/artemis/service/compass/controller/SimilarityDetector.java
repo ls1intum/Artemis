@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 
@@ -33,7 +33,7 @@ public class SimilarityDetector {
             }
         }
 
-        for (UMLClassRelationship relation : model.getAssociationList()) {
+        for (UMLRelationship relation : model.getRelationshipList()) {
             relation.setSimilarityID(index.getSimilarityId(relation));
         }
 
@@ -55,7 +55,7 @@ public class SimilarityDetector {
             }
         }
 
-        for (UMLClassRelationship relation : model.getAssociationList()) {
+        for (UMLRelationship relation : model.getRelationshipList()) {
             relation.setContext(generateContextForElement(model, relation));
         }
 
