@@ -34,6 +34,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -42,16 +46,14 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExercisePageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -748,6 +750,15 @@ public class ProgrammingExerciseService {
         participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation);
         // This will also delete the template & solution participation.
         programmingExerciseRepository.delete(programmingExercise);
+    }
+
+    public ProgrammingExercisePageDTO getAllOnPageWithSize(final int pageSize, final int page, final SortingOrder sortingOrder, final String sortingColumn, String partialTitle) {
+        Sort sorting = Sort.by(sortingColumn);
+        sorting = sortingOrder == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final Pageable sorted = PageRequest.of(page, pageSize, sorting);
+
+        final Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContaining(partialTitle, sorted);
+        return new ProgrammingExercisePageDTO(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
     @Transactional

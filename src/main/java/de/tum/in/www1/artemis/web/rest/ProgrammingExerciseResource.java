@@ -33,11 +33,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExercisePageDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -595,5 +597,12 @@ public class ProgrammingExerciseResource {
                             "errorStructureOracleGeneration"))
                     .body(null);
         }
+    }
+
+    @GetMapping("programming-exercises/pageable")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<ProgrammingExercisePageDTO> getAllExercisesOnPage(@RequestParam int pageSize, @RequestParam int page, @RequestParam SortingOrder sortingOrder,
+            @RequestParam String partialTitle, @RequestParam String sortColumn) {
+        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(pageSize, page, sortingOrder, sortColumn, partialTitle));
     }
 }

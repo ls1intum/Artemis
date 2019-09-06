@@ -70,7 +70,6 @@ import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
-import { PaginationSearchableTableComponent } from './components/pagination-searchable-table/pagination-searchable-table.component';
 
 @NgModule({
     imports: [
@@ -142,7 +141,6 @@ import { PaginationSearchableTableComponent } from './components/pagination-sear
         SystemNotificationComponent,
         NotificationContainerComponent,
         QuizExerciseExportComponent,
-        PaginationSearchableTableComponent,
     ],
     providers: [
         {

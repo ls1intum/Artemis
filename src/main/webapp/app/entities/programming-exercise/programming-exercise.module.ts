@@ -24,6 +24,8 @@ import {
     ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
+    ProgrammingExerciseImportComponent,
+    PorgrammingExerciseImportPopupComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -35,7 +37,6 @@ import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseImportComponent } from './programming-exercise-import.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -71,6 +72,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseManageTestCasesComponent,
         ProgrammingExerciseImportComponent,
+        PorgrammingExerciseImportPopupComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -83,6 +85,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
+        PorgrammingExerciseImportPopupComponent,
+        ProgrammingExerciseImportComponent,
         FaIconComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],

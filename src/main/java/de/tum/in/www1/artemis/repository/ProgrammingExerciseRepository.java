@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -65,4 +67,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(attributePaths = "course")
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
     Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
+
+    Page<ProgrammingExercise> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 }
