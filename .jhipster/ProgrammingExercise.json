@@ -43,14 +43,6 @@
             "relationshipName": "solutionParticipation",
             "otherEntityField": "id",
             "ownerSide": true
-        },
-        {
-            "relationshipType": "one-to-one",
-            "otherEntityName": "programmingExerciseOptions",
-            "otherEntityRelationshipName": "programmingExercise",
-            "relationshipName": "programmingExerciseOptions",
-            "otherEntityField": "id",
-            "ownerSide": true
         }
     ],
     "changelogDate": "20190315161914",
