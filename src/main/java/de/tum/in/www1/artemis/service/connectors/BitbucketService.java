@@ -96,7 +96,7 @@ public class BitbucketService implements VersionControlService {
 
     private void protectBranches(String projectKey, String repositorySlug) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
-        log.info("Setting up branch protection for repository " + repositorySlug);
+        log.debug("Setting up branch protection for repository " + repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
         HashMap<String, Object> matcher = new HashMap<>();
