@@ -27,8 +27,6 @@ export class FileUploadSubmissionComponent implements OnInit {
     participation: StudentParticipation;
     result: Result;
     isActive: boolean;
-    isSaving: boolean;
-    answer: string;
     erroredFile: File | null;
     submissionFile: File | null;
 
@@ -61,7 +59,6 @@ export class FileUploadSubmissionComponent implements OnInit {
         private location: Location,
         translateService: TranslateService,
     ) {
-        this.isSaving = false;
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
@@ -106,7 +103,6 @@ export class FileUploadSubmissionComponent implements OnInit {
             return;
         }
 
-        // this.isUploadingFile = true;
         this.erroredFile = null;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {
@@ -118,7 +114,6 @@ export class FileUploadSubmissionComponent implements OnInit {
                 this.erroredFile = file;
                 this.fileInput.nativeElement.value = '';
                 this.submission!.filePath = null;
-                // this.isUploadingAttachment = false;
                 this.submissionFile = null;
             },
         );
@@ -152,7 +147,7 @@ export class FileUploadSubmissionComponent implements OnInit {
     }
 
     /**
-     * @function setFileSubmissionForExercise
+     * Sets file submission for exercise
      * @param $event {object} Event object which contains the uploaded file
      */
     setFileSubmissionForExercise($event: any): void {
@@ -160,7 +155,12 @@ export class FileUploadSubmissionComponent implements OnInit {
             this.erroredFile = null;
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
-            this.submissionFile = submissionFile;
+            const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
+            if (allowedFileExtensions.some(extension => submissionFile.name.endsWith(extension))) {
+                this.submissionFile = submissionFile;
+            } else {
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
+            }
         }
     }
 

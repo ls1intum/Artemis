@@ -62,7 +62,7 @@
 
                 <ng-container *ngIf="erroredFile">
                     <div id="too-large-file-alert" class="alert alert-danger">
-                        {{ 'artemisApp.lecture.attachments.error' | translate: { fileName: erroredFile.name } }}
+                        {{ 'artemisApp.fileUploadSubmission.fileError' | translate: { fileName: erroredFile.name } }}
                     </div>
                 </ng-container>
             </div>
