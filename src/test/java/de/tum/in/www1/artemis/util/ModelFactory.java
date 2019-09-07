@@ -85,9 +85,9 @@ public class ModelFactory {
         return textSubmission;
     }
 
-    public static FileUploadSubmission generateFileUploadSubmission(String filePath, boolean submitted) {
+    public static FileUploadSubmission generateFileUploadSubmission(String fileName, boolean submitted) {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setFilePath("/api/files/temp/" + fileName);
         fileUploadSubmission.setSubmitted(submitted);
         if (submitted) {
             fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
