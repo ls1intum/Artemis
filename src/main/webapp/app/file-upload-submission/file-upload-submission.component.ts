@@ -65,6 +65,9 @@ export class FileUploadSubmissionComponent implements OnInit {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
+    /**
+     * Initializes data for file upload editor
+     */
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
@@ -93,6 +96,9 @@ export class FileUploadSubmissionComponent implements OnInit {
         );
     }
 
+    /**
+     * Uploads a submission file and submits File Upload Exercise
+     */
     submit() {
         const file = this.submissionFile;
 
@@ -118,6 +124,9 @@ export class FileUploadSubmissionComponent implements OnInit {
         );
     }
 
+    /**
+     * Submits File Upload Exercise
+     */
     submitExercise() {
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
@@ -159,15 +168,24 @@ export class FileUploadSubmissionComponent implements OnInit {
         this.jhiAlertService.error(error.message, null, undefined);
     }
 
+    /**
+     * Navigates to previous location
+     */
     previous() {
         this.location.back();
     }
 
+    /**
+     * Hides more feedback form and shows complaint form
+     */
     toggleComplaintForm() {
         this.showRequestMoreFeedbackForm = false;
         this.showComplaintForm = !this.showComplaintForm;
     }
 
+    /**
+     * Hides complaint form and shows more feedback form
+     */
     toggleRequestMoreFeedbackForm() {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;

@@ -11,6 +11,11 @@ export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 export class FileUploadSubmissionService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Creates new File Upload submission on the server
+     * @param fileUploadSubmission that will added on the server
+     * @param exerciseId id of the exercise
+     */
     create(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
         return this.http
@@ -20,6 +25,11 @@ export class FileUploadSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Updates File Upload submission on the server
+     * @param fileUploadSubmission that will be updated on the server
+     * @param exerciseId id of the exercise
+     */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
         return this.http
@@ -29,6 +39,10 @@ export class FileUploadSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Returns File Upload submission from the server
+     * @param fileUploadSubmissionId the id of the File Upload submission
+     */
     get(fileUploadSubmissionId: number): Observable<HttpResponse<FileUploadSubmission>> {
         return this.http
             .get<FileUploadSubmission>(`api/file-upload-submissions/${fileUploadSubmissionId}`, {
@@ -37,6 +51,11 @@ export class FileUploadSubmissionService {
             .map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res));
     }
 
+    /**
+     * Returns File Upload submissions for exercise from the server
+     * @param exerciseId the id of the exercise
+     * @param req request parameters
+     */
     getFileUploadSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<FileUploadSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -47,10 +66,18 @@ export class FileUploadSubmissionService {
             .map((res: HttpResponse<FileUploadSubmission[]>) => this.convertArrayResponse(res));
     }
 
+    /**
+     * Returns next File Upload submission without assessment from the server
+     * @param exerciseId the id of the exercise
+     */
     getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<FileUploadSubmission> {
         return this.http.get<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submission-without-assessment`);
     }
 
+    /**
+     * Returns data for File Upload editor from the server
+     * @param participationId the id of the participation
+     */
     getDataForFileUploadEditor(participationId: number): Observable<any> {
         return this.http.get<any>(`api/file-upload-editor/${participationId}`);
     }
