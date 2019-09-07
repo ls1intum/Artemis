@@ -26,9 +26,9 @@ public class FileUploadSubmission extends Submission implements Serializable {
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding exercise is deleted.
-     * The workflow is as follows: 1. user uploads a file -> the file is created  => This happens in @PrePersist and @PostPersist 2. When course is deleted, the
-     * file in the permanent location is deleted => This happens in @PostRemove
+     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding exercise is deleted. The workflow is
+     * as follows: 1. user uploads a file -> the file is created => This happens in @PrePersist and @PostPersist 2. When course is deleted, the file in the permanent location is
+     * deleted => This happens in @PostRemove
      */
     @PostLoad
     public void onLoad() {

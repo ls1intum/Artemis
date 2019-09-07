@@ -112,15 +112,13 @@ public class FileUploadSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-                                                                           @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
+            @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
         if (fileUploadSubmission.getId() == null) {
             return createFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
         }
         return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
     }
-
-
 
     /**
      * GET /file-upload-submissions/:id : get the "id" fileUploadSubmission.
