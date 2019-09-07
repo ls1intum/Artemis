@@ -12,14 +12,14 @@ export class FileUploadSubmissionService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Creates new File Upload submission on the server
-     * @param fileUploadSubmission that will added on the server
+     * Updates File Upload submission on the server
+     * @param fileUploadSubmission that will be updated on the server
      * @param exerciseId id of the exercise
      */
-    create(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
         return this.http
-            .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, copy, {
+            .put<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, copy, {
                 observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));

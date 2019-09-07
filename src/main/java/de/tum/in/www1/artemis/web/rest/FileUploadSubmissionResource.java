@@ -94,10 +94,33 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
             @RequestBody FileUploadSubmission fileUploadSubmission) {
         log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
+        if (fileUploadSubmission.getId() != null) {
+            throw new BadRequestAlertException("A new fileUploadSubmission cannot already have an ID", ENTITY_NAME, "idexists");
+        }
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise);
         return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
     }
+
+    /**
+     * PUT /file-upload-submissions : Updates an existing fileUploadSubmission.
+     *
+     * @param fileUploadSubmission the fileUploadSubmission to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission is not valid, or
+     * with status 500 (Internal Server Error) if the fileUploadSubmission couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/exercises/{exerciseId}/file-upload-submissions")
+    public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
+                                                                           @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
+        log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
+        if (fileUploadSubmission.getId() == null) {
+            return createFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
+        }
+        return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
+    }
+
+
 
     /**
      * GET /file-upload-submissions/:id : get the "id" fileUploadSubmission.

@@ -127,7 +127,7 @@ export class FileUploadSubmissionComponent implements OnInit {
 
         if (confirmSubmit) {
             this.submission!.submitted = true;
-            this.fileUploadSubmissionService.create(this.submission!, this.fileUploadExercise.id).subscribe(
+            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
                     this.result = this.submission.result;
@@ -155,7 +155,7 @@ export class FileUploadSubmissionComponent implements OnInit {
             this.erroredFile = null;
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
-            const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
+            const allowedFileExtensions = this.fileUploadExercise.filePattern.replace(/\s/g, '').split(',');
             if (allowedFileExtensions.some(extension => submissionFile.name.endsWith(extension))) {
                 this.submissionFile = submissionFile;
             } else {

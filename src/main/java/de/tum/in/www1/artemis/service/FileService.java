@@ -144,6 +144,10 @@ public class FileService {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
+        if (publicPath.contains("files/file-upload-submission")) {
+            String fileUploadSubmissionId = publicPath.replace(filename, "").replace("/api/files/file-upload-submission/", "");
+            return Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + fileUploadSubmissionId + filename;
+        }
 
         // path is unknown => cannot convert
         throw new RuntimeException("Unknown Filepath: " + publicPath);
