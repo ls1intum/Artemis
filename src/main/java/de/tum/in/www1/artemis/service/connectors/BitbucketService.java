@@ -94,12 +94,20 @@ public class BitbucketService implements VersionControlService {
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
 
+    /**
+     * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
+     * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
+     * @param projectKey The project key of the repository that should be protected
+     * @param repositorySlug The slug of the repository that should be protected
+     */
     private void protectBranches(String projectKey, String repositorySlug) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
         log.debug("Setting up branch protection for repository " + repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
         HashMap<String, Object> matcher = new HashMap<>();
+
+        // A wildcard (*) ist used to protect all branches
         matcher.put("displayId", "*");
         matcher.put("id", "*");
         HashMap<String, Object> type = new HashMap<>();
