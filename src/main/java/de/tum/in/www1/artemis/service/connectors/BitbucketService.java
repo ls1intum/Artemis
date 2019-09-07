@@ -131,7 +131,7 @@ public class BitbucketService implements VersionControlService {
             log.error("Exception occurred while protecting repository " + repositorySlug, emAll);
         }
 
-        log.info("Branch protection for repository " + repositorySlug + " set up");
+        log.debug("Branch protection for repository " + repositorySlug + " set up");
     }
 
     @Override
