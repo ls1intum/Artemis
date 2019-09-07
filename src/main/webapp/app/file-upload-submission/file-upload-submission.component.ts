@@ -10,7 +10,6 @@ import { FileUploadExerciseService, FileUploadExercise } from 'app/entities/file
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
@@ -31,7 +30,6 @@ export class FileUploadSubmissionComponent implements OnInit {
     isActive: boolean;
     isSaving: boolean;
     answer: string;
-    isExampleSubmission = false;
     erroredFile: File | null;
     submissionFile: File | null;
 
@@ -111,22 +109,6 @@ export class FileUploadSubmissionComponent implements OnInit {
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
-    }
-
-    /**
-     * Find "General Feedback" item for Result, if it exists.
-     * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
-     * @return General Feedback item, if it exists and if it has a Feedback Text.
-     */
-    get generalFeedback(): Feedback | null {
-        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
-            if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
-                return feedbackWithoutReference;
-            }
-        }
-
-        return null;
     }
 
     submit() {
