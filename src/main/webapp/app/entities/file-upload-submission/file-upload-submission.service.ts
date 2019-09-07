@@ -26,20 +26,6 @@ export class FileUploadSubmissionService {
     }
 
     /**
-     * Updates File Upload submission on the server
-     * @param fileUploadSubmission that will be updated on the server
-     * @param exerciseId id of the exercise
-     */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(fileUploadSubmission);
-        return this.http
-            .put<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, copy, {
-                observe: 'response',
-            })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    /**
      * Returns File Upload submission from the server
      * @param fileUploadSubmissionId the id of the File Upload submission
      */

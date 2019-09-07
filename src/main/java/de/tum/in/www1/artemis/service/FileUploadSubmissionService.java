@@ -58,23 +58,17 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, FileUploadExercise fileUploadExercise, Principal principal) {
-        if (fileUploadSubmission.isExampleSubmission() == Boolean.TRUE) {
-            fileUploadSubmission = save(fileUploadSubmission);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
+        if (!optionalParticipation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
         }
-        else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
-            if (!optionalParticipation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
-            }
-            StudentParticipation participation = optionalParticipation.get();
+        StudentParticipation participation = optionalParticipation.get();
 
-            if (participation.getInitializationState() == InitializationState.FINISHED) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-            }
-
-            fileUploadSubmission = save(fileUploadSubmission, participation);
+        if (participation.getInitializationState() == InitializationState.FINISHED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
         }
-        return fileUploadSubmission;
+
+        return save(fileUploadSubmission, participation);
     }
 
     /**

@@ -132,7 +132,7 @@ export class FileUploadSubmissionComponent implements OnInit {
 
         if (confirmSubmit) {
             this.submission!.submitted = true;
-            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id).subscribe(
+            this.fileUploadSubmissionService.create(this.submission!, this.fileUploadExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
                     this.result = this.submission.result;
