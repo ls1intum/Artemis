@@ -17,7 +17,9 @@
             },
             "filePath": "File Path",
             "feedbackResult": "You received {{ credits }} credits for {{ part }} part",
-            "feedbackResultDetail": "with following feedback: {{ detailText }}"
+            "feedbackResultDetail": "with following feedback: {{ detailText }}",
+            "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
+            "file": "File"
         }
     }
 }

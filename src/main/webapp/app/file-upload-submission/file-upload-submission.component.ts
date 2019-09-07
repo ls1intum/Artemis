@@ -15,7 +15,6 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { filter } from 'rxjs/operators';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -63,7 +62,7 @@ export class FileUploadSubmissionComponent implements OnInit {
         translateService: TranslateService,
     ) {
         this.isSaving = false;
-        translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
+        translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
@@ -85,23 +84,6 @@ export class FileUploadSubmissionComponent implements OnInit {
 
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as FileUploadSubmission;
-                    if (this.submission && data.results && this.isAfterAssessmentDueDate) {
-                        this.result = data.results.find(r => r.submission!.id === this.submission!.id)!;
-                    }
-
-                    if (this.result && this.result.completionDate) {
-                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
-                        this.complaintService
-                            .findByResultId(this.result.id)
-                            .pipe(filter(res => !!res.body))
-                            .subscribe(res => {
-                                if (res.body!.complaintType == null || res.body!.complaintType === ComplaintType.COMPLAINT) {
-                                    this.hasComplaint = true;
-                                } else {
-                                    this.hasRequestMoreFeedback = true;
-                                }
-                            });
-                    }
                 }
 
                 this.isActive =
