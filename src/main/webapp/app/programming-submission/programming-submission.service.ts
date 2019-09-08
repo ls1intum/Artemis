@@ -375,6 +375,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Get the count of submission state type for exercise.
      *
      * @param exerciseId ProgrammingExercise
+     * @param state ProgrammingSubmissionState
      */
     public getSubmissionCountByType(exerciseId: number, state: ProgrammingSubmissionState) {
         const exerciseBuildState = this.exerciseBuildState[exerciseId];
