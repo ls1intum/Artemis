@@ -2,10 +2,7 @@ import { CanDeactivate } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
-
-export interface ComponentCanDeactivate {
-    canDeactivate: () => boolean | Observable<boolean>;
-}
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Injectable({ providedIn: 'root' })
 export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate> {

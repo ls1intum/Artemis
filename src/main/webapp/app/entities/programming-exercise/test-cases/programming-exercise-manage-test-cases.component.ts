@@ -222,15 +222,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         return !row.active ? 'test-case--inactive' : '';
     }
 
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
-        if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
+    /**
+     * Checks if there are unsaved test cases or there was no submission run after the test cases were changed.
+     * Provides a fitting text for the confirm.
+     */
     canDeactivate() {
-        return !this.changedTestCaseIds.length && !this.hasUpdatedTestCases;
+        if (!this.changedTestCaseIds.length && !this.hasUpdatedTestCases) {
+            return true;
+        }
+        const warning = this.changedTestCaseIds.length
+            ? this.translateService.instant('pendingChanges')
+            : this.translateService.instant('artemisApp.programmingExercise.manageTestCases.updatedTestCases');
+        return confirm(warning);
     }
 }
