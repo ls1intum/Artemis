@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, Event, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/entities/participation';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-navbar',
@@ -38,8 +38,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private router: Router,
         public guidedTourService: GuidedTourService,
+        private deviceService: DeviceDetectorService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -80,7 +80,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     subscribeForGuidedTourAvailability(): void {
         // Check availability after first subscribe call since the router event been triggered already
         this.guidedTourService.getGuidedTourAvailabilityStream().subscribe(isAvailable => {
-            this.isTourAvailable = isAvailable;
+            if (this.deviceService.isMobile()) {
+                this.isTourAvailable = false;
+            } else {
+                this.isTourAvailable = isAvailable;
+            }
         });
     }
 
