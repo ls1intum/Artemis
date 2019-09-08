@@ -66,23 +66,25 @@ body.tour-open {
 }
 
 jhi-guided-tour {
-    .guided-tour-user-input-mask {
-        position: fixed;
-        top: 0;
-        left: 0;
+    .guided-tour-overlay {
+        background: #000;
+        opacity: 0.5;
+        text-align: center;
         display: block;
         height: 100%;
         width: 100%;
         max-height: 100vh;
-        text-align: center;
-        opacity: 0;
+        top: 0;
+        left: 0;
+        position: fixed;
         z-index: $tour-zIndex;
     }
 
-    .guided-tour-spotlight-overlay {
+    .guided-tour-element-overlay {
+        background: none;
+        display: block;
         position: fixed;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 1.5rem rgba(0, 0, 0, 0.5);
-        z-index: $tour-zIndex + 1;
+        z-index: $tour-zIndex;
     }
 
     .tour-step {

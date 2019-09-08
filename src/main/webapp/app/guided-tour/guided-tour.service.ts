@@ -321,7 +321,7 @@ export class GuidedTourService {
      */
     public get preventBackdropFromAdvancing(): boolean {
         if (this.currentTour) {
-            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
+            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : true);
         }
         return false;
     }

@@ -1,6 +1,7 @@
 <div *ngIf="currentTourStep">
-    <div class="guided-tour-user-input-mask" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-spotlight-overlay" [ngStyle]="getOverlayStyle()"></div>
+    <div *ngIf="!this.selectedElementRect; else selectedElementOverlay">
+        <div class="guided-tour-overlay" (click)="backdropClick($event)"></div>
+    </div>
 </div>
 <div *ngIf="currentTourStep">
     <div
@@ -50,7 +51,12 @@
                         </li>
                     </ul>
                 </div>
-                <button *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage" class="next-button" (click)="guidedTourService.nextStep()">
+                <button
+                    *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage"
+                    class="next-button"
+                    [disabled]="this.currentTourStep.enableUserInteraction"
+                    (click)="guidedTourService.nextStep()"
+                >
                     <span jhiTranslate="tour.navigation.next"></span>
                     <fa-icon icon="chevron-right"></fa-icon>
                 </button>
@@ -60,3 +66,10 @@
         </div>
     </div>
 </div>
+<ng-template #selectedElementOverlay>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle('top')" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle('left')" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle('right')" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle('bottom')" (click)="backdropClick($event)"></div>
+    <div *ngIf="!this.currentTourStep.enableUserInteraction" class="guided-tour-element-overlay" [ngStyle]="getOverlayStyle('element')"></div>
+</ng-template>

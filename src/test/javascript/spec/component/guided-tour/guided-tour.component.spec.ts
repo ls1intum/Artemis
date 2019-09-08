@@ -205,16 +205,6 @@ describe('Component Tests', () => {
                 expect(guidedTourComponent.getHighlightPadding()).to.equal(10);
             });
 
-            it('should determine the overlay style', () => {
-                guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
-
-                const style = guidedTourComponent.getOverlayStyle();
-                expect(style['top.px']).to.equal(-10);
-                expect(style['left.px']).to.equal(-10);
-                expect(style['height.px']).to.equal(70);
-                expect(style['width.px']).to.equal(220);
-            });
-
             it('should calculate the top position of the tour step', () => {
                 expect(guidedTourComponent.topPosition).to.equal(0);
 
