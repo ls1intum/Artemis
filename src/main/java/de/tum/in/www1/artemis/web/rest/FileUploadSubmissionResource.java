@@ -87,6 +87,8 @@ public class FileUploadSubmissionResource {
      * POST /file-upload-submissions : Create a new fileUploadSubmission.
      *
      * @param fileUploadSubmission the fileUploadSubmission to create
+     * @param exerciseId the id of the exercise
+     * @param principal the user principal
      * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
      * ID
      */
@@ -106,6 +108,8 @@ public class FileUploadSubmissionResource {
      * PUT /file-upload-submissions : Updates an existing fileUploadSubmission.
      *
      * @param fileUploadSubmission the fileUploadSubmission to update
+     * @param exerciseId the id of the exercise
+     * @param principal user principal
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission is not valid, or
      * with status 500 (Internal Server Error) if the fileUploadSubmission couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -145,6 +149,9 @@ public class FileUploadSubmissionResource {
      * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call
      *
+     * @param exerciseId the id of the exercise
+     * @param submittedOnly if only submitted submissions should be returned
+     * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
@@ -173,6 +180,7 @@ public class FileUploadSubmissionResource {
     /**
      * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
      *
+     * @param exerciseId the id of the exercise
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
