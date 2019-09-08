@@ -167,15 +167,6 @@ public class FileUploadSubmissionResource {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
         }
 
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            fileUploadSubmissions.forEach(fileUploadSubmission -> {
-                if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation() instanceof StudentParticipation) {
-                    ((StudentParticipation) fileUploadSubmission.getParticipation()).filterSensitiveInformation();
-                }
-            });
-        }
-
         return ResponseEntity.ok().body(fileUploadSubmissions);
     }
 
