@@ -157,7 +157,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId that is connected to the submission.
      * @param exerciseId that is connected to the participation.
      */
-    private setupWebsocketSubscription = (participationId: number, exerciseId: number): void => {
+    private setupWebsocketSubscriptionForLatestPendingSubmission = (participationId: number, exerciseId: number): void => {
         if (!this.submissionTopicsSubscribed[participationId]) {
             const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
             this.submissionTopicsSubscribed[participationId] = newSubmissionTopic;
@@ -399,10 +399,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         exerciseId: number,
     ): Observable<ProgrammingSubmissionStateObj> => {
         return of(submissionToBeProcessed).pipe(
+            // When a new submission comes in, make sure that a subscription is set up for new incoming submissions. The new submission would then override the current latest pending submission.
             tap(() => {
-                this.setupWebsocketSubscription(participationId, exerciseId);
-                this.subscribeForNewResult(participationId, exerciseId);
+                this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId);
             }),
+            // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
             map((submission: ProgrammingSubmission | null) => {
                 if (submission) {
                     const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
@@ -418,9 +419,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.emitNoPendingSubmission(participationId, exerciseId);
                 return { participationId, submission: null, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
             }),
+            // Now update the exercise build state object and start the result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                this.exerciseBuildState[exerciseId][participationId] = submissionStateObj;
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { [participationId]: submissionStateObj, ...(this.exerciseBuildState[exerciseId] || {}) } };
+                this.subscribeForNewResult(participationId, exerciseId);
             }),
         );
     };
