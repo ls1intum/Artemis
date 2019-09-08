@@ -75,7 +75,7 @@ describe('ProgrammingSubmissionService', () => {
         // @ts-ignore
         const fetchLatestPendingSubmissionSpy = spy(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
         // @ts-ignore
-        const setupWebsocketSubscriptionSpy = spy(submissionService, 'setupWebsocketSubscription');
+        const setupWebsocketSubscriptionSpy = spy(submissionService, 'setupWebsocketSubscriptionForLatestPendingSubmission');
         // @ts-ignore
         const subscribeForNewResultSpy = spy(submissionService, 'subscribeForNewResult');
         // @ts-ignore
