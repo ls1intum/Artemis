@@ -1,8 +1,24 @@
 <jhi-alert></jhi-alert>
 <div>
-    <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
-        Manage Test Cases.
-    </h3>
+    <div class="d-flex align-content-center mb-2">
+        <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
+            Manage Test Cases.
+        </h3>
+        <fa-icon
+            *ngIf="hasUpdatedTestCases"
+            class="ml-2 text-warning"
+            size="2x"
+            icon="exclamation-triangle"
+            [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate"
+        ></fa-icon>
+        <jhi-programming-exercise-trigger-all-button
+            *ngIf="hasUpdatedTestCases"
+            id="trigger-submission-run-button"
+            class="ml-2"
+            [exerciseId]="exerciseId"
+            [disabled]="isSaving"
+        ></jhi-programming-exercise-trigger-all-button>
+    </div>
     <div class="d-flex">
         <label class="d-flex align-items-center mb-0">
             <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
@@ -15,7 +31,12 @@
             (click)="saveWeights()"
             [disabled]="isSaving || !changedTestCaseIds.length"
         ></button>
-        <button class="btn btn-danger ml-auto" (click)="resetWeights()" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"></button>
+        <button
+            class="btn btn-secondary ml-auto"
+            (click)="resetWeights()"
+            [disabled]="isSaving"
+            jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
+        ></button>
     </div>
     <ngx-datatable
         id="testCaseTable"

@@ -85,7 +85,8 @@
                 "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}.",
                 "saveTestCases": "Save test cases",
                 "testCasesUpdated": "The test cases were updated successfully.",
-                "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
+                "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
+                "updatedTestCasesTooltip": "You have updated the test cases, this does not have direct implications on the student results though. With the button to the right of this symbol you can run the submissions of all students with the updated test case settings."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",

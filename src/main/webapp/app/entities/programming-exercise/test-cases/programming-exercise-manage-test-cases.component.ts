@@ -9,6 +9,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -32,8 +33,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
     showInactiveValue = false;
-
     isSaving = false;
+    // This flag means that the test cases were edited, but no submission run was triggered yet.
+    hasUpdatedTestCases = false;
 
     get testCases() {
         return this.testCasesValue;
@@ -156,6 +158,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     } else {
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
+
+                    // If at least one test case was updated, a submission run should be triggered.
+                    this.hasUpdatedTestCases = updatedTestCases.length > 0;
                 }),
                 catchError((err: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
@@ -226,6 +231,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     canDeactivate() {
-        return !this.changedTestCaseIds.length;
+        return !this.changedTestCaseIds.length && !this.hasUpdatedTestCases;
     }
 }
