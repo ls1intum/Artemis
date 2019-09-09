@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core';
 import {
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionResultDetailComponent,
