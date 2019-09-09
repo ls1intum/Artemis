@@ -368,10 +368,10 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName); // template build
-                                                                                                                                                               // plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName); // solution build
-                                                                                                                                                               // plan
+        // template build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName);
+        // solution build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
