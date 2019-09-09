@@ -8,7 +8,7 @@
         <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
         <div class="form-group" *ngIf="deleteConfirmationText">
             <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input type="text" class="form-control" name="confirmExerciseName" value="" [(ngModel)]="confirmExerciseName" />
+            <input type="text" class="form-control" name="confirmExerciseName" value="" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
     <div class="modal-footer">
@@ -18,7 +18,7 @@
         <button
             type="submit"
             class="btn btn-danger"
-            [disabled]="deleteForm.form.invalid || (confirmExerciseName != entityTitle && deleteConfirmationText)"
+            [disabled]="deleteForm.form.invalid || (confirmEntityName != entityTitle && deleteConfirmationText)"
             id="delete-quiz-confirmation-button"
         >
             <fa-icon icon="times"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>

@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent {
-    confirmExerciseName: string;
+    confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;

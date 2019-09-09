@@ -7,8 +7,13 @@ import { Observable, from } from 'rxjs';
  * Data that will be passed to the delete dialog component
  */
 export class DeleteDialogData {
+    // title of the entity we want to delete
     entityTitle: string;
+
+    // i18n key, that will be translated
     deleteQuestion: string;
+
+    // i18n key, if undefined no safety check will take place (input name of the entity)
     deleteConfirmationText?: string;
 }
 @Injectable({ providedIn: 'root' })
