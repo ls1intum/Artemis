@@ -24,11 +24,11 @@
             },
             "account-menu": {
                 "headline": "Personal settings",
-                "content": "In your account menu you can change your display language and restart the guided tour at any other time. Click here to see how the menu looks like"
+                "content": "Click on your user name to view your account menu."
             },
             "startTourOption": {
-                "headline": "Restart current tour",
-                "content": "If you click on 'Start tour' you can view the current tour again."
+                "headline": "Personal settings",
+                "content": "In this menu you can change the display language, restart the current tour or logout from Artemis"
             },
             "course": {
                 "headline": "Your current courses",
