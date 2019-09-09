@@ -162,13 +162,12 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
-        String assignmentRepoName = ASSIGNMENT_REPO_NAME;
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            assignmentRepoName,
+            ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
             versionControlService.get().getRepositoryName(repositoryUrl)
         );
@@ -196,16 +195,12 @@ public class BambooService implements ContinuousIntegrationService {
                 }
             } catch (GitAPIException ex) {
                 log.error("Git error while doing empty commit", ex);
-                return;
             } catch (IOException ex) {
                 log.error("IOError while doing empty commit", ex);
-                return;
             } catch (InterruptedException ex) {
                 log.error("InterruptedException while doing empty commit", ex);
-                return;
             } catch (NullPointerException ex) {
                 log.error("NullPointerException while doing empty commit", ex);
-                return;
             }
         }
     }
@@ -251,6 +246,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void deleteProject(String projectKey) {
         try {
             log.info("Delete project " + projectKey);
+            //TODO: use Bamboo REST API: DELETE "/rest/api/latest/project/{projectKey}"
             String message = getBambooClient().getProjectHelper().deleteProject(projectKey);
             log.info("Delete project was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -339,6 +335,7 @@ public class BambooService implements ContinuousIntegrationService {
         String toPlan = toProject + "-" + name;
         try {
             log.debug("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
+            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}:{toProjectKey}-{toBuildKey}"
             String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
@@ -365,6 +362,7 @@ public class BambooService implements ContinuousIntegrationService {
     public String enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + projectKey + "-" + planKey);
+            //TODO: use REST API POST "/rest/api/latest/plan/{projectKey}-{buildKey}/enable"
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
             log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
             return message;
@@ -398,6 +396,7 @@ public class BambooService implements ContinuousIntegrationService {
     private void deletePlan(String projectKey, String planKey) {
         try {
             log.info("Delete build plan " + projectKey + "-" + planKey);
+            //TODO use REST API DELETE "/rest/api/latest/plan/{projectKey}-{buildKey}"
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
