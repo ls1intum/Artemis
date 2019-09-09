@@ -259,17 +259,21 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return false;
         }
-        if (this.currentTour.steps[this.currentTourStepIndex].selector) {
-            const selectedElement = document.querySelector(this.currentTour.steps[this.currentTourStepIndex].selector!);
-            if (!selectedElement) {
-                this.errorHandler.handleError(
-                    // If error handler is configured this should not block the browser.
-                    console.warn(
-                        `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                            this.currentTour.settingsKey
-                        }`,
-                    ),
-                );
+        const selector = this.currentTour.steps[this.currentTourStepIndex].selector;
+        if (selector) {
+            try {
+                const selectedElement = document.querySelector(selector);
+                if (!selectedElement) {
+                    this.errorHandler.handleError(
+                        // If error handler is configured this should not block the browser.
+                        console.warn(
+                            `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                                this.currentTour.settingsKey
+                            }`,
+                        ),
+                    );
+                }
+            } catch (e) {
                 return false;
             }
         }
