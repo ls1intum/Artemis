@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, EventEmitter, Output } from '@angular/core';
 import { catchError } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
@@ -22,6 +22,7 @@ import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class ProgrammingExerciseTriggerAllButtonComponent {
     @Input() exerciseId: number;
     @Input() disabled = false;
+    @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
 
     constructor(private submissionService: ProgrammingSubmissionService, private modalService: NgbModal) {}
@@ -41,6 +42,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.isTriggeringBuildAll = false;
+                    this.onBuildTriggered.emit();
                 });
         });
     }

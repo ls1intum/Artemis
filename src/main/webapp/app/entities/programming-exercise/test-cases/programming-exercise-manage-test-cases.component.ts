@@ -213,6 +213,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
     };
 
+    onBuildTriggered = () => {
+        this.hasUpdatedTestCases = false;
+    };
+
     /**
      * Makes inactive test cases grey.
      *
