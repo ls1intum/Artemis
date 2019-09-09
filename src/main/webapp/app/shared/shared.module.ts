@@ -9,7 +9,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog-service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteButtonComponent } from 'app/shared/delete-button/delete-button.component';
 
 @NgModule({

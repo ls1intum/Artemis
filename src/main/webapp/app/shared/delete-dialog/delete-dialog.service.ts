@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { Observable, from } from 'rxjs';
 
@@ -18,6 +18,8 @@ export class DeleteDialogData {
 }
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
+    modalRef: NgbModalRef | null;
+
     constructor(private modalService: NgbModal) {}
 
     /**
@@ -25,10 +27,10 @@ export class DeleteDialogService {
      * @param deleteDialogData data that is used in dialog
      */
     openDeleteDialog(deleteDialogData: DeleteDialogData): Observable<any> {
-        const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
-        modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
-        modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
-        return from(modalRef.result);
+        this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
+        this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
+        this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
+        return from(this.modalRef.result.then(() => (this.modalRef = null)));
     }
 }

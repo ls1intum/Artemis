@@ -18,7 +18,7 @@
         <button
             type="submit"
             class="btn btn-danger"
-            [disabled]="deleteForm.form.invalid || (confirmEntityName != entityTitle && deleteConfirmationText)"
+            [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle)"
             id="delete-quiz-confirmation-button"
         >
             <fa-icon icon="times"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>

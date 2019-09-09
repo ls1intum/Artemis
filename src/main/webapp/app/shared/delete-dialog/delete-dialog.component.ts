@@ -21,7 +21,7 @@ export class DeleteDialogComponent {
     }
 
     /**
-     * Deletes specified entity and closes the dialog
+     * Closes the dialog with a 'confirm' message, so the user of the service can use this message to delete the entity
      */
     confirmDelete() {
         this.activeModal.close();

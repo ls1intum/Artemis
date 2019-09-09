@@ -1,4 +1,4 @@
-import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog-service';
+import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { Component, Output, EventEmitter, Input } from '@angular/core';
 
 @Component({
