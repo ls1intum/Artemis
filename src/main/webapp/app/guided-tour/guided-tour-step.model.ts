@@ -2,7 +2,7 @@ import { LinkType, Orientation, OrientationConfiguration } from 'app/guided-tour
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
-    selector?: string | undefined;
+    selector?: string;
     /** Where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */

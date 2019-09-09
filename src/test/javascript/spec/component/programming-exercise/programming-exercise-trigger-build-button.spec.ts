@@ -5,7 +5,7 @@ import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, WindowRef } from 'app/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core';
 import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
