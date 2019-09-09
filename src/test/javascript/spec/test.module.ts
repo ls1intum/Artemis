@@ -6,12 +6,13 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
 import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
-import { AccountService, JhiLanguageHelper } from 'app/core';
+import { AccountService, ArtemisCoreModule, JhiLanguageHelper } from 'app/core';
 import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
 import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
+import { ArtemisSharedModule } from 'app/shared';
 
 // TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({

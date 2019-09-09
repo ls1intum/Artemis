@@ -3,6 +3,7 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @NgModule({
     imports: [HttpClientModule],
@@ -15,6 +16,7 @@ import locale from '@angular/common/locales/en';
             useValue: 'en',
         },
         DatePipe,
+        JhiLanguageHelper,
     ],
 })
 export class ArtemisCoreModule {

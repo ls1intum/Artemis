@@ -1,6 +1,16 @@
 import { NgModule } from '@angular/core';
-import { HtmlForMarkdownPipe, KeysPipe, RemoveKeysPipe, RemovePositiveAutomaticFeedbackPipe, SafeHtmlPipe, SafeUrlPipe, SanitizeHtmlPipe, TruncatePipe, TypeCheckPipe } from './';
-import { ExerciseTypePipe } from 'app/entities/exercise';
+import {
+    HtmlForMarkdownPipe,
+    KeysPipe,
+    RemoveKeysPipe,
+    RemovePositiveAutomaticFeedbackPipe,
+    SafeHtmlPipe,
+    SafeUrlPipe,
+    SanitizeHtmlPipe,
+    TruncatePipe,
+    TypeCheckPipe,
+    ExerciseTypePipe,
+} from './';
 
 @NgModule({
     declarations: [

@@ -19,8 +19,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { JhiAlertComponent } from 'app/shared';
+import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTableModule } from 'app/components/table/table.module';
+import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { ArtemisCoreModule } from 'app/core';
+import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,8 +60,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule, NgxDatatableModule, FormsModule],
-            declarations: [ProgrammingExerciseManageTestCasesComponent, MockComponent(JhiAlertComponent)],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCoreModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
                 JhiAlertService,
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
