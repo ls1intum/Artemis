@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
@@ -27,13 +27,7 @@ export class GuidedTourService {
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
 
-    constructor(
-        private errorHandler: ErrorHandler,
-        private http: HttpClient,
-        private jhiAlertService: JhiAlertService,
-        private accountService: AccountService,
-        private router: Router,
-    ) {}
+    constructor(private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService, private router: Router) {}
 
     /**
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
@@ -261,19 +255,13 @@ export class GuidedTourService {
         }
         const selector = this.currentTour.steps[this.currentTourStepIndex].selector;
         if (selector) {
-            try {
-                const selectedElement = document.querySelector(selector);
-                if (!selectedElement) {
-                    this.errorHandler.handleError(
-                        // If error handler is configured this should not block the browser.
-                        console.warn(
-                            `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                                this.currentTour.settingsKey
-                            }`,
-                        ),
-                    );
-                }
-            } catch (e) {
+            const selectedElement = document.querySelector(selector);
+            if (!selectedElement) {
+                console.warn(
+                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                        this.currentTour.settingsKey
+                    }`,
+                );
                 return false;
             }
         }
