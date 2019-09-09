@@ -1,0 +1,30 @@
+{
+    "tour": {
+        "programmingExercise": {
+            "fileBrowser": {
+                "headline": "Datei Browser",
+                "content": "Im Datei Browser findest die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
+            },
+            "exerciseFile": {
+                "headline": "Klassendatei",
+                "content": "Klick hier auf die Klassendatei, damit sie sich im Programmier-Editor öffnet."
+            },
+            "codeEditor": {
+                "headline": "Programmier-Editor",
+                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Lese dir das TODO durch und versuche, die Aufgabe zu lösen. Wenn du damit fertig bist, dann klicke auf weiter."
+            },
+            "saveChanges": {
+                "headline": "Änderungen speichern",
+                "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf Speichern klickst. Solltest du noch Änderungen am Quellcode machen wollen, dann klick auf Zurück um zum letzten Schritt zu navigieren."
+            },
+            "submitChanges": {
+                "headline": "Änderungen absenden",
+                "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst. Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum mehrfache Abgaben machen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+            },
+            "buildStatus": {
+                "headline": "Buildstatus",
+                "content": "Nachdem du deine Abgabe eingereicht hast, wird der Build gestartet. Hier kannst den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
+            }
+        }
+    }
+}

@@ -470,6 +470,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /* ==========     User interaction methods     ========== */
 
+    /**
+     * Handles all user interaction for the current tour step
+     * @param selectedElement the highlighted element that listens to click events
+     */
     public handleUserInteraction(selectedElement: HTMLElement) {
         if (!this.currentTourStep || (this.currentTourStep && !this.currentTourStep.userInteractionEvent)) {
             return;
@@ -477,14 +481,14 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         switch (this.currentTourStep.userInteractionEvent) {
             case UserInteractionEvent.CLICK: {
                 this.userInteractionListener = () => this.handleUserClickInteraction(selectedElement, this.currentTourStep.autoNextStep);
-                selectedElement.addEventListener('click', this.userInteractionListener);
+                addEventListener('click', this.userInteractionListener);
                 break;
             }
             case UserInteractionEvent.ACE_EDITOR: {
                 const aceEditor = document.querySelector('.ace_content') as HTMLElement;
                 if (aceEditor) {
                     this.userInteractionListener = () => this.handleKeydownInteraction(aceEditor);
-                    selectedElement.addEventListener('keydown', this.userInteractionListener);
+                    addEventListener('keydown', this.userInteractionListener);
                 }
                 break;
             }
@@ -492,11 +496,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Handles the user click interaction with the highlighted element, and skips tour if the interaction
-     * is not intended
+     * Handles the user click interaction with the highlighted element
+     * @param selectedElement the highlighted element that listens to click events
+     * @param autoNextStep will automatically call navigate to the next step after the click action if set to true
      */
     public handleUserClickInteraction(selectedElement: HTMLElement, autoNextStep: boolean | undefined) {
-        selectedElement.removeEventListener('click', this.userInteractionListener);
+        removeEventListener('click', this.userInteractionListener);
         if (autoNextStep !== false) {
             setTimeout(() => {
                 this.guidedTourService.nextStep();
@@ -506,11 +511,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.enableNextStepButton();
     }
 
+    /**
+     * Handles the key down interaction with the highlighted element
+     * @param selectedElement the highlighted element that listens to keydown events
+     */
     public handleKeydownInteraction(selectedElement: HTMLElement) {
         selectedElement.removeEventListener('keydown', this.userInteractionListener);
         this.enableNextStepButton();
     }
 
+    /**
+     * This method enables the next step button for the guided tour
+     */
     private enableNextStepButton() {
         setTimeout(() => {
             // Enable next step button

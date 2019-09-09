@@ -1,0 +1,30 @@
+{
+    "tour": {
+        "programmingExercise": {
+            "fileBrowser": {
+                "headline": "File Browser",
+                "content": "In the file browser wou can view the project structure with all its folders and files. Additionally you can also create your own folders and files if necessary."
+            },
+            "exerciseFile": {
+                "headline": "Class file",
+                "content": "Click on the class file, so that its source code will be displayed in the code editor."
+            },
+            "codeEditor": {
+                "headline": "Code editor",
+                "content": "The source code is now displayed in the code editor. Please read through the TODO and try to solve it. If you are done with the implementation, just click on the 'Next' button to proceed."
+            },
+            "saveChanges": {
+                "headline": "Save changes",
+                "content": "You can save your changes in the code editor by clicking on 'Save'. If you want to adjust your implementation, just click on 'Back' to navigate to the latest step."
+            },
+            "submitChanges": {
+                "headline": "Submit changes",
+                "content": "If you are content with your implementation, then you can submit your current code by clicking 'Submit'. Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
+            },
+            "buildStatus": {
+                "headline": "Build status",
+                "content": "After submitting your changes, Artemis will trigger the build. Here you see your build status and identify which tasks have passed the tests and are therefore successfully solved."
+            }
+        }
+    }
+}
