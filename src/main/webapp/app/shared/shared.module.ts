@@ -10,13 +10,14 @@ import { CacheableImageService } from 'app/shared/image/cacheable-image.service'
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog-service';
+import { DeleteButtonComponent } from 'app/shared/delete-button/delete-button.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
-    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent],
+    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonComponent],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
     entryComponents: [],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
+    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, DeleteButtonComponent],
 })
 export class ArtemisSharedModule {
     static forRoot() {

@@ -74,10 +74,14 @@
                                 <fa-icon icon="pencil-alt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
-                            <button *ngIf="textExercise.isAtLeastInstructor" type="submit" (click)="openDeleteTextExerciseDialog(textExercise)" class="btn btn-danger btn-sm mr-1">
-                                <fa-icon icon="times"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                            </button>
+                            <jhi-delete-button
+                                *ngIf="textExercise.isAtLeastInstructor"
+                                [entityTitle]="textExercise.title"
+                                deleteQuestion="artemisApp.exercise.delete.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="deleteTextExercise(textExercise.id)"
+                            >
+                            </jhi-delete-button>
                         </div>
                     </td>
                 </tr>
