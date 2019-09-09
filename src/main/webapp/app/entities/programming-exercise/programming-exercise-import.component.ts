@@ -36,7 +36,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     total = 0;
     state: PageableSearch = {
         page: 1,
-        pageSize: 10,
+        pageSize: 2,
         partialTitle: '',
         sortingOrder: SortingOrder.DESCENDING,
         sortColumn: 'id',
@@ -51,10 +51,14 @@ export class ProgrammingExerciseImportComponent implements OnInit {
             .pipe(
                 tap(() => (this.loading = true)),
                 debounceTime(200),
-                switchMap(() => this.pagingService.searchForExercises(this.state)),
+                switchMap(() =>
+                    this.pagingService.searchForExercises({
+                        ...this.state,
+                        sortingOrder: this.state.sortingOrder === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
+                    }),
+                ),
             )
             .subscribe(resp => {
-                console.log('RESP = ' + resp);
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;

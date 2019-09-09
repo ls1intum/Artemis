@@ -288,10 +288,9 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    @PostMapping("/programming-exercises/import/{sourceExerciseId}/{targetCourseId}")
-    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @PathVariable long targetCourseId,
-            @RequestBody ProgrammingExercise newExercise) {
-        final ProgrammingExercise templateExercise = programmingExerciseService.importProgrammingExerciseBasis(newExercise, sourceExerciseId, targetCourseId);
+    @PostMapping("/programming-exercises/import/{sourceExerciseId}")
+    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+        final ProgrammingExercise templateExercise = programmingExerciseService.importProgrammingExerciseBasis(newExercise, sourceExerciseId);
         programmingExerciseService.importRepositories(templateExercise, newExercise);
         programmingExerciseService.importBuildPlans(templateExercise, newExercise);
 

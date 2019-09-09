@@ -4,13 +4,16 @@
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">
                 Create new Programming Exercise
             </h4>
-            <h4 *ngIf="programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
+            <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
                 Edit Programming Exercise
+            </h4>
+            <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import">
+                Import Programming Exercise
             </h4>
             <div>
                 <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
-                <div class="form-group-narrow" [hidden]="!programmingExercise.id">
+                <div class="form-group-narrow" [hidden]="isImport || !programmingExercise.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
                 </div>
@@ -45,7 +48,7 @@
                         minlength="3"
                         [pattern]="shortNamePattern"
                         [(ngModel)]="programmingExercise.shortName"
-                        [readonly]="programmingExercise.id"
+                        [readonly]="!isImport && programmingExercise.id"
                         #shortName="ngModel"
                     />
                     <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
@@ -78,7 +81,7 @@
                         (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
-                        [disabled]="programmingExercise.id"
+                        [disabled]="isImport || programmingExercise.id"
                     >
                         <option value="JAVA">Java</option>
                         <option value="PYTHON">Python</option>
@@ -155,8 +158,10 @@
 
                 <div class="form-group" id="field_problemStatement" name="problemStatement">
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
+                    <jhi-programming-exercise-instructions *ngIf="isImport" [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation">
+                    </jhi-programming-exercise-instructions>
                     <jhi-programming-exercise-editable-instructions
-                        *ngIf="problemStatementLoaded && templateParticipationResultLoaded"
+                        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
                         [participation]="programmingExercise.templateParticipation"
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
@@ -219,7 +224,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="form-group-narrow" *ngIf="programmingExercise.id">
+                <div class="form-group-narrow" *ngIf="programmingExercise.id && !isImport">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
                     <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
                 </div>

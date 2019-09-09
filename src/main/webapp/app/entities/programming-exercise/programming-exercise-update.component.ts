@@ -23,6 +23,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
+    isImport: boolean;
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
@@ -70,6 +71,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
         });
+        this.activatedRoute.url.subscribe(segments => {
+            this.isImport = segments.some(segment => segment.path === 'import');
+        });
         this.activatedRoute.params.subscribe(params => {
             if (params['courseId']) {
                 const courseId = params['courseId'];
@@ -83,6 +87,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         },
                         (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                     );
+                    if (this.isImport) {
+                        this.programmingExercise.dueDate = null;
+                        this.programmingExercise.assessmentDueDate = null;
+                        this.programmingExercise.releaseDate = null;
+                        this.programmingExercise.shortName = '';
+                        this.programmingExercise.title = '';
+                    }
                 });
             }
         });
@@ -110,7 +121,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (this.programmingExercise.id !== undefined) {
+        if (this.isImport) {
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
+        } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;

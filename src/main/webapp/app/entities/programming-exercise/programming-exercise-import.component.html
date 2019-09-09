@@ -23,6 +23,7 @@
                     <span>Course</span>
                     <fa-icon icon="sort"></fa-icon>
                 </th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -31,13 +32,18 @@
                     <span>{{ exercise.id }}</span>
                 </td>
                 <td>
-                    <ngb-highlight [result]="exercise.title" [term]="state.partialTitle"></ngb-highlight>
+                    <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
                 </td>
                 <td>
                     <span>{{ exercise.programmingLanguage }}</span>
                 </td>
                 <td>
                     <span>{{ exercise.course.title }}</span>
+                </td>
+                <td>
+                    <button class="btn btn-outline-primary" [routerLink]="['/course', exercise.course.id, 'programming-exercise', exercise.id, 'import']">
+                        Import
+                    </button>
                 </td>
             </tr>
         </tbody>

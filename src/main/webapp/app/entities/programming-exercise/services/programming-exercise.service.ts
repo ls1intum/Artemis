@@ -40,6 +40,12 @@ export class ProgrammingExerciseService {
         return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
     }
 
+    importExercise(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+        return this.http
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${programmingExercise.id}`, programmingExercise, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertDataFromClient(programmingExercise);

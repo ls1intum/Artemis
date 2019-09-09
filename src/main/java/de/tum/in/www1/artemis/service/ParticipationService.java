@@ -646,7 +646,7 @@ public class ParticipationService {
      */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
+        return exercises.isEmpty() ? new LinkedList<>() : studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**

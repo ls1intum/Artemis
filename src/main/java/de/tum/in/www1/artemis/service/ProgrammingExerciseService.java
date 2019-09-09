@@ -762,10 +762,9 @@ public class ProgrammingExerciseService {
     }
 
     @Transactional
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise newExercise, long toBeImportedId, long targetCourseId) {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise newExercise, long toBeImportedId) {
         ProgrammingExercise templateExercise = programmingExerciseRepository.findById(toBeImportedId).get();
-        final Course targetCourse = courseRepository.findById(targetCourseId).get();
-        copyBasicExerciseProperties(newExercise, templateExercise, targetCourse);
+        setupExerciseForImport(newExercise);
         final String projectKey = newExercise.getProjectKey();
         final String templatePlanName = RepositoryType.TEMPLATE.getName();
         final String solutionPlanName = RepositoryType.SOLUTION.getName();
@@ -821,17 +820,15 @@ public class ProgrammingExerciseService {
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
     }
 
-    private void copyBasicExerciseProperties(ProgrammingExercise newExercise, ProgrammingExercise templateExercise, Course targetCourse) {
-        newExercise.setCourse(targetCourse);
-        newExercise.setAllowOnlineEditor(templateExercise.isAllowOnlineEditor());
-        newExercise.setPackageName(templateExercise.getPackageName());
-        newExercise.setCategories(Set.copyOf(templateExercise.getCategories()));
-        newExercise.setAssessmentType(templateExercise.getAssessmentType());
-        newExercise.setDifficulty(templateExercise.getDifficulty());
-        newExercise.setGradingInstructions(templateExercise.getGradingInstructions());
-        newExercise.setMaxScore(templateExercise.getMaxScore());
-        newExercise.setProblemStatement(templateExercise.getProblemStatement());
-        newExercise.setSequentialTestRuns(templateExercise.hasSequentialTestRuns());
-        newExercise.setPublishBuildPlanUrl(templateExercise.isPublishBuildPlanUrl());
+    private void setupExerciseForImport(ProgrammingExercise newExercise) {
+        newExercise.setId(null);
+        newExercise.setTemplateParticipation(null);
+        newExercise.setSolutionParticipation(null);
+        newExercise.setExerciseHints(null);
+        newExercise.setTestCases(null);
+        newExercise.setNumberOfMoreFeedbackRequests(null);
+        newExercise.setNumberOfMoreFeedbackRequests(null);
+        newExercise.setNumberOfComplaints(null);
+        newExercise.setNumberOfAssessments(null);
     }
 }
