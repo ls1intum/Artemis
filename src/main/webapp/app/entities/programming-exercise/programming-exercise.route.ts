@@ -79,7 +79,7 @@ export const programmingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/programming-exercise/:id/import',
+        path: 'course/:courseId/programming-exercise/:id/import/:targetCourseId',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -120,15 +120,6 @@ export const programmingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
     },
-    {
-        path: 'course/:courseId/programming-exercise-import',
-        component: ProgrammingExerciseImportComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 export const programmingExercisePopupRoute: Routes = [
@@ -142,16 +133,16 @@ export const programmingExercisePopupRoute: Routes = [
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
     },
-    // {
-    //     path: 'course/:courseId/programming-exercise-import',
-    //     component: PorgrammingExerciseImportPopupComponent,
-    //     data: {
-    //         authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-    //         pageTitle: 'Import Programming Exercise',
-    //     },
-    //     canActivate: [UserRouteAccessService],
-    //     outlet: 'popup',
-    // },
+    {
+        path: 'course/:courseId/programming-exercise-import',
+        component: PorgrammingExerciseImportPopupComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'Import Programming Exercise',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
     {
         path: 'course/:courseId/programming-exercise/:id/editlink',
         component: ProgrammingExercisePopupComponent,

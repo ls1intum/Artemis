@@ -71,10 +71,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
         });
-        this.activatedRoute.url.subscribe(segments => {
-            this.isImport = segments.some(segment => segment.path === 'import');
-        });
         this.activatedRoute.params.subscribe(params => {
+            if (params['targetCourseId']) {
+                const targetCourseId = params['targetCourseId'];
+                this.isImport = true;
+                this.courseService.find(targetCourseId).subscribe(res => (this.programmingExercise.course = res.body!));
+
+                this.programmingExercise.dueDate = null;
+                this.programmingExercise.assessmentDueDate = null;
+                this.programmingExercise.releaseDate = null;
+                this.programmingExercise.shortName = '';
+                this.programmingExercise.title = '';
+            }
             if (params['courseId']) {
                 const courseId = params['courseId'];
                 this.courseService.find(courseId).subscribe(res => {
@@ -87,13 +95,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         },
                         (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                     );
-                    if (this.isImport) {
-                        this.programmingExercise.dueDate = null;
-                        this.programmingExercise.assessmentDueDate = null;
-                        this.programmingExercise.releaseDate = null;
-                        this.programmingExercise.shortName = '';
-                        this.programmingExercise.title = '';
-                    }
                 });
             }
         });

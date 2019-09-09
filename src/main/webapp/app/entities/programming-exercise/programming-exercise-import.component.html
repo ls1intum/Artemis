@@ -1,55 +1,60 @@
 <form>
-    <div class="form-group form-inline">
-        Search for exercise: <input class="form-control ml-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-        <span class="ml-3" *ngIf="loading">Loading...</span>
+    <div class="modal-header">
+        <h4 class="modal-title">Import a Programming Exercise</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
+    <div class="modal-body">
+        <div class="form-group form-inline">
+            Search for exercise: <input class="form-control ml-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span class="ml-3" *ngIf="loading">Loading...</span>
+        </div>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="callback">
+                    <th jhiSortBy="id">
+                        <span>#</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="title">
+                        <span>Title</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="language">
+                        <span>Programming Language</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="course">
+                        <span>Course</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let exercise of content.exercisesOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
+                    <td>
+                        <span>{{ exercise.id }}</span>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <span>{{ exercise.programmingLanguage }}</span>
+                    </td>
+                    <td>
+                        <span>{{ exercise.course.title }}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline-primary" (click)="openImport(exercise)">
+                            Import
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="callback">
-                <th jhiSortBy="id">
-                    <span>#</span>
-                    <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="title">
-                    <span>Title</span>
-                    <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="language">
-                    <span>Programming Language</span>
-                    <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="course">
-                    <span>Course</span>
-                    <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let exercise of content.exercisesOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
-                <td>
-                    <span>{{ exercise.id }}</span>
-                </td>
-                <td>
-                    <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
-                </td>
-                <td>
-                    <span>{{ exercise.programmingLanguage }}</span>
-                </td>
-                <td>
-                    <span>{{ exercise.course.title }}</span>
-                </td>
-                <td>
-                    <button class="btn btn-outline-primary" [routerLink]="['/course', exercise.course.id, 'programming-exercise', exercise.id, 'import']">
-                        Import
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="d-flex justify-content-between p-2">
-        <ngb-pagination [collectionSize]="total" [(page)]="page" [pageSize]="state.pageSize"> </ngb-pagination>
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination [collectionSize]="total" [(page)]="page" [pageSize]="state.pageSize"> </ngb-pagination>
+        </div>
     </div>
 </form>
