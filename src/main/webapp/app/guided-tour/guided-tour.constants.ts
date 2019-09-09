@@ -28,3 +28,8 @@ export enum GuidedTourState {
     STARTED,
     FINISHED,
 }
+
+export enum UserInteractionEvent {
+    CLICK = 'click',
+    ACE_EDITOR = 'ace-editor',
+}

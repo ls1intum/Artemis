@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -34,7 +34,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
-    private clickEventListener: EventListenerOrEventListenerObject;
+    private userInteractionListener: EventListenerOrEventListenerObject;
 
     readonly LinkType = LinkType;
 
@@ -54,7 +54,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                  */
                 if (
                     this.currentTourStep &&
-                    !this.currentTourStep.enableUserInteraction &&
+                    !this.currentTourStep.userInteractionEvent &&
                     this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
                 ) {
                     this.guidedTourService.nextStep();
@@ -462,10 +462,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
-                this.clickEventListener = () => this.handleUserClickInteraction(selectedElement);
-                selectedElement.addEventListener('click', this.clickEventListener);
-            }
+            this.handleUserInteraction(selectedElement);
         }
 
         return selectedElementRect;
@@ -473,17 +470,54 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /* ==========     User interaction methods     ========== */
 
+    public handleUserInteraction(selectedElement: HTMLElement) {
+        if (!this.currentTourStep || (this.currentTourStep && !this.currentTourStep.userInteractionEvent)) {
+            return;
+        }
+        switch (this.currentTourStep.userInteractionEvent) {
+            case UserInteractionEvent.CLICK: {
+                this.userInteractionListener = () => this.handleUserClickInteraction(selectedElement, this.currentTourStep.autoNextStep);
+                selectedElement.addEventListener('click', this.userInteractionListener);
+                break;
+            }
+            case UserInteractionEvent.ACE_EDITOR: {
+                const aceEditor = document.querySelector('.ace_content') as HTMLElement;
+                if (aceEditor) {
+                    this.userInteractionListener = () => this.handleKeydownInteraction(aceEditor);
+                    selectedElement.addEventListener('keydown', this.userInteractionListener);
+                }
+                break;
+            }
+        }
+    }
+
     /**
      * Handles the user click interaction with the highlighted element, and skips tour if the interaction
      * is not intended
      */
-    public handleUserClickInteraction(selectedElement: HTMLElement) {
-        selectedElement.removeEventListener('click', this.clickEventListener);
-        if (!this.currentTourStep) {
+    public handleUserClickInteraction(selectedElement: HTMLElement, autoNextStep: boolean | undefined) {
+        selectedElement.removeEventListener('click', this.userInteractionListener);
+        if (autoNextStep !== false) {
+            setTimeout(() => {
+                this.guidedTourService.nextStep();
+            }, 500);
             return;
         }
+        this.enableNextStepButton();
+    }
+
+    public handleKeydownInteraction(selectedElement: HTMLElement) {
+        selectedElement.removeEventListener('keydown', this.userInteractionListener);
+        this.enableNextStepButton();
+    }
+
+    private enableNextStepButton() {
         setTimeout(() => {
-            this.guidedTourService.nextStep();
+            // Enable next step button
+            const nextStepButton = document.querySelector('.next-button');
+            if (nextStepButton) {
+                nextStepButton.removeAttribute('disabled');
+            }
         }, 500);
     }
 }

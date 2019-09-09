@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -16,7 +16,7 @@ import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourState, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -92,7 +92,7 @@ describe('Service Tests', () => {
                         selector: '.random-selector',
                         headlineTranslateKey: '',
                         contentTranslateKey: '',
-                        enableUserInteraction: true,
+                        userInteractionEvent: UserInteractionEvent.CLICK,
                     }),
                     new TextTourStep({
                         selector: '.random-selector',

@@ -1,4 +1,4 @@
-import { LinkType, Orientation, OrientationConfiguration } from 'app/guided-tour/guided-tour.constants';
+import { LinkType, Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
@@ -19,8 +19,10 @@ export abstract class TourStep {
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
      */
     permission?: string[];
-    /** If this is set to true, then the user can interact with the elements that are within the rectangle that highlights the selected element */
-    enableUserInteraction?: boolean;
+    /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
+    userInteractionEvent?: UserInteractionEvent;
+    /** Defines if the next step is automatically triggered after the user interaction */
+    autoNextStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {
