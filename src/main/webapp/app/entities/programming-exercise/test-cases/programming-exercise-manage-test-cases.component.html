@@ -11,12 +11,18 @@
             <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
         </label>
         <div class="d-flex align-items-center ml-auto">
-            <div *ngIf="changedTestCaseIds.length; else updatedTestCases" class="d-flex align-items-center badge badge-warning">
-                <fa-icon class="ml-2 text-white" icon="exclamation-triangle"></fa-icon>
-                <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.unsavedChanges"></span>
-            </div>
-            <ng-template #updatedTestCases>
-                <div class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else clean">
+            <div class="d-flex flex-column justify-content-between">
+                <div *ngIf="changedTestCaseIds.length; else noUnsavedChanges" class="d-flex align-items-center badge badge-warning">
+                    <fa-icon class="ml-2 text-white" icon="exclamation-triangle"></fa-icon>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.unsavedChanges"></span>
+                </div>
+                <ng-template #noUnsavedChanges>
+                    <div class="d-flex align-items-center badge badge-success">
+                        <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
+                        <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUnsavedChanges"></span>
+                    </div>
+                </ng-template>
+                <div class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else noUpdatedTestCases">
                     <fa-icon
                         class="ml-2 text-white"
                         icon="exclamation-triangle"
@@ -24,13 +30,13 @@
                     ></fa-icon>
                     <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.updatedTestCasesShort"></span>
                 </div>
-            </ng-template>
-            <ng-template #clean>
-                <div class="d-flex align-items-center badge badge-success">
-                    <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
-                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.clean"></span>
-                </div>
-            </ng-template>
+                <ng-template #noUpdatedTestCases>
+                    <div class="d-flex align-items-center badge badge-success">
+                        <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
+                        <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUpdatedTestCases"></span>
+                    </div>
+                </ng-template>
+            </div>
             <button
                 id="save-weights-button"
                 class="btn btn-primary ml-3"

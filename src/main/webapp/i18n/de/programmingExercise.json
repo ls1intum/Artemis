@@ -86,11 +86,12 @@
                 "saveTestCases": "Testfälle speichern",
                 "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
                 "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
-                "clean": "Keine ungespeicherten Änderungen",
+                "noUnsavedChanges": "Keine ungespeicherten Änderungen",
                 "unsavedChanges": "Ungespeicherte Änderungen",
                 "updatedTestCasesShort": "Veränderte Testfälle",
                 "updatedTestCases": "Achtung: Du hast die Testfälle der Aufgabe verändert, aber nicht die Einrichungen der Studenten mit den aktuellen Einstellungen erneut ausgeführt. Wollen Sie wirklich den Bereich verlassen?",
-                "updatedTestCasesTooltip": "Du hast die Testfälle verändert, allerdings hast diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Über den Button rechts neben diesem Symbol können Sie die Einreichungen aller Studenten mit den veränderten Testfällen erneut bewerten."
+                "updatedTestCasesTooltip": "Du hast die Testfälle verändert, allerdings hast diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Über den Button rechts neben diesem Symbol können Sie die Einreichungen aller Studenten mit den veränderten Testfällen erneut bewerten.",
+                "noUpdatedTestCases": "Keine veränderten Testfälle"
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
