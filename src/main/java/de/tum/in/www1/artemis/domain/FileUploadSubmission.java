@@ -9,7 +9,9 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
- * A FileUploadSubmission.
+ * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding submission is deleted. The workflow is
+ * as follows: 1. user uploads a file -> temporary file is created and at this point we don't know if submission is already created, when submission is created file is moved to permanent location =>
+ * This happens in @PrePersist and @PostPersist 2. When submission is deleted, the file in the permanent location is deleted => This happens in @PostRemove
  */
 @Entity
 @DiscriminatorValue(value = "F")
@@ -25,22 +27,9 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
-    /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding exercise is deleted. The workflow is
-     * as follows: 1. user uploads a file -> the file is created => This happens in @PrePersist and @PostPersist 2. When course is deleted, the file in the permanent location is
-     * deleted => This happens in @PostRemove
-     */
     @PostLoad
-    public void onLoad() {
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (getFilePath() != null && getFilePath().contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            filePath = filePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
-        }
-    }
-
     @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
+    public void onLoad() {
         if (getFilePath() != null && getFilePath().contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
             filePath = filePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
         }
