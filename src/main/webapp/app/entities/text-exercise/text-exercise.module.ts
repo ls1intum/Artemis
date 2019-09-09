@@ -10,8 +10,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
-import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -24,7 +23,6 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisMarkdownEditorModule,
-        ArtemisDeleteDialogModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],

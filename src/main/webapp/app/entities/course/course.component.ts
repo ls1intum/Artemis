@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { DeleteDialogData, DeleteDialogService } from 'app/delete-dialog';
+import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog-service';
 
 @Component({
     selector: 'jhi-course',
@@ -69,7 +69,7 @@ export class CourseComponent implements OnInit, OnDestroy {
             deleteQuestion: 'artemisApp.course.delete.question',
             deleteConfirmationText: 'artemisApp.course.delete.typeNameToConfirm',
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(
             () => {
                 this.courseService.delete(course.id).subscribe(
                     () => {

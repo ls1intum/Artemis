@@ -17,8 +17,6 @@ import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
 import { MomentModule } from 'ngx-moment';
-import { ArtemisDeleteDialogModule } from 'app/delete-dialog/delete-dialog.module';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -37,10 +35,9 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
-        ArtemisDeleteDialogModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
-    entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent, DeleteDialogComponent],
+    entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],
     providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisCourseModule {

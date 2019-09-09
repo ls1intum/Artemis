@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteDialogComponent } from 'app/delete-dialog/delete-dialog.component';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { Observable, from } from 'rxjs';
 
 /**
  * Data that will be passed to the delete dialog component
@@ -18,11 +19,11 @@ export class DeleteDialogService {
      * Opens delete dialog and returns a result after dialog is closed
      * @param deleteDialogData data that is used in dialog
      */
-    openDeleteDialog(deleteDialogData: DeleteDialogData): Promise<any> {
+    openDeleteDialog(deleteDialogData: DeleteDialogData): Observable<any> {
         const modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
         modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
-        return modalRef.result;
+        return from(modalRef.result);
     }
 }

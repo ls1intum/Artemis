@@ -10,7 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { DeleteDialogData, DeleteDialogService } from 'app/delete-dialog';
+import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog-service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -72,7 +72,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
             deleteQuestion: 'artemisApp.exercise.delete.question',
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).then(
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(
             () => {
                 this.modelingExerciseService.delete(modelingExercise.id).subscribe(
                     response => {
