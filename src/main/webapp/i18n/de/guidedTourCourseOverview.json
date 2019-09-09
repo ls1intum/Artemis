@@ -24,7 +24,11 @@
             },
             "account-menu": {
                 "headline": "Persönliche Einstellungen",
-                "content": "In diesem Menü kannst du die Sprache ändern und dieses Tutorial jederzeit neu starten."
+                "content": "Klicke auf deinen Benutzernamen um das Menü für deine persönlichen Einstellungen anzuzeigen."
+            },
+            "startTourOption": {
+                "headline": "Persönliche Einstellungen",
+                "content": "Hier in diesem Menü kannst du die Anzeigesprache einstellen, die aktuelle Tour nochmals wiederholen oder dich aus Artemis ausloggen."
             },
             "course": {
                 "headline": "Deine aktuellen Kurse",
