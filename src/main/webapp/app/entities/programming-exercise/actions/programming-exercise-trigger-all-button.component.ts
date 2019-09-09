@@ -14,7 +14,7 @@ import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
             (click)="openTriggerAllModal()"
             [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate"
         >
-            <fa-icon icon="redo"></fa-icon>
+            <fa-icon icon="redo" [spin]="isTriggeringBuildAll"></fa-icon>
             <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
         </button>
     `,
