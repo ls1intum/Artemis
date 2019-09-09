@@ -26,6 +26,10 @@
                 "headline": "Persönliche Einstellungen",
                 "content": "In diesem Menü kannst du die Sprache ändern und dieses Tutorial jederzeit neu starten."
             },
+            "startTourOption": {
+                "headline": "Tour wiederholen",
+                "content": "Wenn du auf 'Tour starten' klickst, dann kannst du die aktuelle Tour nochmal wiederholen."
+            },
             "course": {
                 "headline": "Deine aktuellen Kurse",
                 "content": "Du bist für diesen Kurs angemeldet. Schau dir die Kursdetailseite nach der Tour genauer an, indem du auf diese Kachel klickst."

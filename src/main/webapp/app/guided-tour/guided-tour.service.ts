@@ -255,7 +255,7 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    private checkSelectorValidity(): boolean {
+    public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }
@@ -376,7 +376,7 @@ export class GuidedTourService {
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
      * @return Observable<EntityResponseType>: updated guided tour settings
      */
-    private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
+    public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');

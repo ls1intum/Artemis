@@ -19,6 +19,7 @@ export abstract class TourStep {
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
      */
     permission?: string[];
+    /** If this is set to true, then the user can interact with the elements that are within the rectangle that highlights the selected element */
     enableUserInteraction?: boolean;
 }
 

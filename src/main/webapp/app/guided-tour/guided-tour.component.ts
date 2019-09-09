@@ -34,6 +34,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
+    private clickEventListener: EventListenerOrEventListenerObject;
 
     readonly LinkType = LinkType;
 
@@ -461,9 +462,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            selectedElement.addEventListener('click', (event: Event) => {
-                this.handleUserClickInteraction(event);
-            });
+            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
+                this.clickEventListener = () => this.handleUserClickInteraction(selectedElement);
+                selectedElement.addEventListener('click', this.clickEventListener);
+            }
         }
 
         return selectedElementRect;
@@ -475,12 +477,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Handles the user click interaction with the highlighted element, and skips tour if the interaction
      * is not intended
      */
-    public handleUserClickInteraction(event: Event) {
-        if (this.currentTourStep && !this.currentTourStep.enableUserInteraction) {
+    public handleUserClickInteraction(selectedElement: HTMLElement) {
+        selectedElement.removeEventListener('click', this.clickEventListener);
+        if (!this.currentTourStep) {
             return;
         }
         setTimeout(() => {
             this.guidedTourService.nextStep();
-        }, 1000);
+        }, 500);
     }
 }

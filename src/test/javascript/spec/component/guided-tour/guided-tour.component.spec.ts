@@ -258,6 +258,23 @@ describe('Component Tests', () => {
                 guidedTourComponent.tourStepWidth = 1000;
                 expect(guidedTourComponent.widthAdjustmentForScreenBound).to.equal(500);
             });
+
+            it('should calculate the right style for the overlays', () => {
+                // Define expected objects
+                const topStyle = { 'top.px': 0, 'left.px': 0, 'height.px': 0 };
+                const bottomStyle = { 'top.px': 50 };
+                const leftStyle = { 'top.px': 0, 'left.px': 0, 'height.px': 50, 'width.px': 0 };
+                const rightStyle = { 'top.px': 0, 'left.px': 200, 'height.px': 50 };
+
+                let style = guidedTourComponent.getOverlayStyle('top');
+                expect(JSON.stringify(style)).to.equal(JSON.stringify(topStyle));
+                style = guidedTourComponent.getOverlayStyle('bottom');
+                expect(JSON.stringify(style)).to.equal(JSON.stringify(bottomStyle));
+                style = guidedTourComponent.getOverlayStyle('left');
+                expect(JSON.stringify(style)).to.equal(JSON.stringify(leftStyle));
+                style = guidedTourComponent.getOverlayStyle('right');
+                expect(JSON.stringify(style)).to.equal(JSON.stringify(rightStyle));
+            });
         });
     });
 });

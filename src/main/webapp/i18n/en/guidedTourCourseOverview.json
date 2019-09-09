@@ -24,7 +24,11 @@
             },
             "account-menu": {
                 "headline": "Personal settings",
-                "content": "In your account menu you can change your display language and restart the guided tour at any other time."
+                "content": "In your account menu you can change your display language and restart the guided tour at any other time. Click here to see how the menu looks like"
+            },
+            "startTourOption": {
+                "headline": "Restart current tour",
+                "content": "If you click on 'Start tour' you can view the current tour again."
             },
             "course": {
                 "headline": "Your current courses",
