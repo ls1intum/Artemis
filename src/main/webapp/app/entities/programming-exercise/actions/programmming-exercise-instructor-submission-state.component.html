@@ -1,4 +1,4 @@
-<div *ngIf="buildingSummary" class="d-flex">
+<div *ngIf="buildingSummary; else loadingState" class="d-flex">
     <div id="result-eta" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
         <fa-icon icon="clock"></fa-icon>
         <span
@@ -46,3 +46,6 @@
         <span jhiTranslate="artemisApp.programmingExercise.resubmitFailed">Trigger failed</span>
     </button>
 </div>
+<ng-template #loadingState>
+    <fa-icon icon="circle-notch" [spin]="true"></fa-icon>
+</ng-template>
