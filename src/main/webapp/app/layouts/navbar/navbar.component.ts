@@ -80,6 +80,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     subscribeForGuidedTourAvailability(): void {
         // Check availability after first subscribe call since the router event been triggered already
         this.guidedTourService.getGuidedTourAvailabilityStream().subscribe(isAvailable => {
+            // The guided tour is currently disabled for mobile devices and tablets
+            // TODO optimize guided tour layout for mobile devices and tablets
             if (this.deviceService.isMobile() || this.deviceService.isTablet()) {
                 this.isTourAvailable = false;
             } else {
