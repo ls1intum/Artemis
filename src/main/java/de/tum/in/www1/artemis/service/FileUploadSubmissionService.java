@@ -83,13 +83,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<FileUploadSubmission> submissions = new ArrayList<>();
-       participations.
-             // avoid infinite recursion
-            .peek(participation -> participation.getExercise().setParticipations(null))
-            .map(StudentParticipation::findLatestFileUploadSubmission)
-            // filter out non submitted submissions if the flag is set to true
-            .filter(submission -> submission.isPresent() && !submittedOnly && submission.get().isSubmitted())
-            .forEach(submission -> submissions.add(submission.get()));
+        for (StudentParticipation participation : participations) {
             Optional<FileUploadSubmission> submission = participation.findLatestFileUploadSubmission();
             if (submission.isPresent()) {
                 if (submittedOnly && !submission.get().isSubmitted()) {
