@@ -6,24 +6,7 @@ import { ProgrammingExercisePagingService } from 'app/entities/programming-exerc
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course, CourseService } from 'app/entities/course';
-
-export interface SearchResult<T> {
-    resultsOnPage: T[];
-    numberOfPages: number;
-}
-
-export enum SortingOrder {
-    ASCENDING = 'ASCENDING',
-    DESCENDING = 'DESCENDING',
-}
-
-export interface PageableSearch {
-    page: number;
-    pageSize: number;
-    searchTerm: string;
-    sortingOrder: SortingOrder;
-    sortedColumn: string;
-}
+import { PageableSearch, SearchResult, SortingOrder } from 'app/components/table';
 
 enum TableColumn {
     ID = 'ID',
