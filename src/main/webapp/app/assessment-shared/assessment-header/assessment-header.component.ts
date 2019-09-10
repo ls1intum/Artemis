@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { Result } from 'app/entities/result';
 import { AccountService } from 'app/core';
 
@@ -15,7 +14,7 @@ import { AccountService } from 'app/core';
     styleUrls: ['./assessment-header.component.scss'],
 })
 export class AssessmentHeaderComponent implements OnInit {
-    showBackButton: boolean;
+    @Input() showBackButton = true;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
@@ -36,10 +35,9 @@ export class AssessmentHeaderComponent implements OnInit {
     @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
 
-    constructor(private accountService: AccountService, private route: ActivatedRoute) {}
+    constructor(private accountService: AccountService) {}
 
     ngOnInit() {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.showBackButton = this.route.snapshot.queryParamMap.get('showBackButton') === 'true';
     }
 }

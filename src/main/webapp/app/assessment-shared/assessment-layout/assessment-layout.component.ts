@@ -17,6 +17,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
     styleUrls: ['./assessment-layout.component.scss'],
 })
 export class AssessmentLayoutComponent implements OnInit {
+    @Input() showBackButton: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;

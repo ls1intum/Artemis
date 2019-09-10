@@ -41,6 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
+    showBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
     canOverride = false;
@@ -80,14 +81,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        this.route.params.subscribe(params => {
-            const submissionId: String = params['submissionId'];
-            const exerciseId = Number(params['exerciseId']);
+        this.route.paramMap.subscribe(params => {
+            const submissionId: String = params.get('submissionId');
+            const exerciseId = Number(params.get('exerciseId'));
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
+        });
+        this.route.queryParamMap.subscribe(queryParams => {
+            this.showBackButton = queryParams.get('showBackButton') === 'true';
         });
     }
 
