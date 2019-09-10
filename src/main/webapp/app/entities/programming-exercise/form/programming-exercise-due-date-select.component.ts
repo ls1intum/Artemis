@@ -85,9 +85,9 @@ export class ProgrammingExerciseDueDateSelectComponent {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
         const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate && updatedDueDate.isValid() ? updatedDueDate : null };
         this.buildAndTestDateInvalid =
-            !!updatedDueDate &&
-            updatedDueDate.isValid() &&
-            !!this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate &&
+            !updatedDueDate ||
+            !updatedDueDate.isValid() ||
+            !this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate ||
             updatedDueDate.isAfter(this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate);
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
