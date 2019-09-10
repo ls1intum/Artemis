@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.*;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -333,6 +334,15 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    public Course addEmptyCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        courseRepo.save(course);
+
+        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+
+        return course;
+    }
+
     @Transactional
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
@@ -636,5 +646,12 @@ public class DatabaseUtilService {
         hints.add(exerciseHint2);
         hints.add(exerciseHint3);
         exerciseHintRepository.saveAll(hints);
+    }
+
+    @Transactional
+    public List<ProgrammingExercise> loadProgrammingExercisesWithEagerReferences() {
+        final var exercises = programmingExerciseRepository.findAllWithEagerParticipations();
+
+        return exercises;
     }
 }
