@@ -4,8 +4,9 @@ import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { PageableSearch, SearchResult } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
-type EntityResponseType = HttpResponse<SearchResult>;
+type EntityResponseType = SearchResult<ProgrammingExercise>;
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePagingService {
@@ -13,13 +14,13 @@ export class ProgrammingExercisePagingService {
 
     constructor(private http: HttpClient) {}
 
-    searchForExercises(pageable: PageableSearch): Observable<SearchResult> {
+    searchForExercises(pageable: PageableSearch): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
             .set('sortingOrder', pageable.sortingOrder)
-            .set('partialTitle', pageable.partialTitle)
-            .set('sortColumn', pageable.sortColumn);
-        return this.http.get(`${this.resourceUrl}/pageable`, { params, observe: 'response' }).pipe(map((resp: EntityResponseType) => resp && resp.body!));
+            .set('searchTerm', pageable.searchTerm)
+            .set('sortedColumn', pageable.sortedColumn);
+        return this.http.get(`${this.resourceUrl}/pageable`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

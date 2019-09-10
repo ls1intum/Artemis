@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -85,14 +83,21 @@ public class ExerciseHintService {
     }
 
     public void copyExerciseHints(final Exercise template, final Exercise target) {
+        final Map<Long, Long> hintIdMapping = new HashMap<>();
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
             final ExerciseHint copiedHint = new ExerciseHint();
             copiedHint.setExercise(target);
             copiedHint.setContent(hint.getContent());
             copiedHint.setTitle(hint.getTitle());
+            exerciseHintRepository.save(copiedHint);
+            hintIdMapping.put(hint.getId(), copiedHint.getId());
             return copiedHint;
         }).collect(Collectors.toSet()));
 
-        exerciseHintRepository.saveAll(target.getExerciseHints());
+        String patchedStatement = target.getProblemStatement();
+        for (final Map.Entry<Long, Long> idMapping : hintIdMapping.entrySet()) {
+            final String replacement = "$1" + idMapping.getValue() + "$3";
+            patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*\\})", replacement);
+        }
     }
 }

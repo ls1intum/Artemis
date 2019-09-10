@@ -65,7 +65,7 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field -icon="sort" Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateRepositoryUrl() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {

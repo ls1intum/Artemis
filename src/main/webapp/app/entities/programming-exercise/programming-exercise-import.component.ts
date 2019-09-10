@@ -7,8 +7,8 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course, CourseService } from 'app/entities/course';
 
-export interface SearchResult {
-    exercisesOnPage: ProgrammingExercise[];
+export interface SearchResult<T> {
+    resultsOnPage: T[];
     numberOfPages: number;
 }
 
@@ -20,9 +20,16 @@ export enum SortingOrder {
 export interface PageableSearch {
     page: number;
     pageSize: number;
-    partialTitle: string;
+    searchTerm: string;
     sortingOrder: SortingOrder;
-    sortColumn: string;
+    sortedColumn: string;
+}
+
+enum TableColumn {
+    ID = 'ID',
+    TITLE = 'TITLE',
+    PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
+    COURSE_TITLE = 'COURSE_TITLE',
 }
 
 @Component({
@@ -31,35 +38,31 @@ export interface PageableSearch {
     styles: [],
 })
 export class ProgrammingExerciseImportComponent implements OnInit {
+    readonly column = TableColumn;
+
     private search = new Subject<void>();
 
     course: Course;
     loading = false;
-    content: SearchResult;
+    content: SearchResult<ProgrammingExercise>;
     total = 0;
     state: PageableSearch = {
         page: 1,
         pageSize: 2,
-        partialTitle: '',
+        searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
-        sortColumn: 'id',
+        sortedColumn: TableColumn.ID,
     };
 
     constructor(private pagingService: ProgrammingExercisePagingService, private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
-        this.content = { exercisesOnPage: [], numberOfPages: 1 };
+        this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.search
             .pipe(
                 tap(() => (this.loading = true)),
-                // debounceTime(200),
-                switchMap(() =>
-                    this.pagingService.searchForExercises({
-                        ...this.state,
-                        // sortingOrder: this.state.sortingOrder === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
-                    }),
-                ),
+                switchMap(() => this.pagingService.searchForExercises(this.state)),
             )
             .subscribe(resp => {
                 this.content = resp;
@@ -77,29 +80,29 @@ export class ProgrammingExerciseImportComponent implements OnInit {
         return this.state.page + 1;
     }
 
-    set searchTerm(partialTitle: string) {
-        this.setSearchParam({ partialTitle });
+    set searchTerm(searchTerm: string) {
+        this.setSearchParam({ searchTerm });
     }
 
     get searchTerm(): string {
-        return this.state.partialTitle;
+        return this.state.searchTerm;
     }
 
     set listSorting(ascending: boolean) {
-        const sortingOrder = ascending ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
+        const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
         this.setSearchParam({ sortingOrder });
     }
 
     get listSorting(): boolean {
-        return this.state.sortingOrder !== SortingOrder.ASCENDING;
+        return this.state.sortingOrder === SortingOrder.ASCENDING;
     }
 
-    set sortedColumn(sortColumn: string) {
-        this.setSearchParam({ sortColumn });
+    set sortedColumn(sortedColumn: string) {
+        this.setSearchParam({ sortedColumn });
     }
 
     get sortedColumn(): string {
-        return this.state.sortColumn;
+        return this.state.sortedColumn;
     }
 
     private setSearchParam(patch: Partial<PageableSearch>) {

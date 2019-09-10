@@ -11,19 +11,19 @@
         <table class="table table-striped">
             <thead class="thead-dark">
                 <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="callback">
-                    <th jhiSortBy="id">
+                    <th jhiSortBy="{{ column.ID }}">
                         <span>#</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="title">
+                    <th jhiSortBy="{{ column.TITLE }}">
                         <span>Title</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="language">
+                    <th jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}">
                         <span>Programming Language</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="course">
+                    <th jhiSortBy="{{ column.COURSE_TITLE }}">
                         <span>Course</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
@@ -31,7 +31,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of content.exercisesOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
+                <tr *ngFor="let exercise of content.resultsOnPage | sortBy: sortedColumn:listSorting; trackBy: trackId">
                     <td>
                         <span>{{ exercise.id }}</span>
                     </td>

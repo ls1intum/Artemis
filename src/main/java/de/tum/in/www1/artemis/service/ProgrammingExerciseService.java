@@ -53,7 +53,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
-import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExercisePageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -752,13 +753,14 @@ public class ProgrammingExerciseService {
         programmingExerciseRepository.delete(programmingExercise);
     }
 
-    public ProgrammingExercisePageDTO getAllOnPageWithSize(final int pageSize, final int page, final SortingOrder sortingOrder, final String sortingColumn, String partialTitle) {
-        Sort sorting = Sort.by(sortingColumn);
-        sorting = sortingOrder == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final Pageable sorted = PageRequest.of(page, pageSize, sorting);
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search) {
+        Sort sorting = Sort.by(ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).mappedColumnName);
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final Pageable sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
 
-        final Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContaining(partialTitle, sorted);
-        return new ProgrammingExercisePageDTO(exercisePage.getContent(), exercisePage.getTotalPages());
+        final Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(search.getSearchTerm(),
+                search.getSearchTerm(), sorted);
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
     @Transactional
@@ -830,5 +832,19 @@ public class ProgrammingExerciseService {
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setNumberOfAssessments(null);
+    }
+
+    private enum ProgrammingExerciseSearchColumn {
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+
+        private String mappedColumnName;
+
+        ProgrammingExerciseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

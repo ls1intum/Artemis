@@ -68,5 +68,5 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
     Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
 
-    Page<ProgrammingExercise> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
+    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 }
