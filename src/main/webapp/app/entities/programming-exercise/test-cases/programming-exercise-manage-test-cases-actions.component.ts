@@ -10,20 +10,20 @@ import { Component, Input, EventEmitter, Output } from '@angular/core';
     selector: 'jhi-programming-exercise-manage-test-cases-actions',
     template: `
         <button
-            id="save-weights-button"
+            id="save-test-cases-button"
             class="btn btn-primary ml-3"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
             (click)="onSaveWeights.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
         <button
+            id="reset-weights-button"
             class="btn btn-secondary ml-3"
             (click)="onResetWeights.emit()"
             [disabled]="isSaving"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
         ></button>
         <jhi-programming-exercise-trigger-all-button
-            id="trigger-submission-run-button"
             [exerciseId]="exerciseId"
             [disabled]="isSaving || !hasUpdatedTestCases"
             (onBuildTriggered)="onBuildTriggered.emit()"

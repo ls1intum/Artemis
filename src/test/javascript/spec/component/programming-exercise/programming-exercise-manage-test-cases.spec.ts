@@ -24,6 +24,7 @@ import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArtemisCoreModule } from 'app/core';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
+import { elementIsDisabled, expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,7 +45,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
-    const saveTestCasesButton = '#save-weights-button';
+    const saveTestCasesButton = '#save-test-cases-button';
+    const resetWeightsButton = '#reset-weights-button';
+    const triggerSubmissionRunButton = '#trigger-all-button';
 
     const exerciseId = 1;
     const testCases1 = [
@@ -58,9 +61,21 @@ describe('ProgrammingExerciseManageTestCases', () => {
         { id: 6, testName: 'otherTest', active: true, weight: 2 },
     ] as ProgrammingExerciseTestCase[];
 
+    const getSaveButton = () => {
+        return getElement(debugElement, saveTestCasesButton);
+    };
+
+    const getResetButton = () => {
+        return getElement(debugElement, resetWeightsButton);
+    };
+
+    const getTriggerButton = () => {
+        return getElement(debugElement, triggerSubmissionRunButton);
+    };
+
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCoreModule, ArtemisProgrammingExerciseTestCaseModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
                 JhiAlertService,
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
@@ -170,12 +185,15 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
 
+        // Trigger button should be disabled.
+        let triggerButton = getTriggerButton();
+        expectElementToBeDisabled(triggerButton);
+
         // Save weight.
-        updateTestCasesStub.returns(of({ ...orderedTests[0], weight: 20 }));
-        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
-        expect(saveWeightsButton).to.exist;
-        expect(saveWeightsButton.nativeElement.disabled).to.be.false;
-        saveWeightsButton.nativeElement.click();
+        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20 }]));
+        const saveButton = getSaveButton();
+        expectElementToBeEnabled(saveButton);
+        saveButton.click();
 
         fixture.detectChanges();
 
@@ -183,7 +201,13 @@ describe('ProgrammingExerciseManageTestCases', () => {
         editingInput = debugElement.query(By.css(tableEditingInput));
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
         expect(editingInput).not.to.exist;
-        expect(testThatWasUpdated.weight).to.equal('20');
+        expect(testThatWasUpdated.weight).to.equal(20);
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+
+        // Trigger button is now enabled because the tests were saved.
+        expect(comp.hasUpdatedTestCases).to.be.true;
+        triggerButton = getTriggerButton();
+        expectElementToBeEnabled(triggerButton);
     });
 
     it('should be able to update the value of the afterDueDate boolean', async () => {
@@ -191,7 +215,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
 
-        let orderedTests = _sortBy(testCases1, 'testName');
+        const orderedTests = _sortBy(testCases1, 'testName');
 
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
