@@ -199,6 +199,10 @@ describe('Service Tests', () => {
                 });
 
                 it('should enable user interaction and navigate to next step after user interaction', async () => {
+                    // Fix jsom error: Not implemented: window.scrollTo
+                    const jsdomAlert = window.scrollTo;
+                    window.scrollTo = () => {};
+
                     enableTourSpy.and.callFake(() => {
                         guidedTourService.currentTour = courseOverviewTourWithUserInteraction;
                     });
@@ -214,6 +218,8 @@ describe('Service Tests', () => {
                         guidedTourComponentFixture.detectChanges();
                         expect(guidedTourService.isOnLastStep).to.be.true;
                     }
+                    // Restore the jsdom alert
+                    window.scrollTo = jsdomAlert;
                 });
             });
         });
