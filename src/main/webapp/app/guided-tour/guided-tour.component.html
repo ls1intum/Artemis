@@ -60,7 +60,13 @@
                     <span jhiTranslate="tour.navigation.next"></span>
                     <fa-icon icon="chevron-right"></fa-icon>
                 </button>
-                <button *ngIf="guidedTourService.isOnLastStep" class="next-button" jhiTranslate="tour.navigation.done" (click)="guidedTourService.nextStep()"></button>
+                <button
+                    *ngIf="guidedTourService.isOnLastStep"
+                    class="next-button"
+                    jhiTranslate="tour.navigation.done"
+                    [disabled]="this.currentTourStep.enableUserInteraction"
+                    (click)="guidedTourService.nextStep()"
+                ></button>
                 <button *ngIf="guidedTourService.isOnResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
             </div>
         </div>

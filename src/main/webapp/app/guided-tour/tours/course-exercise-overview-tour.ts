@@ -92,6 +92,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
+            enableUserInteraction: true,
             action: () => {
                 clickOnElement('.tab-item.exercises');
             },
