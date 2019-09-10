@@ -52,14 +52,28 @@ export class ProgrammingExerciseDueDateSelectComponent {
      */
     public updateDueDate(dueDate: string) {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
-        const updatedSubmissionRunDate =
-            this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.clone().add(1, 'hours') : null;
-        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, buildAndTestStudentSubmissionsAfterDueDate: updatedSubmissionRunDate };
-        this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
+        if (this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate && updatedDueDate.isValid()) {
+            const difference = this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate
+                ? this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.diff(updatedDueDate)
+                : 0;
+            const updatedBuildAndTestStudentSubmissionsAfterDueDate = updatedDueDate.add(difference);
+            const updatedProgrammingExercise = {
+                ...this.programmingExercise,
+                dueDate: updatedDueDate,
+                buildAndTestStudentSubmissionsAfterDueDate: updatedBuildAndTestStudentSubmissionsAfterDueDate,
+            };
+            this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
+        } else if (updatedDueDate && updatedDueDate.isValid()) {
+            const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, buildAndTestStudentSubmissionsAfterDueDate: updatedDueDate.clone() };
+            this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
+        } else {
+            const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: null, buildAndTestStudentSubmissionsAfterDueDate: null };
+            this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
+        }
     }
 
     /**
-     * When the submission run is enabled, we set the .
+     * When the buildAndTestAfterDueDate is enabled, we set its date to the due date by default. If it's disabled we set it to null.
      * The method will return immediately if there is no dueDate set.
      *
      * Will emit the updated programming exercise.
