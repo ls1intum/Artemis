@@ -213,15 +213,20 @@ public class FileResource {
      *
      * @param submissionId ID of the submission, the attachment belongs to
      * @param filename  the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("/files/file-upload-submission/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
+    public ResponseEntity getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         if (!optionalSubmission.isPresent()) {
             return ResponseEntity.badRequest().build();
+        }
+        if (validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding File Upload Submission";
+            return ResponseEntity.status(403).body(errorMessage);
         }
         return buildFileResponse(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + optionalSubmission.get().getId(), filename);
     }
@@ -273,12 +278,25 @@ public class FileResource {
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
-            log.info("Attachment with invalid token was accessed");
-            return ResponseEntity.status(403)
-                    .body("You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture");
+        if (validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
+            return ResponseEntity.status(403).body(errorMessage);
         }
         return buildFileResponse(Constants.LECTURE_ATTACHMENT_FILEPATH + optionalLecture.get().getId(), filename);
+    }
+
+    /**
+     * Validates temporary access token
+     * @param temporaryAccessToken token to be validated
+     * @param filename the name of the file
+     * @return true if temporaryAccessToken is valid for this file, false otherwise
+     */
+    private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
+            log.info("Attachment with invalid token was accessed");
+            return false;
+        }
+        return true;
     }
 
     /**
