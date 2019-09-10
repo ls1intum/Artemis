@@ -78,7 +78,7 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
                     <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
-                    <td><jhi-updating-result [exercise]="exercise" [participation]="result.participation"></jhi-updating-result></td>
+                    <td><jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="result.participation"></jhi-updating-result></td>
                     <td>
                         <span *ngIf="result.score != null">{{ result.score }}%</span>
                     </td>
@@ -89,24 +89,24 @@
                     </td>
                     <td *ngIf="exercise.type !== QUIZ">
                         <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
-                            <fa-icon icon="code-branch" class="mr"></fa-icon>Repository
+                            <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository
                         </button>
                         <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
-                            <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
+                            <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan
                         </button>
                         <button
                             routerLink="/code-editor/{{ result.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor"
                         >
-                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
+                            <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>
                         <button
                             *ngIf="exercise.type === PROGRAMMING"
                             [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new' } }]"
                             class="btn btn-warning btn-sm mr-1"
                         >
-                            <fa-icon icon="asterisk"></fa-icon>New result
+                            <fa-icon class="mr-1" icon="asterisk"></fa-icon>New result
                         </button>
                     </td>
                 </tr>
