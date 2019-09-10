@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="d-flex">
-            <div class="form-group-narrow flex-grow-1">
+            <div class="form-group-narrow flex-grow-1 flex-shrink-1 flex-basis-50">
                 <jhi-date-time-picker
                     labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="programmingExercise.releaseDate"
@@ -37,6 +37,7 @@
                 ></jhi-date-time-picker>
             </div>
             <jhi-programming-exercise-due-date-select
+                class="form-group-narrow flex-grow-1 flex-shrink-1 flex-basis-50 ml-3"
                 [programmingExercise]="programmingExercise"
                 (onProgrammingExerciseUpdate)="onProgrammingExerciseUpdate($event)"
             ></jhi-programming-exercise-due-date-select>
