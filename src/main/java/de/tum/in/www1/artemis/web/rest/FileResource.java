@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
@@ -157,7 +159,7 @@ public class FileResource {
      * GET /files/templates/:filename : Get the template file with the given filename
      *
      * @param filename The filename of the file to get
-     * @param language The programming languag for which the template file should be returned
+     * @param language The programming language for which the template file should be returned
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
@@ -216,31 +218,13 @@ public class FileResource {
      */
     @GetMapping("/files/file-upload-submission/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Resource> getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
+    public ResponseEntity getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         if (!optionalSubmission.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        Submission submission = optionalSubmission.get();
-        try {
-            byte[] file = fileService.getFileForPath(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + submission.getId() + '/' + filename);
-            if (file == null) {
-                return ResponseEntity.notFound().build();
-            }
-            ByteArrayResource resource = new ByteArrayResource(file);
-
-            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentDisposition(contentDisposition);
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
-        }
-        catch (IOException ex) {
-            log.error("File upload submission download let to the following exception", ex);
-            return ResponseEntity.status(500).build();
-        }
-
+        return buildFileResponse(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + optionalSubmission.get().getId(), filename);
     }
 
     /**
@@ -252,7 +236,7 @@ public class FileResource {
      */
     @GetMapping("/files/course/icons/{courseId}/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<byte[]> getCoursIcon(@PathVariable Long courseId, @PathVariable String filename) {
+    public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
     }
@@ -295,33 +279,34 @@ public class FileResource {
             return ResponseEntity.status(403)
                     .body("You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture");
         }
-        Lecture lecture = optionalLecture.get();
-        try {
-            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
+        return buildFileResponse(Constants.LECTURE_ATTACHMENT_FILEPATH + optionalLecture.get().getId(), filename);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     * @param path to the file
+     * @param filename the name of the file
+     * @return response entity
+     */
+    private ResponseEntity buildFileResponse(String path, String filename) {
+        try{
+            byte[] file = fileService.getFileForPath(path + '/' + filename);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
+
             ByteArrayResource resource = new ByteArrayResource(file);
-
             ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDisposition(contentDisposition);
-            String mediaType = "application/pdf";
-            if (filename.endsWith(".pdf")) {
-                mediaType = "application/pdf";
-            }
-            else if (filename.endsWith(".zip")) {
-                mediaType = "application/zip";
-            }
-
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
+            FileNameMap fileNameMap = URLConnection.getFileNameMap();
+            String mimeType = fileNameMap.getContentTypeFor(filename);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
-            log.error("Lecture attachment download let to the following exception", ex);
+            log.error("Download of file: " + filename + "on path: " + path + " let to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
-
     }
 
     /**
