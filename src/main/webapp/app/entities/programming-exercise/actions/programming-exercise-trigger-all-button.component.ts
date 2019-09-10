@@ -4,6 +4,9 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
+/**
+ * A button that triggers the build for all participations of the given programming exercise.
+ */
 @Component({
     selector: 'jhi-programming-exercise-trigger-all-button',
     template: `
@@ -48,6 +51,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     }
 }
 
+/**
+ * The warning modal of the trigger all button that informs the user about the cost and effects of the operation.
+ */
 @Component({
     template: `
         <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">

@@ -1,5 +1,11 @@
 import { Component, Input, EventEmitter, Output } from '@angular/core';
 
+/**
+ * The actions of the test case table:
+ * - Save the test cases with the updated values.
+ * - Reset all weights to 1.
+ * - Trigger the submissions for all participations of the given exercise.
+ */
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases-actions',
     template: `

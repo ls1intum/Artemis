@@ -1,5 +1,10 @@
 import { Component, Input } from '@angular/core';
 
+/**
+ * Two status indicators for the test case table:
+ * - Are there unsaved changes?
+ * - Have test cases been changed but the student submissions were not triggered?
+ */
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases-status',
     template: `
