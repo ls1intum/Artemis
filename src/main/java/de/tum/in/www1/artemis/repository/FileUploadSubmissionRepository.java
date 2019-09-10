@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
  */
 @Repository
 public interface FileUploadSubmissionRepository extends JpaRepository<FileUploadSubmission, Long> {
+
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor

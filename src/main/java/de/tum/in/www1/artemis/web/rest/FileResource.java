@@ -30,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -289,7 +288,7 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity buildFileResponse(String path, String filename) {
-        try{
+        try {
             byte[] file = fileService.getFileForPath(path + '/' + filename);
             if (file == null) {
                 return ResponseEntity.notFound().build();
