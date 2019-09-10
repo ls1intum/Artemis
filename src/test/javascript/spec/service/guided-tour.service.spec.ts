@@ -22,6 +22,7 @@ import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
+import { AccountService } from 'app/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
