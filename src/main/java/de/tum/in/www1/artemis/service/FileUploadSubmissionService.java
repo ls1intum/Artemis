@@ -264,7 +264,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return fileUploadSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
     }
 
     /**
@@ -273,7 +273,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 
     /**
