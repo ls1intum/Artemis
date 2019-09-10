@@ -21,6 +21,7 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { MockAccountService } from '../mocks/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -120,6 +121,7 @@ describe('Service Tests', () => {
                         { provide: LocalStorageService, useClass: MockSyncStorage },
                         { provide: SessionStorageService, useClass: MockSyncStorage },
                         { provide: CookieService, useClass: MockCookieService },
+                        { provide: AccountService, useClass: MockAccountService },
                     ],
                 })
                     .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
@@ -203,15 +205,15 @@ describe('Service Tests', () => {
                     const jsdomAlert = window.scrollTo;
                     window.scrollTo = () => {};
 
-                    const getStepScreenAdjustmentMock = spyOn(guidedTourComponent, 'getStepScreenAdjustment').and.returnValue(0);
-                    const isTourOnScreenMock = spyOn(guidedTourComponent, 'isTourOnScreen').and.returnValue(true);
                     enableTourSpy.and.callFake(() => {
                         guidedTourService.currentTour = courseOverviewTourWithUserInteraction;
                     });
+
                     guidedTourService.resetTour();
                     guidedTourService.enableTour(courseOverviewTourWithUserInteraction);
                     guidedTourService.startTour();
                     expect(guidedTourService.isOnFirstStep).to.be.true;
+                    navbarComponentFixture.detectChanges();
                     const selector = navbarComponentFixture.debugElement.query(By.css('.random-selector'));
 
                     if (selector) {
@@ -222,9 +224,6 @@ describe('Service Tests', () => {
                     }
                     // Restore the jsdom alert
                     window.scrollTo = jsdomAlert;
-
-                    getStepScreenAdjustmentMock.calls.reset();
-                    isTourOnScreenMock.calls.reset();
                 });
             });
         });
