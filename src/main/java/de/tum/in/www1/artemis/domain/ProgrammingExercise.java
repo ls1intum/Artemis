@@ -7,12 +7,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -51,8 +51,8 @@ public class ProgrammingExercise extends Exercise {
     private Boolean sequentialTestRuns;
 
     @Nullable
-    @Column(name = "automatic_submission_run_date", table = "programming_exercise_details")
-    private ZonedDateTime automaticSubmissionRunDate;
+    @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
+    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -331,12 +331,12 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @Nullable
-    public ZonedDateTime getAutomaticSubmissionRunDate() {
-        return automaticSubmissionRunDate;
+    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
+        return buildAndTestStudentSubmissionsAfterDueDate;
     }
 
-    public void setAutomaticSubmissionRunDate(@Nullable ZonedDateTime automaticSubmissionRunDate) {
-        this.automaticSubmissionRunDate = automaticSubmissionRunDate;
+    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
     /**

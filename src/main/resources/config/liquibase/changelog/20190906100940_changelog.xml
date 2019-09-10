@@ -8,7 +8,7 @@
             <column name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="automatic_submission_run_date" type="datetime">
+            <column name="build_and_test_student_submissions_after_due_date" type="datetime">
                 <constraints nullable="true" />
             </column>
         </createTable>

@@ -26,7 +26,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
     let programmingExerciseEmitSpy: SinonSpy;
 
     const containerId = '#automatic-submission-after-due-date';
-    const checkboxId = '#field_automaticSubmissionRunAfterDueDate';
+    const checkboxId = '#field_buildAndTestStudentSubmissionsAfterDueDate';
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -58,7 +58,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
 
     it('automatic submission run checkbox should be removed when the due date is not null', async () => {
         // @ts-ignore
-        const programmingExercise = { id: 1, dueDate: null, automaticSubmissionRunAfterDueDate: null } as ProgrammingExercise;
+        const programmingExercise = { id: 1, dueDate: null, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
         comp.programmingExercise = programmingExercise;
 
         fixture.detectChanges();
@@ -72,7 +72,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
-        const programmingExercise = { id: 1, dueDate: now, automaticSubmissionRunDate: null } as ProgrammingExercise;
+        const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
         comp.programmingExercise = programmingExercise;
 
         fixture.detectChanges();
@@ -89,7 +89,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable;
 
-        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, automaticSubmissionRunDate: nowPlusOneHour });
+        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour });
         expect(checkbox.nativeElement.checked).to.be.true;
     });
 
@@ -97,7 +97,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
-        const programmingExercise = { id: 1, dueDate: now, automaticSubmissionRunDate: nowPlusOneHour } as ProgrammingExercise;
+        const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.programmingExercise = programmingExercise;
 
         fixture.detectChanges();
@@ -112,7 +112,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable;
 
-        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, automaticSubmissionRunDate: null });
+        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, buildAndTestStudentSubmissionsAfterDueDate: null });
         expect(checkbox.nativeElement.checked).to.be.false;
     });
 
@@ -120,7 +120,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
-        const programmingExercise = { id: 1, dueDate: now, automaticSubmissionRunDate: nowPlusOneHour } as ProgrammingExercise;
+        const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.programmingExercise = programmingExercise;
 
         fixture.detectChanges();
@@ -139,7 +139,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({
             ...programmingExercise,
             dueDate: newDueDate,
-            automaticSubmissionRunDate: newDueDate.clone().add(1, 'hours'),
+            buildAndTestStudentSubmissionsAfterDueDate: newDueDate.clone().add(1, 'hours'),
         });
         expect(checkbox.nativeElement.checked).to.be.true;
     });
@@ -148,7 +148,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
-        const programmingExercise = { id: 1, dueDate: now, automaticSubmissionRunDate: nowPlusOneHour } as ProgrammingExercise;
+        const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.programmingExercise = programmingExercise;
 
         fixture.detectChanges();
@@ -163,7 +163,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable;
 
-        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, dueDate: null, automaticSubmissionRunDate: null });
+        expect(programmingExerciseEmitSpy).to.have.been.calledOnceWithExactly({ ...programmingExercise, dueDate: null, buildAndTestStudentSubmissionsAfterDueDate: null });
         expect(checkbox.nativeElement.checked).to.be.true;
     });
 });

@@ -17,23 +17,23 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
             name="dueDate"
         ></jhi-date-time-picker>
         <div id="automatic-submission-after-due-date" class="form-check mt-1" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
-            <label class="form-check-label" for="field_automaticSubmissionRunAfterDueDate">
+            <label class="form-check-label" for="field_buildAndTestStudentSubmissionsAfterDueDate">
                 <input
                     class="form-check-input"
                     type="checkbox"
-                    name="automaticSubmissionRunAfterDueDate"
-                    id="field_automaticSubmissionRunAfterDueDate"
+                    name="buildAndTestStudentSubmissionsAfterDueDate"
+                    id="field_buildAndTestStudentSubmissionsAfterDueDate"
                     [disabled]="!programmingExercise.dueDate"
-                    [ngModel]="!!programmingExercise.automaticSubmissionRunDate"
-                    (ngModelChange)="toggleAutomaticSubmissionRun()"
+                    [ngModel]="!!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                    (ngModelChange)="toggleBuildAndTestStudentSubmissionsAfterDueDate()"
                     checked
                 />
-                <span jhiTranslate="artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate.title">Automatic Submission Run After Due Date</span>
+                <span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span>
                 <fa-icon
                     icon="question-circle"
                     class="text-secondary"
                     placement="top"
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.automaticSubmissionRunAfterDueDate.description' | translate }}"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.description' | translate }}"
                 ></fa-icon>
             </label>
         </div>
@@ -53,8 +53,8 @@ export class ProgrammingExerciseDueDateSelectComponent {
     public updateDueDate(dueDate: string) {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
         const updatedSubmissionRunDate =
-            this.programmingExercise.automaticSubmissionRunDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.clone().add(1, 'hours') : null;
-        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, automaticSubmissionRunDate: updatedSubmissionRunDate };
+            this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate && updatedDueDate.isValid() ? updatedDueDate.clone().add(1, 'hours') : null;
+        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate, buildAndTestStudentSubmissionsAfterDueDate: updatedSubmissionRunDate };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
@@ -64,13 +64,15 @@ export class ProgrammingExerciseDueDateSelectComponent {
      *
      * Will emit the updated programming exercise.
      */
-    public toggleAutomaticSubmissionRun() {
+    public toggleBuildAndTestStudentSubmissionsAfterDueDate() {
         if (!this.programmingExercise.dueDate) {
             return;
         }
         const updatedProgrammingExercise = {
             ...this.programmingExercise,
-            automaticSubmissionRunDate: this.programmingExercise.automaticSubmissionRunDate ? null : this.programmingExercise.dueDate.clone().add(1, 'hours'),
+            buildAndTestStudentSubmissionsAfterDueDate: this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate
+                ? null
+                : this.programmingExercise.dueDate.clone().add(1, 'hours'),
         };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }

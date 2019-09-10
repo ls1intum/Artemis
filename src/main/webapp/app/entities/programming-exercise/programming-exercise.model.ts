@@ -22,7 +22,7 @@ export class ProgrammingExercise extends Exercise {
     public problemStatement: string;
     public sequentialTestRuns: boolean | null;
 
-    public automaticSubmissionRunDate: Moment | null;
+    public buildAndTestStudentSubmissionsAfterDueDate: Moment | null;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);

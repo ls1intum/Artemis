@@ -81,8 +81,10 @@ export class ProgrammingExerciseService {
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
             ...this.exerciseService.convertDateFromClient(exercise),
-            automaticSubmissionRunDate:
-                exercise.automaticSubmissionRunDate != null && moment(exercise.automaticSubmissionRunDate).isValid() ? moment(exercise.automaticSubmissionRunDate).toJSON() : null,
+            buildAndTestStudentSubmissionsAfterDueDate:
+                exercise.buildAndTestStudentSubmissionsAfterDueDate != null && moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
+                    ? moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
+                    : null,
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
@@ -101,7 +103,8 @@ export class ProgrammingExerciseService {
         if (!res.body) {
             return res;
         }
-        res.body.automaticSubmissionRunDate = res.body.automaticSubmissionRunDate != null ? moment(res.body.automaticSubmissionRunDate) : null;
+        res.body.buildAndTestStudentSubmissionsAfterDueDate =
+            res.body.buildAndTestStudentSubmissionsAfterDueDate != null ? moment(res.body.buildAndTestStudentSubmissionsAfterDueDate) : null;
         return res;
     }
 }
