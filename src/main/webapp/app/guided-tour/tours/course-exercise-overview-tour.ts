@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
@@ -92,7 +92,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
-            enableUserInteraction: true,
+            userInteractionEvent: UserInteractionEvent.CLICK,
             action: () => {
                 clickOnElement('.tab-item.exercises');
             },
