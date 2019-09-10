@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
-import { Participation, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
