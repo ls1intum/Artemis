@@ -12,7 +12,6 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/entities/participation';
-import { DeviceDetectorService } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-navbar',
@@ -39,7 +38,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
-        private deviceService: DeviceDetectorService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -80,13 +78,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     subscribeForGuidedTourAvailability(): void {
         // Check availability after first subscribe call since the router event been triggered already
         this.guidedTourService.getGuidedTourAvailabilityStream().subscribe(isAvailable => {
-            // The guided tour is currently disabled for mobile devices and tablets
-            // TODO optimize guided tour layout for mobile devices and tablets
-            if (this.deviceService.isMobile() || this.deviceService.isTablet()) {
-                this.isTourAvailable = false;
-            } else {
-                this.isTourAvailable = isAvailable;
-            }
+            this.isTourAvailable = isAvailable;
         });
     }
 
