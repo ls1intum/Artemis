@@ -193,9 +193,6 @@ public class FileUploadSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        if (!(exercise instanceof FileUploadExercise)) {
-            return badRequest();
-        }
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
