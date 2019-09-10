@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -28,6 +28,43 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Service Tests', () => {
+    const courseOverviewTour: GuidedTour = {
+        settingsKey: 'course_overview_tour',
+        preventBackdropFromAdvancing: true,
+        steps: [
+            new TextTourStep({
+                selector: '.random-selector',
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+            }),
+            new TextTourStep({
+                selector: '.random-selector',
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                orientation: Orientation.TOPLEFT,
+            }),
+        ],
+    };
+
+    const courseOverviewTourWithUserInteraction: GuidedTour = {
+        settingsKey: 'course_overview_tour',
+        preventBackdropFromAdvancing: true,
+        steps: [
+            new TextTourStep({
+                selector: '.random-selector',
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                enableUserInteraction: true,
+            }),
+            new TextTourStep({
+                selector: '.random-selector',
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                orientation: Orientation.TOPLEFT,
+            }),
+        ],
+    };
+
     describe('Guided Tour Service', () => {
         describe('Service methods', () => {
             let service: GuidedTourService;
@@ -68,43 +105,6 @@ describe('Service Tests', () => {
             let guidedTourService: GuidedTourService;
             let router: Router;
 
-            const courseOverviewTour: GuidedTour = {
-                settingsKey: 'course_overview_tour',
-                preventBackdropFromAdvancing: true,
-                steps: [
-                    new TextTourStep({
-                        selector: '.random-selector',
-                        headlineTranslateKey: '',
-                        contentTranslateKey: '',
-                    }),
-                    new TextTourStep({
-                        selector: '.random-selector',
-                        headlineTranslateKey: '',
-                        contentTranslateKey: '',
-                        orientation: Orientation.TOPLEFT,
-                    }),
-                ],
-            };
-
-            const courseOverviewTourWithUserInteraction: GuidedTour = {
-                settingsKey: 'course_overview_tour',
-                preventBackdropFromAdvancing: true,
-                steps: [
-                    new TextTourStep({
-                        selector: '.random-selector',
-                        headlineTranslateKey: '',
-                        contentTranslateKey: '',
-                        enableUserInteraction: true,
-                    }),
-                    new TextTourStep({
-                        selector: '.random-selector',
-                        headlineTranslateKey: '',
-                        contentTranslateKey: '',
-                        orientation: Orientation.TOPLEFT,
-                    }),
-                ],
-            };
-
             beforeEach(() => {
                 TestBed.configureTestingModule({
                     imports: [
@@ -139,34 +139,35 @@ describe('Service Tests', () => {
                     });
             });
 
-            describe('Start tour method', () => {
-                let enableTourSpy: jasmine.Spy;
+            async function prepareGuidedTour(tour: GuidedTour) {
+                // Prepare GuidedTourService and GuidedTourComponent
+                spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                spyOn(guidedTourService, 'init').and.returnValue(of());
+                spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
+                spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                    guidedTourService.currentTour = tour;
+                });
 
+                guidedTourComponent.ngAfterViewInit();
+
+                await guidedTourComponentFixture.ngZone!.run(() => {
+                    router.navigateByUrl('/overview');
+                });
+
+                // Start course overview tour
+                expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
+                guidedTourService.enableTour(tour);
+                guidedTourService.startTour();
+                guidedTourComponentFixture.detectChanges();
+                expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
+                expect(guidedTourService.isOnFirstStep).to.be.true;
+                expect(guidedTourService.currentTourStepDisplay).to.equal(1);
+                expect(guidedTourService.currentTourStepCount).to.equal(2);
+            }
+
+            describe('Start guided tours without user interaction', () => {
                 beforeEach(async () => {
-                    // Prepare GuidedTourService and GuidedTourComponent
-                    spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
-                    spyOn(guidedTourService, 'init').and.returnValue(of());
-                    spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
-                    enableTourSpy = spyOn(guidedTourService, 'enableTour');
-                    enableTourSpy.and.callFake(() => {
-                        guidedTourService.currentTour = courseOverviewTour;
-                    });
-
-                    guidedTourComponent.ngAfterViewInit();
-
-                    await guidedTourComponentFixture.ngZone!.run(() => {
-                        router.navigateByUrl('/overview');
-                    });
-
-                    // Start course overview tour
-                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-                    guidedTourService.enableTour(courseOverviewTour);
-                    guidedTourService.startTour();
-                    guidedTourComponentFixture.detectChanges();
-                    expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
-                    expect(guidedTourService.isOnFirstStep).to.be.true;
-                    expect(guidedTourService.currentTourStepDisplay).to.equal(1);
-                    expect(guidedTourService.currentTourStepCount).to.equal(2);
+                    await prepareGuidedTour(courseOverviewTour);
                 });
 
                 it('should start and finish the course overview guided tour', async () => {
@@ -200,21 +201,18 @@ describe('Service Tests', () => {
                     guidedTourComponentFixture.detectChanges();
                     expect(guidedTourService.isOnFirstStep).to.be.true;
                 });
+            });
+
+            describe('Start guided tours with user interaction', () => {
+                beforeEach(async () => {
+                    await prepareGuidedTour(courseOverviewTourWithUserInteraction);
+                });
 
                 it('should enable user interaction and navigate to next step after user interaction', async () => {
                     // Fix jsom error: Not implemented: window.scrollTo
                     const jsdomAlert = window.scrollTo;
                     window.scrollTo = () => {};
 
-                    enableTourSpy.and.callFake(() => {
-                        guidedTourService.currentTour = courseOverviewTourWithUserInteraction;
-                    });
-
-                    guidedTourService.resetTour();
-                    guidedTourService.enableTour(courseOverviewTourWithUserInteraction);
-                    guidedTourService.startTour();
-                    expect(guidedTourService.isOnFirstStep).to.be.true;
-                    navbarComponentFixture.detectChanges();
                     const selector = navbarComponentFixture.debugElement.query(By.css('.random-selector'));
 
                     if (selector) {
