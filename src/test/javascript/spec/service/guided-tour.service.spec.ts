@@ -199,6 +199,12 @@ describe('Service Tests', () => {
                 });
 
                 it('should enable user interaction and navigate to next step after user interaction', async () => {
+                    // Fix jsom error: Not implemented: window.scrollTo
+                    const jsdomAlert = window.scrollTo;
+                    window.scrollTo = () => {};
+
+                    const getStepScreenAdjustmentMock = spyOn(guidedTourComponent, 'getStepScreenAdjustment').and.returnValue(0);
+                    const isTourOnScreenMock = spyOn(guidedTourComponent, 'isTourOnScreen').and.returnValue(true);
                     enableTourSpy.and.callFake(() => {
                         guidedTourService.currentTour = courseOverviewTourWithUserInteraction;
                     });
@@ -214,6 +220,11 @@ describe('Service Tests', () => {
                         guidedTourComponentFixture.detectChanges();
                         expect(guidedTourService.isOnLastStep).to.be.true;
                     }
+                    // Restore the jsdom alert
+                    window.scrollTo = jsdomAlert;
+
+                    getStepScreenAdjustmentMock.calls.reset();
+                    isTourOnScreenMock.calls.reset();
                 });
             });
         });
