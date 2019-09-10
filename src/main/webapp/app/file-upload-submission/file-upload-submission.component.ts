@@ -5,10 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from 'app/entities/result';
-import { ParticipationService } from 'app/entities/participation';
-import { FileUploadExerciseService, FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import * as moment from 'moment';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
@@ -18,7 +16,6 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
-    providers: [ParticipationService],
 })
 export class FileUploadSubmissionComponent implements OnInit {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
@@ -49,14 +46,11 @@ export class FileUploadSubmissionComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private participationService: ParticipationService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
-        private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
         translateService: TranslateService,
     ) {
