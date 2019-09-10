@@ -7,11 +7,11 @@
         <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
     <div [hidden]="isLoading" *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
-        <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false">
+        <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
             Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
             >:
         </p>
-        <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined">
+        <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined && showTestNames">
             No result information for &nbsp;<span class="code-warning">{{ feedback.text }}:</span>
         </p>
         <p *ngIf="feedback.type === 'MANUAL' && !feedback.positive">
