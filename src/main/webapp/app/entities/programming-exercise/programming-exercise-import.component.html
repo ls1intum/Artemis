@@ -42,7 +42,7 @@
                         <span>{{ exercise.programmingLanguage }}</span>
                     </td>
                     <td>
-                        <span>{{ exercise.course.title }}</span>
+                        <ngb-highlight [result]="exercise.course.title" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
                         <button class="btn btn-outline-primary" (click)="openImport(exercise)">

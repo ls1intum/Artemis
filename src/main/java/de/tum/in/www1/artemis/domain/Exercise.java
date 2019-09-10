@@ -122,7 +122,7 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = { CascadeType.REMOVE, CascadeType.PERSIST }, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 

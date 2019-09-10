@@ -99,5 +99,6 @@ public class ExerciseHintService {
             final String replacement = "$1" + idMapping.getValue() + "$3";
             patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*\\})", replacement);
         }
+        target.setProblemStatement(patchedStatement);
     }
 }

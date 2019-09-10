@@ -61,11 +61,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
-    @OneToMany(mappedBy = "exercise", cascade = { CascadeType.REMOVE, CascadeType.PERSIST }, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
-    // jhipster-needle-entity-add-field -icon="sort" Jhipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateRepositoryUrl() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
