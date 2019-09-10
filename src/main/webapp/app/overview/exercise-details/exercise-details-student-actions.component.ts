@@ -100,7 +100,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         ) {
             const participation = this.exercise.participations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return this.exercise.type === ExerciseType.MODELING
+                switch (this.exercise.type) {
+                    case ExerciseType.MODELING: return ParticipationStatus.MODELING_EXERCISE;
+                    case ExerciseType.TEXT: return ParticipationStatus.TEXT_EXERCISE;
+                    default: return ParticipationStatus.FILE_UPLOAD_EXERCISE;
+                }
                     ? ParticipationStatus.MODELING_EXERCISE
                     : ParticipationStatus.TEXT_EXERCISE
                     ? ParticipationStatus.TEXT_EXERCISE
