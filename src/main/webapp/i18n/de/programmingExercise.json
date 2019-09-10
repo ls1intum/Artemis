@@ -35,7 +35,7 @@
             "buildAndTestStudentSubmissionsAfterDueDate": {
                 "title": "Automatischer Build & Testlauf aller Studentenabgaben nach dem Abgabedatum",
                 "description": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist.",
-                "invalid": "Bitte gebe ein vaildes Datum nach dem Abgabedatum ein. Wird kein Datum gesetzt, wird das Abgabedatum verwendet."
+                "invalid": "Bitte gebe ein vaildes Datum nach dem Abgabedatum ein."
             },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",

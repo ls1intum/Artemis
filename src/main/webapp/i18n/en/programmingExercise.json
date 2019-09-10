@@ -35,7 +35,7 @@
             "buildAndTestStudentSubmissionsAfterDueDate": {
                 "title": "Build & Test Student Submissions After Due Date",
                 "description": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated for this submission run even though the due date has passed.",
-                "invalid": "Please insert a valid date after the due date. If no date is set, the due date of the exercise will be used."
+                "invalid": "Please insert a valid date after the due date."
             },
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
