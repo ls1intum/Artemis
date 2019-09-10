@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -23,6 +23,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 export class FileUploadSubmissionComponent implements OnInit {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     submission: FileUploadSubmission | null;
+    submittedFileName: string;
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
@@ -84,6 +85,10 @@ export class FileUploadSubmissionComponent implements OnInit {
 
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as FileUploadSubmission;
+                    if (this.submission && this.submission.submitted) {
+                        const filePath = this.submission.filePath!.split('/');
+                        this.submittedFileName = filePath[filePath.length - 1];
+                    }
                 }
 
                 this.isActive =

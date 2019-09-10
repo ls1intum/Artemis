@@ -50,7 +50,9 @@
                             [disabled]="submission && submission.submitted"
                             (change)="setFileSubmissionForExercise($event)"
                         />
-                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile.name : '' }}</label>
+                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{
+                            submissionFile ? submissionFile.name : submittedFileName ? submittedFileName : ''
+                        }}</label>
                     </div>
                 </div>
                 <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
