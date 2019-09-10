@@ -33,8 +33,8 @@
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
             "buildAndTestStudentSubmissionsAfterDueDate": {
-                "title": "Automatische Bewertung aller Ergebnisse nach dem Abgabedatum",
-                "description": "Aktiviere diese Option um eine automatische Bewertung aller Abgaben 1 Stunde nach dem Abgabedatum durchzuführen. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist."
+                "title": "Automatischer Build & Testlauf aller Studentenabgaben nach dem Abgabedatum",
+                "description": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist."
             },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",

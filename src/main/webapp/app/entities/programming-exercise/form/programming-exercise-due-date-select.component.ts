@@ -59,7 +59,7 @@ export class ProgrammingExerciseDueDateSelectComponent {
     }
 
     /**
-     * We currently don't allow the free setting of the automatic submission run date setting, but set it to one hour after the due date.
+     * When the submission run is enabled, we set the .
      * The method will return immediately if there is no dueDate set.
      *
      * Will emit the updated programming exercise.
@@ -70,9 +70,7 @@ export class ProgrammingExerciseDueDateSelectComponent {
         }
         const updatedProgrammingExercise = {
             ...this.programmingExercise,
-            buildAndTestStudentSubmissionsAfterDueDate: this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate
-                ? null
-                : this.programmingExercise.dueDate.clone().add(1, 'hours'),
+            buildAndTestStudentSubmissionsAfterDueDate: this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate ? null : this.programmingExercise.dueDate.clone(),
         };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
