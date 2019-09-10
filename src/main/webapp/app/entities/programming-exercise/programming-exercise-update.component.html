@@ -117,6 +117,7 @@
                         class="form-group-narrow flex-grow-1 flex-shrink-1 flex-basis-50 ml-3"
                         [programmingExercise]="programmingExercise"
                         (onProgrammingExerciseUpdate)="onProgrammingExerciseUpdate($event)"
+                        (onDueDateValidationChange)="dueDateInvalid = !$event"
                     ></jhi-programming-exercise-due-date-select>
                 </div>
                 <div class="form-group-narrow">
@@ -224,7 +225,7 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary mr-1" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button type="submit" id="save-entity" [disabled]="dueDateInvalid || editForm.form.invalid || isSaving" class="btn btn-primary">
                     <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

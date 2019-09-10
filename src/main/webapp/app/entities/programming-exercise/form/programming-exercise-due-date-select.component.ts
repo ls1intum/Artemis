@@ -61,10 +61,21 @@ export class ProgrammingExerciseDueDateSelectComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
+    // true => Form is valid.
+    @Output() onDueDateValidationChange = new EventEmitter<boolean>();
 
     @ViewChild(FormDateTimePickerComponent, { static: false }) dateTimePicker: FormDateTimePickerComponent;
 
-    buildAndTestDateInvalid = false;
+    buildAndTestDateInvalidValue = false;
+
+    get buildAndTestDateInvalid() {
+        return this.buildAndTestDateInvalidValue;
+    }
+
+    set buildAndTestDateInvalid(invalid: boolean) {
+        this.buildAndTestDateInvalidValue = invalid;
+        this.onDueDateValidationChange.emit(!invalid);
+    }
 
     /**
      * Set the due date. When the due date is set it needs to be checked if the automatic submission date is also set - this should then be updated, too.

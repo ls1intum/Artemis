@@ -35,6 +35,8 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText: string | null;
 
+    dueDateInvalid = false;
+
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
