@@ -27,6 +27,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -77,6 +78,9 @@ public class RepositoryWebsocketResource {
      */
     @MessageMapping("/topic/repository/{participationId}/files")
     public void updateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
+        // Without this, custom jpa repository methods don't work in a websocket channel.
+        SecurityUtils.setAuthorizationObject();
+
         String topic = "/topic/repository/" + participationId + "/files";
         Participation participation;
         try {
@@ -127,6 +131,9 @@ public class RepositoryWebsocketResource {
      */
     @MessageMapping("/topic/test-repository/{exerciseId}/files")
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
+        // Without this, custom jpa repository methods don't work in websocket channel.
+        SecurityUtils.setAuthorizationObject();
+
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -53,8 +54,10 @@ public class QuizSubmissionWebsocketService {
      */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
-        String username = principal.getName();
+        // Without this, custom jpa repository methods don't work in websocket channel.
+        SecurityUtils.setAuthorizationObject();
 
+        String username = principal.getName();
         // check if submission is still allowed
         Optional<QuizExercise> quizExercise = quizExerciseService.findById(exerciseId);
         if (!quizExercise.isPresent()) {
