@@ -31,7 +31,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     total = 0;
     state: PageableSearch = {
         page: 1,
-        pageSize: 2,
+        pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
