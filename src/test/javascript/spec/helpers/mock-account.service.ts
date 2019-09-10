@@ -1,14 +1,14 @@
 import { SpyObject } from './spyobject';
 import { AccountService } from 'app/core/auth/account.service';
 import Spy = jasmine.Spy;
-import { User } from 'app/core';
 
 export class MockAccountService extends SpyObject {
     getSpy: Spy;
     saveSpy: Spy;
     fakeResponse: any;
     hasAnyAuthorityDirectSpy: Spy;
-    fakeUser: User;
+    identitySpy: Spy;
+    isAtLeastInstructorInCourseSpy: Spy;
 
     constructor() {
         super(AccountService);
@@ -17,6 +17,8 @@ export class MockAccountService extends SpyObject {
         this.getSpy = this.spy('get').andReturn(this);
         this.saveSpy = this.spy('save').andReturn(this);
         this.hasAnyAuthorityDirectSpy = this.spy('hasAnyAuthorityDirect').andReturn(this);
+        this.identitySpy = this.spy('identity').andReturn(this);
+        this.isAtLeastInstructorInCourseSpy = this.spy('isAtLeastInstructorInCourse').andReturn(this);
     }
 
     subscribe(callback: any) {
@@ -25,13 +27,5 @@ export class MockAccountService extends SpyObject {
 
     setResponse(json: any): void {
         this.fakeResponse = json;
-    }
-
-    setUser(user: User): void {
-        this.fakeUser = user;
-    }
-
-    identity(): Promise<User | null> {
-        return Promise.resolve(this.fakeUser);
     }
 }

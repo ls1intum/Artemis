@@ -1,6 +1,5 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
-import { AccountService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -16,7 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
 })
-export class AssessmentLayoutComponent implements OnInit {
+export class AssessmentLayoutComponent {
     @Input() showBackButton: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
@@ -24,7 +23,7 @@ export class AssessmentLayoutComponent implements OnInit {
     @Input() busy: boolean;
 
     @Input() isAssessor: boolean;
-    isAtLeastInstructor: boolean;
+    @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
@@ -39,10 +38,4 @@ export class AssessmentLayoutComponent implements OnInit {
     @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
-
-    constructor(private accountService: AccountService) {}
-
-    ngOnInit() {
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-    }
 }
