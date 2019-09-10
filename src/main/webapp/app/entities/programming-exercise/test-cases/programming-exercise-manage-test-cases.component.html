@@ -16,6 +16,7 @@
                 [hasUpdatedTestCases]="hasUpdatedTestCases"
             ></jhi-programming-exercise-manage-test-cases-status>
             <jhi-programming-exercise-manage-test-cases-actions
+                [exerciseId]="exerciseId"
                 [hasUpdatedTestCases]="hasUpdatedTestCases"
                 [hasUnsavedChanges]="!!changedTestCaseIds.length"
                 (onBuildTriggered)="onBuildTriggered()"
