@@ -203,6 +203,8 @@ describe('Service Tests', () => {
                     const jsdomAlert = window.scrollTo;
                     window.scrollTo = () => {};
 
+                    const getStepScreenAdjustmentMock = spyOn(guidedTourComponent, 'getStepScreenAdjustment').and.returnValue(0);
+                    const isTourOnScreenMock = spyOn(guidedTourComponent, 'isTourOnScreen').and.returnValue(true);
                     enableTourSpy.and.callFake(() => {
                         guidedTourService.currentTour = courseOverviewTourWithUserInteraction;
                     });
@@ -220,6 +222,9 @@ describe('Service Tests', () => {
                     }
                     // Restore the jsdom alert
                     window.scrollTo = jsdomAlert;
+
+                    getStepScreenAdjustmentMock.calls.reset();
+                    isTourOnScreenMock.calls.reset();
                 });
             });
         });
