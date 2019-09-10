@@ -98,6 +98,12 @@ export class ProgrammingExerciseService {
         return copy;
     }
 
+    /**
+     * Convert all date fields of the programming exercise to momentJs date objects.
+     * Note: This conversion could produce an invalid date if the date is malformatted.
+     *
+     * @param entity ProgrammingExercise
+     */
     convertDateFromServer(entity: EntityResponseType) {
         const res = this.exerciseService.convertDateFromServer(entity);
         if (!res.body) {
