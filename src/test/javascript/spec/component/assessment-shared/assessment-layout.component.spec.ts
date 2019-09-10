@@ -5,9 +5,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisAssessmentSharedModule, AssessmentComplaintAlertComponent, AssessmentHeaderComponent, AssessmentLayoutComponent } from 'app/assessment-shared';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisComplaintsForTutorModule, ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { JhiLanguageHelper } from 'app/core';
-import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
 import { Complaint } from 'app/entities/complaint';
 
 describe('AssessmentLayoutComponent', () => {
@@ -18,7 +17,7 @@ describe('AssessmentLayoutComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
             declarations: [],
-            providers: [JhiAlertService, JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' })],
+            providers: [JhiAlertService, JhiLanguageHelper],
         }).compileComponents();
     }));
 
@@ -55,5 +54,17 @@ describe('AssessmentLayoutComponent', () => {
         fixture.detectChanges();
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
+    });
+
+    it('should show or hide a back button', () => {
+        component.showBackButton = true;
+        fixture.detectChanges();
+        let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
+        expect(backButton).toBeTruthy();
+
+        component.showBackButton = false;
+        fixture.detectChanges();
+        backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
+        expect(backButton).toBeFalsy();
     });
 });

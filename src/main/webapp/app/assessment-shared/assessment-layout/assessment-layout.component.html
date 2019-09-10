@@ -1,9 +1,11 @@
 <div class="assessment-container">
     <jhi-assessment-header
+        [showBackButton]="showBackButton"
         (navigateBack)="navigateBack.emit()"
         [isLoading]="isLoading"
         [busy]="busy"
         [isAssessor]="isAssessor"
+        [isAtLeastInstructor]="isAtLeastInstructor"
         [canOverride]="canOverride"
         [assessmentsAreValid]="assessmentsAreValid"
         [result]="result"

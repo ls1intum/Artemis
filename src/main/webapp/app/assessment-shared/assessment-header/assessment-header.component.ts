@@ -1,6 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Result } from 'app/entities/result';
-import { AccountService } from 'app/core';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -13,7 +12,7 @@ import { AccountService } from 'app/core';
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
 })
-export class AssessmentHeaderComponent implements OnInit {
+export class AssessmentHeaderComponent {
     @Input() showBackButton = true;
     @Output() navigateBack = new EventEmitter<void>();
 
@@ -21,7 +20,7 @@ export class AssessmentHeaderComponent implements OnInit {
     @Input() busy: boolean;
 
     @Input() isAssessor: boolean;
-    isAtLeastInstructor: boolean;
+    @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
@@ -34,10 +33,4 @@ export class AssessmentHeaderComponent implements OnInit {
     @Output() cancel = new EventEmitter<void>();
     @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
-
-    constructor(private accountService: AccountService) {}
-
-    ngOnInit() {
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-    }
 }

@@ -8,13 +8,10 @@ import { AssessmentHeaderComponent } from 'app/assessment-shared';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result';
-import { AccountService } from 'app/core';
-import { MockAccountService } from '../../helpers/mock-account.service';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
-    let mockAuth: MockAccountService;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -27,8 +24,6 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);
         component = fixture.componentInstance;
-        mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
-        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(false);
         fixture.detectChanges();
     });
 
@@ -193,8 +188,7 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(true);
-        component.ngOnInit();
+        component.isAtLeastInstructor = true;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
@@ -204,8 +198,7 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        mockAuth.hasAnyAuthorityDirectSpy.and.returnValue(false);
-        component.ngOnInit();
+        component.isAtLeastInstructor = false;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();

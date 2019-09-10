@@ -1,12 +1,14 @@
 import { SpyObject } from './spyobject';
 import { AccountService } from 'app/core/auth/account.service';
 import Spy = jasmine.Spy;
+import { User } from 'app/core';
 
 export class MockAccountService extends SpyObject {
     getSpy: Spy;
     saveSpy: Spy;
     fakeResponse: any;
     hasAnyAuthorityDirectSpy: Spy;
+    fakeUser: User;
 
     constructor() {
         super(AccountService);
@@ -23,5 +25,13 @@ export class MockAccountService extends SpyObject {
 
     setResponse(json: any): void {
         this.fakeResponse = json;
+    }
+
+    setUser(user: User): void {
+        this.fakeUser = user;
+    }
+
+    identity(): Promise<User | null> {
+        return Promise.resolve(this.fakeUser);
     }
 }

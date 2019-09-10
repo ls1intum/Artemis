@@ -82,7 +82,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe(params => {
-            const submissionId: String = params.get('submissionId');
+            const submissionId: String | null = params.get('submissionId');
             const exerciseId = Number(params.get('exerciseId'));
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
