@@ -12,6 +12,7 @@ import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 })
 export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
+    @Input() showTestNames = false;
     isLoading: boolean;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;

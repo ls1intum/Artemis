@@ -10,6 +10,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
 import { ArtemisSharedModule, CacheableImageService, CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared';
 import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,7 +69,7 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
-        comp.ngOnChanges();
+        triggerChanges(comp);
 
         fixture.detectChanges();
 
@@ -84,7 +85,7 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
-        comp.ngOnChanges();
+        triggerChanges(comp);
 
         fixture.detectChanges();
 
@@ -100,7 +101,7 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
-        comp.ngOnChanges();
+        triggerChanges(comp);
 
         fixture.detectChanges();
 
@@ -115,7 +116,7 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
-        comp.ngOnChanges();
+        triggerChanges(comp);
 
         fixture.detectChanges();
 
