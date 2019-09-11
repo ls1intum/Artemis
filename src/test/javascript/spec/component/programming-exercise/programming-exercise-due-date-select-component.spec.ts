@@ -15,6 +15,7 @@ import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-ex
 import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 import { FormDateTimePickerModule } from '../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedModule } from 'app/shared';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +28,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
     let programmingExerciseEmitSpy: SinonSpy;
     let validDueDateSpy: SinonSpy;
 
-    const containerId = '#automatic-submission-after-due-date';
+    const containerId = '#build-and-test-date-container';
     const checkboxId = '#field_buildAndTestStudentSubmissionsAfterDueDate';
 
     beforeEach(async () => {
@@ -59,7 +60,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         return debugElement.query(By.css(checkboxId));
     };
 
-    it('automatic submission run checkbox should be removed when the due date is not null', async () => {
+    it('automatic buildAndTest date container should be removed when the due date is null', async () => {
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: null, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
         comp.exercise = programmingExercise;
@@ -67,15 +68,35 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable;
 
-        const checkbox = getAutomaticSubmissionContainer();
-        expect(checkbox).not.to.exist;
+        const container = getAutomaticSubmissionContainer();
+        expect(container).not.to.exist;
     });
 
-    it('should set the automatic submission date to the due date when the checkbox is activated and the due date is set', async () => {
+    it('automatic buildAndTest date checkbox should be checked when the container is provided with an exercise that has a buildAndTestDate', async () => {
+        // @ts-ignore
+        const programmingExercise = { id: 1, dueDate: moment(), buildAndTestStudentSubmissionsAfterDueDate: moment() } as ProgrammingExercise;
+        comp.exercise = programmingExercise;
+
+        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+
+        fixture.detectChanges();
+        await fixture.whenStable;
+
+        const container = getAutomaticSubmissionContainer();
+        expect(container).to.exist;
+
+        const checkbox = getCheckbox();
+        expect(checkbox).to.exist;
+        expect(checkbox.nativeElement.checked).to.be.true;
+    });
+
+    it('should set the buildAndTest date to the due date when the checkbox is activated and the due date is set', async () => {
         const now = moment();
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
         comp.exercise = programmingExercise;
+
+        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -96,12 +117,14 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         expect(validDueDateSpy).to.have.been.calledOnceWithExactly(true);
     });
 
-    it('should set the automatic build and test date to null when the checkbox is deactivated', async () => {
+    it('should set the buildAndTest date to null when the checkbox is deactivated', async () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
+
+        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -119,12 +142,14 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         expect(checkbox.nativeElement.checked).to.be.false;
     });
 
-    it('should not update the automatic submission date when active and the due date is changed, but emit an error', async () => {
+    it('should not update the buildAndTest date when active and the due date is changed to a date in the future of the buildAndTest date, but emit an error', async () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
+
+        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -147,12 +172,14 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         expect(validDueDateSpy).to.have.been.calledOnceWithExactly(false);
     });
 
-    it('should not set the automatic submission date to null when the due date is set to null, but emit an error', async () => {
+    it('should not set the buildAndTest date to null when the due date is set to null, but emit an error', async () => {
         const now = moment();
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
+
+        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;

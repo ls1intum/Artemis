@@ -18,7 +18,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div id="automatic-submission-after-due-date" class="form-check mt-1 d-flex" *ngIf="exercise.dueDate && exercise.dueDate.isValid()">
+        <div id="build-and-test-date-container" class="form-check mt-1 d-flex" *ngIf="exercise.dueDate && exercise.dueDate.isValid()">
             <label class="form-check-label flex-grow-1" for="field_buildAndTestStudentSubmissionsAfterDueDate">
                 <div class="flex-grow-1 d-flex mt-1">
                     <input
