@@ -252,7 +252,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.isReleasedAndHasResults || (!this.changedTestCaseIds.length && !this.hasUpdatedTestCases)) {
+        if (!this.changedTestCaseIds.length && (this.isReleasedAndHasResults || !this.hasUpdatedTestCases)) {
             return true;
         }
         const warning = this.changedTestCaseIds.length
