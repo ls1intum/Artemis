@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable, throwError } from 'rxjs';
 import { SERVER_API_URL } from '../../app.constants';
 
 import * as moment from 'moment';
@@ -11,6 +11,7 @@ import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { of } from 'rxjs';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -180,6 +181,10 @@ export class ExerciseService {
 
     getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    }
+
+    existsByExercise(exerciseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/exists`, { observe: 'response' });
     }
 }
 

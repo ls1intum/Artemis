@@ -389,4 +389,16 @@ public class ExerciseResource {
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
+
+    /**
+     * GET /exercises/:exerciseId/exists : Check if the given exercise has at least one student result.
+     *
+     * @param exerciseId the id of an Exercise
+     * @return the ResponseEntity with status 200 (OK) and true if there is at least one result, false if not. Will also return false if the exercise does not exist.
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/exists")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> doesExerciseHaveResult(@PathVariable Long exerciseId) {
+        return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
+    }
 }

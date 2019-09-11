@@ -107,4 +107,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return true if a result for the given participation exists, false otherwise.
      */
     boolean existsByParticipationId(long participationId);
+
+    /**
+     * Returns true if there is at least one result for the given exercise.
+     * @param exerciseId id of an Exercise.
+     * @return true if there is a result, false if not.
+     */
+    boolean existsByParticipation_ExerciseId(long exerciseId);
 }
