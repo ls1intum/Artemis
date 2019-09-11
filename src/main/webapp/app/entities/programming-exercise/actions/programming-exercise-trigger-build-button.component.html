@@ -3,8 +3,7 @@
     [btnSize]="btnSize"
     [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
     [icon]="'redo'"
-    [disabled]="isBuilding"
-    [isLoading]="showProgress && isBuilding"
+    [isLoading]="isBuilding"
     (onClick)="triggerBuild($event)"
     [tooltip]="participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
 >
