@@ -15,6 +15,7 @@ import { Feedback } from 'app/entities/feedback';
 export class ProgrammingExerciseInstructionResultDetailComponent implements OnInit {
     @Input() result: Result;
     @Input() tests: string[];
+    @Input() showTestNames = false;
     isLoading: boolean;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
