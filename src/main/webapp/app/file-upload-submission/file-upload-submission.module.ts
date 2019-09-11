@@ -7,12 +7,13 @@ import { fileUploadSubmissionRoute } from './file-upload-submission.route';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { JhiLanguageService } from 'ng-jhipster';
+import { MomentModule } from 'ngx-moment';
 
 const ENTITY_STATES = [...fileUploadSubmissionRoute];
 
 @NgModule({
     declarations: [FileUploadSubmissionComponent],
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule, MomentModule],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArtemisFileUploadSubmissionModule {
