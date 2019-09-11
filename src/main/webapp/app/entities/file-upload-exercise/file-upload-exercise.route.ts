@@ -34,7 +34,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 filter(res => !!res.body),
                 map((course: HttpResponse<Course>) => {
                     const fileUploadExercise = new FileUploadExercise(course.body!);
-                    fileUploadExercise.filePattern = '.pdf, .png';
+                    fileUploadExercise.filePattern = 'pdf, png';
                     return fileUploadExercise;
                 }),
             );

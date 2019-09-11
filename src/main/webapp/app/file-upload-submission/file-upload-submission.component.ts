@@ -42,6 +42,8 @@ export class FileUploadSubmissionComponent implements OnInit {
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
 
+    acceptedFileExtensions: string;
+
     private submissionConfirmationText: string;
 
     constructor(
@@ -69,6 +71,10 @@ export class FileUploadSubmissionComponent implements OnInit {
             (data: StudentParticipation) => {
                 this.participation = data;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                this.acceptedFileExtensions = this.fileUploadExercise.filePattern
+                    .split(',')
+                    .map(extension => `.${extension}`)
+                    .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
 
                 if (this.fileUploadExercise.course) {

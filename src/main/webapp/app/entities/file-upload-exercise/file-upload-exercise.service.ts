@@ -22,7 +22,7 @@ export class FileUploadExerciseService {
      */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        copy = this.removeSpacesInFilePattern(copy);
+        copy = this.formatFilePattern(copy);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
@@ -37,7 +37,7 @@ export class FileUploadExerciseService {
     update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        copy = this.removeSpacesInFilePattern(fileUploadExercise);
+        copy = this.formatFilePattern(fileUploadExercise);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
@@ -72,8 +72,8 @@ export class FileUploadExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
-    private removeSpacesInFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
-        fileUploadExercise.filePattern.replace(/\s/g, '');
+    private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
+        fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
     }
 }
