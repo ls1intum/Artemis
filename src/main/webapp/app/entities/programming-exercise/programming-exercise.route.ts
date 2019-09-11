@@ -17,7 +17,7 @@ import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
 import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
-import { PorgrammingExerciseImportPopupComponent, ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { ProgrammingExerciseImportPopupComponent, ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -135,7 +135,7 @@ export const programmingExercisePopupRoute: Routes = [
     },
     {
         path: 'course/:courseId/programming-exercise-import',
-        component: PorgrammingExerciseImportPopupComponent,
+        component: ProgrammingExerciseImportPopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'Import Programming Exercise',

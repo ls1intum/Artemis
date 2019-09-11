@@ -112,7 +112,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     selector: 'jhi-programming-exercise-import-popup',
     template: '',
 })
-export class PorgrammingExerciseImportPopupComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseImportPopupComponent implements OnInit, OnDestroy {
     private routeSub: Subscription;
     private ngbModalRef: NgbModalRef | null = null;
 
@@ -145,7 +145,7 @@ export class PorgrammingExerciseImportPopupComponent implements OnInit, OnDestro
         modalRef.componentInstance.course = course;
         modalRef.result.then(
             (result: ProgrammingExercise) => {
-                this.router.navigate(['/course', result.course!!.id, 'programming-exercise', result.id, 'import', course.id]);
+                this.router.navigateByUrl(`/course/${result.course!!.id}/programming-exercise/${result.id}/import/${course.id}`);
                 this.ngbModalRef = null;
             },
             reason => {
