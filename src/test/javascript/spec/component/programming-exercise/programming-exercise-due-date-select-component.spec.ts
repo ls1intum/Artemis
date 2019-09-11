@@ -77,7 +77,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const programmingExercise = { id: 1, dueDate: moment(), buildAndTestStudentSubmissionsAfterDueDate: moment() } as ProgrammingExercise;
         comp.exercise = programmingExercise;
 
-        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -96,7 +96,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
         comp.exercise = programmingExercise;
 
-        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -124,7 +124,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
 
-        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -149,7 +149,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
 
-        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -179,7 +179,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
         comp.exercise = programmingExercise;
 
-        triggerChanges(comp, { property: 'exercise', newObj: programmingExercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: programmingExercise });
 
         fixture.detectChanges();
         await fixture.whenStable;
