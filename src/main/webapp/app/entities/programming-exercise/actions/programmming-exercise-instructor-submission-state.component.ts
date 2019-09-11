@@ -49,7 +49,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
-                    debounceTime(1000),
+                    debounceTime(500),
                     tap((buildingSummary: { [submissionState: string]: number }) => {
                         this.buildingSummary = buildingSummary;
                         this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
