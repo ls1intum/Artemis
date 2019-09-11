@@ -33,7 +33,9 @@ export enum ButtonSize {
 export class ButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
+    // Fa-icon name.
     @Input() icon: string;
+    // Translation placeholders, will be translated in the component.
     @Input() title: string;
     @Input() tooltip: string;
 
