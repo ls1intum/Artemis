@@ -2,14 +2,9 @@ import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasParticipationChanged, InitializationState, Participation, StudentParticipation } from 'app/entities/participation';
+import { hasParticipationChanged, InitializationState, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-
-export enum ButtonSize {
-    SMALL = 'btn-sm',
-    MEDIUM = 'btn-md',
-    LARGE = 'btn-lg',
-}
+import { ButtonSize, ButtonType } from 'app/shared/components';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -17,6 +12,7 @@ export enum ButtonSize {
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+    ButtonType = ButtonType;
     abstract triggerBuild: (event: any) => void;
 
     @Input() exercise: ProgrammingExercise;

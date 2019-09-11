@@ -3,6 +3,7 @@ import { catchError, debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { of, Subscription, Subject } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonType } from 'app/shared/components';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -16,6 +17,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './programmming-exercise-instructor-submission-state.component.html',
 })
 export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exerciseId: number;

@@ -1,13 +1,11 @@
-<button
+<jhi-button
     *ngIf="alwaysShowTriggerButton || (participationIsActive && participationHasLatestSubmissionWithoutResult)"
-    [ngClass]="['btn', btnSize]"
-    [class.btn-danger]="participationHasLatestSubmissionWithoutResult"
-    [class.btn-primary]="!participationHasLatestSubmissionWithoutResult"
+    [btnSize]="btnSize"
+    [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
+    [icon]="'redo'"
     [disabled]="isBuilding"
-    (click)="triggerBuild($event)"
-    [ngbTooltip]="
-        (participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit') | translate
-    "
+    [isLoading]="showProgress && isBuilding"
+    (onClick)="triggerBuild($event)"
+    [tooltip]="participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
 >
-    <fa-icon icon="redo" [spin]="showProgress && isBuilding"></fa-icon>
-</button>
+</jhi-button>
