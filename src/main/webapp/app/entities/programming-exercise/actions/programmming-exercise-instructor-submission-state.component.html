@@ -1,5 +1,5 @@
 <div *ngIf="buildingSummary; else loadingState" class="d-flex">
-    <div id="result-eta" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
+    <div id="result-eta" *ngIf="hasFailedSubmissions" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
         <fa-icon icon="clock"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | translate"

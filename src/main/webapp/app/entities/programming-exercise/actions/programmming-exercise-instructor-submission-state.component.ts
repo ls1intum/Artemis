@@ -21,6 +21,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     @Input() exerciseId: number;
 
     hasFailedSubmissions = false;
+    hasBuildingSubmissions = false;
     buildingSummary: { [submissionState: string]: number };
     isBuildingFailedSubmissions = false;
     isTriggeringBuildAll = false;
@@ -52,6 +53,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
                     tap((buildingSummary: { [submissionState: string]: number }) => {
                         this.buildingSummary = buildingSummary;
                         this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
+                        this.hasBuildingSubmissions = this.buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] > 0;
                     }),
                 )
                 .subscribe();
