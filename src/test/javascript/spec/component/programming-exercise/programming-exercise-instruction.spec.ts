@@ -3,12 +3,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
-import { of, Subject, Subscription, throwError, Observable } from 'rxjs';
+import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
@@ -32,6 +32,7 @@ import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -99,18 +100,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
-        const oldParticipation = { id: 1 };
+        const oldParticipation = { id: 1 } as Participation;
         const result = { id: 1 };
         const participation = { id: 2, results: [result] } as Participation;
         const oldSubscription = new Subscription();
         subscribeForLatestResultOfParticipationStub.returns(of());
-        comp.exercise = exercise;
+        comp.exercise = exercise as ProgrammingExercise;
         comp.participation = participation;
         comp.participationSubscription = oldSubscription;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(oldParticipation, participation, false),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
@@ -134,7 +133,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isLoading = false;
 
         fixture.detectChanges();
-        comp.ngOnChanges({} as SimpleChanges);
+        triggerChanges(comp);
         fixture.detectChanges();
         expect(comp.isLoading).to.be.true;
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).to.exist;
@@ -166,7 +165,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isLoading = false;
 
         fixture.detectChanges();
-        comp.ngOnChanges({} as SimpleChanges);
+        triggerChanges(comp);
 
         expect(getFileStub).to.not.have.been.called;
         expect(comp.problemStatement).to.equal('lorem ipsum');
@@ -195,7 +194,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isLoading = false;
 
         fixture.detectChanges();
-        comp.ngOnChanges({} as SimpleChanges);
+        triggerChanges(comp);
         expect(comp.isLoading).to.be.true;
         expect(getFileStub).to.have.been.calledOnceWithExactly(participation.id, 'README.md');
 
@@ -223,13 +222,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.exercise = { ...exercise, problemStatement: newProblemStatement };
         comp.participation = participation;
         comp.isInitial = false;
-        comp.ngOnChanges({
-            exercise: {
-                previousValue: { ...exercise, problemStatement: oldProblemStatement },
-                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
-                firstChange: false,
-            } as SimpleChange,
-        } as SimpleChanges);
+        triggerChanges(comp, {
+            property: 'exercise',
+            previousValue: { ...exercise, problemStatement: oldProblemStatement },
+            currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
+            firstChange: false,
+        });
         expect(updateMarkdownStub).to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
     });
@@ -244,13 +242,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.exercise = { ...exercise, problemStatement: newProblemStatement };
         comp.participation = participation;
         comp.isInitial = false;
-        comp.ngOnChanges({
-            exercise: {
-                previousValue: undefined,
-                currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
-                firstChange: false,
-            } as SimpleChange,
-        } as SimpleChanges);
+        triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
         expect(comp.markdownExtensions).to.have.lengthOf(2);
         expect(updateMarkdownStub).to.have.been.called;
         expect(loadInitialResult).not.to.have.been.called;
@@ -268,7 +260,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isLoading = false;
 
         fixture.detectChanges();
-        comp.ngOnChanges({} as SimpleChanges);
+        triggerChanges(comp);
 
         expect(comp.markdownExtensions).to.have.lengthOf(2);
         expect(getLatestResultWithFeedbacks).to.have.been.calledOnceWith(participation.id);
