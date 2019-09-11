@@ -213,12 +213,12 @@ describe('Service Tests', () => {
                     const jsdomAlert = window.scrollTo;
                     window.scrollTo = () => {};
 
+                    navbarComponentFixture.detectChanges();
                     const selector = navbarComponentFixture.debugElement.query(By.css('.random-selector'));
 
                     if (selector) {
                         selector.nativeElement.click();
                         await new Promise(resolve => setTimeout(() => resolve(), 500));
-                        guidedTourComponentFixture.detectChanges();
                         expect(guidedTourService.isOnLastStep).to.be.true;
                     }
                     // Restore the jsdom alert

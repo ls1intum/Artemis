@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation, OverlayPosition } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -37,6 +37,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private clickEventListener: EventListenerOrEventListenerObject;
 
     readonly LinkType = LinkType;
+    readonly OverlayPosition = OverlayPosition;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -316,7 +317,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Get overlay style for the rectangles beside the highlighted element
      * @return style object for the rectangle beside the highlighted element
      */
-    public getOverlayStyle(position: string) {
+    public getOverlayStyle(position: OverlayPosition) {
         let style;
 
         if (this.selectedElementRect) {
@@ -326,23 +327,23 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const selectedElementWidth = this.selectedElementRect.width + this.getHighlightPadding() * 2;
 
             switch (position) {
-                case 'top': {
+                case OverlayPosition.TOP: {
                     style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop };
                     break;
                 }
-                case 'left': {
+                case OverlayPosition.LEFT: {
                     style = { 'top.px': selectedElementTop, 'left.px': 0, 'height.px': selectedElementHeight, 'width.px': selectedElementLeft };
                     break;
                 }
-                case 'right': {
+                case OverlayPosition.RIGHT: {
                     style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
                     break;
                 }
-                case 'bottom': {
+                case OverlayPosition.BOTTOM: {
                     style = { 'top.px': selectedElementTop + selectedElementHeight };
                     break;
                 }
-                case 'element': {
+                case OverlayPosition.ELEMENT: {
                     style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
                 }
             }
