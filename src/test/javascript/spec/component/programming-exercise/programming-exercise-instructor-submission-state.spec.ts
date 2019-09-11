@@ -93,25 +93,41 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getBuildState()).to.be.null;
     });
 
-    it('should show the result eta if there is at least one building submission', () => {
-        const compressedSummary = { [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 2, [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION]: 1 };
-        comp.buildingSummary = compressedSummary;
+    it('should show the result eta if there is at least one building submission', fakeAsync(() => {
+        const isBuildingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
+        comp.exerciseId = exercise.id;
+
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
+
+        tick(500);
 
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
         expect(resultEta).to.exist;
-    });
+    }));
 
-    it('should not show the result eta if there is no building submission', () => {
-        const compressedSummary = { [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 2, [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1 };
-        comp.buildingSummary = compressedSummary;
+    it('should not show the result eta if there is no building submission', fakeAsync(() => {
+        const isNotBuildingSubmission = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
+        comp.exerciseId = exercise.id;
+
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
+
+        tick(500);
 
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
         expect(resultEta).not.to.exist;
-    });
+    }));
 
     it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
         const noPendingSubmissionState = {
@@ -125,7 +141,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
-        tick(1000);
+        tick(500);
 
         fixture.detectChanges();
 
@@ -159,7 +175,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
-        tick(1000);
+        tick(500);
 
         fixture.detectChanges();
 
