@@ -24,9 +24,9 @@ export enum ButtonSize {
     selector: 'jhi-button',
     template: `
         <button [ngClass]="['jhi-btn', 'btn', btnType, btnSize]" ngbTooltip="{{ tooltip | translate }}" [disabled]="disabled || isLoading" (click)="onClick.emit($event)">
-            <fa-icon class="jhi-btn__loading" *ngIf="isLoading" icon="circle-notch" [spin]="true"></fa-icon>
-            <fa-icon class="jhi-btn__icon" *ngIf="icon && !isLoading" [icon]="icon"></fa-icon>
-            <span class="jhi-btn__title" *ngIf="title" [jhiTranslate]="title"></span>
+            <fa-icon class="jhi-btn__loading" *ngIf="isLoading" icon="circle-notch" [spin]="true" size="sm"></fa-icon>
+            <fa-icon class="jhi-btn__icon" *ngIf="icon && !isLoading" [icon]="icon" size="sm"></fa-icon>
+            <span class="jhi-btn__title" [class.ml-1]="icon || isLoading" *ngIf="title" [jhiTranslate]="title"></span>
         </button>
     `,
 })
