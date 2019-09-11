@@ -21,6 +21,7 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -35,7 +36,7 @@ describe('Service Tests', () => {
             beforeEach(() => {
                 TestBed.configureTestingModule({
                     imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
-                    providers: [GuidedTourService],
+                    providers: [GuidedTourService, { provide: DeviceDetectorService }],
                 });
 
                 service = TestBed.get(GuidedTourService);
@@ -96,6 +97,7 @@ describe('Service Tests', () => {
                         { provide: LocalStorageService, useClass: MockSyncStorage },
                         { provide: SessionStorageService, useClass: MockSyncStorage },
                         { provide: CookieService, useClass: MockCookieService },
+                        { provide: DeviceDetectorService },
                     ],
                 })
                     .overrideTemplate(NavbarComponent, '')
