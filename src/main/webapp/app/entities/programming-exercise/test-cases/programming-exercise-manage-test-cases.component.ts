@@ -7,10 +7,11 @@ import { of, Subscription } from 'rxjs';
 import { catchError, map, distinctUntilChanged, tap, switchMap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -33,7 +34,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
-    exerciseHasResults: boolean;
+    isReleasedAndHasResults: boolean;
     showInactiveValue = false;
     isSaving = false;
     // This flag means that the test cases were edited, but no submission run was triggered yet.
@@ -60,7 +61,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
     constructor(
         private testCaseService: ProgrammingExerciseTestCaseService,
-        private exerciseService: ExerciseService,
+        private programmingExerciseService: ProgrammingExerciseService,
         private route: ActivatedRoute,
         private alertService: JhiAlertService,
         private translateService: TranslateService,
@@ -82,14 +83,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
                 this.testCases = testCases;
             });
-            // Check if the exercise does not have a release date, its release date has not yet passed or the exercise does not have results yet.
-            this.exerciseService.find(this.exerciseId).pipe(
-                catchError(() => of()),
-                map(({ body }) => (body ? body : of())),
-                switchMap((exercise: Exercise) => {
-                    return exercise.releaseDate && exercise.releaseDate.isBefore(moment()) ? of() : this.checkIfExerciseHasResults();
-                }),
-            );
+
+            this.checkIfExerciseIsReleasedAndHasResults();
         });
     }
 
@@ -102,11 +97,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
-    checkIfExerciseHasResults() {
-        return this.exerciseService.existsByExercise(this.exerciseId).pipe(
-            map(({ body }) => body || false),
-            tap(hasResult => (this.exerciseHasResults = hasResult)),
-        );
+    /**
+     * Checks if the exercise is released and has at least one student result.
+     */
+    checkIfExerciseIsReleasedAndHasResults() {
+        return this.programmingExerciseService
+            .isReleasedAndHasResults(this.exerciseId)
+            .pipe(
+                map(({ body }) => body || false),
+                tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
+            )
+            .subscribe();
     }
 
     /**
@@ -251,7 +252,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.exerciseHasResults || (!this.changedTestCaseIds.length && !this.hasUpdatedTestCases)) {
+        if (!this.isReleasedAndHasResults || (!this.changedTestCaseIds.length && !this.hasUpdatedTestCases)) {
             return true;
         }
         const warning = this.changedTestCaseIds.length

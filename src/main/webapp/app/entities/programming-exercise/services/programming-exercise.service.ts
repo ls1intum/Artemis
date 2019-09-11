@@ -64,6 +64,10 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    isReleasedAndHasResults(exerciseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/is-released-and-has-results`, { observe: 'response' });
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

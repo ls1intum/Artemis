@@ -182,10 +182,6 @@ export class ExerciseService {
     getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
-
-    existsByExercise(exerciseId: number): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/exists`, { observe: 'response' });
-    }
 }
 
 @Injectable({ providedIn: 'root' })
