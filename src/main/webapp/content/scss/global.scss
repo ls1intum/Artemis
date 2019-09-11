@@ -189,6 +189,10 @@ Generic styles
     flex-shrink: 0;
 }
 
+.flex-basis-50 {
+    flex-basis: 50%;
+}
+
 a:hover {
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
