@@ -14,9 +14,9 @@ export const getFocusedElement = (debugElement: DebugElement) => {
  * @param comp Angular Component that implements OnChanges
  * @param changes object with data needed to construct SimpleChange objects.
  */
-export const triggerChanges = <T>(comp: OnChanges, ...changes: Array<{ property: string; newObj: T; oldObj?: T; firstChange?: boolean }>) => {
-    const simpleChanges: SimpleChanges = changes.reduce((acc, { property, newObj, oldObj, firstChange = true }) => {
-        return { ...acc, [property]: new SimpleChange(oldObj, newObj, firstChange) };
+export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: string; currentValue: any; previousValue?: any; firstChange?: boolean }>) => {
+    const simpleChanges: SimpleChanges = changes.reduce((acc, { property, currentValue, previousValue, firstChange = true }) => {
+        return { ...acc, [property]: new SimpleChange(previousValue, currentValue, firstChange) };
     }, {});
     comp.ngOnChanges(simpleChanges);
 };

@@ -47,7 +47,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     handleKeyboardEvent(event: KeyboardEvent) {
         switch (event.code) {
             case 'ArrowRight': {
-                if (this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                // Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
                     this.guidedTourService.nextStep();
                 }
                 break;
