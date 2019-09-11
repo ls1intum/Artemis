@@ -1,4 +1,5 @@
 import { Course } from '../course';
+import { Moment } from 'moment';
 import { Exercise, ExerciseType } from '../exercise';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
@@ -19,6 +20,8 @@ export class ProgrammingExercise extends Exercise {
     public packageName: string;
     public problemStatement: string;
     public sequentialTestRuns: boolean | null;
+
+    public buildAndTestStudentSubmissionsAfterDueDate: Moment | null;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
