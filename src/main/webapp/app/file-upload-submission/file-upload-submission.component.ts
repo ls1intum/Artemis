@@ -103,7 +103,7 @@ export class FileUploadSubmissionComponent implements OnInit {
         }
 
         this.erroredFile = null;
-        this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
+        this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true, isSubmission: true }).then(
             result => {
                 this.submission!.filePath = result.path;
                 this.submitExercise();

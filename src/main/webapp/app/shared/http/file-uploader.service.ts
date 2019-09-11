@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { MAX_FILE_SIZE } from '../constants/input.constants';
+import { MAX_FILE_SIZE, MAX_SUBMISSION_FILE_SIZE } from '../constants/input.constants';
 
 export interface FileUploadResponse {
     path: string;
@@ -26,15 +26,19 @@ export class FileUploaderService {
             return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
         }
 
+        const isSubmission: boolean = !!options && !!options.isSubmission;
+
         /** Check file size **/
-        if (file.size > MAX_FILE_SIZE) {
+        if (isSubmission && file.size > MAX_SUBMISSION_FILE_SIZE) {
+            return Promise.reject(new Error('Submitted file is too big! Maximum allowed file size: ' + MAX_SUBMISSION_FILE_SIZE / (1024 * 1024) + ' MB.'));
+        } else if (file.size > MAX_FILE_SIZE) {
             return Promise.reject(new Error('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.'));
         }
 
         const formData = new FormData();
         formData.append('file', file, fileName);
         const keepFileName: boolean = !!options && options.keepFileName;
-        const url = `/api/fileUpload?keepFileName=${keepFileName}`;
+        const url = `/api/fileUpload?keepFileName=${keepFileName}&isSubmission=${isSubmission}`;
         return this.http.post<FileUploadResponse>(url, formData).toPromise();
     }
 

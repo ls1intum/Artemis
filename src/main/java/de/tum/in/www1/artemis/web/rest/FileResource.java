@@ -81,13 +81,18 @@ public class FileResource {
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @PostMapping("/fileUpload")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName,
+                                           @RequestParam(value = "isSubmission", required = false, defaultValue = "false") Boolean isSubmission) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
 
+        if (isSubmission && file.getSize() > 2_000_000){
+            // NOTE: Maximum file size for submission is 2 MB
+            return ResponseEntity.status(413).body("Maximum file size for submission is 2 MB!");
+        }
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")
@@ -224,7 +229,7 @@ public class FileResource {
         if (!optionalSubmission.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        if (validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding File Upload Submission";
             return ResponseEntity.status(403).body(errorMessage);
         }
@@ -278,7 +283,7 @@ public class FileResource {
         if (!optionalLecture.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
-        if (validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(403).body(errorMessage);
         }
