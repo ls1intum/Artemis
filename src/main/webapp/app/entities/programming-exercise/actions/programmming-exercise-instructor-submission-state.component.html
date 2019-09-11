@@ -41,9 +41,10 @@
         class="ml-3"
         [disabled]="!hasFailedSubmissions"
         [isLoading]="isBuildingFailedSubmissions"
-        (onClick)="triggerBuildOfFailedSubmissions()"
-        [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+        [icon]="'redo'"
         [title]="'artemisApp.programmingExercise.resubmitFailed'"
+        [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+        (onClick)="triggerBuildOfFailedSubmissions()"
     ></jhi-button>
 </div>
 <ng-template #loadingState>
