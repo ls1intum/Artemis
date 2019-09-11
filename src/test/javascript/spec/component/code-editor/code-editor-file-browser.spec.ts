@@ -28,6 +28,7 @@ import {
 import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -99,10 +100,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
         isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
-        const changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
         expect(comp.isLoadingFiles).to.equal(false);
@@ -119,10 +118,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
         isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
-        const changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).to.equal(false);
         expect(comp.repositoryFiles).to.deep.equal(repositoryContent);
@@ -244,10 +241,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
         isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
-        const changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).to.equal(false);
         expect(comp.repositoryFiles).to.deep.equal(allowedFiles);
@@ -264,10 +258,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const loadFilesSpy = spy(comp, 'loadFiles');
         isCleanStub.returns(isCleanSubject);
         comp.commitState = CommitState.UNDEFINED;
-        const changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).to.equal(true);
         expect(comp.commitState).to.equal(CommitState.UNDEFINED);
@@ -293,10 +284,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         isCleanStub.returns(isCleanSubject);
         getRepositoryContentStub.returns(getRepositoryContentSubject);
         comp.commitState = CommitState.UNDEFINED;
-        const changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).to.equal(true);
         expect(comp.commitState).to.equal(CommitState.UNDEFINED);
@@ -341,10 +329,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.filesTreeViewItem = treeItems;
         comp.repositoryFiles = repositoryFiles;
         comp.selectedFile = selectedFile;
-        const changes: SimpleChanges = {
-            selectedFile: new SimpleChange(undefined, 'folder/file2', false),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'selectedFile', currentValue: 'folder/file2', firstChange: false });
         fixture.detectChanges();
         expect(comp.selectedFile).to.equal(selectedFile);
         const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder').children.find(({ value }) => value === selectedFile);
@@ -715,10 +700,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
         comp.commitState = CommitState.UNDEFINED;
 
-        let changes: SimpleChanges = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
         expect(comp.commitState).to.equal(CommitState.CONFLICT);
@@ -733,10 +715,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         comp.commitState = CommitState.UNDEFINED;
 
-        changes = {
-            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
         expect(comp.commitState).to.equal(CommitState.CLEAN);
