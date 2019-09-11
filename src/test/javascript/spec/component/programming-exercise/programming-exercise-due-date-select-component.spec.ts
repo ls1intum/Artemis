@@ -62,7 +62,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
     it('automatic submission run checkbox should be removed when the due date is not null', async () => {
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: null, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
-        comp.programmingExercise = programmingExercise;
+        comp.exercise = programmingExercise;
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -75,7 +75,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const now = moment();
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: null } as ProgrammingExercise;
-        comp.programmingExercise = programmingExercise;
+        comp.exercise = programmingExercise;
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -101,7 +101,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
-        comp.programmingExercise = programmingExercise;
+        comp.exercise = programmingExercise;
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -124,7 +124,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
-        comp.programmingExercise = programmingExercise;
+        comp.exercise = programmingExercise;
 
         fixture.detectChanges();
         await fixture.whenStable;
@@ -152,7 +152,7 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         const nowPlusOneHour = now.clone().add(1, 'hours');
         // @ts-ignore
         const programmingExercise = { id: 1, dueDate: now, buildAndTestStudentSubmissionsAfterDueDate: nowPlusOneHour } as ProgrammingExercise;
-        comp.programmingExercise = programmingExercise;
+        comp.exercise = programmingExercise;
 
         fixture.detectChanges();
         await fixture.whenStable;

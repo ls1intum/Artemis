@@ -22,6 +22,12 @@
                 <dd>
                     <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
                 </dd>
+                <ng-container *ngIf="programmingExercise.dueDate">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
@@ -49,10 +55,6 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
                 <dd>
                     <span>{{ programmingExercise.sequentialTestRuns }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span></dt>
-                <dd>
-                    <span>{{ !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>

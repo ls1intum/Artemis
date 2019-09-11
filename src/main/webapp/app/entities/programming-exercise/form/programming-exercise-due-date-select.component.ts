@@ -1,7 +1,8 @@
 import * as moment from 'moment';
-import { Component, EventEmitter, Input, Output, HostBinding, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostBinding, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { hasExerciseChanged } from 'app/entities/exercise';
 
 /**
  * Due date select for programming exercises.
@@ -12,12 +13,12 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
     template: `
         <jhi-date-time-picker
             labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
-            [ngModel]="programmingExercise.dueDate"
+            [ngModel]="exercise.dueDate"
             [min]="TODAY"
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div id="automatic-submission-after-due-date" class="form-check mt-1 d-flex" *ngIf="programmingExercise.dueDate && programmingExercise.dueDate.isValid()">
+        <div id="automatic-submission-after-due-date" class="form-check mt-1 d-flex" *ngIf="exercise.dueDate && exercise.dueDate.isValid()">
             <label class="form-check-label flex-grow-1" for="field_buildAndTestStudentSubmissionsAfterDueDate">
                 <div class="flex-grow-1 d-flex mt-1">
                     <input
@@ -25,8 +26,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
                         type="checkbox"
                         name="buildAndTestStudentSubmissionsAfterDueDate"
                         id="field_buildAndTestStudentSubmissionsAfterDueDate"
-                        [disabled]="!programmingExercise.dueDate"
-                        [ngModel]="!!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                        [disabled]="!exercise.dueDate"
+                        [ngModel]="buildAndTestDateActive"
                         (ngModelChange)="toggleBuildAndTestStudentSubmissionsAfterDueDate()"
                         checked
                     />
@@ -40,12 +41,12 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
                 </div>
                 <div class="d-flex flex-column mt-1">
                     <jhi-date-time-picker
-                        *ngIf="programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
-                        [ngModel]="programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                        *ngIf="exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                        [ngModel]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
                         (ngModelChange)="setBuildAndTestStudentSubmissionsAfterDueDate($event)"
                         (validationStateChange)="buildAndTestDateInvalid = $event"
-                        [startAt]="programmingExercise.dueDate"
-                        [min]="programmingExercise.dueDate"
+                        [startAt]="exercise.dueDate"
+                        [min]="exercise.dueDate"
                         name="buildAndTestStudentSumissionsAfterDueDate"
                     ></jhi-date-time-picker>
                     <div *ngIf="buildAndTestDateInvalid" class="alert alert-danger">
@@ -56,16 +57,17 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
         </div>
     `,
 })
-export class ProgrammingExerciseDueDateSelectComponent {
+export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
     TODAY = moment();
 
-    @Input() programmingExercise: ProgrammingExercise;
+    @Input() exercise: ProgrammingExercise;
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
     // true => Form is valid.
     @Output() onDueDateValidationChange = new EventEmitter<boolean>();
 
     @ViewChild(FormDateTimePickerComponent, { static: false }) dateTimePicker: FormDateTimePickerComponent;
 
+    buildAndTestDateActive: boolean;
     buildAndTestDateInvalidValue = false;
 
     get buildAndTestDateInvalid() {
@@ -77,18 +79,24 @@ export class ProgrammingExerciseDueDateSelectComponent {
         this.onDueDateValidationChange.emit(!invalid);
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (hasExerciseChanged(changes)) {
+            this.buildAndTestDateActive = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        }
+    }
+
     /**
      * Set the due date. When the due date is set it needs to be checked if the automatic submission date is also set - this should then be updated, too.
      * @param dueDate of the programming exercise.
      */
     public updateDueDate(dueDate: string) {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
-        const updatedProgrammingExercise = { ...this.programmingExercise, dueDate: updatedDueDate && updatedDueDate.isValid() ? updatedDueDate : null };
+        const updatedProgrammingExercise = { ...this.exercise, dueDate: updatedDueDate && updatedDueDate.isValid() ? updatedDueDate : null };
         this.buildAndTestDateInvalid =
             !updatedDueDate ||
             !updatedDueDate.isValid() ||
-            !this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate ||
-            updatedDueDate.isAfter(this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate);
+            (this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate) ||
+            (!!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate));
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
@@ -99,12 +107,13 @@ export class ProgrammingExerciseDueDateSelectComponent {
      * Will emit the updated programming exercise.
      */
     public toggleBuildAndTestStudentSubmissionsAfterDueDate() {
-        if (!this.programmingExercise.dueDate) {
+        if (!this.exercise.dueDate) {
             return;
         }
+        this.buildAndTestDateActive = !this.buildAndTestDateActive;
         const updatedProgrammingExercise = {
-            ...this.programmingExercise,
-            buildAndTestStudentSubmissionsAfterDueDate: this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate ? null : this.programmingExercise.dueDate.clone(),
+            ...this.exercise,
+            buildAndTestStudentSubmissionsAfterDueDate: !this.buildAndTestDateActive ? null : this.exercise.dueDate.clone(),
         };
         if (!!updatedProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
             this.buildAndTestDateInvalid = false;
@@ -119,14 +128,14 @@ export class ProgrammingExerciseDueDateSelectComponent {
      * @param buildDate date string set by the date picker.
      */
     public setBuildAndTestStudentSubmissionsAfterDueDate(buildDate: string) {
-        if (!this.programmingExercise.dueDate) {
+        if (!this.exercise.dueDate) {
             return;
         }
         const buildDateMoment = moment(buildDate);
         this.buildAndTestDateInvalid = !buildDateMoment.isValid();
         const updatedProgrammingExercise = {
-            ...this.programmingExercise,
-            buildAndTestStudentSubmissionsAfterDueDate: buildDateMoment.isValid() ? buildDateMoment : this.programmingExercise.dueDate,
+            ...this.exercise,
+            buildAndTestStudentSubmissionsAfterDueDate: buildDateMoment.isValid() ? buildDateMoment : this.exercise.dueDate,
         };
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
