@@ -37,7 +37,7 @@ export class FileUploadExerciseService {
     update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        copy = this.formatFilePattern(fileUploadExercise);
+        copy = this.formatFilePattern(copy);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
@@ -73,7 +73,7 @@ export class FileUploadExerciseService {
     }
 
     private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
-        fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
+        fileUploadExercise.filePattern = fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
     }
 }
