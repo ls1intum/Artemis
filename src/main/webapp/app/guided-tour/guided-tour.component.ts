@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, HostBinding } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
@@ -31,6 +31,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
+    public startFade = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
@@ -108,6 +109,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
+                this.handleTransition();
                 return;
             }
             this.selectedElementRect = null;
@@ -460,31 +462,22 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public updateStepLocation(selectedElement: HTMLElement | null): DOMRect | null {
         let selectedElementRect = null;
-
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
             if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
-                this.clickEventListener = () => this.handleUserClickInteraction(selectedElement);
-                selectedElement.addEventListener('click', this.clickEventListener);
+                this.guidedTourService.pauseTour(selectedElement);
             }
         }
-
         return selectedElementRect;
     }
 
-    /* ==========     User interaction methods     ========== */
-
     /**
-     * Handles the user click interaction with the highlighted element, and skips tour if the interaction
-     * is not intended
+     * Sets the startFade class for the tour step div to ease the transition between tour steps
      */
-    public handleUserClickInteraction(selectedElement: HTMLElement) {
-        selectedElement.removeEventListener('click', this.clickEventListener);
-        if (!this.currentTourStep) {
-            return;
-        }
+    public handleTransition() {
+        this.startFade = true;
         setTimeout(() => {
-            this.guidedTourService.nextStep();
-        }, 500);
+            this.startFade = false;
+        }, 1000);
     }
 }

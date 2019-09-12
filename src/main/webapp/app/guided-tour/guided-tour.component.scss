@@ -1,8 +1,10 @@
 @import 'dot-navigation';
 
+// Variables
 $tour-zIndex: 1081 !default;
 $tour-step-color: #ffffff !default;
 $tour-text-color: #231f1f !default;
+$tour-border-color: #17a2b8 !default;
 $tour-next-button-color: #17a2b8 !default;
 $tour-next-button-hover: #117a8b !default;
 $tour-back-button-color: #17a2b8 !default;
@@ -12,10 +14,7 @@ $tour-button-text-color: #ffffff !default;
 $tour-button-text-disabled: #a3a3a3 !default;
 $tour-shadow-color: #4c4c4c !default;
 
-body.tour-open {
-    overflow: hidden;
-}
-
+// Mixins
 @mixin tour-triangle($direction, $color: currentColor, $size: 1rem) {
     @if not index(top right bottom left, $direction) {
         @error 'Direction must be either `top`, `right`, `bottom` or `left`.';
@@ -50,6 +49,19 @@ body.tour-open {
     }
 }
 
+@keyframes fade {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+body.tour-open {
+    overflow: hidden;
+}
+
 .guided-tour-button {
     background-color: $tour-next-button-color;
     border-radius: 50%;
@@ -82,15 +94,25 @@ jhi-guided-tour {
 
     .guided-tour-element-overlay {
         background: none;
+        border: 5px $tour-border-color solid;
         display: block;
         position: fixed;
         z-index: $tour-zIndex;
+
+        &.click-through {
+            pointer-events: none;
+        }
     }
 
     .tour-step {
         min-width: 400px;
         position: fixed;
         z-index: $tour-zIndex + 2;
+
+        &.startFade {
+            opacity: 1;
+            animation: fade 0.6s ease;
+        }
 
         &.page-tour-step {
             max-width: 800px;
@@ -153,11 +175,30 @@ jhi-guided-tour {
                 font-size: 16px;
                 padding-bottom: 28px;
 
-                div > * {
+                div > btn,
+                img {
                     display: block;
                     margin-top: 10px;
                     margin-left: auto;
                     margin-right: auto;
+                }
+
+                .click-hint {
+                    background: #f0f0f0;
+                    border-radius: 3px;
+                    margin-top: 15px;
+                    padding: 8px;
+
+                    &__icon {
+                        display: inline-block;
+                        margin: 0 10px 0 8px;
+                    }
+
+                    &__label {
+                        display: inline-block;
+                        font-size: 13px;
+                        vertical-align: text-bottom;
+                    }
                 }
 
                 .subHeadline {

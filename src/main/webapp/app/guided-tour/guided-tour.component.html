@@ -8,7 +8,8 @@
         #tourStep
         *ngIf="currentTourStep"
         class="tour-step tour-{{ currentTourStep.orientation }}"
-        [ngClass]="{ 'page-tour-step': !currentTourStep.selector }"
+        [class.page-tour-step]="!currentTourStep.selector"
+        [class.startFade]="startFade"
         [style.top.px]="topPosition"
         [style.left.px]="leftPosition"
         [style.width.px]="calculatedTourStepWidth"
@@ -37,6 +38,10 @@
                         target="_blank"
                         rel="noopener noreferrer"
                     ></a>
+                </div>
+                <div *ngIf="currentTourStep.enableUserInteraction" class="click-hint">
+                    <div class="click-hint__icon"><fa-icon icon="info-circle"></fa-icon></div>
+                    <div class="click-hint__label"><span>Click on element to proceed</span></div>
                 </div>
             </div>
             <div class="tour-block__buttons">
@@ -78,8 +83,8 @@
     <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.RIGHT)" (click)="backdropClick($event)"></div>
     <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.BOTTOM)" (click)="backdropClick($event)"></div>
     <div
-        *ngIf="!this.currentTourStep.enableUserInteraction"
         class="guided-tour-element-overlay"
+        [class.click-through]="this.currentTourStep.enableUserInteraction"
         [ngStyle]="getOverlayStyle(OverlayPosition.ELEMENT)"
         (click)="backdropClick($event)"
     ></div>
