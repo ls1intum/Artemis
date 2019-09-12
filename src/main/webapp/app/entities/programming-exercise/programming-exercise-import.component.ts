@@ -25,7 +25,6 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     private search = new Subject<void>();
 
-    course: Course;
     loading = false;
     content: SearchResult<ProgrammingExercise>;
     total = 0;
@@ -142,7 +141,6 @@ export class ProgrammingExerciseImportPopupComponent implements OnInit, OnDestro
 
     private createImportModalRef(course: Course): NgbModalRef {
         const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.course = course;
         modalRef.result.then(
             (result: ProgrammingExercise) => {
                 this.router.navigateByUrl(`/course/${result.course!!.id}/programming-exercise/${result.id}/import/${course.id}`);
