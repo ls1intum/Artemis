@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,26 +15,31 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.MockBeans;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -40,6 +48,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 @ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira" })
 @MockBeans({ @MockBean(BambooService.class), @MockBean(BitbucketService.class) })
 public class ProgrammingExerciseServiceIntegrationTest {
+
+    private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
     @Autowired
     BambooService bambooService;
@@ -56,6 +66,9 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    RequestUtilService request;
+
     private Course baseCourse;
 
     private Course additionalEmptyCourse;
@@ -65,7 +78,7 @@ public class ProgrammingExerciseServiceIntegrationTest {
     private Set<ExerciseHint> hints;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws MalformedURLException {
         databse.addUsers(1, 1, 1);
         baseCourse = databse.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = databse.addEmptyCourse();
@@ -75,6 +88,9 @@ public class ProgrammingExerciseServiceIntegrationTest {
 
         // Load again to fetch changes to statement and hints while keeping eager refs
         programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
+
+        ReflectionTestUtils.setField(bitbucketService, "log", LoggerFactory.getLogger(BitbucketService.class));
+        ReflectionTestUtils.setField(bitbucketService, "BITBUCKET_SERVER_URL", new URL("http://testurl.de"));
     }
 
     @AfterEach
@@ -83,7 +99,6 @@ public class ProgrammingExerciseServiceIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExerciseBasis_baseReferencesGotCloned() throws MalformedURLException {
         final var newlyImported = importExerciseBase();
 
@@ -115,7 +130,6 @@ public class ProgrammingExerciseServiceIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() throws MalformedURLException {
         final var imported = importExerciseBase();
 
@@ -136,6 +150,38 @@ public class ProgrammingExerciseServiceIntegrationTest {
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
                 && oldTest.getTestName().equals(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void importExercise_tutor_forbidden() throws Exception {
+        final var toBeImported = createToBeImported();
+        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void importExercise_user_forbidden() throws Exception {
+        final var toBeImported = createToBeImported();
+        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
+        final var toBeImported = createToBeImported();
+        // Mock just the calls to the Bamboo service when we actually would call Bamboo
+        doCallRealMethod().when(bambooService).importBuildPlans(any(ProgrammingExercise.class), any(ProgrammingExercise.class));
+        when(bambooService.getBaseBuildPlanIDs(anyString())).thenReturn(Map.of(RepositoryType.TEMPLATE, "basePlanID", RepositoryType.SOLUTION, "solutionPlanID"));
+        when(bambooService.clonePlan("basePlanID", toBeImported.getTemplateBuildPlanId(), RepositoryType.TEMPLATE.getName())).thenReturn(toBeImported.getTemplateBuildPlanId());
+        when(bambooService.clonePlan("solutionPlanID", toBeImported.getSolutionBuildPlanId(), RepositoryType.SOLUTION.getName())).thenReturn(toBeImported.getSolutionBuildPlanId());
+        when(bambooService.enablePlan(anyString())).thenReturn("");
+        doNothing().when(bambooService).configureBuildPlan(any());
+        doNothing().when(bitbucketService).forkRepositoryForExerciseImport(any(ProgrammingExercise.class), anyString(), anyList());
+        doNothing().when(bitbucketService).addWebHook(any(), anyString(), anyString());
+        doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
+
+        request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
     }
 
     private ProgrammingExercise importExerciseBase() throws MalformedURLException {

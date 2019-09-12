@@ -289,13 +289,37 @@ public class ProgrammingExerciseResource {
     }
 
     @PostMapping("/programming-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
-        final var template = programmingExerciseRepository.findById(sourceExerciseId).get();
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
+
+        if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
+            return notFound();
+        }
+
+        final var user = userService.getUser();
+        if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
+            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
+            return forbidden();
+        }
+
+        final var optionalTemplate = programmingExerciseRepository.findById(sourceExerciseId);
+        if (optionalTemplate.isEmpty()) {
+            return notFound();
+        }
+
+        final var template = optionalTemplate.get();
         final var imported = programmingExerciseService.importProgrammingExerciseBasis(template, newExercise);
         programmingExerciseService.importRepositories(template, imported);
         programmingExerciseService.importBuildPlans(template, imported);
 
-        return new ResponseEntity<>(newExercise, HttpStatus.CREATED);
+        // Remove unnecessary fields
+        imported.setTestCases(null);
+        imported.setTemplateParticipation(null);
+        imported.setSolutionParticipation(null);
+        imported.setExerciseHints(null);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle())).body(imported);
     }
 
     /**
