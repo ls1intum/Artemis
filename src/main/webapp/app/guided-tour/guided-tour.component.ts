@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, HostBinding } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation, UserInteractionEvent } from './guided-tour.constants';
+import { LinkType, Orientation, OverlayPosition } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -31,12 +31,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
+    public startFade = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
-    private userInteractionListener: EventListenerOrEventListenerObject;
 
     readonly LinkType = LinkType;
+    readonly OverlayPosition = OverlayPosition;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -54,7 +55,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                  */
                 if (
                     this.currentTourStep &&
-                    !this.currentTourStep.userInteractionEvent &&
+                    !this.currentTourStep.enableUserInteraction &&
                     this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
                 ) {
                     this.guidedTourService.nextStep();
@@ -107,6 +108,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
+                this.handleTransition();
                 return;
             }
             this.selectedElementRect = null;
@@ -316,7 +318,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Get overlay style for the rectangles beside the highlighted element
      * @return style object for the rectangle beside the highlighted element
      */
-    public getOverlayStyle(position: string) {
+    public getOverlayStyle(position: OverlayPosition) {
         let style;
 
         if (this.selectedElementRect) {
@@ -326,23 +328,23 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const selectedElementWidth = this.selectedElementRect.width + this.getHighlightPadding() * 2;
 
             switch (position) {
-                case 'top': {
+                case OverlayPosition.TOP: {
                     style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop };
                     break;
                 }
-                case 'left': {
+                case OverlayPosition.LEFT: {
                     style = { 'top.px': selectedElementTop, 'left.px': 0, 'height.px': selectedElementHeight, 'width.px': selectedElementLeft };
                     break;
                 }
-                case 'right': {
+                case OverlayPosition.RIGHT: {
                     style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
                     break;
                 }
-                case 'bottom': {
+                case OverlayPosition.BOTTOM: {
                     style = { 'top.px': selectedElementTop + selectedElementHeight };
                     break;
                 }
-                case 'element': {
+                case OverlayPosition.ELEMENT: {
                     style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
                 }
             }
@@ -459,77 +461,22 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public updateStepLocation(selectedElement: HTMLElement | null): DOMRect | null {
         let selectedElementRect = null;
-
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            this.handleUserInteraction(selectedElement);
+            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
+                this.guidedTourService.pauseTour(selectedElement);
+            }
         }
-
         return selectedElementRect;
     }
 
-    /* ==========     User interaction methods     ========== */
-
     /**
-     * Handles all user interaction for the current tour step
-     * @param selectedElement the highlighted element that listens to click events
+     * Sets the startFade class for the tour step div to ease the transition between tour steps
      */
-    public handleUserInteraction(selectedElement: HTMLElement) {
-        if (!this.currentTourStep || (this.currentTourStep && !this.currentTourStep.userInteractionEvent)) {
-            return;
-        }
-        switch (this.currentTourStep.userInteractionEvent) {
-            case UserInteractionEvent.CLICK: {
-                this.userInteractionListener = () => this.handleUserClickInteraction(selectedElement, this.currentTourStep.autoNextStep);
-                addEventListener('click', this.userInteractionListener);
-                break;
-            }
-            case UserInteractionEvent.ACE_EDITOR: {
-                const aceEditor = document.querySelector('.ace_content') as HTMLElement;
-                if (aceEditor) {
-                    this.userInteractionListener = () => this.handleKeydownInteraction(aceEditor);
-                    addEventListener('keydown', this.userInteractionListener);
-                }
-                break;
-            }
-        }
-    }
-
-    /**
-     * Handles the user click interaction with the highlighted element
-     * @param selectedElement the highlighted element that listens to click events
-     * @param autoNextStep will automatically call navigate to the next step after the click action if set to true
-     */
-    public handleUserClickInteraction(selectedElement: HTMLElement, autoNextStep: boolean | undefined) {
-        removeEventListener('click', this.userInteractionListener);
-        if (autoNextStep !== false) {
-            setTimeout(() => {
-                this.guidedTourService.nextStep();
-            }, 500);
-            return;
-        }
-        this.enableNextStepButton();
-    }
-
-    /**
-     * Handles the key down interaction with the highlighted element
-     * @param selectedElement the highlighted element that listens to keydown events
-     */
-    public handleKeydownInteraction(selectedElement: HTMLElement) {
-        selectedElement.removeEventListener('keydown', this.userInteractionListener);
-        this.enableNextStepButton();
-    }
-
-    /**
-     * This method enables the next step button for the guided tour
-     */
-    private enableNextStepButton() {
+    public handleTransition() {
+        this.startFade = true;
         setTimeout(() => {
-            // Enable next step button
-            const nextStepButton = document.querySelector('.next-button');
-            if (nextStepButton) {
-                nextStepButton.removeAttribute('disabled');
-            }
-        }, 500);
+            this.startFade = false;
+        }, 1000);
     }
 }

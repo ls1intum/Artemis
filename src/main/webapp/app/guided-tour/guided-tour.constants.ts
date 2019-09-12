@@ -29,6 +29,14 @@ export enum GuidedTourState {
     FINISHED,
 }
 
+export enum OverlayPosition {
+    TOP = 'top',
+    LEFT = 'left',
+    RIGHT = 'right',
+    BOTTOM = 'bottom',
+    ELEMENT = 'element',
+}
+
 export enum UserInteractionEvent {
     CLICK = 'click',
     ACE_EDITOR = 'ace-editor',

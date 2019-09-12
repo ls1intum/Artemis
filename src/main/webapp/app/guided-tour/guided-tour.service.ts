@@ -13,6 +13,7 @@ import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter } from 'rxjs/operators';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -27,7 +28,13 @@ export class GuidedTourService {
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
 
-    constructor(private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService, private router: Router) {}
+    constructor(
+        private http: HttpClient,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
+        private router: Router,
+        private deviceService: DeviceDetectorService,
+    ) {}
 
     /**
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
@@ -79,7 +86,9 @@ export class GuidedTourService {
      * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
      */
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
-        return this.guidedTourAvailability.asObservable();
+        // The guided tour is currently disabled for mobile devices and tablets
+        // TODO optimize guided tour layout for mobile devices and tablets
+        return this.guidedTourAvailability.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
     }
 
     /**
@@ -130,6 +139,7 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
@@ -209,8 +219,42 @@ export class GuidedTourService {
     }
 
     /**
+     * Pause tour for a smooth user interaction
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     */
+    public pauseTour(targetNode: HTMLElement): void {
+        if (!this.currentTour) {
+            return;
+        }
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(() => {
+                if (nextStep) {
+                    document.body.classList.remove('tour-open');
+                    this.guidedTourCurrentStepSubject.next(null);
+                    this.resumeTour(observer, nextStep);
+                }
+            });
+        });
+        observer.observe(targetNode, {
+            attributes: true,
+            childList: true,
+            characterData: true,
+        });
+    }
+
+    /**
+     * Resume tour after user interaction
+     * @param observer the current DOM MutationObserver that should be disconnected
+     */
+    public resumeTour(observer: MutationObserver, nextStep: TourStep) {
+        observer.disconnect();
+        this.currentTourStepIndex++;
+        this.guidedTourCurrentStepSubject.next(nextStep);
+    }
+
+    /**
      * Start guided tour for given guided tour
-     * @param tour: guided tour
      */
     public startTour(): void {
         if (!this.currentTour) {

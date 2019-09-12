@@ -14,6 +14,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorRepositoryFileService } from '../../mocks';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { AnnotationArray } from 'app/entities/ace-editor';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -86,13 +87,10 @@ describe('CodeEditorAceComponent', () => {
         const loadFileSubject = new Subject();
         const initEditorAfterFileChangeSpy = spy(comp, 'initEditorAfterFileChange');
         loadRepositoryFileStub.returns(loadFileSubject);
-
-        const changes: SimpleChanges = {
-            selectedFile: new SimpleChange(undefined, selectedFile, true),
-        };
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
         expect(comp.isLoading).to.be.true;
@@ -110,13 +108,10 @@ describe('CodeEditorAceComponent', () => {
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } } };
         const initEditorAfterFileChangeSpy = spy(comp, 'initEditorAfterFileChange');
         const loadFileSpy = spy(comp, 'loadFile');
-
-        const changes: SimpleChanges = {
-            selectedFile: new SimpleChange(undefined, selectedFile, true),
-        };
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
         expect(initEditorAfterFileChangeSpy).to.have.been.calledOnceWithExactly();
@@ -128,14 +123,11 @@ describe('CodeEditorAceComponent', () => {
         const newFileName = 'newFilename';
         const fileChange = new RenameFileChange(FileType.FILE, selectedFile, newFileName);
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } }, anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 } } };
-
-        const changes: SimpleChanges = {
-            fileChange: new SimpleChange(undefined, fileChange, false),
-        };
         comp.selectedFile = newFileName;
         comp.fileSession = fileSession;
         comp.fileChange = fileChange;
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'fileChange', currentValue: fileChange, firstChange: false });
         fixture.detectChanges();
 
         expect(comp.fileSession).to.deep.equal({ anotherFile: fileSession.anotherFile, [fileChange.newFileName]: fileSession[selectedFile] });
@@ -146,14 +138,11 @@ describe('CodeEditorAceComponent', () => {
         const fileChange = new CreateFileChange(FileType.FILE, selectedFile);
         const fileSession = { anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 } } };
         const initEditorAfterFileChangeSpy = spy(comp, 'initEditorAfterFileChange');
-
-        const changes: SimpleChanges = {
-            fileChange: new SimpleChange(undefined, fileChange, false),
-        };
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
         comp.fileChange = fileChange;
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'fileChange', currentValue: fileChange, firstChange: false });
         fixture.detectChanges();
 
         expect(initEditorAfterFileChangeSpy).to.have.been.calledOnceWithExactly();
