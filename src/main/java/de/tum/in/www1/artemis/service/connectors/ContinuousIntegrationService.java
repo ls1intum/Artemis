@@ -168,4 +168,6 @@ public interface ContinuousIntegrationService {
     String checkIfProjectExists(String projectKey, String projectName);
 
     void importBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise targetExercise);
+
+    boolean isPlanActive(final String planId);
 }

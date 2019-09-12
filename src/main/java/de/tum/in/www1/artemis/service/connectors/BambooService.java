@@ -231,7 +231,8 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    private boolean isPlanActive(final String planId) {
+    @Override
+    public boolean isPlanActive(final String planId) {
         try {
             return getBambooClient().getPlanHelper().getPlan(planId).matches("(?s)^.*Enabled[. ]*: Yes.*$");
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
