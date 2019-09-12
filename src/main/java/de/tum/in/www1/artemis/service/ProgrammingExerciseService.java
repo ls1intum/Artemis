@@ -764,8 +764,7 @@ public class ProgrammingExerciseService {
     }
 
     @Transactional
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise newExercise, long toBeImportedId) {
-        ProgrammingExercise templateExercise = programmingExerciseRepository.findById(toBeImportedId).get();
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         setupExerciseForImport(newExercise);
         final String projectKey = newExercise.getProjectKey();
         final String templatePlanName = RepositoryType.TEMPLATE.getName();
@@ -782,7 +781,7 @@ public class ProgrammingExerciseService {
 
         importTestCases(templateExercise, newExercise);
 
-        return templateExercise;
+        return newExercise;
     }
 
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
@@ -828,10 +827,15 @@ public class ProgrammingExerciseService {
         newExercise.setSolutionParticipation(null);
         newExercise.setExerciseHints(null);
         newExercise.setTestCases(null);
+        newExercise.setAttachments(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setNumberOfAssessments(null);
+        newExercise.setTutorParticipations(null);
+        newExercise.setExampleSubmissions(null);
+        newExercise.setStudentQuestions(null);
+        newExercise.setParticipations(null);
     }
 
     private enum ProgrammingExerciseSearchColumn {
