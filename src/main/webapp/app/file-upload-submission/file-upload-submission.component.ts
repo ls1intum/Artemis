@@ -54,7 +54,7 @@ export class FileUploadSubmissionComponent implements OnInit {
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private location: Location,
-        translateService: TranslateService,
+        private translateService: TranslateService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
@@ -194,5 +194,14 @@ export class FileUploadSubmissionComponent implements OnInit {
     toggleRequestMoreFeedbackForm() {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
+    }
+
+    canDeactivate() {
+        if (this.submission && this.submission.submitted && !this.submissionFile) {
+            return true;
+        } else {
+            const confirmationMessage = this.translateService.instant('artemisApp.fileUploadSubmission.notSubmittedWarning');
+            return window.confirm(confirmationMessage);
+        }
     }
 }
