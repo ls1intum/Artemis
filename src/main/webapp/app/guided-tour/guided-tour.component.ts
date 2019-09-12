@@ -35,7 +35,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
-    private clickEventListener: EventListenerOrEventListenerObject;
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;

@@ -103,6 +103,8 @@ describe('GuidedTourService', () => {
         let guidedTourService: GuidedTourService;
         let router: Router;
 
+        let pauseTourSpy: jasmine.Spy;
+
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [
@@ -146,6 +148,8 @@ describe('GuidedTourService', () => {
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService.currentTour = tour;
             });
+
+            pauseTourSpy = spyOn(guidedTourService, 'pauseTour');
 
             guidedTourComponent.ngAfterViewInit();
 
@@ -207,14 +211,8 @@ describe('GuidedTourService', () => {
                 await prepareGuidedTour(courseOverviewTourWithUserInteraction);
             });
 
-            it('should enable user interaction and navigate to next step after user interaction', () => {
-                // Fix jsom error: Not implemented: window.scrollTo
-                const jsdomAlert = window.scrollTo;
-                window.scrollTo = () => {};
-                const resumeTour = spyOn(guidedTourService, 'resumeTour');
-                const selector = navbarComponentFixture.debugElement.query(By.css('.random-selector'));
-                // Restore the jsdom alert
-                window.scrollTo = jsdomAlert;
+            it('should pause the tour for user interaction', () => {
+                expect(pauseTourSpy.calls.count()).to.equal(1);
             });
         });
     });
