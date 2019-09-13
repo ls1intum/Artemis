@@ -5,8 +5,6 @@ import { ParticipationComponent } from './participation.component';
 import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
 import { ExerciseScoresResultResultPopupComponent } from 'app/scores/exercise-scores-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
-import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
-import { ParticipationSubmissionDeletePopupComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
 
 export const participationRoute: Routes = [
     {

@@ -12,6 +12,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,13 +55,10 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
             { completeString: '[task][Implement BubbleSort](testBubbleSort)', taskName: 'Implement BubbleSort', tests: ['testBubbleSort'] },
             { completeString: '[task][Implement MergeSort](testMergeSort)', taskName: 'Implement MergeSort', tests: ['testMergeSort'] },
         ];
-        const changes: SimpleChanges = {
-            tasks: new SimpleChange(undefined, tasks, true),
-            latestResult: new SimpleChange(undefined, result, true),
-        };
         comp.latestResult = result;
         comp.tasks = tasks;
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'tasks', currentValue: tasks }, { property: 'latestResult', currentValue: result });
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));
@@ -78,13 +76,10 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
             completionDate: moment('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
-        const changes: SimpleChanges = {
-            tasks: new SimpleChange(undefined, [], true),
-            latestResult: new SimpleChange(undefined, result, true),
-        };
         comp.latestResult = result;
         comp.tasks = [];
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'tasks', currentValue: [] }, { property: 'latestResult', currentValue: result });
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));

@@ -18,6 +18,7 @@ import { ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { AnnotationArray } from 'app/entities/ace-editor';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -108,10 +109,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         loadSessionStub.returns({ errors: {}, timestamp: 0 });
 
         comp.participation = participation;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
@@ -136,11 +134,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
         getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
-        fixture.detectChanges();
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
         expect(loadSessionStub).to.not.have.been.called;
@@ -164,10 +158,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
 
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
@@ -219,10 +210,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         subscribeForLatestResultOfParticipationStub.returns(of(result));
 
         comp.participation = participation;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
