@@ -13,11 +13,13 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ComponentCanDeactivate } from 'app/shared';
+import { Observable } from 'rxjs';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
 })
-export class FileUploadSubmissionComponent implements OnInit {
+export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     submission: FileUploadSubmission | null;
     submittedFileName: string;
@@ -196,12 +198,10 @@ export class FileUploadSubmissionComponent implements OnInit {
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 
-    canDeactivate() {
-        if (this.submission && this.submission.submitted && !this.submissionFile) {
-            return true;
-        } else {
-            const confirmationMessage = this.translateService.instant('artemisApp.fileUploadSubmission.notSubmittedWarning');
-            return window.confirm(confirmationMessage);
-        }
+    /**
+     * Returns false if user selected a file, but didn't submit the exercise, false otherwise.
+     */
+    canDeactivate(): Observable<boolean> | boolean {
+        return !(this.submission && !this.submission.submitted && this.submissionFile);
     }
 }

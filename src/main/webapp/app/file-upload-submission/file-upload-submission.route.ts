@@ -1,15 +1,7 @@
-import { Routes, CanDeactivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
-import { Injectable } from '@angular/core';
-
-@Injectable()
-export class NotSubmittedFileGuard implements CanDeactivate<FileUploadSubmissionComponent> {
-    canDeactivate(component: FileUploadSubmissionComponent, route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-        return component.canDeactivate();
-    }
-}
+import { PendingChangesGuard } from 'app/shared';
 
 export const fileUploadSubmissionRoute: Routes = [
     {
@@ -20,5 +12,6 @@ export const fileUploadSubmissionRoute: Routes = [
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
     },
 ];
