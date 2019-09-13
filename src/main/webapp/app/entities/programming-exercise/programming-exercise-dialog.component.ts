@@ -35,6 +35,8 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText: string | null;
 
+    dueDateInvalid = false;
+
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
@@ -122,6 +124,10 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     trackCourseById(index: number, item: Course) {
         return item.id;
+    }
+
+    public onProgrammingExerciseUpdate(programmingExercise: ProgrammingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 }
 
