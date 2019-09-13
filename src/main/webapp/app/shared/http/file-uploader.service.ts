@@ -21,13 +21,13 @@ export class FileUploaderService {
                   .split('.')
                   .pop()
                   .toLocaleLowerCase();
-        const supportedImageFormats = 'png,jpg,jpeg,svg,pdf,zip';
-        if (supportedImageFormats.indexOf(fileExtension) === -1) {
-            return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
-        }
-
         const isSubmission: boolean = !!options && !!options.isSubmission;
-
+        if (!isSubmission) {
+            const supportedImageFormats = 'png,jpg,jpeg,svg,pdf,zip';
+            if (supportedImageFormats.indexOf(fileExtension) === -1) {
+                return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
+            }
+        }
         /** Check file size **/
         if (isSubmission && file.size > MAX_SUBMISSION_FILE_SIZE) {
             return Promise.reject(new Error('Submitted file is too big! Maximum allowed file size: ' + MAX_SUBMISSION_FILE_SIZE / (1024 * 1024) + ' MB.'));
