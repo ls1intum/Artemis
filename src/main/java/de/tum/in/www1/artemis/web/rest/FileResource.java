@@ -76,6 +76,7 @@ public class FileResource {
      *
      * @param file The file to save
      * @param keepFileName specifies if original file name should be kept
+     * @param isSubmission specifies if file is submitted by a student
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
