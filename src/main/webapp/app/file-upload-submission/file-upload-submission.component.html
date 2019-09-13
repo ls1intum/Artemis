@@ -24,7 +24,7 @@
 <div class="p-4">
     <div class="row" *ngIf="fileUploadExercise">
         <div class="col-9">
-            <p class="mb-3 markdown-preview">
+            <p class="mb-3 markdown-preview" *ngIf="fileUploadExercise!.problemStatement">
                 <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
                 <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
             </p>
