@@ -9,8 +9,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -83,20 +82,20 @@ public class FileResource {
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName,
-                                           @RequestParam(value = "isSubmission", required = false, defaultValue = "false") Boolean isSubmission) throws URISyntaxException {
+            @RequestParam(value = "isSubmission", required = false, defaultValue = "false") Boolean isSubmission) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
 
-        if (isSubmission && file.getSize() > 2_000_000){
+        if (isSubmission && file.getSize() > 2_000_000) {
             // NOTE: Maximum file size for submission is 2 MB
             return ResponseEntity.status(413).body("Maximum file size for submission is 2 MB!");
         }
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")
-                && !fileExtension.equalsIgnoreCase("pdf") && !fileExtension.equalsIgnoreCase("zip")) {
+        List<String> allowedFileExtensions = Arrays.asList("png", "jpg", "zip", "pdf", "svg", "jpeg");
+        if (!isSubmission && !allowedFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase)) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf, .zip");
         }
 
