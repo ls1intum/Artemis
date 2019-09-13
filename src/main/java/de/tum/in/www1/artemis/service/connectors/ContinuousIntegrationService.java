@@ -7,7 +7,6 @@ import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exception.BambooException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -29,24 +28,14 @@ public interface ContinuousIntegrationService {
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
 
     /**
-     * Copy the base build plan for the given user on the CI system.
-     *
-     * @param templateBuildPlanId unique identifier for build plan on CI system
-     * @param username            username of user for whom to copy build plan
-     * @return unique identifier of the copied build plan
-     */
-    String copyBuildPlan(String templateBuildPlanId, String username);
-
-    /**
      * Clones an existing Bamboo plan.
      *
      * @param templatePlan The key of the template plan.
      * @param planKey The key of the new plan
      * @param planName The name of the new plan
      * @return The name of the new build plan
-     * @throws BambooException if a communication issue occurs or the plan already exists.
      */
-    String clonePlan(String templatePlan, String planKey, String planName) throws BambooException;
+    String clonePlan(String templatePlan, String planKey, String planName);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
@@ -167,7 +156,13 @@ public interface ContinuousIntegrationService {
      */
     String checkIfProjectExists(String projectKey, String projectName);
 
-    void importBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise targetExercise);
-
     boolean isPlanActive(final String planId);
+
+    /**
+     * Enables the given build plan.
+     *
+     * @param planKey to identify the plan in the CI service.
+     * @return the message indicating the result of the enabling operation.
+     */
+    String enablePlan(String planKey);
 }

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -170,9 +169,6 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
-        // Mock just the calls to the Bamboo service when we actually would call Bamboo
-        doCallRealMethod().when(bambooService).importBuildPlans(any(ProgrammingExercise.class), any(ProgrammingExercise.class));
-        when(bambooService.getBaseBuildPlanIDs(anyString())).thenReturn(Map.of(RepositoryType.TEMPLATE, "basePlanID", RepositoryType.SOLUTION, "solutionPlanID"));
         when(bambooService.clonePlan("basePlanID", toBeImported.getTemplateBuildPlanId(), RepositoryType.TEMPLATE.getName())).thenReturn(toBeImported.getTemplateBuildPlanId());
         when(bambooService.clonePlan("solutionPlanID", toBeImported.getSolutionBuildPlanId(), RepositoryType.SOLUTION.getName())).thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");

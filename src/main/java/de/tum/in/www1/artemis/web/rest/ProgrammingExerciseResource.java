@@ -297,13 +297,13 @@ public class ProgrammingExerciseResource {
             return notFound();
         }
 
-        final var user = userService.getUser();
+        final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
             log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
             return forbidden();
         }
 
-        final var optionalTemplate = programmingExerciseRepository.findById(sourceExerciseId);
+        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndBaseParticipations(sourceExerciseId);
         if (optionalTemplate.isEmpty()) {
             return notFound();
         }

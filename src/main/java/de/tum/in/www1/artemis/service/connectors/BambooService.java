@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -38,10 +37,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
@@ -117,27 +114,6 @@ public class BambooService implements ContinuousIntegrationService {
 
         bambooClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
         return bambooClient;
-    }
-
-    /**
-     * Copy the base build plan for the given user on the CI system.
-     *
-     * @param templateBuildPlanId unique identifier for build plan on CI system to copy the plan from.
-     * @param wantedPlanKey       specified key for the new plan.
-     * @return unique identifier of the copied build plan
-     */
-    @Override
-    public String copyBuildPlan(String templateBuildPlanId, String wantedPlanKey) {
-        wantedPlanKey = getCleanPlanKey(wantedPlanKey);
-        String projectKey = getProjectKeyFromBuildPlanId(templateBuildPlanId);
-        try {
-            return clonePlan(templateBuildPlanId, projectKey + "-" + wantedPlanKey, wantedPlanKey); // Save the new plan in the same project
-        } catch (BambooException bambooException) {
-            if (bambooException.getMessage().contains("already exists")) {
-                log.info("Build Plan already exists. Going to recover build plan information...");
-                return getProjectKeyFromBuildPlanId(templateBuildPlanId) + "-" + wantedPlanKey;
-            } else throw bambooException;
-        }
     }
 
     /**
@@ -336,14 +312,17 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public String clonePlan(String templatePlan, String planKey, String planName) throws BambooException {
+        final var cleanPlanName = getCleanPlanKey(planName);
+        planKey = planKey.replace(planName, cleanPlanName);
         try {
             log.debug("Clone build plan " + templatePlan + " to " + planKey);
-            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}:{toProjectKey}-{toBuildKey}"
-            String message = getBambooClient().getPlanHelper().clonePlan(templatePlan, planKey, planName, "", "", true);
+            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
+            String message = getBambooClient().getPlanHelper().clonePlan(templatePlan, planKey, cleanPlanName, "", "", true);
             log.info("Clone build plan " + templatePlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
-                throw new BambooException(clientException.getMessage());
+                log.info("Build Plan already exists. Going to recover build plan information...");
+                return planKey;
             } else {
                 log.error(clientException.getMessage(), clientException);
             }
@@ -355,27 +334,7 @@ public class BambooService implements ContinuousIntegrationService {
         return planKey;
     }
 
-    public Map<RepositoryType, String> getBaseBuildPlanIDs(String projectKey) {
-        final String plans;
-        try {
-            plans = getBambooClient().getPlanHelper().getPlanList(projectKey, false, false, false, null, 0, null, 99, Pattern.compile(".*"));
-            return Arrays.stream(plans.split("\\n"))
-                .filter(planInfo -> planInfo.matches(".*-(BASE|SOLUTION).*http://.*"))
-                .map(planInfo -> planInfo.split(",")[2].replace("\"", ""))
-                .collect(Collectors.toMap(plan -> plan.contains("BASE") ? RepositoryType.TEMPLATE : RepositoryType.SOLUTION, Function.identity()));
-        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Unable to fetch build plans for project " + projectKey);
-        }
-    }
-
-    /**
-     * Enables the given build plan.
-     *
-     * @param planKey to identify the Bamboo plan.
-     * @return the message indicating the result of the enabling operation.
-     * @throws BambooException if a communication issue occurs.
-     */
+    @Override
     public String enablePlan(String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
@@ -592,22 +551,6 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
         }
-    }
-
-    @Override
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
-        final Map<RepositoryType, String> sourcePlans = getBaseBuildPlanIDs(templateExercise.getProjectKey());
-        final TemplateProgrammingExerciseParticipation templateParticipation = targetExercise.getTemplateParticipation();
-        final SolutionProgrammingExerciseParticipation solutionParticipation = targetExercise.getSolutionParticipation();
-        final String templatePlanName = RepositoryType.TEMPLATE.getName();
-        final String solutionPlanName = RepositoryType.SOLUTION.getName();
-
-        clonePlan(sourcePlans.get(RepositoryType.TEMPLATE), templateParticipation.getBuildPlanId(), templatePlanName);
-        clonePlan(sourcePlans.get(RepositoryType.SOLUTION), solutionParticipation.getBuildPlanId(), solutionPlanName);
-        enablePlan(templateParticipation.getBuildPlanId());
-        enablePlan(solutionParticipation.getBuildPlanId());
-        configureBuildPlan(templateParticipation);
-        configureBuildPlan(solutionParticipation);
     }
 
     /**

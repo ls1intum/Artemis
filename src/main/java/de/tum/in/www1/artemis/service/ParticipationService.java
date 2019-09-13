@@ -441,8 +441,10 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(participation.getProgrammingExercise().getTemplateBuildPlanId(),
-                    participation.getStudent().getLogin());
+            final var templatePlanId = participation.getProgrammingExercise().getTemplateBuildPlanId();
+            final var projectKey = templatePlanId.split("-")[0];
+            final var userId = participation.getStudent().getLogin();
+            final var buildPlanId = continuousIntegrationService.get().clonePlan(templatePlanId, projectKey + userId, userId);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);

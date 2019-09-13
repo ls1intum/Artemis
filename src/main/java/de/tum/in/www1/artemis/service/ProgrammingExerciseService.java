@@ -34,9 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -756,19 +754,19 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search) {
         Sort sorting = Sort.by(ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).mappedColumnName);
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final Pageable sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
 
-        final Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(search.getSearchTerm(),
-                search.getSearchTerm(), sorted);
+        final var exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(search.getSearchTerm(), search.getSearchTerm(),
+                sorted);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
     @Transactional
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         setupExerciseForImport(newExercise);
-        final String projectKey = newExercise.getProjectKey();
-        final String templatePlanName = RepositoryType.TEMPLATE.getName();
-        final String solutionPlanName = RepositoryType.SOLUTION.getName();
+        final var projectKey = newExercise.getProjectKey();
+        final var templatePlanName = RepositoryType.TEMPLATE.getName();
+        final var solutionPlanName = RepositoryType.SOLUTION.getName();
 
         programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
         programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
@@ -785,11 +783,11 @@ public class ProgrammingExerciseService {
     }
 
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        final List<String> sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
+        final var sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
                 templateExercise.getTestRepositoryName());
-        final String sourceProjectKey = templateExercise.getProjectKey();
-        final TemplateProgrammingExerciseParticipation templateParticipation = newExercise.getTemplateParticipation();
-        final SolutionProgrammingExerciseParticipation solutionParticipation = newExercise.getSolutionParticipation();
+        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
 
         versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
@@ -801,12 +799,24 @@ public class ProgrammingExerciseService {
     }
 
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        continuousIntegrationService.get().importBuildPlans(templateExercise, newExercise);
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+        final var sourceTemplateId = templateExercise.getTemplateBuildPlanId();
+        final var sourceSolutionId = templateExercise.getSolutionBuildPlanId();
+        final var templatePlanName = RepositoryType.TEMPLATE.getName();
+        final var solutionPlanName = RepositoryType.SOLUTION.getName();
+
+        continuousIntegrationService.get().clonePlan(sourceTemplateId, templateParticipation.getBuildPlanId(), templatePlanName);
+        continuousIntegrationService.get().clonePlan(sourceSolutionId, solutionParticipation.getBuildPlanId(), solutionPlanName);
+        continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
+        continuousIntegrationService.get().configureBuildPlan(templateParticipation);
+        continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
     }
 
     private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
-            final ProgrammingExerciseTestCase copy = new ProgrammingExerciseTestCase();
+            final var copy = new ProgrammingExerciseTestCase();
             copy.setActive(testCase.isActive());
             copy.setAfterDueDate(testCase.isAfterDueDate());
             copy.setTestName(testCase.getTestName());
@@ -817,7 +827,7 @@ public class ProgrammingExerciseService {
     }
 
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
-        final String testRepoName = projectKey.toLowerCase() + "-tests";
+        final var testRepoName = projectKey.toLowerCase() + "-tests";
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
     }
 
