@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
     - name: Use Node.js 12
       uses: actions/setup-node@v1
       with:
@@ -17,7 +16,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: '12.0.2'
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v1
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
       env:
