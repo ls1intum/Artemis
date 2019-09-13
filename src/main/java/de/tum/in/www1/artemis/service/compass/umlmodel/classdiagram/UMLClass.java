@@ -43,9 +43,9 @@ public class UMLClass extends UMLElement {
     }
 
     /**
-     * checks for name similarity
+     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
      *
-     * @param other the element to compare with
+     * @param other the UML class to compare this class with
      * @return the similarity as number [0-1]
      */
     @Override
@@ -88,6 +88,7 @@ public class UMLClass extends UMLElement {
         int missingCount = 0;
 
         // check name
+        // TODO: use similarity() method here instead? (it considers the Leivenshtein distance of the names and the type of the classes)
         if (reference.name.equals(this.name)) {
             similarity += weight;
         }
@@ -120,6 +121,7 @@ public class UMLClass extends UMLElement {
 
         // make sure: 0.0 <= similarity <= simulation.0
         if (missingCount > 0) {
+            // TODO: the two lines below are equal to "similarity -= CompassConfiguration.MISSING_ELEMENT_PENALTY;"
             double penaltyWeight = 1 / missingCount;
             similarity -= penaltyWeight * CompassConfiguration.MISSING_ELEMENT_PENALTY * missingCount;
         }
@@ -173,19 +175,25 @@ public class UMLClass extends UMLElement {
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
     }
 
-    UMLElement getElementByJSONID(String jsonID) {
-        if (this.getJSONElementID().equals(jsonID)) {
+    /**
+     * Checks if the UML class or one of its methods/attributes has the given element ID and returns the corresponding element. Otherwise, it returns null.
+     *
+     * @param jsonElementId the id of the UML element that should be returned
+     * @return the UML element if one could be found for the given id, null otherwise
+     */
+    UMLElement getElementByJSONID(String jsonElementId) {
+        if (this.getJSONElementID().equals(jsonElementId)) {
             return this;
         }
 
         for (UMLAttribute umlAttribute : attributes) {
-            if (umlAttribute.getJSONElementID().equals(jsonID)) {
+            if (umlAttribute.getJSONElementID().equals(jsonElementId)) {
                 return umlAttribute;
             }
         }
 
         for (UMLMethod umlMethod : methods) {
-            if (umlMethod.getJSONElementID().equals(jsonID)) {
+            if (umlMethod.getJSONElementID().equals(jsonElementId)) {
                 return umlMethod;
             }
         }

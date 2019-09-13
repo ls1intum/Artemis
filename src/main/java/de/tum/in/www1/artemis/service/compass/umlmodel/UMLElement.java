@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
-public abstract class UMLElement {
+public abstract class UMLElement implements SimilarElement<UMLElement>{
 
     private int similarityID; // id of similarity set the element belongs to
 
@@ -13,11 +13,13 @@ public abstract class UMLElement {
     private Context context;
 
     /**
-     * Compare this with another element to calculate the similarity
+     * Compare this with another UML element to calculate the similarity. If the types of the two elements do not match (e.g. comparing a UML class with a UML activity node), the
+     * returned similarity score is 0.
      *
      * @param element the element to compare with
      * @return the similarity as number [0-1]
      */
+    @Override
     public abstract double similarity(UMLElement element);
 
     /**

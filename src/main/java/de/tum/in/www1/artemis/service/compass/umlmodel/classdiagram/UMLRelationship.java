@@ -73,12 +73,6 @@ public class UMLRelationship extends UMLElement {
         this.type = UMLRelationshipType.valueOf(type.toUpperCase());
     }
 
-    /**
-     * Compare this with another element to calculate the similarity
-     *
-     * @param element the element to compare with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(UMLElement element) {
         if (element.getClass() != UMLRelationship.class) {

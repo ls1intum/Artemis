@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 
-public abstract class UMLDiagram {
+public abstract class UMLDiagram implements SimilarElement<UMLDiagram> {
 
     private long modelSubmissionId;
 
@@ -26,7 +26,20 @@ public abstract class UMLDiagram {
      * @param reference the UML diagram to compare with
      * @return the similarity of the diagrams as number [0-1]
      */
-    public abstract double similarity(UMLDiagram reference);
+    protected abstract double similarityScore(UMLDiagram reference);
+
+    @Override
+    public final double similarity(UMLDiagram reference) {
+        if (reference == null || reference.getClass() != this.getClass()) {
+            return 0;
+        }
+
+        double sim1 = reference.similarityScore(this);
+        double sim2 = similarityScore(reference);
+
+        // TODO CZ: is the double calculation + multiplication necessary?
+        return sim1 * sim2;
+    }
 
     public long getModelSubmissionId() {
         return modelSubmissionId;

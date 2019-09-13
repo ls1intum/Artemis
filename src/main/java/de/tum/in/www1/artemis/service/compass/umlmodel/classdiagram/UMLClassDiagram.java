@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+
+import java.util.List;
 
 public class UMLClassDiagram extends UMLDiagram {
 
@@ -22,34 +22,25 @@ public class UMLClassDiagram extends UMLDiagram {
     }
 
     @Override
-    public double similarity(UMLDiagram reference) {
-        if (reference.getClass() != UMLClassDiagram.class) {
+    protected double similarityScore(UMLDiagram reference) {
+        // TODO: also check UMLPackage elements
+        if (reference == null || reference.getClass() != UMLClassDiagram.class) {
             return 0;
         }
 
-        UMLClassDiagram referenceClassDiagram = (UMLClassDiagram) reference;
-
-        double sim1 = referenceClassDiagram.similarityScore(this);
-        double sim2 = this.similarityScore(referenceClassDiagram);
-
-        return sim1 * sim2;
-    }
-
-    private double similarityScore(UMLClassDiagram reference) {
+        UMLClassDiagram classDiagramReference = (UMLClassDiagram) reference;
         double similarity = 0;
 
         int elementCount = classList.size() + relationshipList.size();
-
         if (elementCount == 0) {
             return 0;
         }
-
         double weight = 1.0 / elementCount;
 
         int missingCount = 0;
 
-        for (UMLClass UMLConnectableElement : classList) {
-            double similarityValue = reference.similarConnectableElementScore(UMLConnectableElement);
+        for (UMLClass connectableElement : classList) {
+            double similarityValue = classDiagramReference.similarConnectableElementScore(connectableElement);
             similarity += weight * similarityValue;
 
             // = no match found
@@ -59,7 +50,7 @@ public class UMLClassDiagram extends UMLDiagram {
         }
 
         for (UMLRelationship relationship : relationshipList) {
-            double similarityValue = reference.similarUMLRelationScore(relationship);
+            double similarityValue = classDiagramReference.similarUMLRelationScore(relationship);
             similarity += weight * similarityValue;
 
             // = no match found
@@ -69,12 +60,13 @@ public class UMLClassDiagram extends UMLDiagram {
         }
 
         // Punish missing classes (on either side)
-        int referenceMissingCount = Math.max(reference.classList.size() - classList.size(), 0);
-        referenceMissingCount += Math.max(reference.relationshipList.size() - relationshipList.size(), 0);
+        int referenceMissingCount = Math.max(classDiagramReference.classList.size() - classList.size(), 0);
+        referenceMissingCount += Math.max(classDiagramReference.relationshipList.size() - relationshipList.size(), 0);
 
         missingCount += referenceMissingCount;
 
         if (missingCount > 0) {
+            // TODO: the two lines below are equal to "similarity -= CompassConfiguration.MISSING_ELEMENT_PENALTY;"
             double penaltyWeight = 1.0 / missingCount;
             similarity -= penaltyWeight * CompassConfiguration.MISSING_ELEMENT_PENALTY * missingCount;
         }
