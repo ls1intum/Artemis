@@ -3,6 +3,8 @@ import { LinkType, Orientation, OrientationConfiguration, UserInteractionEvent }
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
     selector?: string;
+    /** Selector for the node that should listen to DOM changes during user interactions to define if the next step is ready**/
+    eventListenerSelector?: string;
     /** Where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */

@@ -13,7 +13,8 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            selector: '.list-group-item.file-item',
+            selector: '.list-group-item.file-item:not(.node-selected)',
+            eventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.exerciseFile.headline',
             contentTranslateKey: 'tour.programmingExercise.exerciseFile.content',
             highlightPadding: 5,
@@ -22,6 +23,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             selector: '.editor-center',
+            eventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.content',
             highlightPadding: 5,
@@ -39,6 +41,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             selector: '#submit_button',
+            eventListenerSelector: 'jhi-updating-result',
             headlineTranslateKey: 'tour.programmingExercise.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.submitChanges.content',
             highlightPadding: 10,

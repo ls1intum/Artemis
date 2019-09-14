@@ -12,6 +12,9 @@
         },
         "clickHint": {
             "text": "Klick auf das Element um mit der Tour fortzusetzen."
+        },
+        "inputHint": {
+            "text": "Klick auf das Element um mit der Tour fortzusetzen."
         }
     }
 }

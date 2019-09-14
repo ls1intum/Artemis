@@ -8,7 +8,7 @@ import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
+import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -135,13 +135,16 @@ export class GuidedTourService {
     /**
      * Navigate to next tour step
      */
-    public nextStep(): void {
+    public nextStep(nextTourStep?: TourStep): void {
         if (!this.currentTour) {
             return;
         }
-
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
-        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        let nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        if (nextTourStep) {
+            nextStep = nextTourStep;
+        }
+        console.log('next step: ', nextStep);
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -221,18 +224,34 @@ export class GuidedTourService {
     /**
      * Pause tour for a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
+     * @param userInteraction the user interaction to complete the tour step
      */
-    public pauseTour(targetNode: HTMLElement): void {
+    public pauseTour(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
         if (!this.currentTour) {
             return;
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         const observer = new MutationObserver(mutations => {
-            mutations.forEach(() => {
+            mutations.forEach(mutation => {
                 if (nextStep) {
-                    document.body.classList.remove('tour-open');
-                    this.guidedTourCurrentStepSubject.next(null);
-                    this.resumeTour(observer, nextStep);
+                    switch (userInteraction) {
+                        case UserInteractionEvent.CLICK: {
+                            this.guidedTourCurrentStepSubject.next(null);
+                            console.log('observer disconnect');
+                            observer.disconnect();
+                            this.nextStep(nextStep);
+                            return;
+                        }
+                        case UserInteractionEvent.ACE_EDITOR: {
+                            if (mutation.addedNodes.length !== mutation.removedNodes.length && mutation.addedNodes.length >= 1) {
+                                const nextButton = document.querySelector('.next-button');
+                                if (nextButton) {
+                                    nextButton.attributes.removeNamedItem('disabled');
+                                }
+                            }
+                            break;
+                        }
+                    }
                 }
             });
         });
@@ -249,8 +268,7 @@ export class GuidedTourService {
      */
     public resumeTour(observer: MutationObserver, nextStep: TourStep) {
         observer.disconnect();
-        this.currentTourStepIndex++;
-        this.guidedTourCurrentStepSubject.next(nextStep);
+        this.nextStep(nextStep);
     }
 
     /**

@@ -16,7 +16,7 @@ import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourState, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -149,7 +149,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.currentTour = tour;
             });
 
-            pauseTourSpy = spyOn(guidedTourService, 'pauseTour');
+            pauseTourSpy = spyOn(guidedTourService, 'pauseTour', UserInteractionEvent.CLICK);
 
             guidedTourComponent.ngAfterViewInit();
 

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChil
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation, OverlayPosition } from './guided-tour.constants';
+import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -38,6 +38,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
+    readonly UserInteractionEvent = UserInteractionEvent;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -55,7 +56,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                  */
                 if (
                     this.currentTourStep &&
-                    !this.currentTourStep.enableUserInteraction &&
+                    !this.currentTourStep.userInteractionEvent &&
                     this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
                 ) {
                     this.guidedTourService.nextStep();
@@ -63,7 +64,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'ArrowLeft': {
-                if (this.guidedTourService.currentTourStepDisplay > 1) {
+                if (this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
                     this.guidedTourService.backStep();
                 }
                 break;
@@ -380,6 +381,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return document.querySelector(this.currentTourStep.selector);
     }
 
+    public getEventListenerSelector(): HTMLElement | null {
+        if (!this.currentTourStep || !this.currentTourStep.selector) {
+            return null;
+        }
+        return document.querySelector(this.currentTourStep.eventListenerSelector);
+    }
+
     /**
      * Calculate max width adjustment for tour step
      * @return {number} maxWidthAdjustmentForTourStep
@@ -463,8 +471,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
-                this.guidedTourService.pauseTour(selectedElement);
+            if (this.currentTourStep && this.currentTourStep.userInteractionEvent) {
+                const eventListenerElement = this.getEventListenerSelector();
+                if (eventListenerElement) {
+                    selectedElement = eventListenerElement;
+                }
+                this.guidedTourService.pauseTour(selectedElement, this.currentTourStep.userInteractionEvent);
             }
         }
         return selectedElementRect;
