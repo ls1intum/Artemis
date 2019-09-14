@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
-@Transactional
 public class ProgrammingSubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
@@ -76,6 +75,7 @@ public class ProgrammingSubmissionService {
      * @throws IllegalStateException if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
+    @Transactional
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
@@ -164,6 +164,7 @@ public class ProgrammingSubmissionService {
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
+    @Transactional(readOnly = true)
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
         Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
@@ -181,6 +182,7 @@ public class ProgrammingSubmissionService {
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
+    @Transactional
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         if (programmingExercise == null) {
@@ -281,7 +283,7 @@ public class ProgrammingSubmissionService {
      * Notify user on a new programming submission.
      * @param submission ProgrammingSubmission
      */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+    private void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
         messagingTemplate.convertAndSend(topic, submission);
     }
