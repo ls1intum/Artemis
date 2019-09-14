@@ -283,7 +283,7 @@ public class ProgrammingSubmissionService {
      * Notify user on a new programming submission.
      * @param submission ProgrammingSubmission
      */
-    private void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+    public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
         messagingTemplate.convertAndSend(topic, submission);
     }
