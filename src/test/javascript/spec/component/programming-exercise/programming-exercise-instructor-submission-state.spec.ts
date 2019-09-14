@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
@@ -15,6 +15,7 @@ import { Exercise } from 'app/entities/exercise';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -93,11 +94,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 2 };
         comp.exerciseId = exercise.id;
-        const changes: SimpleChanges = {
-            exerciseId: new SimpleChange(undefined, comp.exerciseId, true),
-        };
-        comp.ngOnChanges(changes);
 
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
@@ -125,11 +123,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
         comp.exerciseId = exercise.id;
-        const changes: SimpleChanges = {
-            exerciseId: new SimpleChange(undefined, comp.exerciseId, true),
-        };
-        comp.ngOnChanges(changes);
 
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.

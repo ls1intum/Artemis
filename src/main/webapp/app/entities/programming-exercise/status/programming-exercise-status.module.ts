@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core';
 import { ProgrammingExerciseInstructorExerciseStatusComponent, ProgrammingExerciseInstructorStatusComponent } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor';

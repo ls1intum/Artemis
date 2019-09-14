@@ -15,6 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { Orientation } from 'app/guided-tour/guided-tour.constants';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,6 +69,7 @@ describe('Component Tests', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: CookieService, useClass: MockCookieService },
+                    { provide: DeviceDetectorService },
                 ],
             })
                 .compileComponents()
@@ -103,7 +105,7 @@ describe('Component Tests', () => {
         describe('Keydown Element', () => {
             beforeEach(async () => {
                 // Prepare guided tour service
-                spyOn(guidedTourService, 'updateGuidedTourSettings');
+                spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
                 spyOn(guidedTourService, 'init').and.returnValue(of());
                 spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                     guidedTourService.currentTour = courseOverviewTour;
@@ -118,6 +120,15 @@ describe('Component Tests', () => {
                 guidedTourService.startTour();
                 guidedTourComponentFixture.detectChanges();
                 expect(guidedTourComponent.currentTourStep).to.exist;
+            });
+
+            it('should not trigger the guided tour with the right arrow key', () => {
+                guidedTourComponent.currentTourStep = null;
+                const nextStep = spyOn(guidedTourService, 'nextStep');
+                const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                guidedTourComponent.handleKeyboardEvent(eventMock);
+                expect(nextStep.calls.count()).to.equal(0);
+                nextStep.calls.reset();
             });
 
             it('should navigate next with the right arrow key', () => {

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -162,13 +163,12 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
-        String assignmentRepoName = ASSIGNMENT_REPO_NAME;
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            assignmentRepoName,
+            ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
             versionControlService.get().getRepositoryName(repositoryUrl)
         );
@@ -196,16 +196,12 @@ public class BambooService implements ContinuousIntegrationService {
                 }
             } catch (GitAPIException ex) {
                 log.error("Git error while doing empty commit", ex);
-                return;
             } catch (IOException ex) {
                 log.error("IOError while doing empty commit", ex);
-                return;
             } catch (InterruptedException ex) {
                 log.error("InterruptedException while doing empty commit", ex);
-                return;
             } catch (NullPointerException ex) {
                 log.error("NullPointerException while doing empty commit", ex);
-                return;
             }
         }
     }
@@ -251,6 +247,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void deleteProject(String projectKey) {
         try {
             log.info("Delete project " + projectKey);
+            //TODO: use Bamboo REST API: DELETE "/rest/api/latest/project/{projectKey}"
             String message = getBambooClient().getProjectHelper().deleteProject(projectKey);
             log.info("Delete project was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -339,6 +336,7 @@ public class BambooService implements ContinuousIntegrationService {
         String toPlan = toProject + "-" + name;
         try {
             log.debug("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
+            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}:{toProjectKey}-{toBuildKey}"
             String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
@@ -365,6 +363,7 @@ public class BambooService implements ContinuousIntegrationService {
     public String enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + projectKey + "-" + planKey);
+            //TODO: use REST API POST "/rest/api/latest/plan/{projectKey}-{buildKey}/enable"
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
             log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
             return message;
@@ -398,6 +397,7 @@ public class BambooService implements ContinuousIntegrationService {
     private void deletePlan(String projectKey, String planKey) {
         try {
             log.info("Delete build plan " + projectKey + "-" + planKey);
+            //TODO use REST API DELETE "/rest/api/latest/plan/{projectKey}-{buildKey}"
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -651,6 +651,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>) buildResultDetails.get("details");
+            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
+                .getProgrammingLanguage();
             if (!details.isEmpty()) {
                 result.setHasFeedback(true);
             }
@@ -662,11 +664,10 @@ public class BambooService implements ContinuousIntegrationService {
                 Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
                 List<Map<String, Object>> errors = (List<Map<String, Object>>) errorsMap.get("error");
 
-                String errorMessageString = "";
-                for (Map<String, Object> error : errors) {
-                    //Splitting string at the first linebreak to only get the first line of the Exception
-                    errorMessageString += ((String) error.get("message")).split("\\n", 2)[0] + "\n";
-                }
+                final String errorMessageString = errors.stream()
+                    .map(error -> (String) error.get("message"))
+                    .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                    .reduce("", String::concat);
 
                 createAutomaticFeedback(result, methodName, false, errorMessageString);
             }
@@ -675,6 +676,24 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return result.getFeedbacks();
+    }
+
+    /**
+     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
+     * the programming language, or just reformatting it to only show the most important details.
+     *
+     * @param programmingLanguage The programming language for which the feedback was generated
+     * @param message The raw error message in the feedback
+     * @return A filtered and better formatted error message
+     */
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            // Splitting string at the first linebreak to only get the first line of the Exception
+            return message.split("\\n", 2)[0]
+                .replace("java.lang.AssertionError: ", "");
+        }
+
+        return message;
     }
 
     /**
@@ -708,6 +727,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs;
+            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
+                .getProgrammingLanguage();
 
             for (Map<String, Object> job : castedJobs) {
 
@@ -717,14 +738,9 @@ public class BambooService implements ContinuousIntegrationService {
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     List<String> errors = (List<String>) failedTest.get("errors");
-                    String errorMessageString = "";
-                    for (String error : errors) {
-                        //Splitting string at the first linebreak to only get the first line of the Exception
-                        errorMessageString += error.split("\\n", 2)[0] + "\n";
-                    }
-
-                    //TODO: if PE.Language == C, do not split, else do split (take only first line)
-                    //TODO: filter java.lang.AssertionError
+                    final String errorMessageString = errors.stream()
+                        .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                        .reduce("", String::concat);
 
                     log.debug("errorMSGString is {}", errorMessageString);
 

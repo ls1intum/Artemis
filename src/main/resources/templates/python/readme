@@ -24,10 +24,10 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 1. [task][SortStrategy Interface](test_sort_strategy_class,test_sort_strategy_methods)
 Create a `SortStrategy` abstract class with an abstract method and adjust the sorting algorithms so that they inherit from this class.
 
-2. [task][Context Class](test_context_class,test_context_attributes,test_context_methods)
+2. [task][Context Class](test_context_attributes,test_context_methods)
 Create and implement a `Context` class following the below class diagram
 
-3. [task][Context Policy](test_policy_class,test_policy_constructor,test_policy_attributes,test_policy_methods)
+3. [task][Context Policy](test_policy_constructor,test_policy_attributes,test_policy_methods)
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
     1. [task][Select MergeSort](test_merge_sort_struct,test_merge_sort_for_big_list)
