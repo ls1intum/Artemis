@@ -35,25 +35,7 @@ public class ExerciseLifecycleService {
      * @return The {@code ScheduledFuture<?>} allows to later cancel the task or check whether it has been executed.
      */
     public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
-        final ZonedDateTime lifecycleDate;
-
-        switch (lifecycle) {
-        case RELEASE:
-            lifecycleDate = exercise.getReleaseDate();
-            break;
-
-        case DUE:
-            lifecycleDate = exercise.getDueDate();
-            break;
-
-        case ASSESSMENT_DUE:
-            lifecycleDate = exercise.getAssessmentDueDate();
-            break;
-
-        default:
-            throw new IllegalStateException("Unexpected Exercise Lifecycle State: " + lifecycle);
-        }
-
+        final ZonedDateTime lifecycleDate = lifecycle.getDateFromExercise(exercise);
         final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
         log.debug("Scheduled Task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
         return future;
