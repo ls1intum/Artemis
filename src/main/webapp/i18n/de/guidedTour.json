@@ -11,10 +11,7 @@
             "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
         },
         "clickHint": {
-            "text": "Klick auf das Element um mit der Tour fortzusetzen."
-        },
-        "inputHint": {
-            "text": "Klick auf das Element um mit der Tour fortzusetzen."
+            "text": "Klicke auf das Element um die Tour fortzusetzen."
         }
     }
 }
