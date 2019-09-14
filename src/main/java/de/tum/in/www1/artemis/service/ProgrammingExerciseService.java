@@ -783,13 +783,15 @@ public class ProgrammingExerciseService {
     }
 
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        final var sourcePorjectRepoNames = List.of(templateExercise.getTemplateRepositoryName(), templateExercise.getSolutionRepositoryName(),
-                templateExercise.getTestRepositoryName());
-        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var slugMapping = Map.of(templateExercise.getTemplateRepositoryUrlAsUrl(), "-exercise", templateExercise.getSolutionRepositoryUrlAsUrl(), "-solution",
+                templateExercise.getTestRepositoryUrlAsUrl(), "-tests");
+        final var targetProjectKey = newExercise.getProjectKey();
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
+        final var targetSlugPrefix = targetProjectKey.toLowerCase();
 
-        versionControlService.get().forkRepositoryForExerciseImport(newExercise, sourceProjectKey, sourcePorjectRepoNames);
+        versionControlService.get().createProjectForExercise(newExercise);
+        slugMapping.forEach((sourceRepoUrl, targetSuffix) -> versionControlService.get().copyRepository(sourceRepoUrl, targetProjectKey, targetSlugPrefix + targetSuffix, null));
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),

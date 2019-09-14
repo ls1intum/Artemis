@@ -173,7 +173,7 @@ public class ProgrammingExerciseServiceIntegrationTest {
         when(bambooService.clonePlan("solutionPlanID", toBeImported.getSolutionBuildPlanId(), RepositoryType.SOLUTION.getName())).thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");
         doNothing().when(bambooService).configureBuildPlan(any());
-        doNothing().when(bitbucketService).forkRepositoryForExerciseImport(any(ProgrammingExercise.class), anyString(), anyList());
+        doNothing().when(bitbucketService).copyRepository(any(), anyString(), anyString(), null);
         doNothing().when(bitbucketService).addWebHook(any(), anyString(), anyString());
         doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
 

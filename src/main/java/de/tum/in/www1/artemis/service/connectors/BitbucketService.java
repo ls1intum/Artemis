@@ -5,15 +5,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -54,18 +52,6 @@ public class BitbucketService implements VersionControlService {
 
     public BitbucketService(UserService userService) {
         this.userService = userService;
-    }
-
-    @Override
-    public URL copyRepository(URL templateRepositoryUrl, String username) {
-        Map<String, String> result = this.forkRepository(getProjectKeyFromUrl(templateRepositoryUrl), getRepositorySlugFromUrl(templateRepositoryUrl), username);
-        try {
-            return new URL(result.get("cloneUrl"));
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @Override
@@ -199,18 +185,52 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void forkRepositoryForExerciseImport(final ProgrammingExercise exercise, final String sourceProjectKey, final List<String> sourceProjectRepoNames) {
-        final String projectKey = exercise.getProjectKey();
-        final String targetSlugPrefix = projectKey.toLowerCase();
-        final Pattern suffixPattern = Pattern.compile("^(.+)(-[^\\-]+)$");
-        final Map<String, String> slugs = sourceProjectRepoNames.stream().collect(Collectors.toMap(String::toLowerCase, slug -> {
-            Matcher m = suffixPattern.matcher(slug);
-            m.matches();
-            return m.group(m.groupCount());
-        }));
+    public Map<String, String> copyRepository(URL baseRepositoryUrl, String targetProjectKey, String targetRepositorySlug, @Nullable String username) {
+        final var baseRepositorySlug = getRepositorySlugFromUrl(baseRepositoryUrl);
+        final var baseProjectKey = getProjectKeyFromUrl(baseRepositoryUrl);
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", targetRepositorySlug);
+        body.put("project", new HashMap<>());
+        ((Map) body.get("project")).put("key", targetProjectKey);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
 
-        createProjectForExercise(exercise);
-        slugs.forEach((sourceSlug, targetSuffix) -> forkRepository(sourceProjectKey, projectKey, sourceSlug, targetSlugPrefix + targetSuffix));
+        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug;
+        try {
+            final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+            if (response.getStatusCode().equals(HttpStatus.CREATED)) {
+                String slug = (String) response.getBody().get("slug");
+                String cloneUrl = buildCloneUrl(baseProjectKey, targetRepositorySlug, username).toString();
+                Map<String, String> result = new HashMap<>();
+                result.put("slug", slug);
+                result.put("cloneUrl", cloneUrl);
+                return result;
+            }
+        }
+        catch (URISyntaxException e) {
+            throw new BitbucketException("Invalid repository URL built while trying to fork: " + repoUrl);
+        }
+        catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.CONFLICT) && username != null) {
+                log.info("Repository already exists. Going to recover repository information...");
+                Map<String, String> result = new HashMap<>();
+                result.put("slug", targetRepositorySlug);
+                result.put("cloneUrl", buildCloneUrl(baseProjectKey, targetRepositorySlug, username).toString());
+                // Delete existing WebHooks (partipation ID might have changed)
+                deleteExistingWebHooks(baseProjectKey, targetRepositorySlug);
+                return result;
+            }
+            else {
+                throw e;
+            }
+        }
+        catch (Exception emAll) {
+            log.error("Could not fork base repository for user " + username, emAll);
+            throw new BitbucketException("Error while forking repository");
+        }
+
+        return null;
     }
 
     /**
@@ -251,70 +271,6 @@ public class BitbucketService implements VersionControlService {
 
         log.error("No repository slug could be found for repository {}", repositoryUrl);
         throw new BitbucketException("No repository slug could be found");
-    }
-
-    /**
-     * Uses the configured Bitbucket account to fork the given repository inside the project.
-     *
-     * @param baseProjectKey     The project key of the base project.
-     * @param baseRepositorySlug The repository slug of the base repository.
-     * @return The slug of the forked repository (i.e. its identifier).
-     */
-    @SuppressWarnings("unchecked")
-    private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
-        String forkName = String.format("%s-%s", baseRepositorySlug, username);
-        Map<String, Object> body = new HashMap<>();
-        ResponseEntity<Map> response;
-        try {
-            response = forkRepository(baseProjectKey, baseProjectKey, baseRepositorySlug, forkName);
-        }
-        catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
-                log.info("Repository already exists. Going to recover repository information...");
-                Map<String, String> result = new HashMap<>();
-                result.put("slug", forkName);
-                result.put("cloneUrl", buildCloneUrl(baseProjectKey, forkName, username).toString());
-                // Delete existing WebHooks (partipation ID might have changed)
-                deleteExistingWebHooks(baseProjectKey, forkName);
-                return result;
-            }
-            else {
-                throw e;
-
-            }
-        }
-        catch (Exception emAll) {
-            log.error("Could not fork base repository for user " + username, emAll);
-            throw new BitbucketException("Error while forking repository");
-        }
-
-        if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-            String slug = (String) response.getBody().get("slug");
-            String cloneUrl = buildCloneUrl(baseProjectKey, forkName, username).toString();
-            Map<String, String> result = new HashMap<>();
-            result.put("slug", slug);
-            result.put("cloneUrl", cloneUrl);
-            return result;
-        }
-        return null;
-    }
-
-    private ResponseEntity<Map> forkRepository(String baseProjectKey, String targetProjectKey, String baseRepositorySlug, String targetRepositorySlug) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", targetRepositorySlug);
-        body.put("project", new HashMap<>());
-        ((Map) body.get("project")).put("key", targetProjectKey);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
-
-        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug;
-        try {
-            return restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
-        }
-        catch (URISyntaxException e) {
-            throw new BitbucketException("Invalid repository URL built while trying to fork: " + repoUrl);
-        }
     }
 
     /**

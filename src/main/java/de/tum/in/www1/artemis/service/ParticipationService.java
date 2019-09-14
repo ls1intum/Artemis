@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -415,10 +416,22 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.get().copyRepository(participation.getProgrammingExercise().getTemplateRepositoryUrlAsUrl(),
-                    participation.getStudent().getLogin());
-            if (Optional.ofNullable(repositoryUrl).isPresent()) {
-                participation.setRepositoryUrl(repositoryUrl.toString());
+            final var exercise = participation.getProgrammingExercise();
+            final var projectKey = exercise.getProjectKey();
+            final var templateUrl = exercise.getTemplateRepositoryUrlAsUrl();
+            final var username = participation.getStudent().getLogin();
+            final var copySlug = String.format("%s-%s", projectKey.toLowerCase(), username);
+            final var newRepoUrlString = versionControlService.get().copyRepository(templateUrl, projectKey, copySlug, username).get("cloneUrl");
+            Optional<URL> newRepoUrl;
+            try {
+                newRepoUrl = Optional.ofNullable(newRepoUrlString != null ? new URL(newRepoUrlString) : null);
+            }
+            catch (MalformedURLException e) {
+                log.error(e.getMessage(), e);
+                newRepoUrl = Optional.empty();
+            }
+            if (newRepoUrl.isPresent()) {
+                participation.setRepositoryUrl(newRepoUrl.get().toString());
                 participation.setInitializationState(InitializationState.REPO_COPIED);
             }
             return save(participation);
@@ -444,7 +457,7 @@ public class ParticipationService {
             final var templatePlanId = participation.getProgrammingExercise().getTemplateBuildPlanId();
             final var projectKey = templatePlanId.split("-")[0];
             final var userId = participation.getStudent().getLogin();
-            final var buildPlanId = continuousIntegrationService.get().clonePlan(templatePlanId, projectKey + userId, userId);
+            final var buildPlanId = continuousIntegrationService.get().clonePlan(templatePlanId, projectKey + "-" + userId, userId);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
