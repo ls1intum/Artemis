@@ -29,7 +29,14 @@ public class ScheduleService {
         scheduledTasks.remove(exercise.getId());
     }
 
-    public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
+    /**
+     * Schedule a task for the given Exercise for the provided ExerciseLifecycle.
+     *
+     * @param exercise Exercise
+     * @param lifecycle ExerciseLifecycle
+     * @param task Runnable task to be executed on the lifecycle hook
+     */
+    void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled for clustering more than once.
         cancelScheduledTask(exercise);
@@ -41,7 +48,7 @@ public class ScheduleService {
      * Cancel possible schedules tasks for a provided exercise.
      * @param exercise exercise for which a potential clustering task is canceled
      */
-    public void cancelScheduledTask(Exercise exercise) {
+    void cancelScheduledTask(Exercise exercise) {
         ScheduledFuture future = scheduledTasks.get(exercise.getId());
         if (future != null) {
             future.cancel(false);

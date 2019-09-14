@@ -16,6 +16,8 @@ public interface IExerciseScheduleService<T extends Exercise> {
 
     /**
      * Schedules / does not schedule the task with the given exercise settings..
+     *
+     * @param exercise Exercise
      */
     void scheduleExerciseIfRequired(T exercise);
 
