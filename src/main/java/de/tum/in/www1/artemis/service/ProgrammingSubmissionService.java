@@ -9,10 +9,13 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -23,12 +26,15 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
 @Transactional
 public class ProgrammingSubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+
+    private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -46,11 +52,12 @@ public class ProgrammingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
+    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -168,6 +175,18 @@ public class ProgrammingSubmissionService {
         return submissionOpt;
     }
 
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (programmingExercise == null) {
+            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
+        List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
+
+        notifyUserTriggerBuildForNewSubmissions(submissions);
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * Create a submission with given submission type for the last commit hash of the given participation.
      * WARNING: The commitHash is used to map incoming results to submissions. Using this method could cause the result to have multiple fitting submissions.
@@ -224,5 +243,38 @@ public class ProgrammingSubmissionService {
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
+        for (ProgrammingSubmission submission : submissions) {
+            triggerBuildAndNotifyUser(submission);
+        }
+    }
+
+    /**
+     * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
+     * Will send an error object in the case that the communication with the CI failed.
+     *
+     * @param submission ProgrammingSubmission that was just created.
+     */
+    public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
+        try {
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            notifyUserAboutSubmission(submission);
+        }
+        catch (HttpException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
+            notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
+    public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, submission);
+    }
+
+    private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
+        String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
+        messagingTemplate.convertAndSend(topic, error);
     }
 }

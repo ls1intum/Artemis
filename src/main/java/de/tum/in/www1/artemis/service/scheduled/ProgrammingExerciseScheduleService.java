@@ -12,8 +12,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
@@ -24,17 +25,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ProgrammingSubmissionResource programmingSubmissionResource;
+    private final ProgrammingSubmissionService programmingSubmissionService;
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionResource programmingSubmissionResource) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseService = programmingExerciseService;
-        this.programmingSubmissionResource = programmingSubmissionResource;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     @PostConstruct
     public void scheduleRunningExercisesOnStartup() {
+        SecurityUtils.setAuthorizationObject();
         List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseService.findAllWithBuildAndTestAfterDueDateInFuture();
         programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
         log.info("Scheduled building the student submissions for " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
@@ -61,9 +63,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @NotNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
         return () -> {
-            // TODO: needed?
-            // SecurityUtils.setAuthorizationObject();
-            programmingSubmissionResource.triggerInstructorBuildForExercise(exercise.getId());
+            SecurityUtils.setAuthorizationObject();
+            try {
+                programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Programming exercise with id " + exercise.getId() + " is no longer available in database for use in scheduled task.");
+            }
         };
     }
 
