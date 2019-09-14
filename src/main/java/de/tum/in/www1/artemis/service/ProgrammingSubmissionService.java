@@ -9,7 +9,6 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -175,7 +174,14 @@ public class ProgrammingSubmissionService {
         return submissionOpt;
     }
 
-    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
+    /**
+     * Trigger the CI of all student participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
+     */
+    public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
@@ -184,7 +190,6 @@ public class ProgrammingSubmissionService {
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -245,6 +250,10 @@ public class ProgrammingSubmissionService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
+    /**
+     * Trigger a CI build for each submission & notify each user on a new programming submission.
+     * @param submissions ProgrammingSubmission Collection
+     */
     public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
         for (ProgrammingSubmission submission : submissions) {
             triggerBuildAndNotifyUser(submission);
@@ -268,6 +277,10 @@ public class ProgrammingSubmissionService {
         }
     }
 
+    /**
+     * Notify user on a new programming submission.
+     * @param submission ProgrammingSubmission
+     */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
         messagingTemplate.convertAndSend(topic, submission);

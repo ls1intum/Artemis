@@ -35,6 +35,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     @PostConstruct
+    @Override
     public void scheduleRunningExercisesOnStartup() {
         SecurityUtils.setAuthorizationObject();
         List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseService.findAllWithBuildAndTestAfterDueDateInFuture();
@@ -43,9 +44,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Schedule a clustering task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
-     * @param exercise exercise to schedule clustering for
+     * Will cancel a scheduled task if the buildAndTestAfterDueDate is null or has passed already.
+     * @param exercise ProgrammingExercise
      */
+    @Override
     public void scheduleExerciseIfRequired(ProgrammingExercise exercise) {
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null || exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now())) {
             scheduleService.cancelScheduledTask(exercise);
@@ -54,6 +56,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         scheduleExercise(exercise);
     }
 
+    @Override
     public void scheduleExercise(ProgrammingExercise exercise) {
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
