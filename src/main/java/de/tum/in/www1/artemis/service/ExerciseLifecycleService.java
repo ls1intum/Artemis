@@ -40,5 +40,4 @@ public class ExerciseLifecycleService {
         log.debug("Scheduled Task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
         return future;
     }
-
 }

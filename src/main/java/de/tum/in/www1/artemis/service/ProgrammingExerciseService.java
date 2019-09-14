@@ -738,4 +738,12 @@ public class ProgrammingExerciseService {
         // This will also delete the template & solution participation.
         programmingExerciseRepository.delete(programmingExercise);
     }
+
+    /**
+     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
+     * @return List<ProgrammingExercise>
+     */
+    public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
+        return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
 }
