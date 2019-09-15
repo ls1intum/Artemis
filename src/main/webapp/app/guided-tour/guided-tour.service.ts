@@ -232,15 +232,20 @@ export class GuidedTourService {
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         const observer = new MutationObserver(mutations => {
+            let mutationCount = 0;
             mutations.forEach(mutation => {
+                console.log('mutation: ', mutation);
                 if (nextStep) {
                     switch (userInteraction) {
                         case UserInteractionEvent.CLICK: {
-                            this.guidedTourCurrentStepSubject.next(null);
-                            console.log('observer disconnect');
-                            observer.disconnect();
-                            this.nextStep(nextStep);
-                            return;
+                            if (mutationCount < 1) {
+                                // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
+                                mutationCount += 1;
+                                this.guidedTourCurrentStepSubject.next(null);
+                                console.log('observer disconnect');
+                                this.resumeTour(observer, nextStep);
+                            }
+                            break;
                         }
                         case UserInteractionEvent.ACE_EDITOR: {
                             if (mutation.addedNodes.length !== mutation.removedNodes.length && mutation.addedNodes.length >= 1) {

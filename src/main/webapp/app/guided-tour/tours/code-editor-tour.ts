@@ -41,7 +41,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             selector: '#submit_button',
-            eventListenerSelector: 'jhi-updating-result',
+            eventListenerSelector: 'jhi-result',
             headlineTranslateKey: 'tour.programmingExercise.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.submitChanges.content',
             highlightPadding: 10,
