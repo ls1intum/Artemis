@@ -328,8 +328,6 @@ public class DatabaseUtilService {
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        assertThat(programmingExerciseRepository.findAll()).as("programming exercise is initialized").hasSize(1);
-
         return courseRepo.findById(course.getId()).get();
     }
 

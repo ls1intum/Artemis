@@ -121,4 +121,22 @@ class ProgrammingExerciseScheduleServiceTest {
 
         Mockito.verify(programmingSubmissionService, Mockito.never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
+
+    @Test
+    void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws InterruptedException {
+        long delayMS = 100;
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
+        programmingExerciseRepository.save(programmingExercise);
+
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise2 = programmingExerciseRepository.findAll().get(1);
+        programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise2);
+
+        programmingExerciseScheduleService.scheduleRunningExercisesOnStartup();
+
+        Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        Mockito.verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+    }
 }
