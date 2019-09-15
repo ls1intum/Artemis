@@ -72,11 +72,11 @@ public class UMLClass extends UMLElement {
      * @return the similarity as number [0-1]
      */
     double overallSimilarity(UMLElement element) {
-        double similarity = 0;
-
-        if (element.getClass() != UMLClass.class) {
+        if (element == null || element.getClass() != UMLClass.class) {
             return 0;
         }
+
+        double similarity = 0;
 
         UMLClass reference = (UMLClass) element;
 
