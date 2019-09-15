@@ -28,7 +28,7 @@
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
                 <div *ngIf="currentTourStep.videoUrl">
-                    <iframe [src]="sanitizer.bypassSecurityTrustResourceUrl(currentTourStep.videoUrl)" frameborder="0" allowfullscreen></iframe>
+                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
                 </div>
                 <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a

@@ -40,7 +40,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
 
-    constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
+    constructor(public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key
