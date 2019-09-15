@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
 
-    private final Logger log = LoggerFactory.getLogger(TextClusteringScheduleService.class);
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
 
@@ -68,6 +68,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
+                log.error("Invoking scheduled task programming exercise with id " + exercise.getId() + ".");
                 programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {

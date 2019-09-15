@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -12,6 +14,8 @@ import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 
 @Service
 public class ScheduleService {
+
+    private final Logger log = LoggerFactory.getLogger(ScheduleService.class);
 
     private ExerciseLifecycleService exerciseLifecycleService;
 
@@ -51,6 +55,8 @@ public class ScheduleService {
     void cancelScheduledTask(Exercise exercise) {
         ScheduledFuture future = scheduledTasks.get(exercise.getId());
         if (future != null) {
+            log.debug("Cancelling scheduled task for build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#"
+                    + exercise.getId() + ").");
             future.cancel(false);
             removeScheduledTask(exercise);
         }
