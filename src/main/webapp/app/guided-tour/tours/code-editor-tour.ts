@@ -35,7 +35,7 @@ export const codeEditorTour: GuidedTour = {
             headlineTranslateKey: 'tour.programmingExercise.saveChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.saveChanges.content',
             highlightPadding: 10,
-            orientation: Orientation.LEFT,
+            orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
             autoNextStep: false,
         }),
@@ -45,7 +45,7 @@ export const codeEditorTour: GuidedTour = {
             headlineTranslateKey: 'tour.programmingExercise.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.submitChanges.content',
             highlightPadding: 10,
-            orientation: Orientation.LEFT,
+            orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         new TextTourStep({
@@ -53,7 +53,7 @@ export const codeEditorTour: GuidedTour = {
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             highlightPadding: 10,
-            orientation: Orientation.LEFT,
+            orientation: Orientation.BOTTOMRIGHT,
         }),
     ],
 };

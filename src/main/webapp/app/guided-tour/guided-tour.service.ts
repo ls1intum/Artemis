@@ -144,7 +144,6 @@ export class GuidedTourService {
         if (nextTourStep) {
             nextStep = nextTourStep;
         }
-        console.log('next step: ', nextStep);
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -234,7 +233,6 @@ export class GuidedTourService {
         const observer = new MutationObserver(mutations => {
             let mutationCount = 0;
             mutations.forEach(mutation => {
-                console.log('mutation: ', mutation);
                 if (nextStep) {
                     switch (userInteraction) {
                         case UserInteractionEvent.CLICK: {
@@ -242,7 +240,6 @@ export class GuidedTourService {
                                 // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
                                 mutationCount += 1;
                                 this.guidedTourCurrentStepSubject.next(null);
-                                console.log('observer disconnect');
                                 this.resumeTour(observer, nextStep);
                             }
                             break;
@@ -250,7 +247,7 @@ export class GuidedTourService {
                         case UserInteractionEvent.ACE_EDITOR: {
                             if (mutation.addedNodes.length !== mutation.removedNodes.length && mutation.addedNodes.length >= 1) {
                                 const nextButton = document.querySelector('.next-button');
-                                if (nextButton) {
+                                if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
                                     nextButton.attributes.removeNamedItem('disabled');
                                 }
                             }

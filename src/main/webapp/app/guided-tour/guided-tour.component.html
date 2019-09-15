@@ -39,13 +39,13 @@
                         rel="noopener noreferrer"
                     ></a>
                 </div>
-                <div *ngIf="currentTourStep.userInteractionEvent" class="click-hint">
-                    <div class="click-hint__icon"><fa-icon icon="info-circle"></fa-icon></div>
-                    <div *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" class="click-hint__label">
-                        <span jhiTranslate="tour.clickHint.text"></span>
+                <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="info-circle"></fa-icon>
                     </div>
-                    <div *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" class="click-hint__label">
-                        <span jhiTranslate="tour.clickHint.text"></span>
+                    <div class="step-hint__label">
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.clickHint.text"></span>
                     </div>
                 </div>
             </div>
