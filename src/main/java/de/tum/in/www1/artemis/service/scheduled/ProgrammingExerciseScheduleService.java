@@ -56,8 +56,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         scheduleExercise(exercise);
     }
 
-    @Override
-    public void scheduleExercise(ProgrammingExercise exercise) {
+    private void scheduleExercise(ProgrammingExercise exercise) {
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                 + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");

@@ -15,15 +15,10 @@ public interface IExerciseScheduleService<T extends Exercise> {
     void scheduleRunningExercisesOnStartup();
 
     /**
-     * Schedules / does not schedule the task with the given exercise settings..
+     * Schedules / does not schedule the task with the given exercise settings.
+     * Will also cancel existing tasks if they exist.
      *
      * @param exercise Exercise
      */
     void scheduleExerciseIfRequired(T exercise);
-
-    /**
-     * Schedule a task regardless of the exercise's settings.
-     * @param exercise Exercise
-     */
-    void scheduleExercise(T exercise);
 }
