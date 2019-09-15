@@ -751,8 +751,16 @@ public class ProgrammingExerciseService {
         programmingExerciseRepository.delete(programmingExercise);
     }
 
+    /**
+     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search) {
-        Sort sorting = Sort.by(ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).mappedColumnName);
+        var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
 
@@ -761,6 +769,24 @@ public class ProgrammingExerciseService {
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
+    /**
+     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
+     * All basic include everything except for repositories, or build plans on a remote version control server, or
+     * continuous integration server. <br>
+     * There are however, a couple of things that will never get copied:
+     * <ul>
+     *     <li>The ID</li>
+     *     <li>The template and solution participation</li>
+     *     <li>The number of complaints, assessments and more feedback requests</li>
+     *     <li>The tutor/student participations</li>
+     *     <li>The questions asked by students</li>
+     *     <li>The example submissions</li>
+     * </ul>
+     *
+     * @param templateExercise The template exercise which should get imported
+     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @return The newly created exercise
+     */
     @Transactional
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         setupExerciseForImport(newExercise);
@@ -782,6 +808,13 @@ public class ProgrammingExerciseService {
         return newExercise;
     }
 
+    /**
+     * Import all base repositories from one exercise. These include the template, the solution and the test
+     * repository. Participation repositories from students or tutors will not get copied!
+     *
+     * @param templateExercise The template exercise having a reference to all base repositories
+     * @param newExercise The new exercise without any repositories
+     */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var slugMapping = Map.of(templateExercise.getTemplateRepositoryUrlAsUrl(), "-exercise", templateExercise.getSolutionRepositoryUrlAsUrl(), "-solution",
                 templateExercise.getTestRepositoryUrlAsUrl(), "-tests");
@@ -800,6 +833,13 @@ public class ProgrammingExerciseService {
                 "Artemis Tests WebHook");
     }
 
+    /**
+     * Imports all base build plans for an exercise. These include the template and the solution build plan, <b>not</b>
+     * any participation plans!
+     *
+     * @param templateExercise The template exercise which plans should get copied
+     * @param newExercise The new exercise to which all plans should get copied
+     */
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
@@ -816,6 +856,13 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
     }
 
+    /**
+     * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
+     * The remaining contents stay the same, especially the weights.
+     *
+     * @param templateExercise The template exercise which test cases should get copied
+     * @param targetExercise The new exercise to which all test cases should get copied to
+     */
     private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
@@ -828,11 +875,25 @@ public class ProgrammingExerciseService {
         }).collect(Collectors.toSet()));
     }
 
+    /**
+     * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
+     * repository on the version control server!
+     *
+     * @param newExercise
+     * @param projectKey
+     */
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final var testRepoName = projectKey.toLowerCase() + "-tests";
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
     }
 
+    /**
+     * Sets up a new exercise for importing it by setting all values, that should either never get imported, or
+     * for which we should create new entities (e.g. test cases) to null. This ensures that we do not copy
+     * anything by accident.
+     *
+     * @param newExercise
+     */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
         newExercise.setId(null);
         newExercise.setTemplateParticipation(null);
@@ -841,26 +902,11 @@ public class ProgrammingExerciseService {
         newExercise.setTestCases(null);
         newExercise.setAttachments(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
-        newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setNumberOfAssessments(null);
         newExercise.setTutorParticipations(null);
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);
         newExercise.setParticipations(null);
-    }
-
-    private enum ProgrammingExerciseSearchColumn {
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
-
-        private String mappedColumnName;
-
-        ProgrammingExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 }

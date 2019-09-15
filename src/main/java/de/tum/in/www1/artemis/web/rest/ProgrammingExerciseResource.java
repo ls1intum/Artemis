@@ -288,6 +288,21 @@ public class ProgrammingExerciseResource {
         }
     }
 
+    /**
+     * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
+     *
+     * This will import the whole exercise, including all base build plans (template, solution) and repositories
+     * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
+     * a new id. For a concrete list of what gets copied and what not have a look at {@link ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
+     *
+     * @see ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseService#importRepositories(ProgrammingExercise, ProgrammingExercise)
+     * @param sourceExerciseId The ID of the template exercise which should get imported
+     * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     */
     @PostMapping("/programming-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {

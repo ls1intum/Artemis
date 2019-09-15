@@ -2,10 +2,23 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
 
+/**
+ * Wrapper for a search result which is paged <br>
+ *
+ * @see org.springframework.data.domain.Pageable
+ * @see PageableSearchDTO
+ * @param <T>
+ */
 public class SearchResultPageDTO<T> {
 
+    /**
+     * The search result
+     */
     private List<T> resultsOnPage;
 
+    /**
+     * The total number of available pages for the given search
+     */
     private int numberOfPages;
 
     public SearchResultPageDTO() {

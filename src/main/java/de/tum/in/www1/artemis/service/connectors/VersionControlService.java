@@ -114,5 +114,14 @@ public interface VersionControlService {
      */
     String checkIfProjectExists(String projectKey, String projectName);
 
+    /**
+     * Copies a repository from one project to another one. The project can be the same.
+     *
+     * @param baseRepositoryUrl The URL of the template repository
+     * @param targetProjectKey The key of the target project
+     * @param targetRepositorySlug The slug of the new repository
+     * @param username Can be null. The name of the user if the newly created repository should belong to a specific user
+     * @return A map containing various information about the copied repository, s.a. the slug or the cloneUrl of the new repo.
+     */
     Map<String, String> copyRepository(URL baseRepositoryUrl, String targetProjectKey, String targetRepositorySlug, @Nullable String username);
 }

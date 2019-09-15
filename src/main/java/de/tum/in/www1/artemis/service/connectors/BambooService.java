@@ -191,7 +191,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
-        if (!isPlanActive(participation.getBuildPlanId())) {
+        if (!isBuildPlanEnabled(participation.getBuildPlanId())) {
             return;
         }
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
@@ -209,7 +209,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public boolean isPlanActive(final String planId) {
+    public boolean isBuildPlanEnabled(final String planId) {
         final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         final var entity = new HttpEntity<>(null, headers);
@@ -312,7 +312,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public String clonePlan(String templatePlan, String planKey, String planName) throws BambooException {
-        final var cleanPlanName = getCleanPlanKey(planName);
+        final var cleanPlanName = getCleanPlanName(planName);
         planKey = planKey.replace(planName, cleanPlanName);
         try {
             log.debug("Clone build plan " + templatePlan + " to " + planKey);
@@ -1071,7 +1071,7 @@ public class BambooService implements ContinuousIntegrationService {
         return buildPlanId.split("-")[0];
     }
 
-    private String getCleanPlanKey(String name) {
+    private String getCleanPlanName(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 }

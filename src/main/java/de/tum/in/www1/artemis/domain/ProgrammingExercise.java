@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +19,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
  * A ProgrammingExercise.
@@ -70,8 +75,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
+    /**
+     * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
+     */
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-    @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
+    @JsonIgnore
     public String getTemplateRepositoryUrl() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             return templateParticipation.getRepositoryUrl();
@@ -90,7 +98,10 @@ public class ProgrammingExercise extends Exercise {
         return getRepositoryNameFor(getTemplateRepositoryUrl(), "exercise");
     }
 
-    @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
+    /**
+     * Convenience getter. The actual URL is stored in the {@link SolutionProgrammingExerciseParticipation}
+     */
+    @JsonIgnore
     public String getSolutionRepositoryUrl() {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             return solutionParticipation.getRepositoryUrl();
@@ -126,6 +137,13 @@ public class ProgrammingExercise extends Exercise {
         return getRepositoryNameFor(getTestRepositoryUrl(), "tests");
     }
 
+    /**
+     * Get the repository name for any stored repository, i.e. the slug of the repository.
+     *
+     * @param repoUrl The full URL of the repository
+     * @param suffix The suffix defining the repository type, e.g. "exercise" for the template repo.
+     * @return The full repository slug for the given URL
+     */
     private String getRepositoryNameFor(final String repoUrl, final String suffix) {
         if (repoUrl == null) {
             return null;
@@ -393,5 +411,23 @@ public class ProgrammingExercise extends Exercise {
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
                 + ", packageName='" + getPackageName() + "'" + "}";
+    }
+
+    /**
+     * Columns for which we allow a pageable search using the {@link ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO)}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum ProgrammingExerciseSearchColumn {
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+
+        private String mappedColumnName;
+
+        ProgrammingExerciseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

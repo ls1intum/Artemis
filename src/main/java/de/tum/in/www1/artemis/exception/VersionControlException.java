@@ -7,6 +7,10 @@ package de.tum.in.www1.artemis.exception;
  * unchecked exceptions. But, by declaring "throws Exception" in the interface, we now have lots of methods calling this interface and just passing the generic exceptions by
  * declaring "throws Exception" themselves (Although in the end, we just throw an unchecked RuntimeException).
  */
+
+/**
+ * Generic exception thrown if there are any errors while communicating with the {@link de.tum.in.www1.artemis.service.connectors.VersionControlService VersionControlService}
+ */
 public class VersionControlException extends RuntimeException {
 
     public VersionControlException() {

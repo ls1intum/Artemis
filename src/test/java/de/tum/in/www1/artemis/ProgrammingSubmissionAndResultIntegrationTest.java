@@ -126,7 +126,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @BeforeEach
     void reset() {
-        doReturn(true).when(bambooService).isPlanActive(anyString());
+        doReturn(true).when(bambooService).isBuildPlanEnabled(anyString());
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 

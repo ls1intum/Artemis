@@ -82,10 +82,18 @@ public class ExerciseHintService {
         exerciseHintRepository.deleteById(id);
     }
 
+    /**
+     * Copies the hints of an exercise to a new target exercise without by cloning the hint objects and saving them
+     * resulting in new IDs for the copied hints. The contents stay the same. On top of that, all hints in the
+     * problem statement of the target exercise get replaced by the new IDs.
+     *
+     * @param template The template exercise containing the hints that should be copied
+     * @param target The new target exercise, to which all hints should get copied to.
+     */
     public void copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
-            final ExerciseHint copiedHint = new ExerciseHint();
+            final var copiedHint = new ExerciseHint();
             copiedHint.setExercise(target);
             copiedHint.setContent(hint.getContent());
             copiedHint.setTitle(hint.getTitle());
@@ -95,8 +103,8 @@ public class ExerciseHintService {
         }).collect(Collectors.toSet()));
 
         String patchedStatement = target.getProblemStatement();
-        for (final Map.Entry<Long, Long> idMapping : hintIdMapping.entrySet()) {
-            final String replacement = "$1" + idMapping.getValue() + "$3";
+        for (final var idMapping : hintIdMapping.entrySet()) {
+            final var replacement = "$1" + idMapping.getValue() + "$3";
             patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*\\})", replacement);
         }
         target.setProblemStatement(patchedStatement);

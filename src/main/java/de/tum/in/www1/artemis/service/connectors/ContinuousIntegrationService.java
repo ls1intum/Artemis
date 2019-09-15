@@ -28,12 +28,12 @@ public interface ContinuousIntegrationService {
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
 
     /**
-     * Clones an existing Bamboo plan.
+     * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
      * @param templatePlan The key of the template plan.
-     * @param planKey The key of the new plan
-     * @param planName The name of the new plan
-     * @return The name of the new build plan
+     * @param planKey The wanted key of the new plan
+     * @param planName The wanted name of the new plan
+     * @return The key of the new build plan
      */
     String clonePlan(String templatePlan, String planKey, String planName);
 
@@ -156,7 +156,13 @@ public interface ContinuousIntegrationService {
      */
     String checkIfProjectExists(String projectKey, String projectName);
 
-    boolean isPlanActive(final String planId);
+    /**
+     * Checks if a given build plan is deactivated, or enabled
+     *
+     * @param planId The ID of the build plan
+     * @return True, if the plan is enabled, false otherwise
+     */
+    boolean isBuildPlanEnabled(final String planId);
 
     /**
      * Enables the given build plan.

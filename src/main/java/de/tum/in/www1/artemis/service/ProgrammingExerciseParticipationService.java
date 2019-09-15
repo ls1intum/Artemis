@@ -162,6 +162,14 @@ public class ProgrammingExerciseParticipationService {
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
+    /**
+     * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     * @param projectKey The key of the project of the new exercise
+     * @param solutionPlanName The name for the build plan of the participation
+     */
     @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
         final String solutionRepoName = projectKey.toLowerCase() + "-solution";
@@ -173,14 +181,22 @@ public class ProgrammingExerciseParticipationService {
         solutionParticipationRepository.save(solutionParticipation);
     }
 
+    /**
+     * Setup the initial template participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     * @param projectKey The key of the project of the new exercise
+     * @param templatePlanName The name for the build plan of the participation
+     */
     @NotNull
     public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
         final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        newExercise.setTemplateParticipation(templateParticipation);
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
+        newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
     }
 }
