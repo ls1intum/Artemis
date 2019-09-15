@@ -80,54 +80,32 @@ public class UMLClass extends UMLElement {
 
         UMLClass reference = (UMLClass) element;
 
-        int elementCount = attributes.size() + methods.size() + 1;
+        // For calculating the weight of the similarity of every element, we consider the max. element count of both classes to reflect missing elements on either side in the total
+        // similarity score. E.g. if we compare two classes, classA with one attribute and classB with two attributes, the highest possible similarity between these classes should
+        // be 2/3 (name/type + one attribute can be similar), so the weight should be 2/3, no matter if we do classA.overallSimilarity(classB) or classB.overallSimilarity(classA).
+        int maxElementCount = Math.max(attributes.size(), reference.getAttributes().size()) + Math.max(methods.size(), reference.getMethods().size()) + 1;
+        double weight = 1.0 / maxElementCount;
 
-        double weight = 1.0 / elementCount;
-
-        // count of items with similarity = 0
-        int missingCount = 0;
-
-        // check name
-        // TODO: use similarity() method here instead? (it considers the Leivenshtein distance of the names and the type of the classes)
-        if (reference.name.equals(this.name)) {
-            similarity += weight;
-        }
+        // check similarity of class name and type
+        similarity += weight * similarity(reference);
 
         // check attributes
         for (UMLAttribute attribute : attributes) {
             double similarityValue = reference.similarAttributeScore(attribute);
             similarity += weight * similarityValue;
-
-            if (similarityValue < CompassConfiguration.NO_MATCH_THRESHOLD) {
-                missingCount++;
-            }
         }
 
         // check methods
         for (UMLMethod method : methods) {
             double similarityValue = reference.similarMethodScore(method);
             similarity += weight * similarityValue;
-
-            if (similarityValue < CompassConfiguration.NO_MATCH_THRESHOLD) {
-                missingCount++;
-            }
-        }
-
-        // Penalty for missing attributes and methods
-        int referenceMissingCount = Math.max(reference.attributes.size() - attributes.size(), 0);
-        referenceMissingCount += Math.max(reference.methods.size() - methods.size(), 0);
-
-        missingCount += referenceMissingCount;
-
-        // make sure: 0.0 <= similarity <= simulation.0
-        if (missingCount > 0) {
-            // TODO: the two lines below are equal to "similarity -= CompassConfiguration.MISSING_ELEMENT_PENALTY;"
-            double penaltyWeight = 1 / missingCount;
-            similarity -= penaltyWeight * CompassConfiguration.MISSING_ELEMENT_PENALTY * missingCount;
         }
 
         if (similarity < 0) {
             similarity = 0;
+        }
+        else if(similarity > 1) {
+            similarity = 1;
         }
 
         return similarity;
