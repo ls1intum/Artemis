@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.FileService;
 /**
  * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding submission is deleted. The workflow is
  * as follows: 1. user uploads a file -> temporary file is created and at this point we don't know if submission is already created, when submission is created file is moved to permanent location =>
- * This happens in @PrePersist and @PostPersist 2. When submission is deleted, the file in the permanent location is deleted => This happens in @PostRemove
+ * This happens in @PreUpdate 2. When submission is deleted, the file in the permanent location is deleted => This happens in @PostRemove
  */
 @Entity
 @DiscriminatorValue(value = "F")
@@ -27,19 +27,18 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
-    @PostLoad
-    @PostPersist
-    public void onLoad() {
-        if (getFilePath() != null && getFilePath().contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            filePath = filePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
-        }
+    @PreUpdate
+    public void onUpdate() {
+        // move file and delete old file if necessary
+        filePath = fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + getId() + '/', getId(), true);
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(filePath, null, Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + getId() + '/', getId(), true);
+        fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + getId() + '/', getId(), true);
     }
+
 
     public String getFilePath() {
         return filePath;
