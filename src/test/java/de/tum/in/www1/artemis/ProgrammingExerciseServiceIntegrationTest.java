@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -172,9 +172,6 @@ public class ProgrammingExerciseServiceIntegrationTest {
         when(bambooService.clonePlan("basePlanID", toBeImported.getTemplateBuildPlanId(), RepositoryType.TEMPLATE.getName())).thenReturn(toBeImported.getTemplateBuildPlanId());
         when(bambooService.clonePlan("solutionPlanID", toBeImported.getSolutionBuildPlanId(), RepositoryType.SOLUTION.getName())).thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");
-        doNothing().when(bambooService).configureBuildPlan(any());
-        doNothing().when(bitbucketService).copyRepository(any(), anyString(), anyString(), null);
-        doNothing().when(bitbucketService).addWebHook(any(), anyString(), anyString());
         doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
