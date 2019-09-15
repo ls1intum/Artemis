@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.google.common.base.CaseFormat;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+import org.apache.commons.lang3.EnumUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -443,7 +447,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (model == null) {
             return false;
         }
-        if (UMLClass.UMLClassType.getTypesAsList().contains(umlElementType)) {
+
+        if (EnumUtils.isValidEnum(UMLClassType.class, CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, umlElementType))) {
             for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getJSONElementID().equals(jsonElementID)) {
                     return true;
@@ -468,7 +473,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 }
             }
         }
-        else if (UMLRelationship.UMLRelationshipType.getTypesAsList().contains(umlElementType)) {
+        else if (EnumUtils.isValidEnum(UMLRelationshipType.class, CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, umlElementType))) {
             for (UMLRelationship umlRelationship : model.getRelationshipList()) {
                 if (umlRelationship.getJSONElementID().equals(jsonElementID)) {
                     return true;

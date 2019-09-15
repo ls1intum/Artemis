@@ -1,11 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
@@ -13,11 +8,6 @@ public class UMLRelationship extends UMLElement {
 
     public enum UMLRelationshipType {
         CLASS_BIDIRECTIONAL, CLASS_UNIDIRECTIONAL, CLASS_INHERITANCE, CLASS_REALIZATION, CLASS_DEPENDENCY, CLASS_AGGREGATION, CLASS_COMPOSITION;
-
-        public static List<String> getTypesAsList() {
-            return Arrays.stream(UMLRelationshipType.values()).map(umlRelationshipType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationshipType.name()))
-                    .collect(Collectors.toList());
-        }
 
         /**
          * Converts the UMLRelationship to a representing string
@@ -59,7 +49,7 @@ public class UMLRelationship extends UMLElement {
 
     private UMLRelationshipType type;
 
-    public UMLRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
+    public UMLRelationship(UMLClass source, UMLClass target, UMLRelationshipType type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
                            String targetMultiplicity) {
         this.source = source;
         this.target = target;
@@ -70,7 +60,7 @@ public class UMLRelationship extends UMLElement {
 
         this.setJsonElementID(jsonElementID);
 
-        this.type = UMLRelationshipType.valueOf(type.toUpperCase());
+        this.type = type;
     }
 
     @Override

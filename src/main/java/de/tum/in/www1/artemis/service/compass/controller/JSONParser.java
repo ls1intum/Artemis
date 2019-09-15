@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,11 @@ public class JSONParser {
             JsonObject element = elem.getAsJsonObject();
 
             String elementType = element.get(JSONMapping.elementType).getAsString();
-            if (UMLClassType.getTypesAsList().contains(elementType)) {
+            elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
+
+            if (EnumUtils.isValidEnum(UMLClassType.class, elementType)) {
+                UMLClassType classType = UMLClassType.valueOf(elementType);
+
                 String className = element.get(JSONMapping.elementName).getAsString();
 
                 List<UMLAttribute> umlAttributesList = new ArrayList<>();
@@ -110,8 +116,7 @@ public class JSONParser {
                     umlMethodList.add(newMethod);
                 }
 
-                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, element.get(JSONMapping.elementID).getAsString(),
-                        CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType));
+                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, element.get(JSONMapping.elementID).getAsString(), classType);
 
                 if (element.has(JSONMapping.elementOwner) && !element.get(JSONMapping.elementOwner).isJsonNull()) {
                     String packageId = element.get(JSONMapping.elementOwner).getAsString();
@@ -160,8 +165,12 @@ public class JSONParser {
             String relationshipType = relationship.get(JSONMapping.relationshipType).getAsString();
             relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
+            if (!EnumUtils.isValidEnum(UMLRelationshipType.class, relationshipType)) {
+                continue;
+            }
+
             if (source != null && target != null) {
-                UMLRelationship newRelation = new UMLRelationship(source, target, relationshipType, relationship.get(JSONMapping.elementID).getAsString(),
+                UMLRelationship newRelation = new UMLRelationship(source, target, UMLRelationshipType.valueOf(relationshipType), relationship.get(JSONMapping.elementID).getAsString(),
                         relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                         relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                         relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),

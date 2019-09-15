@@ -1,26 +1,17 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
-
 import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public class UMLClass extends UMLElement {
 
     public enum UMLClassType {
-        CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE;
-
-        public static List<String> getTypesAsList() {
-            return Arrays.stream(UMLClassType.values()).map(umlClassType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlClassType.name()))
-                    .collect(Collectors.toList());
-        }
+        CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE
     }
 
     private String name;
@@ -34,12 +25,12 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
-    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, String type) {
+    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType type) {
         this.name = name;
         this.attributes = attributes;
         this.methods = methods;
         this.setJsonElementID(jsonElementID);
-        this.type = UMLClassType.valueOf(type);
+        this.type = type;
     }
 
     /**
