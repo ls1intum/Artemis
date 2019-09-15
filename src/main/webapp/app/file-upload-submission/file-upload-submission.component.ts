@@ -13,7 +13,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ComponentCanDeactivate } from 'app/shared';
+import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -57,6 +57,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private jhiAlertService: JhiAlertService,
         private location: Location,
         private translateService: TranslateService,
+        private fileService: FileService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
@@ -180,6 +181,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      */
     previous() {
         this.location.back();
+    }
+
+    downloadFile(filePath: string) {
+        this.fileService.downloadAttachment(filePath);
     }
 
     /**

@@ -5,6 +5,7 @@ import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as moment from 'moment';
+import { FileService } from 'app/shared';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -41,6 +42,7 @@ export class LectureAttachmentsComponent implements OnInit {
         private attachmentService: AttachmentService,
         private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
+        private fileService: FileService,
     ) {}
 
     ngOnInit() {
@@ -137,7 +139,7 @@ export class LectureAttachmentsComponent implements OnInit {
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.attachmentService.downloadAttachment(downloadUrl);
+            this.fileService.downloadAttachment(downloadUrl);
             this.isDownloadingAttachmentLink = null;
         }
     }

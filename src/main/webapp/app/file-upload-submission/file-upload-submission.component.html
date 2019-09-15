@@ -37,7 +37,7 @@
     </div>
 
     <div class="row">
-        <div class="col-12 col-md-6" *ngIf="!result && fileUploadExercise">
+        <div class="col-12 col-md-6" *ngIf="!submission?.submitted && fileUploadExercise">
             <div class="form-group">
                 <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.file">File</label>
                 <div class="input-group background-file">
@@ -68,6 +68,15 @@
                         {{ 'artemisApp.fileUploadSubmission.fileError' | translate: { fileName: erroredFile.name } }}
                     </div>
                 </ng-container>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div *ngIf="submission?.submitted" class="card-text">
+                <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadSubmission.submissionFile' | translate }}</a>
+                <span class="ml-1 badge badge-info">
+                    {{ submittedFileName.split('.')[1] | uppercase }}
+                </span>
             </div>
         </div>
     </div>

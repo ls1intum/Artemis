@@ -3,10 +3,11 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { AuthServerProvider, JhiWebsocketService } from 'app/core';
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
 import { Attachment, AttachmentService } from 'app/entities/attachment';
+import { FileService } from 'app/shared';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -26,6 +27,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private authServerProvider: AuthServerProvider,
         private route: ActivatedRoute,
         private router: Router,
+        private fileService: FileService,
     ) {
         const navigation = this.router.getCurrentNavigation();
         if (navigation && navigation.extras.state) {
@@ -76,7 +78,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string): void {
         if (!this.isDownloadingLink) {
             this.isDownloadingLink = downloadUrl;
-            this.attachmentService.downloadAttachment(downloadUrl);
+            this.fileService.downloadAttachment(downloadUrl);
             this.isDownloadingLink = null;
         }
     }
