@@ -140,6 +140,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.submission = response.body!;
                     this.result = this.submission.result;
 
+                    const filePath = this.submission.filePath!.split('/');
+                    this.submittedFileName = filePath[filePath.length - 1];
+
                     if (this.isActive) {
                         this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                     } else {
