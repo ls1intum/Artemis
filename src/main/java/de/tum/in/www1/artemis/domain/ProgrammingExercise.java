@@ -77,6 +77,8 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
+     *
+     * @return The URL of the template repository as a String
      */
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore
@@ -100,6 +102,8 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Convenience getter. The actual URL is stored in the {@link SolutionProgrammingExerciseParticipation}
+     *
+     * @return The URL of the solution repository as a String
      */
     @JsonIgnore
     public String getSolutionRepositoryUrl() {

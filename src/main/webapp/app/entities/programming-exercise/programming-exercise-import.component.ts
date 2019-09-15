@@ -92,16 +92,34 @@ export class ProgrammingExerciseImportComponent implements OnInit {
         this.search.next();
     }
 
+    /**
+     * Callback after sorting the table. Since no callback is needed atm, this is empty
+     */
     callback() {}
 
+    /**
+     * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
+     *
+     * @param index The index of the elemnt in the ngFor
+     * @param item The exercise itself
+     * @returns The ID of the programming exercise
+     */
     trackId(index: number, item: ProgrammingExercise): number {
         return item.id;
     }
 
+    /**
+     * Closes the modal in which the import component is opened by dismissing it
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Closes the modal in which the import component is opened. Gives the selected exercise as a result.
+     *
+     * @param exercise The exercise which was selected by the user for the import.
+     */
     openImport(exercise: ProgrammingExercise) {
         this.activeModal.close(exercise);
     }
