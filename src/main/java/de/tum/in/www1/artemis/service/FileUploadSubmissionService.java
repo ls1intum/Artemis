@@ -85,7 +85,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         List<FileUploadSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setParticipations(null)).map(StudentParticipation::findLatestFileUploadSubmission)
                 // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && !submittedOnly && submission.get().isSubmitted()).forEach(submission -> submissions.add(submission.get()));
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
         return submissions;
     }
 
