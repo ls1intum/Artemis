@@ -86,7 +86,7 @@ export const programmingExerciseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'Import Programming Exercise',
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -138,7 +138,7 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExerciseImportPopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'Import Programming Exercise',
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

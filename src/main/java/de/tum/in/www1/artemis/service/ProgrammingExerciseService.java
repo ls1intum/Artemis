@@ -789,6 +789,7 @@ public class ProgrammingExerciseService {
      */
     @Transactional
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
         final var projectKey = newExercise.getProjectKey();
         final var templatePlanName = RepositoryType.TEMPLATE.getName();
@@ -799,10 +800,9 @@ public class ProgrammingExerciseService {
         setupTestRepository(newExercise, projectKey);
         initParticipations(newExercise);
 
-        // Hints
+        // Hints and test cases
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
-
         importTestCases(templateExercise, newExercise);
 
         return newExercise;
@@ -816,15 +816,20 @@ public class ProgrammingExerciseService {
      * @param newExercise The new exercise without any repositories
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Mapping of repoURL -> slugSuffix
         final var slugMapping = Map.of(templateExercise.getTemplateRepositoryUrlAsUrl(), "-exercise", templateExercise.getSolutionRepositoryUrlAsUrl(), "-solution",
                 templateExercise.getTestRepositoryUrlAsUrl(), "-tests");
         final var targetProjectKey = newExercise.getProjectKey();
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
+        // The project key is always the first half of a repo slug
         final var targetSlugPrefix = targetProjectKey.toLowerCase();
 
+        // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
+        // Copy all repositories
         slugMapping.forEach((sourceRepoUrl, targetSuffix) -> versionControlService.get().copyRepository(sourceRepoUrl, targetProjectKey, targetSlugPrefix + targetSuffix, null));
+        // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
@@ -848,6 +853,8 @@ public class ProgrammingExerciseService {
         final var templatePlanName = RepositoryType.TEMPLATE.getName();
         final var solutionPlanName = RepositoryType.SOLUTION.getName();
 
+        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
+        // running the plan for the first time
         continuousIntegrationService.get().clonePlan(sourceTemplateId, templateParticipation.getBuildPlanId(), templatePlanName);
         continuousIntegrationService.get().clonePlan(sourceSolutionId, solutionParticipation.getBuildPlanId(), solutionPlanName);
         continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
@@ -866,6 +873,8 @@ public class ProgrammingExerciseService {
     private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
+
+            // Copy everything except for the referenced exercise
             copy.setActive(testCase.isActive());
             copy.setAfterDueDate(testCase.isAfterDueDate());
             copy.setTestName(testCase.getTestName());

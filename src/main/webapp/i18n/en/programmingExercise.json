@@ -5,6 +5,7 @@
                 "title": "Programming Exercises",
                 "createLabel": "Create new Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
+                "importLabel": "Import new Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "editLinkLabel": "Edit linked Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
@@ -102,7 +103,16 @@
             "buildingSubmissions": "Building submissions: {{number}}",
             "failedSubmissions": "Failed submissions: {{number}}",
             "resultETA": "Result ETA: {{eta}}",
-            "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system."
+            "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system.",
+            "import": {
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "language": "Programming Language",
+                    "course": "Course",
+                    "doImport": "Import"
+                }
+            }
         }
     }
 }
