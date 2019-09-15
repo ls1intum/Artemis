@@ -57,8 +57,6 @@ import { hasExerciseChanged } from 'app/entities/exercise';
     `,
 })
 export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
-    TODAY = moment();
-
     @Input() exercise: ProgrammingExercise;
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
     // true => Form is valid.
