@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -129,7 +129,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     /**
      * Submits File Upload Exercise
      */
-    submitExercise() {
+    private submitExercise() {
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {
