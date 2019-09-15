@@ -72,7 +72,7 @@
         </div>
 
         <div class="card-body">
-            <div *ngIf="submission?.submitted" class="card-text">
+            <div *ngIf="submission?.submitted && submittedFileName" class="card-text">
                 <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadSubmission.submissionFile' | translate }}</a>
                 <span class="ml-1 badge badge-info">
                     {{ submittedFileName.split('.')[1] | uppercase }}
