@@ -14,7 +14,6 @@ import { hasExerciseChanged } from 'app/entities/exercise';
         <jhi-date-time-picker
             labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
             [ngModel]="exercise.dueDate"
-            [min]="TODAY"
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
