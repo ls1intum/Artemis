@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, Event, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -38,7 +37,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private router: Router,
         public guidedTourService: GuidedTourService,
     ) {
         this.version = VERSION ? VERSION : '';

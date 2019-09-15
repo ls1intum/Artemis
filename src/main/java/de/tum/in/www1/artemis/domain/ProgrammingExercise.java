@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.Hibernate;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@SecondaryTable(name = "programming_exercise_details")
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -46,6 +49,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
+
+    @Nullable
+    @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
+    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -321,6 +328,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    @Nullable
+    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
+        return buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
     /**

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -7,7 +7,9 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService, JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core';
+import { Course, CourseService } from 'app/entities/course';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-result',
@@ -31,6 +33,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
+    @Input() showTestNames = false;
 
     textColorClass: string;
     hasFeedback: boolean;
@@ -44,7 +47,6 @@ export class ResultComponent implements OnInit, OnChanges {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
@@ -127,6 +129,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
+        modalRef.componentInstance.showTestNames = this.showTestNames;
     }
 
     downloadBuildResult(participationId: number) {

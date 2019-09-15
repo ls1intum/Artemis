@@ -225,7 +225,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      */
     startCloneRepositoryGuidedTour() {
         const tourSetting = this.guidedTourService.guidedTourSettings.filter(setting => setting.guidedTourKey === courseExerciseOverviewTour.settingsKey);
-        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
+        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() !== GuidedTourState[GuidedTourState.FINISHED]) {
             this.guidedTourService.enableTour(cloneRepositoryTour);
             // Set timeout for clone repository button to render
             setTimeout(() => {
