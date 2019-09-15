@@ -39,7 +39,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
         fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + getId() + '/', getId(), true);
     }
 
-
     public String getFilePath() {
         return filePath;
     }
