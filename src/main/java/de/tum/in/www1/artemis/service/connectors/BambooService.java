@@ -69,10 +69,11 @@ public class BambooService implements ContinuousIntegrationService {
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
+    private final RestTemplate restTemplate;
 
     public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
-                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService) {
+                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, RestTemplate restTemplate) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
@@ -81,6 +82,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -194,7 +196,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(
                 BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + participation.getBuildPlanId(),
@@ -209,12 +210,11 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public boolean isPlanActive(final String planId) {
-        try {
-            return getBambooClient().getPlanHelper().getPlan(planId).matches("(?s)^.*Enabled[. ]*: Yes.*$");
-        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Unable to get plan status (enabled true/false) for build plan " + planId);
-        }
+        final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        final var entity = new HttpEntity<>(null, headers);
+        final var planInfo = restTemplate.exchange(BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + planId, HttpMethod.GET, entity, Map.class, new HashMap<>()).getBody();
+        return planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
     }
 
     /**
@@ -780,7 +780,6 @@ public class BambooService implements ContinuousIntegrationService {
     private Map<String, Object> retrieveLatestBuildResult(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
@@ -857,7 +856,6 @@ public class BambooService implements ContinuousIntegrationService {
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
@@ -941,7 +939,6 @@ public class BambooService implements ContinuousIntegrationService {
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
@@ -986,7 +983,6 @@ public class BambooService implements ContinuousIntegrationService {
     private ResponseEntity retrieveArtifactPage(String url) throws BambooException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<byte[]> response;
 
         try {
@@ -1026,7 +1022,6 @@ public class BambooService implements ContinuousIntegrationService {
     public Map<String, Boolean> retrieveBuildStatus(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
@@ -1058,7 +1053,6 @@ public class BambooService implements ContinuousIntegrationService {
     public Boolean buildPlanIdIsValid(String buildPlanId) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(

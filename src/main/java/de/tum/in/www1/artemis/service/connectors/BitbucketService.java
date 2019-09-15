@@ -50,8 +50,11 @@ public class BitbucketService implements VersionControlService {
 
     private final UserService userService;
 
-    public BitbucketService(UserService userService) {
+    private final RestTemplate restTemplate;
+
+    public BitbucketService(UserService userService, RestTemplate restTemplate) {
         this.userService = userService;
+        this.restTemplate = restTemplate;
     }
 
     @Override
@@ -122,7 +125,6 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
         }
@@ -146,7 +148,6 @@ public class BitbucketService implements VersionControlService {
         log.info("Delete bitbucket project " + projectKey);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
         }
@@ -194,7 +195,6 @@ public class BitbucketService implements VersionControlService {
         ((Map) body.get("project")).put("key", targetProjectKey);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
 
         final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug;
         try {
@@ -283,7 +283,6 @@ public class BitbucketService implements VersionControlService {
     private Boolean userExists(String username) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/users/" + username, HttpMethod.GET, entity, Map.class);
         }
@@ -314,7 +313,6 @@ public class BitbucketService implements VersionControlService {
                 .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
 
         log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
 
@@ -342,8 +340,6 @@ public class BitbucketService implements VersionControlService {
         body.put("groups", groups);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         log.debug("Adding Bitbucket user {} to groups {}", username, groups);
 
         try {
@@ -366,7 +362,6 @@ public class BitbucketService implements VersionControlService {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl + username + "&permission=REPO_WRITE", HttpMethod.PUT, entity, Map.class);
         }
@@ -380,7 +375,6 @@ public class BitbucketService implements VersionControlService {
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
             // first check that the project key is unique
@@ -429,8 +423,6 @@ public class BitbucketService implements VersionControlService {
         // TODO: add a description
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
         try {
@@ -466,8 +458,6 @@ public class BitbucketService implements VersionControlService {
         body.put("name", repoName.toLowerCase());
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
 
         try {
@@ -487,7 +477,6 @@ public class BitbucketService implements VersionControlService {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, entity, Map.class);
         }
@@ -510,7 +499,6 @@ public class BitbucketService implements VersionControlService {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response;
         try {
             response = restTemplate.exchange(baseUrl, HttpMethod.GET, entity, Map.class);
@@ -553,8 +541,6 @@ public class BitbucketService implements VersionControlService {
 
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         try {
             restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Map.class);
         }
@@ -569,7 +555,6 @@ public class BitbucketService implements VersionControlService {
         log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
         }
@@ -596,7 +581,6 @@ public class BitbucketService implements VersionControlService {
         log.info("Delete repository " + baseUrl);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
         }
@@ -626,7 +610,6 @@ public class BitbucketService implements VersionControlService {
 
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
         }
