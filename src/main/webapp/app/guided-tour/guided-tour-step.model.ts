@@ -9,7 +9,7 @@ export abstract class TourStep {
     action?: () => void;
     /** Action that happens when the step is closed */
     closeAction?: () => void;
-    /** Skips this step, this is so you do not have create multiple tour configurations based on user settings/configuration */
+    /** Skips this step, so you do not have create multiple tour configurations based on user settings/configuration */
     skipStep?: boolean;
     /** Adds some padding for things like sticky headers when scrolling to an element */
     scrollAdjustment?: number;
@@ -19,6 +19,8 @@ export abstract class TourStep {
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
      */
     permission?: string[];
+    /** If this is set to true, then the user can interact with the elements that are within the rectangle that highlights the selected element */
+    enableUserInteraction?: boolean;
 }
 
 export class TextTourStep extends TourStep {
