@@ -15,7 +15,7 @@
             },
             "saveChanges": {
                 "headline": "Save changes",
-                "content": "You can save your changes in the code editor by clicking on 'Save'. If you want to adjust your implementation, just click on 'Back' to navigate to the latest step."
+                "content": "You can save your changes in the code editor by clicking on 'Save'."
             },
             "submitChanges": {
                 "headline": "Submit changes",

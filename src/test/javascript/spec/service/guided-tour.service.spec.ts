@@ -34,7 +34,7 @@ describe('GuidedTourService', () => {
         preventBackdropFromAdvancing: true,
         steps: [
             new TextTourStep({
-                selector: '.random-selector',
+                highlightSelector: '.random-selector',
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
             }),
@@ -51,10 +51,10 @@ describe('GuidedTourService', () => {
         preventBackdropFromAdvancing: true,
         steps: [
             new TextTourStep({
-                selector: '.random-selector',
+                highlightSelector: '.random-selector',
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
-                enableUserInteraction: true,
+                userInteractionEvent: UserInteractionEvent.CLICK,
             }),
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -103,12 +103,11 @@ describe('GuidedTourService', () => {
         let guidedTourService: GuidedTourService;
         let router: Router;
 
-        let pauseTourSpy: jasmine.Spy;
-
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [
                     ArtemisTestModule,
+                    ArtemisSharedModule,
                     RouterTestingModule.withRoutes([
                         {
                             path: 'overview',
@@ -148,8 +147,6 @@ describe('GuidedTourService', () => {
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService.currentTour = tour;
             });
-
-            pauseTourSpy = spyOn(guidedTourService, 'pauseTour', UserInteractionEvent.CLICK);
 
             guidedTourComponent.ngAfterViewInit();
 
@@ -211,8 +208,10 @@ describe('GuidedTourService', () => {
                 await prepareGuidedTour(courseOverviewTourWithUserInteraction);
             });
 
-            it('should pause the tour for user interaction', () => {
-                expect(pauseTourSpy.calls.count()).to.equal(1);
+            it('should disable the next button', () => {
+                guidedTourComponentFixture.detectChanges();
+                const nextButton = guidedTourComponentFixture.debugElement.nativeElement.querySelector('.next-button').disabled;
+                expect(nextButton).to.exist;
             });
         });
     });

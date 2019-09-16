@@ -72,7 +72,7 @@ export const codeEditorTour: GuidedTour = {
             headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
             contentTranslateKey: 'tour.programmingExercise.testCases.content',
             highlightPadding: 20,
-            orientation: Orientation.RIGHT,
+            orientation: Orientation.BOTTOM,
             closeAction: () => {
                 clickOnElement('.modal-header .close');
             },
@@ -91,6 +91,17 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
+            userInteractionEvent: UserInteractionEvent.CLICK,
+        }),
+        new TextTourStep({
+            highlightSelector: '.modal-body pre',
+            headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
+            contentTranslateKey: 'tour.programmingExercise.testCases.content',
+            highlightPadding: 20,
+            orientation: Orientation.BOTTOM,
+            closeAction: () => {
+                clickOnElement('.modal-header .close');
+            },
         }),
     ],
 };

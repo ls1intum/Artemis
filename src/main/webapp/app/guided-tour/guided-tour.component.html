@@ -61,7 +61,11 @@
                 </div>
             </div>
             <div class="tour-block__buttons">
-                <button [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
+                <button
+                    [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage || this.currentTourStep.userInteractionEvent"
+                    class="back-button"
+                    (click)="guidedTourService.backStep()"
+                >
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>

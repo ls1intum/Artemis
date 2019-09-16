@@ -15,7 +15,7 @@
             },
             "saveChanges": {
                 "headline": "Änderungen speichern",
-                "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf Speichern klickst. Solltest du noch Änderungen am Quellcode machen wollen, dann klick auf Zurück um zum letzten Schritt zu navigieren."
+                "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf Speichern klickst."
             },
             "submitChanges": {
                 "headline": "Änderungen absenden",

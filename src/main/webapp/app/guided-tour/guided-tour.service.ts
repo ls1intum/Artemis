@@ -197,7 +197,6 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-
         this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
             .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
             .subscribe(guidedTourSettings => {
@@ -205,6 +204,14 @@ export class GuidedTourService {
             });
 
         this.resetTour();
+    }
+
+    public checkTourStateFinished(guidedTour: GuidedTour): boolean {
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
+        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -217,13 +224,8 @@ export class GuidedTourService {
         this.guidedTourCurrentStepSubject.next(null);
     }
 
-    public pauseTour(): void {
-        document.body.classList.remove('tour-open');
-        this.guidedTourCurrentStepSubject.next(null);
-    }
-
     /**
-     * Pause tour for a smooth user interaction
+     * Enable a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
      */
@@ -232,37 +234,33 @@ export class GuidedTourService {
             return;
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-                if (nextStep.highlightSelector) {
-                    this.waitForElement(nextStep.highlightSelector);
-                } else {
-                    this.enableNextStepClick();
-                }
+
+        if (nextStep && userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
+            if (nextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector);
+            } else {
+                this.enableNextStepClick();
             }
         } else {
             const observer = new MutationObserver(mutations => {
                 let mutationCount = 0;
                 mutations.forEach(mutation => {
-                    if (nextStep) {
-                        switch (userInteraction) {
-                            case UserInteractionEvent.CLICK: {
-                                if (mutationCount < 1) {
-                                    // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
-                                    mutationCount += 1;
-                                    this.guidedTourCurrentStepSubject.next(null);
-                                    observer.disconnect();
-                                    this.nextStep();
-                                }
-                                break;
+                    switch (userInteraction) {
+                        case UserInteractionEvent.CLICK: {
+                            if (mutationCount < 1) {
+                                // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
+                                mutationCount += 1;
+                                observer.disconnect();
+                                this.nextStep();
                             }
-                            case UserInteractionEvent.ACE_EDITOR: {
-                                if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                    observer.disconnect();
-                                    this.enableNextStepClick();
-                                }
-                                break;
+                            break;
+                        }
+                        case UserInteractionEvent.ACE_EDITOR: {
+                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                                observer.disconnect();
+                                this.enableNextStepClick();
                             }
+                            break;
                         }
                     }
                 });
@@ -277,7 +275,7 @@ export class GuidedTourService {
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
-     * @param nextStepSelector
+     * @param nextStepSelector the selector string of the next element that should appear in the DOM
      */
     private waitForElement(nextStepSelector: string) {
         const interval = setInterval(() => {
