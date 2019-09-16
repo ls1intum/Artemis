@@ -12,7 +12,6 @@ import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/en
 import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
-import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 
