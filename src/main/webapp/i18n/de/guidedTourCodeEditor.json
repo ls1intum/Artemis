@@ -11,7 +11,7 @@
             },
             "codeEditor": {
                 "headline": "Programmier-Editor",
-                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Lese dir das TODO durch und versuche, die Aufgabe zu lösen. Wenn du damit fertig bist, dann klicke auf weiter."
+                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das TODO durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch jeden beliebigen Code zum in dieser Testrunde einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
             },
             "saveChanges": {
                 "headline": "Änderungen speichern",
@@ -24,6 +24,10 @@
             "buildStatus": {
                 "headline": "Buildstatus",
                 "content": "Nachdem du deine Abgabe eingereicht hast, wird der Build gestartet. Hier kannst den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
+            },
+            "testCases": {
+                "headline": "Feedback",
+                "content": "Hier kannst du das Feedback zu deiner Abgabe einsehen. Versuche alle Fehler zu beheben, um die Programmieraufgabe erfolgreich zu bestehen."
             }
         }
     }

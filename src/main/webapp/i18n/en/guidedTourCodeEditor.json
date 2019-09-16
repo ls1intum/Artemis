@@ -11,7 +11,7 @@
             },
             "codeEditor": {
                 "headline": "Code editor",
-                "content": "The source code is now displayed in the code editor. Please read through the TODO and try to solve it. If you are done with the implementation, just click on the 'Next' button to proceed."
+                "content": "The source code is now displayed in the code editor. You can read through the TODO and try to solve it. Or alternatively you can enter any code for this test round. If you are done with the implementation, just click on the 'Next' button to proceed."
             },
             "saveChanges": {
                 "headline": "Save changes",
@@ -24,6 +24,10 @@
             "buildStatus": {
                 "headline": "Build status",
                 "content": "After submitting your changes, Artemis will trigger the build. Here you see your build status and identify which tasks have passed the tests and are therefore successfully solved."
+            },
+            "testCases": {
+                "headline": "Feedback",
+                "content": "In this window you can view the feedback to your submission. Please try to solve all errors to pass this programming exercise successfully."
             }
         }
     }

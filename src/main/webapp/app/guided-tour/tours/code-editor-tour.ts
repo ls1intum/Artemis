@@ -57,7 +57,7 @@ export const codeEditorTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.WAIT_FOR_SELECTOR,
         }),
         new TextTourStep({
-            highlightSelector: 'jhi-updating-result .text-danger',
+            highlightSelector: 'jhi-updating-result .text-danger .result',
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
@@ -66,11 +66,11 @@ export const codeEditorTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         new TextTourStep({
-            highlightSelector: '.modal-content .buildoutput',
-            headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
-            contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
+            highlightSelector: '.modal-body pre',
+            headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
+            contentTranslateKey: 'tour.programmingExercise.testCases.content',
             highlightPadding: 20,
-            orientation: Orientation.BOTTOMRIGHT,
+            orientation: Orientation.RIGHT,
         }),
     ],
 };
