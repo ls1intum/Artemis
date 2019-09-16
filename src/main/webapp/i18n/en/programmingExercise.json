@@ -98,7 +98,7 @@
             "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
             "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
             "resubmitFailed": "Trigger failed",
-            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. The results will be rated.",
+            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. Failed submissions don't have a result for their latest submission. This can e.g. happen due to communication errors between the CI system and Artemis. The created results will be rated.",
             "buildingSubmissions": "Building submissions: {{number}}",
             "failedSubmissions": "Failed submissions: {{number}}",
             "resultETA": "Result ETA: {{eta}}",
