@@ -27,7 +27,15 @@
             },
             "testCases": {
                 "headline": "Feedback",
-                "content": "Hier kannst du das Feedback zu deiner Abgabe einsehen. Versuche alle Fehler zu beheben, um die Programmieraufgabe erfolgreich zu bestehen."
+                "content": "Hier kannst du das Feedback zu deiner gesamten Abgabe einsehen. Versuche alle Fehler zu beheben, um die Programmieraufgabe erfolgreich zu bestehen."
+            },
+            "testSuccess": {
+                "headline": "Aufgabe gelöst",
+                "content": "Hier siehst du, dass du eine Aufgabe erfolgreich gelöst hast."
+            },
+            "testFailure": {
+                "headline": "Aufgabe ungelöst",
+                "content": "Hier schlagen noch einige Testfälle fehl. Klicke auf das Element und schaue das Feedback zu dieser Aufgabe an."
             }
         }
     }

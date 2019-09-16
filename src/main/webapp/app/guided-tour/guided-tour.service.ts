@@ -152,7 +152,6 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 if (this.checkSelectorValidity()) {
-                    console.log('current step index: ', this.currentTourStepIndex);
                     this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                 } else {
                     this.nextStep();
@@ -248,11 +247,8 @@ export class GuidedTourService {
                             break;
                         }
                         case UserInteractionEvent.ACE_EDITOR: {
-                            if (mutation.addedNodes.length !== mutation.removedNodes.length && mutation.addedNodes.length >= 1) {
-                                const nextButton = document.querySelector('.next-button');
-                                if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
-                                    nextButton.attributes.removeNamedItem('disabled');
-                                }
+                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                                this.enableNextStepClick();
                             }
                             break;
                         }
@@ -266,19 +262,16 @@ export class GuidedTourService {
             characterData: true,
         });
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            console.log('wait for selector');
             if (nextStep.highlightSelector) {
-                console.log('skip tour');
                 this.pauseTour();
-                this.waitForElement(nextStep, nextStep.highlightSelector);
+                this.waitForElement(nextStep.highlightSelector);
             } else {
                 this.resumeTour(observer);
             }
         }
     }
 
-    public waitForElement(nextStep: TourStep, nextStepSelector: string) {
-        console.log('wait for element: ', nextStepSelector);
+    public waitForElement(nextStepSelector: string) {
         const interval = setInterval(() => {
             const nextElement = document.querySelector(nextStepSelector);
             if (nextElement) {
@@ -286,6 +279,13 @@ export class GuidedTourService {
                 this.nextStep();
             }
         }, 1000);
+    }
+
+    public enableNextStepClick() {
+        const nextButton = document.querySelector('.next-button');
+        if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
+            nextButton.attributes.removeNamedItem('disabled');
+        }
     }
 
     /**

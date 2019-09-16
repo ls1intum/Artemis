@@ -12,6 +12,9 @@
         },
         "clickHint": {
             "text": "Click on the highlighted element to proceed with the tour."
+        },
+        "typeHint": {
+            "text": "Enter any new line to proceed with the next step."
         }
     }
 }

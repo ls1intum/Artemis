@@ -1,6 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const codeEditorTour: GuidedTour = {
     settingsKey: 'code_editor_tour',
@@ -71,6 +72,37 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testCases.content',
             highlightPadding: 20,
             orientation: Orientation.RIGHT,
+            closeAction: () => {
+                clickOnElement('.modal-header .close');
+            },
+        }),
+        new TextTourStep({
+            highlightSelector: 'jhi-programming-exercise-instructions-task-status .success',
+            headlineTranslateKey: 'tour.programmingExercise.testSuccess.headline',
+            contentTranslateKey: 'tour.programmingExercise.testSuccess.content',
+            highlightPadding: 20,
+            orientation: Orientation.LEFT,
+        }),
+        new TextTourStep({
+            highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
+            headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
+            contentTranslateKey: 'tour.programmingExercise.testFailure.content',
+            highlightPadding: 20,
+            orientation: Orientation.LEFT,
+            userInteractionEvent: UserInteractionEvent.CLICK,
+            closeAction: () => {
+                clickOnElement('.modal-header .close');
+            },
+        }),
+        new TextTourStep({
+            highlightSelector: '.modal-body pre',
+            headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
+            contentTranslateKey: 'tour.programmingExercise.testCases.content',
+            highlightPadding: 20,
+            orientation: Orientation.RIGHT,
+            closeAction: () => {
+                clickOnElement('.modal-header .close');
+            },
         }),
     ],
 };

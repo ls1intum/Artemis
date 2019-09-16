@@ -28,6 +28,14 @@
             "testCases": {
                 "headline": "Feedback",
                 "content": "In this window you can view the feedback to your submission. Please try to solve all errors to pass this programming exercise successfully."
+            },
+            "testSuccess": {
+                "headline": "Task solved",
+                "content": "Here you can see, that you have successfully solved this task."
+            },
+            "testFailure": {
+                "headline": "Task unsolved",
+                "content": "The test cases are still failing. Click on the element and review the feedback to this task.."
             }
         }
     }
