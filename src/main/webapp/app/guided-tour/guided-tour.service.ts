@@ -341,12 +341,12 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return false;
         }
-        const selector = this.currentTour.steps[this.currentTourStepIndex].selector;
+        const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
                 console.warn(
-                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
                         this.currentTour.settingsKey
                     }`,
                 );
