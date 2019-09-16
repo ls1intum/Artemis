@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -145,8 +146,8 @@ public class FileService {
             return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
         if (publicPath.contains("files/file-upload-exercises")) {
-            String fileUploadSubmissionId = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "");
-            return Constants.FILE_UPLOAD_EXERCISES_FILEPATH + fileUploadSubmissionId + filename;
+            String[] subpath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
+            return FileUploadSubmission.buildFilePath(Long.parseLong(subpath[0]), Long.parseLong(subpath[2]));
         }
 
         // path is unknown => cannot convert
