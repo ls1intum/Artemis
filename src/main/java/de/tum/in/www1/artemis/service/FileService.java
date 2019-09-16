@@ -146,7 +146,7 @@ public class FileService {
         }
         if (publicPath.contains("files/file-upload-submission")) {
             String fileUploadSubmissionId = publicPath.replace(filename, "").replace("/api/files/file-upload-submission/", "");
-            return Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + fileUploadSubmissionId + filename;
+            return Constants.FILE_UPLOAD_EXERCISES_FILEPATH + fileUploadSubmissionId + filename;
         }
 
         // path is unknown => cannot convert
@@ -183,8 +183,9 @@ public class FileService {
         if (actualPath.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH)) {
-            return "/api/files/file-upload-submission/" + id + "/" + filename;
+        if (actualPath.contains(Constants.FILE_UPLOAD_EXERCISES_FILEPATH)) {
+            String[] split = actualPath.split("\\\\");
+            return "/api/files/file-upload-exercises/" + split[2] + "/submissions/" + id + "/" + filename;
         }
 
         // path is unknown => cannot convert

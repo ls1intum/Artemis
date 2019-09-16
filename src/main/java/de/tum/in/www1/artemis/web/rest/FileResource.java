@@ -11,6 +11,8 @@ import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -60,8 +62,11 @@ public class FileResource {
 
     private final TokenProvider tokenProvider;
 
+    private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository, TokenProvider tokenProvider, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
+            LectureRepository lectureRepository, TokenProvider tokenProvider, FileUploadSubmissionRepository fileUploadSubmissionRepository,
+                        FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
@@ -69,6 +74,7 @@ public class FileResource {
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
+        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
     }
 
     /**
@@ -221,11 +227,12 @@ public class FileResource {
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/file-upload-submission/{submissionId}/{filename:.+}")
+    @GetMapping("/files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity getFileUploadSubmission(@PathVariable Long submissionId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
+    public ResponseEntity getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
+        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
         if (!optionalSubmission.isPresent()) {
             return ResponseEntity.badRequest().build();
         }
@@ -233,7 +240,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding File Upload Submission";
             return ResponseEntity.status(403).body(errorMessage);
         }
-        return buildFileResponse(Constants.FILE_UPLOAD_SUBMISSION_FILEPATH + optionalSubmission.get().getId(), filename);
+        return buildFileResponse(Constants.FILE_UPLOAD_EXERCISES_FILEPATH + optionalFileUploadExercise.get().getId() + "/" + optionalSubmission.get().getId(), filename);
     }
 
     /**
