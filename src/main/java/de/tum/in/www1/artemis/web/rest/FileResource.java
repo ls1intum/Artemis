@@ -242,7 +242,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding File Upload Submission";
             return ResponseEntity.status(403).body(errorMessage);
         }
-        return buildFileResponse(Constants.FILE_UPLOAD_EXERCISES_FILEPATH + optionalFileUploadExercise.get().getId() + File.separator + optionalSubmission.get().getId(), filename);
+        return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
     }
 
     /**

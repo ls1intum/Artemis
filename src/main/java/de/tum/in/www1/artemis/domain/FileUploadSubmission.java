@@ -31,13 +31,13 @@ public class FileUploadSubmission extends Submission implements Serializable {
     public void onUpdate() {
         // move file and delete old file if necessary
         filePath = fileService.manageFilesForUpdatedFilePath(null, filePath,
-                Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + File.separator + getId() + File.separator, getId(), true);
+                FileUploadSubmission.buildFilePath(getParticipation().getExercise().getId(), getId()), getId(), true);
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + File.separator + getId() + File.separator,
+        fileService.manageFilesForUpdatedFilePath(null, filePath, FileUploadSubmission.buildFilePath(getParticipation().getExercise().getId(), getId()),
                 getId(), true);
     }
 
@@ -48,6 +48,16 @@ public class FileUploadSubmission extends Submission implements Serializable {
     public FileUploadSubmission filePath(String filePath) {
         this.filePath = filePath;
         return this;
+    }
+
+    /**
+     * Builds file path for file upload submission.
+     * @param exerciseId the id of the exercise
+     * @param submissionId the id of the submission
+     * @return path where submission for file upload exercise is stored
+     */
+    public static String buildFilePath(Long exerciseId, Long submissionId) {
+        return Constants.FILE_UPLOAD_EXERCISES_FILEPATH + exerciseId + File.separator + submissionId + File.separator;
     }
 
     public void setFilePath(String filePath) {
