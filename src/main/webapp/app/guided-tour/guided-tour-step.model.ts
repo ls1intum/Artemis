@@ -23,8 +23,6 @@ export abstract class TourStep {
     permission?: string[];
     /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
     userInteractionEvent?: UserInteractionEvent;
-    /** Defines if the next step is automatically triggered after the user interaction */
-    autoNextStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {

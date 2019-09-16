@@ -13,7 +13,7 @@ import { Result } from 'app/entities/result';
     styleUrls: ['./assessment-header.component.scss'],
 })
 export class AssessmentHeaderComponent {
-    @Input() showBackButton: boolean;
+    @Input() hideBackButton: boolean;
     @Output() goBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
