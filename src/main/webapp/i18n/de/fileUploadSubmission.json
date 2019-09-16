@@ -23,7 +23,8 @@
             "fileError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 2 MB",
             "fileExtensionError": "Falsche Dateierweiterung. Bitte lade eine Datei mit einer zulässigen Dateierweiterung hoch.",
             "submitted": "Abgegeben",
-            "submissionFile": "Submission Datei"
+            "submittedFile": "Die Datei {{ filename }} wurde als Lösung für die Übung eingereicht",
+            "download": "Datei herunterladen"
         }
     }
 }

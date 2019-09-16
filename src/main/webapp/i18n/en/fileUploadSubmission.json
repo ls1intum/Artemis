@@ -23,7 +23,8 @@
             "fileError": "The file {{ fileName }} is too large. The maximum file size is 2 MB",
             "fileExtensionError": "Incorrect file extension. Please, upload a file with allowed file extensions.",
             "submitted": "Submitted",
-            "submissionFile": "Submission File"
+            "submittedFile": "File {{ filename }} was submitted as a solution for exercise",
+            "download": "Download file"
         }
     }
 }
