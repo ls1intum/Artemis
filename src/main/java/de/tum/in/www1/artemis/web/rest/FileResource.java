@@ -11,8 +11,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -29,9 +27,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -66,7 +66,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
             LectureRepository lectureRepository, TokenProvider tokenProvider, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-                        FileUploadExerciseRepository fileUploadExerciseRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.userService = userService;
@@ -222,14 +222,16 @@ public class FileResource {
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
-     * @param submissionId ID of the submission, the attachment belongs to
+     * @param submissionId id of the submission, the file belongs to
+     * @param exerciseId id of the exercise, the file belongs to
      * @param filename  the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("/files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
+    public ResponseEntity getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
+            @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
