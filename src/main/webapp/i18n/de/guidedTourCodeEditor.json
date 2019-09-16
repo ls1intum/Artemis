@@ -36,11 +36,11 @@
             },
             "testSuccess": {
                 "headline": "Aufgabe gelöst",
-                "content": "Hier siehst du, dass du eine Aufgabe erfolgreich gelöst hast."
+                "content": "Hier siehst du, dass du eine Aufgabe erfolgreich gelöst hast und alle Tests erfolgreich durchgelaufen sind."
             },
             "testFailure": {
                 "headline": "Aufgabe ungelöst",
-                "content": "Hier schlagen noch einige Testfälle fehl. Klicke auf das Element und schaue das Feedback zu dieser Aufgabe an."
+                "content": "Hier kannst du die Testfälle der einzelnen Aufgaben einsehen, die noch nicht erfolgreich durchgelaufen sind."
             }
         }
     }

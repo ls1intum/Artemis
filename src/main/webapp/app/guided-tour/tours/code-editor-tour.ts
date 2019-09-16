@@ -38,7 +38,6 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            autoNextStep: false,
         }),
         new TextTourStep({
             highlightSelector: '#submit_button',
@@ -91,17 +90,6 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            userInteractionEvent: UserInteractionEvent.CLICK,
-        }),
-        new TextTourStep({
-            highlightSelector: '.modal-body pre',
-            headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
-            contentTranslateKey: 'tour.programmingExercise.testCases.content',
-            highlightPadding: 20,
-            orientation: Orientation.BOTTOM,
-            closeAction: () => {
-                clickOnElement('.modal-header .close');
-            },
         }),
     ],
 };

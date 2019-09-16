@@ -36,11 +36,11 @@
             },
             "testSuccess": {
                 "headline": "Task solved",
-                "content": "Here you can see, that you have successfully solved this task."
+                "content": "Here you can see, that you have successfully solved this task and all tests have been executed successfully."
             },
             "testFailure": {
                 "headline": "Task unsolved",
-                "content": "The test cases are still failing. Click on the element and review the feedback to this task.."
+                "content": "Here you can see the failing test cases of every individual task."
             }
         }
     }
