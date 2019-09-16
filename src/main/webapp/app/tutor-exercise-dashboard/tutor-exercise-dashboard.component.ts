@@ -327,7 +327,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
 
-        const queryParams: any = {};
         let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
@@ -340,13 +339,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
             case ExerciseType.MODELING:
                 route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
-                queryParams.showBackButton = true;
                 break;
             case ExerciseType.FILE_UPLOAD:
                 route = `/file-upload-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
                 break;
         }
-        this.router.navigate([route], { queryParams });
+        this.router.navigate([route]);
     }
 
     back() {
