@@ -135,15 +135,12 @@ export class GuidedTourService {
     /**
      * Navigate to next tour step
      */
-    public nextStep(nextTourStep?: TourStep): void {
+    public nextStep(): void {
         if (!this.currentTour) {
             return;
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
-        let nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        if (nextTourStep) {
-            nextStep = nextTourStep;
-        }
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -155,6 +152,7 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 if (this.checkSelectorValidity()) {
+                    console.log('current step index: ', this.currentTourStepIndex);
                     this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                 } else {
                     this.nextStep();
@@ -220,12 +218,17 @@ export class GuidedTourService {
         this.guidedTourCurrentStepSubject.next(null);
     }
 
+    public pauseTour(): void {
+        document.body.classList.remove('tour-open');
+        this.guidedTourCurrentStepSubject.next(null);
+    }
+
     /**
      * Pause tour for a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
      */
-    public pauseTour(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
+    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
         if (!this.currentTour) {
             return;
         }
@@ -240,7 +243,7 @@ export class GuidedTourService {
                                 // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
                                 mutationCount += 1;
                                 this.guidedTourCurrentStepSubject.next(null);
-                                this.resumeTour(observer, nextStep);
+                                this.resumeTour(observer);
                             }
                             break;
                         }
@@ -262,15 +265,36 @@ export class GuidedTourService {
             childList: true,
             characterData: true,
         });
+        if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
+            console.log('wait for selector');
+            if (nextStep.highlightSelector) {
+                console.log('skip tour');
+                this.pauseTour();
+                this.waitForElement(nextStep, nextStep.highlightSelector);
+            } else {
+                this.resumeTour(observer);
+            }
+        }
+    }
+
+    public waitForElement(nextStep: TourStep, nextStepSelector: string) {
+        console.log('wait for element: ', nextStepSelector);
+        const interval = setInterval(() => {
+            const nextElement = document.querySelector(nextStepSelector);
+            if (nextElement) {
+                clearInterval(interval);
+                this.nextStep();
+            }
+        }, 1000);
     }
 
     /**
      * Resume tour after user interaction
      * @param observer the current DOM MutationObserver that should be disconnected
      */
-    public resumeTour(observer: MutationObserver, nextStep: TourStep) {
+    public resumeTour(observer: MutationObserver) {
         observer.disconnect();
-        this.nextStep(nextStep);
+        this.nextStep();
     }
 
     /**

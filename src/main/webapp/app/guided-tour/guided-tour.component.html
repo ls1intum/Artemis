@@ -8,14 +8,14 @@
         #tourStep
         *ngIf="currentTourStep"
         class="tour-step tour-{{ currentTourStep.orientation }}"
-        [class.page-tour-step]="!currentTourStep.selector"
+        [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
         [style.top.px]="topPosition"
         [style.left.px]="leftPosition"
         [style.width.px]="calculatedTourStepWidth"
         [style.transform]="transform"
     >
-        <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
+        <div *ngIf="currentTourStep.highlightSelector" class="tour-arrow"></div>
         <div class="tour-block">
             <div class="tour-block__header">
                 <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>

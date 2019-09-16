@@ -181,7 +181,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        return !this.currentTourStep.selector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
+        return (
+            !this.currentTourStep.highlightSelector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement))
+        );
     }
 
     /**
@@ -360,7 +362,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public get transform(): string | null {
         if (
             this.currentTourStep &&
-            ((!this.currentTourStep.orientation && this.currentTourStep.selector) ||
+            ((!this.currentTourStep.orientation && this.currentTourStep.highlightSelector) ||
                 this.currentTourStep.orientation === Orientation.TOP ||
                 this.currentTourStep.orientation === Orientation.TOPRIGHT ||
                 this.currentTourStep.orientation === Orientation.TOPLEFT)
@@ -375,14 +377,14 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return current selected element for the tour step or null
      */
     public getSelectedElement(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.selector) {
+        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.selector);
+        return document.querySelector(this.currentTourStep.highlightSelector);
     }
 
     public getEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.selector) {
+        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
         return document.querySelector(this.currentTourStep.eventListenerSelector);
@@ -476,7 +478,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 if (eventListenerElement) {
                     selectedElement = eventListenerElement;
                 }
-                this.guidedTourService.pauseTour(selectedElement, this.currentTourStep.userInteractionEvent);
+                this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
             }
         }
         return selectedElementRect;

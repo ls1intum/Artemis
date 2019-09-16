@@ -104,14 +104,14 @@ export const cloneRepositoryTour: GuidedTour = {
     settingsKey: 'clone_repository_tour',
     steps: [
         new TextTourStep({
-            selector: '.clone-repository',
+            highlightSelector: '.clone-repository',
             headlineTranslateKey: 'tour.cloneRepository.clone.headline',
             contentTranslateKey: 'tour.cloneRepository.clone.content',
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            selector: '.popover',
+            highlightSelector: '.popover',
             headlineTranslateKey: 'tour.cloneRepository.useSourceTree.headline',
             contentTranslateKey: 'tour.cloneRepository.useSourceTree.content',
             highlightPadding: 10,
