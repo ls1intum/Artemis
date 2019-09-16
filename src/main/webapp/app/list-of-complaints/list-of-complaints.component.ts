@@ -91,16 +91,13 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        const queryParams: any = {};
         let route: string;
-
         if (exercise.type === ExerciseType.TEXT) {
             route = `/text/${exercise.id}/assessment/${submissionId}`;
         } else if (exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
-            queryParams.showBackButton = true;
         }
-        this.router.navigate([route!], { queryParams });
+        this.router.navigate([route!]);
     }
 
     private onError(error: string) {
