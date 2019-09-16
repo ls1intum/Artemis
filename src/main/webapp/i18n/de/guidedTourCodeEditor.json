@@ -19,11 +19,16 @@
             },
             "submitChanges": {
                 "headline": "Änderungen absenden",
-                "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst. Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum mehrfache Abgaben machen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+                "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst.",
+                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum mehrfache Abgaben machen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+            },
+            "buildLoading": {
+                "headline": "Build und Tests",
+                "content": "Nachdem du deine Abgabe eingereicht hast, werden Build und Tests von Artemis automatisch gestartet."
             },
             "buildStatus": {
                 "headline": "Buildstatus",
-                "content": "Nachdem du deine Abgabe eingereicht hast, wird der Build gestartet. Hier kannst den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
+                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
             },
             "testCases": {
                 "headline": "Feedback",

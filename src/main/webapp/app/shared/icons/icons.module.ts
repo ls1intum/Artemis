@@ -108,6 +108,8 @@ import {
     faCompress,
     faEquals,
     faRobot,
+    faHandPointUp,
+    faICursor,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -259,5 +261,7 @@ export class ArtemisIconsModule {
         library.addIcons(faAngleDoubleUp);
         library.addIcons(faCompress);
         library.addIcons(faEquals);
+        library.addIcons(faHandPointUp);
+        library.addIcons(faICursor);
     }
 }

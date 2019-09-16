@@ -19,11 +19,16 @@
             },
             "submitChanges": {
                 "headline": "Submit changes",
-                "content": "If you are content with your implementation, then you can submit your current code by clicking 'Submit'. Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
+                "content": "If you are content with your implementation, then you can submit your current code by clicking 'Submit'.",
+                "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
+            },
+            "buildLoading": {
+                "headline": "Build und tests",
+                "content": "After submitting your changes, Artemis will automatically trigger the build and the tests."
             },
             "buildStatus": {
                 "headline": "Build status",
-                "content": "After submitting your changes, Artemis will trigger the build. Here you see your build status and identify which tasks have passed the tests and are therefore successfully solved."
+                "content": "Now you see your build status here and identify which tasks have passed the tests and are therefore successfully solved."
             },
             "testCases": {
                 "headline": "Feedback",

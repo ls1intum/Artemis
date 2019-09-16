@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, HostBinding } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';

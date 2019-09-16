@@ -15,6 +15,9 @@
         },
         "typeHint": {
             "text": "Enter any new line to proceed with the next step."
+        },
+        "waitHint": {
+            "text": "Please wait until the next step is loaded."
         }
     }
 }

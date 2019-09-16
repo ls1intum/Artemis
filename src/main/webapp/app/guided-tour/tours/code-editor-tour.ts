@@ -45,14 +45,15 @@ export const codeEditorTour: GuidedTour = {
             eventListenerSelector: 'jhi-result',
             headlineTranslateKey: 'tour.programmingExercise.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.submitChanges.content',
+            hintTranslateKey: 'tour.programmingExercise.submitChanges.hint',
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result',
-            headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
-            contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
+            headlineTranslateKey: 'tour.programmingExercise.buildLoading.headline',
+            contentTranslateKey: 'tour.programmingExercise.buildLoading.content',
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.WAIT_FOR_SELECTOR,
@@ -85,24 +86,11 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
+            eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            userInteractionEvent: UserInteractionEvent.CLICK,
-            closeAction: () => {
-                clickOnElement('.modal-header .close');
-            },
-        }),
-        new TextTourStep({
-            highlightSelector: '.modal-body pre',
-            headlineTranslateKey: 'tour.programmingExercise.testCases.headline',
-            contentTranslateKey: 'tour.programmingExercise.testCases.content',
-            highlightPadding: 20,
-            orientation: Orientation.RIGHT,
-            closeAction: () => {
-                clickOnElement('.modal-header .close');
-            },
         }),
     ],
 };
