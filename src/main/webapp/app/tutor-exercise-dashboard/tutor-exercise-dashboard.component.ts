@@ -305,7 +305,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
 
-        const queryParams: any = {};
         let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
@@ -316,9 +315,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             route = `/text/${this.exercise.id}/assessment/${submission}`;
         } else if (this.exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
-            queryParams.showBackButton = true;
         }
-        this.router.navigate([route], { queryParams });
+        this.router.navigate([route]);
     }
 
     back() {

@@ -139,6 +139,7 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
@@ -218,8 +219,42 @@ export class GuidedTourService {
     }
 
     /**
+     * Pause tour for a smooth user interaction
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     */
+    public pauseTour(targetNode: HTMLElement): void {
+        if (!this.currentTour) {
+            return;
+        }
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(() => {
+                if (nextStep) {
+                    document.body.classList.remove('tour-open');
+                    this.guidedTourCurrentStepSubject.next(null);
+                    this.resumeTour(observer, nextStep);
+                }
+            });
+        });
+        observer.observe(targetNode, {
+            attributes: true,
+            childList: true,
+            characterData: true,
+        });
+    }
+
+    /**
+     * Resume tour after user interaction
+     * @param observer the current DOM MutationObserver that should be disconnected
+     */
+    public resumeTour(observer: MutationObserver, nextStep: TourStep) {
+        observer.disconnect();
+        this.currentTourStepIndex++;
+        this.guidedTourCurrentStepSubject.next(nextStep);
+    }
+
+    /**
      * Start guided tour for given guided tour
-     * @param tour: guided tour
      */
     public startTour(): void {
         if (!this.currentTour) {
@@ -258,7 +293,7 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    private checkSelectorValidity(): boolean {
+    public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }
@@ -322,7 +357,7 @@ export class GuidedTourService {
      */
     public get preventBackdropFromAdvancing(): boolean {
         if (this.currentTour) {
-            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
+            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : true);
         }
         return false;
     }
@@ -377,7 +412,7 @@ export class GuidedTourService {
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
      * @return Observable<EntityResponseType>: updated guided tour settings
      */
-    private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
+    public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');

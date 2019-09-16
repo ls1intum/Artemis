@@ -1,6 +1,7 @@
 import { LinkType, Orientation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextLinkTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -50,6 +51,17 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.course-overview.account-menu.content',
             orientation: Orientation.LEFT,
             highlightPadding: 10,
+            enableUserInteraction: true,
+        }),
+        new TextTourStep({
+            selector: '.nav-item .dropdown-menu.show',
+            headlineTranslateKey: 'tour.course-overview.startTourOption.headline',
+            contentTranslateKey: 'tour.course-overview.startTourOption.content',
+            orientation: Orientation.LEFT,
+            highlightPadding: 10,
+            closeAction: () => {
+                clickOnElement('.dropdown-menu.show #account-menu');
+            },
         }),
         new TextTourStep({
             selector: 'jhi-overview-course-card .card',

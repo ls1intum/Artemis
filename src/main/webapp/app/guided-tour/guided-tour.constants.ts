@@ -28,3 +28,11 @@ export enum GuidedTourState {
     STARTED,
     FINISHED,
 }
+
+export enum OverlayPosition {
+    TOP = 'top',
+    LEFT = 'left',
+    RIGHT = 'right',
+    BOTTOM = 'bottom',
+    ELEMENT = 'element',
+}
