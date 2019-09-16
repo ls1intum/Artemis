@@ -9,6 +9,9 @@
         "resize": {
             "headline": "Browser window too small",
             "content": "Please resize the browser to a larger size to continue the tour or close the tour."
+        },
+        "clickHint": {
+            "text": "Click on the highlighted element to proceed with the tour."
         }
     }
 }
