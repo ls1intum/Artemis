@@ -112,7 +112,7 @@ describe('FileUploadSubmissionComponent', () => {
         expect(extension.nativeElement.textContent.replace(/\s/g, '')).to.be.equal(fileUploadExercise.filePattern.split(',')[0].toUpperCase());
     }));
 
-    it('Submission and file uploaded', () => {
+    it('Submission and file uploaded', fakeAsync(() => {
         window.confirm = () => {
             return false;
         };
@@ -139,7 +139,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
         expect(submitFileButton).to.be.null;
-    });
+    }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
         // Ignore console errors and window confirm
@@ -156,14 +156,9 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
         fixture.detectChanges();
 
+        // check that properties are set properly
         expect(comp.erroredFile).to.be.not.null;
         expect(comp.submissionFile).to.be.null;
         expect(comp.submission.filePath).to.be.null;
-
-        // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
     }));
 });
