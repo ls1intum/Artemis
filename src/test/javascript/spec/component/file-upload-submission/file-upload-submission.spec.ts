@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService, JhiLanguageHelper } from 'app/core';
 import * as chai from 'chai';
@@ -137,7 +137,6 @@ describe('FileUploadSubmissionComponent', () => {
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).to.not.exist;
 
-        expect(comp.submission.filePath).to.be.equal('test');
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
         expect(submitFileButton).to.be.null;
     });
@@ -153,10 +152,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
         Object.defineProperty(comp.submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
         comp.submission = fileUploadSubmission;
-        fixture.detectChanges();
-
-        let submitFileButton = debugElement.query(By.css('.btn.btn-success'));
-        submitFileButton.nativeElement.click();
+        comp.submit();
         tick();
         fixture.detectChanges();
 
