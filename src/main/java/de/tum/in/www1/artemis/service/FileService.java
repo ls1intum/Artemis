@@ -144,8 +144,8 @@ public class FileService {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
-        if (publicPath.contains("files/file-upload-submission")) {
-            String fileUploadSubmissionId = publicPath.replace(filename, "").replace("/api/files/file-upload-submission/", "");
+        if (publicPath.contains("files/file-upload-exercises")) {
+            String fileUploadSubmissionId = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "");
             return Constants.FILE_UPLOAD_EXERCISES_FILEPATH + fileUploadSubmissionId + filename;
         }
 
@@ -184,8 +184,8 @@ public class FileService {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
         if (actualPath.contains(Constants.FILE_UPLOAD_EXERCISES_FILEPATH)) {
-            String[] split = actualPath.split("\\\\");
-            return "/api/files/file-upload-exercises/" + split[2] + "/submissions/" + id + "/" + filename;
+            Path path = Paths.get(actualPath);
+            return "/api/files/file-upload-exercises/" + path.getName(2) + "/submissions/" + id + "/" + filename;
         }
 
         // path is unknown => cannot convert

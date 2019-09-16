@@ -31,13 +31,13 @@ public class FileUploadSubmission extends Submission implements Serializable {
     public void onUpdate() {
         // move file and delete old file if necessary
         filePath = fileService.manageFilesForUpdatedFilePath(null, filePath,
-                Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + '/' + getId() + '/', getId(), true);
+                Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + File.separator + getId() + File.separator, getId(), true);
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + '/' + getId() + '/',
+        fileService.manageFilesForUpdatedFilePath(null, filePath, Constants.FILE_UPLOAD_EXERCISES_FILEPATH + getParticipation().getExercise().getId() + File.separator + getId() + File.separator,
                 getId(), true);
     }
 
