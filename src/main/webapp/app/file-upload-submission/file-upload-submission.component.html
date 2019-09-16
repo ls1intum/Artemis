@@ -76,8 +76,8 @@
                     {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
                 </h5>
                 <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-                <span class="ml-1 badge badge-info">
-                    {{ submittedFileName.split('.')[1] | uppercase }}
+                <span class="ml-1 badge badge-info" *ngIf="submittedFileExtension">
+                    {{ submittedFileExtension | uppercase }}
                 </span>
             </div>
         </div>

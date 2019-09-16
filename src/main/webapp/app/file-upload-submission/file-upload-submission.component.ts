@@ -23,6 +23,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     submission: FileUploadSubmission | null;
     submittedFileName: string;
+    submittedFileExtension: string;
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
@@ -89,8 +90,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as FileUploadSubmission;
                     if (this.submission && this.submission.submitted) {
-                        const filePath = this.submission.filePath!.split('/');
-                        this.submittedFileName = filePath[filePath.length - 1];
+                        this.setSubmittedFile();
                     }
                 }
 
@@ -139,10 +139,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 response => {
                     this.submission = response.body!;
                     this.result = this.submission.result;
-
-                    const filePath = this.submission.filePath!.split('/');
-                    this.submittedFileName = filePath[filePath.length - 1];
-
+                    this.setSubmittedFile();
                     if (this.isActive) {
                         this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                     } else {
@@ -177,6 +174,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, undefined);
+    }
+
+    private setSubmittedFile() {
+        const filePath = this.submission!.filePath!.split('/');
+        this.submittedFileName = filePath[filePath.length - 1];
+        const fileName = this.submittedFileName.split('.');
+        this.submittedFileExtension = fileName[fileName.length - 1];
     }
 
     /**
