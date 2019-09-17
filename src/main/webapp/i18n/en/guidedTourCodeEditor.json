@@ -23,7 +23,7 @@
                 "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
             },
             "buildLoading": {
-                "headline": "Build und tests",
+                "headline": "Build and tests",
                 "content": "After submitting your changes, Artemis will automatically trigger the build and the tests."
             },
             "buildStatus": {
