@@ -28,7 +28,8 @@
             },
             "buildStatus": {
                 "headline": "Buildstatus",
-                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht."
+                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht.",
+                "hint": "Es können zusätzliche Tests nach dem Abgabedatum ausgeführt werden. Das heißt, das eine volle Punktzahl ist nicht sichergestellt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind. Überprüfe deine Imlementierung daher genau bevor du es final abgibst."
             },
             "testCases": {
                 "headline": "Feedback",

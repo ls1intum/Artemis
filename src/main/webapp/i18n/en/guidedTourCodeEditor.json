@@ -28,7 +28,8 @@
             },
             "buildStatus": {
                 "headline": "Build status",
-                "content": "Now you see your build status here and identify which tasks have passed the tests and are therefore successfully solved."
+                "content": "Now you see your build status here and identify which tasks have passed the tests and are therefore successfully solved.",
+                "hint": "It is possible that some additional tests are run after the due date. That means that passing all displayed tests does not necessarily guarantee a 100% score in the end. Therefore please double check your submission."
             },
             "testCases": {
                 "headline": "Feedback",
