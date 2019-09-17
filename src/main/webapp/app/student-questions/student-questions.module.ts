@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
-import { StudentQuestionsComponent, StudentQuestionRowComponent } from './';
+import { StudentQuestionRowComponent, StudentQuestionsComponent } from './';
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArtemisConfirmIconModule } from 'app/components/confirm-icon/confirm-icon.module';
 

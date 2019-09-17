@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 
 import {
+    CourseExerciseDetailsComponent,
     CourseExercisesComponent,
+    CourseLectureDetailsComponent,
+    CourseLecturesComponent,
     CourseOverviewComponent,
     CourseStatisticsComponent,
     OverviewComponent,
-    CourseExerciseDetailsComponent,
-    CourseLecturesComponent,
-    CourseLectureDetailsComponent,
 } from './';
 import { UserRouteAccessService } from 'app/core';
 

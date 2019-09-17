@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Route } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 
 import { NotificationMgmtComponent, NotificationMgmtDetailComponent, NotificationMgmtUpdateComponent } from 'app/admin';

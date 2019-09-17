@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule, PendingChangesGuard } from '../../shared';
 import {
@@ -53,14 +51,6 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         QuizExerciseResetPopupComponent,
         QuizExerciseDetailComponent,
     ],
-    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
 })
-export class ArtemisQuizExerciseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisQuizExerciseModule {}

@@ -8,8 +8,6 @@ import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
-import { Course, CourseService } from 'app/entities/course';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-result',
