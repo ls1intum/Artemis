@@ -15,7 +15,7 @@ import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.serv
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
-    entryComponents: [],
+    entryComponents: [DeleteDialogComponent],
     exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
 })
 export class ArtemisSharedModule {
