@@ -36,6 +36,6 @@ const ENTITY_STATES = [...courseRoute];
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],
-    providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [CourseService, CourseExerciseService],
 })
 export class ArtemisCourseModule {}
