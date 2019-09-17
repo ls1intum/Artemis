@@ -11,9 +11,9 @@
         <ace-editor
             #editor
             id="ace-code-editor"
+            *ngIf="selectedFile && !isLoading"
             [mode]="editorMode"
             [readOnly]="isLoading"
-            [hidden]="!selectedFile || isLoading"
             [autoUpdateContent]="true"
             [durationBeforeCallback]="200"
             (textChanged)="onFileTextChanged($event)"
