@@ -30,6 +30,7 @@ import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,11 +52,11 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisSharedModule,
                 MomentModule,
                 ArtemisComplaintsModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
             ],
             declarations: [FileUploadSubmissionComponent, MockComponent(ResizableInstructionsComponent), MockComponent(ComplaintsForTutorComponent)],
             providers: [
-                JhiLanguageHelper,
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
