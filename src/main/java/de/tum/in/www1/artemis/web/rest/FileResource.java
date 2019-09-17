@@ -39,6 +39,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UserService;
 
+import javax.activation.MimetypesFileTypeMap;
+
 /**
  * REST controller for managing Course.
  */
@@ -332,6 +334,13 @@ public class FileResource {
             headers.setContentDisposition(contentDisposition);
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
             String mimeType = fileNameMap.getContentTypeFor(filename);
+
+            // If we were unable to find mimeType with previous method, try another one, which returns application/octet-stream mime type,
+            // if it also can't determine mime type
+            if (mimeType == null) {
+                MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
+                mimeType = fileTypeMap.getContentType(filename);
+            }
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
