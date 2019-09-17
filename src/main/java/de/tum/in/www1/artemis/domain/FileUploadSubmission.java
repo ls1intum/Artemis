@@ -30,17 +30,18 @@ public class FileUploadSubmission extends Submission implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        filePath = fileService.manageFilesForUpdatedFilePath(null, filePath,
-                FileUploadSubmission.buildFilePath(getParticipation().getExercise().getId(), getId()), getId(), true);
+        filePath = fileService.manageFilesForUpdatedFilePath(null, filePath, FileUploadSubmission.buildFilePath(getParticipation().getExercise().getId(), getId()), getId(), true);
     }
 
+    /**
+     * Deletes solution file for this submission
+     */
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
             // delete old file if necessary
             String[] path = filePath.split("/");
-            fileService.manageFilesForUpdatedFilePath(filePath, null, FileUploadSubmission.buildFilePath(Long.parseLong(path[4]), getId()),
-                getId(), true);
+            fileService.manageFilesForUpdatedFilePath(filePath, null, FileUploadSubmission.buildFilePath(Long.parseLong(path[4]), getId()), getId(), true);
         }
     }
 

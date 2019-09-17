@@ -11,6 +11,8 @@ import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.activation.MimetypesFileTypeMap;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -38,8 +40,6 @@ import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UserService;
-
-import javax.activation.MimetypesFileTypeMap;
 
 /**
  * REST controller for managing Course.

@@ -16,7 +16,6 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -26,6 +25,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 
 @Service
 public class FileService {
