@@ -148,7 +148,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.editor.getEditor().moveCursorToPosition(this.fileSession[this.selectedFile].cursor);
         this.editorMode = this.aceModeList.getModeForPath(this.selectedFile).name;
         this.editor.setMode(this.editorMode);
-        this.editor.getEditor().resize();
         this.editor.getEditor().focus();
         // Reset the undo stack after file change, otherwise the user can undo back to the old file
         this.editor
@@ -161,6 +160,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 .getSession()
                 .setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
+
+        setTimeout(() => this.editor.getEditor().resize());
     }
 
     /**
