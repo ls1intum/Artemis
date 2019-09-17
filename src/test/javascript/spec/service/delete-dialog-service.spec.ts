@@ -8,6 +8,7 @@ import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -18,7 +19,7 @@ describe('Delete Dialog Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
             providers: [DeleteDialogService],
         });
 
