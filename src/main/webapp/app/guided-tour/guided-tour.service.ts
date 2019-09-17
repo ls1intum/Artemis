@@ -206,6 +206,10 @@ export class GuidedTourService {
         this.resetTour();
     }
 
+    /**
+     * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
+     * @param guidedTour that should be checked for the finished state
+     */
     public checkTourStateFinished(guidedTour: GuidedTour): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
         if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {

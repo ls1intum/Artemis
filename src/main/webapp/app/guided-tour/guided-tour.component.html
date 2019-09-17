@@ -62,7 +62,8 @@
             </div>
             <div class="tour-block__buttons">
                 <button
-                    [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage || this.currentTourStep.userInteractionEvent"
+                    *ngIf="this.currentTourStep.userInteractionEvent"
+                    [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage"
                     class="back-button"
                     (click)="guidedTourService.backStep()"
                 >
