@@ -31,6 +31,7 @@ import { SubmissionService } from 'app/entities/submission/submission.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { participationSubmissionRoute } from 'app/entities/participation-submission';
+import { TranslateService, TranslateStore, TranslateLoader, TranslateCompiler, TranslateParser, TranslateModule, MissingTranslationHandler } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +47,14 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, RouterTestingModule.withRoutes([participationSubmissionRoute[0]])],
+            imports: [
+                ArtemisTestModule,
+                NgxDatatableModule,
+                ArtemisResultModule,
+                ArtemisSharedModule,
+                TranslateModule.forRoot(),
+                RouterTestingModule.withRoutes([participationSubmissionRoute[0]]),
+            ],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),

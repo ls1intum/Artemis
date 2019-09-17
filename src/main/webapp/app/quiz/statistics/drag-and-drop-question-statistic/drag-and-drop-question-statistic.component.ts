@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';

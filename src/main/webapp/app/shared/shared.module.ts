@@ -8,13 +8,14 @@ import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, TranslateModule],
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService],
     entryComponents: [],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
+    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule],
 })
 export class ArtemisSharedModule {
     static forRoot() {

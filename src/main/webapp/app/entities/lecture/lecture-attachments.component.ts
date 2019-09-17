@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';

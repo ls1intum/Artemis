@@ -1,12 +1,11 @@
-import { Component, HostBinding, Input, OnInit, OnDestroy } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
-import { Subscription } from 'rxjs/Subscription';
-
 import { Moment } from 'moment';
+import { Subscription } from 'rxjs/Subscription';
 import { Course } from 'app/entities/course';
 import { AccountService, WindowRef } from 'app/core';
 import { ActivatedRoute, Router } from '@angular/router';

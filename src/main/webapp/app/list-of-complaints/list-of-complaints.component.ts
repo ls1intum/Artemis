@@ -6,7 +6,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation';
 

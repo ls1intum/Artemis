@@ -1,11 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { CourseComponent, CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisResultModule } from '../entities/result';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'ngx-moment';
@@ -22,15 +20,7 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [CourseService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [CourseService, JhiAlertService],
     schemas: [],
 })
-export class ArtemisExampleTextSubmissionModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisExampleTextSubmissionModule {}

@@ -1,4 +1,4 @@
-import { Routes, Resolve, RouterStateSnapshot, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../../core';
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
@@ -8,7 +8,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-uploa
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, filter } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-update.component';
 import { Course, CourseService } from 'app/entities/course';

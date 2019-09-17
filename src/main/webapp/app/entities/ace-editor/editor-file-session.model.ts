@@ -1,4 +1,4 @@
-import { concat, compose, differenceWith } from 'lodash/fp';
+import { compose, concat, differenceWith } from 'lodash/fp';
 import { differenceWith as _differenceWith } from 'lodash';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
 import { TextChange } from './text-change.model';
