@@ -20,7 +20,7 @@
             "submitChanges": {
                 "headline": "Änderungen absenden",
                 "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst.",
-                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum mehrfache Abgaben machen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum beliebig oft eine neue Lösung einreichen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
             },
             "buildLoading": {
                 "headline": "Build und Tests",
