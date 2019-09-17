@@ -25,8 +25,8 @@ import { fileUploadSubmissionRoute } from 'app/file-upload-submission/file-uploa
 import { FileUploadSubmissionComponent } from 'app/file-upload-submission/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisComplaintsModule } from 'app/complaints';
-import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/file-upload-submission';
-import { fileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
+import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -112,33 +112,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(extension.nativeElement.textContent.replace(/\s/g, '')).to.be.equal(fileUploadExercise.filePattern.split(',')[0].toUpperCase());
     }));
 
-    it('Incorrect file type can not be submitted', fakeAsync(() => {
-        // Ignore console errors and window confirm
-        console.error = jest.fn();
-        window.confirm = () => {
-            return false;
-        };
-
-        const fileName = 'exampleSubmission';
-        comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
-        Object.defineProperty(comp.submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
-        comp.submission = new FileUploadSubmission();
-        comp.submit();
-        tick();
-        fixture.detectChanges();
-
-        // check that properties are set properly
-        expect(comp.erroredFile).to.be.not.null;
-        expect(comp.submissionFile).to.be.null;
-        expect(comp.submission.filePath).to.be.null;
-
-        // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).to.exist;
-        expect(fileUploadInput.nativeElement.disabled).to.be.false;
-        expect(fileUploadInput.nativeElement.value).to.be.equal('');
-    }));
-
     it('Submission and file uploaded', fakeAsync(() => {
         // Ignore window confirm
         window.confirm = () => {
@@ -146,7 +119,7 @@ describe('FileUploadSubmissionComponent', () => {
         };
         const fileName = 'exampleSubmission';
         comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
-        comp.submission = fileUploadSubmission;
+        comp.submission = createFileUploadSubmission();
         fixture.detectChanges();
 
         // check if fileUploadLabel value is not set
@@ -167,5 +140,32 @@ describe('FileUploadSubmissionComponent', () => {
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
         expect(submitFileButton).to.be.null;
+    }));
+
+    it('Incorrect file type can not be submitted', fakeAsync(() => {
+        // Ignore console errors and window confirm
+        console.error = jest.fn();
+        window.confirm = () => {
+            return false;
+        };
+
+        const fileName = 'exampleSubmission';
+        comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
+        Object.defineProperty(comp.submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
+        comp.submission = createFileUploadSubmission();
+        comp.submit();
+        tick();
+        fixture.detectChanges();
+
+        // check that properties are set properly
+        expect(comp.erroredFile).to.be.not.null;
+        expect(comp.submissionFile).to.be.null;
+        expect(comp.submission.filePath).to.be.null;
+
+        // check if fileUploadInput is available
+        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).to.exist;
+        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput.nativeElement.value).to.be.equal('');
     }));
 });
