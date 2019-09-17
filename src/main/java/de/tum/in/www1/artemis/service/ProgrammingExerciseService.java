@@ -299,9 +299,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
-        String testRepoName = projectKey.toLowerCase() + "-tests";
-        String solutionRepoName = projectKey.toLowerCase() + "-solution";
+        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -322,8 +322,8 @@ public class ProgrammingExerciseService {
 
         initParticipations(programmingExercise);
 
-        String templatePlanName = RepositoryType.TEMPLATE.getName();
-        String solutionPlanName = RepositoryType.SOLUTION.getName();
+        String templatePlanName = BuildPlanType.TEMPLATE.getName();
+        String solutionPlanName = BuildPlanType.SOLUTION.getName();
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
@@ -336,9 +336,9 @@ public class ProgrammingExerciseService {
         templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
-        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
-        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
+        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName).getRegularUrl();
+        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName).getRegularUrl();
+        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName).getRegularUrl();
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
@@ -792,8 +792,8 @@ public class ProgrammingExerciseService {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
         final var projectKey = newExercise.getProjectKey();
-        final var templatePlanName = RepositoryType.TEMPLATE.getName();
-        final var solutionPlanName = RepositoryType.SOLUTION.getName();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
 
         programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
         programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
@@ -816,10 +816,8 @@ public class ProgrammingExerciseService {
      * @param newExercise The new exercise without any repositories
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        // Mapping of repoURL -> slugSuffix
-        final var slugMapping = Map.of(templateExercise.getTemplateRepositoryUrlAsUrl(), "-exercise", templateExercise.getSolutionRepositoryUrlAsUrl(), "-solution",
-                templateExercise.getTestRepositoryUrlAsUrl(), "-tests");
         final var targetProjectKey = newExercise.getProjectKey();
+        final var sourceProjectKey = templateExercise.getProjectKey();
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         // The project key is always the first half of a repo slug
@@ -828,7 +826,7 @@ public class ProgrammingExerciseService {
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
         // Copy all repositories
-        slugMapping.forEach((sourceRepoUrl, targetSuffix) -> versionControlService.get().copyRepository(sourceRepoUrl, targetProjectKey, targetSlugPrefix + targetSuffix, null));
+        Arrays.stream(RepositoryType.values()).forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getName(), targetProjectKey, repo.getName()));
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
@@ -850,8 +848,8 @@ public class ProgrammingExerciseService {
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var sourceTemplateId = templateExercise.getTemplateBuildPlanId();
         final var sourceSolutionId = templateExercise.getSolutionBuildPlanId();
-        final var templatePlanName = RepositoryType.TEMPLATE.getName();
-        final var solutionPlanName = RepositoryType.SOLUTION.getName();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
 
         // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
         // running the plan for the first time
@@ -892,7 +890,7 @@ public class ProgrammingExerciseService {
      * @param projectKey
      */
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
-        final var testRepoName = projectKey.toLowerCase() + "-tests";
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
     }
 

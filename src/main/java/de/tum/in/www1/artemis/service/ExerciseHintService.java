@@ -83,7 +83,7 @@ public class ExerciseHintService {
     }
 
     /**
-     * Copies the hints of an exercise to a new target exercise without by cloning the hint objects and saving them
+     * Copies the hints of an exercise to a new target exercise by cloning the hint objects and saving them
      * resulting in new IDs for the copied hints. The contents stay the same. On top of that, all hints in the
      * problem statement of the target exercise get replaced by the new IDs.
      *

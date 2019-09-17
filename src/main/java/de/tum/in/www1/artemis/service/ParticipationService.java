@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -418,22 +417,12 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
             final var exercise = participation.getProgrammingExercise();
             final var projectKey = exercise.getProjectKey();
-            final var templateUrl = exercise.getTemplateRepositoryUrlAsUrl();
             final var username = participation.getStudent().getLogin();
-            final var copySlug = String.format("%s-%s", projectKey.toLowerCase(), username);
-            final var newRepoUrlString = versionControlService.get().copyRepository(templateUrl, projectKey, copySlug, username).get("cloneUrl");
-            Optional<URL> newRepoUrl;
-            try {
-                newRepoUrl = Optional.ofNullable(newRepoUrlString != null ? new URL(newRepoUrlString) : null);
-            }
-            catch (MalformedURLException e) {
-                log.error(e.getMessage(), e);
-                newRepoUrl = Optional.empty();
-            }
-            if (newRepoUrl.isPresent()) {
-                participation.setRepositoryUrl(newRepoUrl.get().toString());
-                participation.setInitializationState(InitializationState.REPO_COPIED);
-            }
+            final var repoName = RepositoryType.TEMPLATE.getName();
+            final var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, username).withUser(username);
+            participation.setRepositoryUrl(newRepoUrl.toString());
+            participation.setInitializationState(REPO_COPIED);
+
             return save(participation);
         }
         else {

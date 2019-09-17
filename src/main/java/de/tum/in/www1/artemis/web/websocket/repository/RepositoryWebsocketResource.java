@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.websocket.repository;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -27,6 +26,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -113,7 +113,7 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", error);
             return;
         }
-        catch (IOException | GitAPIException | InterruptedException ex) {
+        catch (GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
@@ -135,13 +135,13 @@ public class RepositoryWebsocketResource {
         SecurityUtils.setAuthorizationObject();
 
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
-        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
         String topic = "/topic/test-repository/" + exerciseId + "/files";
 
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl);
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getRegularUrl());
         }
         catch (IllegalAccessException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
-import java.util.Map;
-
-import org.springframework.lang.Nullable;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -52,7 +50,7 @@ public interface VersionControlService {
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    URL getCloneURL(String projectKey, String repositorySlug);
+    VcsRepositoryUrl getCloneURL(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -117,11 +115,11 @@ public interface VersionControlService {
     /**
      * Copies a repository from one project to another one. The project can be the same.
      *
-     * @param baseRepositoryUrl The URL of the template repository
-     * @param targetProjectKey The key of the target project
-     * @param targetRepositorySlug The slug of the new repository
-     * @param username Can be null. The name of the user if the newly created repository should belong to a specific user
-     * @return A map containing various information about the copied repository, s.a. the slug or the cloneUrl of the new repo.
+     * @param sourceProjectKey The key of the template project (normally based on the course and exercise short name)
+     * @param sourceRepositoryName The name of the repository which should be copied
+     * @param targetProjectKey The key of the target project to which to copy the new plan to
+     * @param targetRepositoryName The desired name of the target repository
+     * @return The URL for cloning the repository
      */
-    Map<String, String> copyRepository(URL baseRepositoryUrl, String targetProjectKey, String targetRepositorySlug, @Nullable String username);
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName);
 }

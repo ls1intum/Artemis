@@ -71,6 +71,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = null;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage;
         });
         this.activatedRoute.params.subscribe(params => {
             if (params['targetCourseId']) {

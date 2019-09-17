@@ -27,10 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -179,17 +176,29 @@ public class ProgrammingExerciseServiceIntegrationTest {
 
     private ProgrammingExercise importExerciseBase() throws MalformedURLException {
         final var toBeImported = createToBeImported();
-        final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-exercise";
-        final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-solution";
-        final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-tests";
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new URL("http://template-url"));
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new URL("http://solution-url"));
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), testRepoName)).thenReturn(new URL("http://tests-url"));
+        final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl("http://template-url"));
+        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl("http://solution-url"));
+        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl("http://tests-url"));
 
         return programmingExerciseService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+    }
+
+    private static final class DummyRepositoryUrl extends VcsRepositoryUrl {
+
+        public DummyRepositoryUrl(String url) throws MalformedURLException {
+            super(url);
+        }
+
+        @Override
+        public VcsRepositoryUrl withUser(String username) {
+            return null;
+        }
     }
 }

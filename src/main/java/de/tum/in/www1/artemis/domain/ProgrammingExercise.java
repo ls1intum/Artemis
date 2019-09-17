@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -97,7 +98,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonIgnore
     public String getTemplateRepositoryName() {
-        return getRepositoryNameFor(getTemplateRepositoryUrl(), "exercise");
+        return getRepositoryNameFor(getTemplateRepositoryUrl(), RepositoryType.TEMPLATE);
     }
 
     /**
@@ -121,7 +122,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonIgnore
     public String getSolutionRepositoryName() {
-        return getRepositoryNameFor(getSolutionRepositoryUrl(), "solution");
+        return getRepositoryNameFor(getSolutionRepositoryUrl(), RepositoryType.SOLUTION);
     }
 
     public void setTestRepositoryUrl(String testRepositoryUrl) {
@@ -138,22 +139,22 @@ public class ProgrammingExercise extends Exercise {
      * @return the test repository name if a valid test repository url is set. Otherwise returns null!
      */
     public String getTestRepositoryName() {
-        return getRepositoryNameFor(getTestRepositoryUrl(), "tests");
+        return getRepositoryNameFor(getTestRepositoryUrl(), RepositoryType.TESTS);
     }
 
     /**
      * Get the repository name for any stored repository, i.e. the slug of the repository.
      *
      * @param repoUrl The full URL of the repository
-     * @param suffix The suffix defining the repository type, e.g. "exercise" for the template repo.
+     * @param repoType The repository type, meaning one of the base repositories (template, solution, test)
      * @return The full repository slug for the given URL
      */
-    private String getRepositoryNameFor(final String repoUrl, final String suffix) {
+    private String getRepositoryNameFor(final String repoUrl, final RepositoryType repoType) {
         if (repoUrl == null) {
             return null;
         }
 
-        Pattern p = Pattern.compile(".*/(.*-" + suffix + ")\\.git");
+        Pattern p = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
         Matcher m = p.matcher(repoUrl);
         if (!m.matches() || m.groupCount() != 1)
             return null;

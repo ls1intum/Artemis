@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -172,7 +173,7 @@ public class ProgrammingExerciseParticipationService {
      */
     @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
-        final String solutionRepoName = projectKey.toLowerCase() + "-solution";
+        final String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
@@ -191,7 +192,7 @@ public class ProgrammingExerciseParticipationService {
      */
     @NotNull
     public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
-        final String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
+        final String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());

@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -12,8 +13,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.domain.FileType;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -44,15 +51,15 @@ public class TestRepositoryResource extends RepositoryResource {
     Repository getRepository(Long exerciseId, boolean pullOnGet) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getTestRepositoryName();
-        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName).getRegularUrl();
         return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnGet);
     }
 
     @Override
     URL getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
-        return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName).getRegularUrl();
     }
 
     @Override

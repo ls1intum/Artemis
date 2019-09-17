@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -20,6 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -174,59 +174,47 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public URL getCloneURL(String projectKey, String repositorySlug) {
-        log.debug("getCloneURL: " + BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
-        try {
-            return new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
-        }
-        catch (MalformedURLException e) {
-            log.error("Couldn't construct clone URL");
-            throw new BitbucketException("Clone URL could not be constructed");
-        }
+    public VcsRepositoryUrl getCloneURL(String projectKey, String repositorySlug) {
+        final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
+        log.debug("getCloneURL: " + cloneUrl.toString());
+
+        return cloneUrl;
     }
 
     @Override
-    public Map<String, String> copyRepository(URL baseRepositoryUrl, String targetProjectKey, String targetRepositorySlug, @Nullable String username) {
-        final var baseRepositorySlug = getRepositorySlugFromUrl(baseRepositoryUrl);
-        final var baseProjectKey = getProjectKeyFromUrl(baseRepositoryUrl);
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", targetRepositorySlug);
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
+        sourceRepositoryName = sourceRepositoryName.toLowerCase();
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        final var sourceRepoSlug = sourceProjectKey.toLowerCase() + "-" + sourceRepositoryName;
+        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        final Map<String, Object> body = new HashMap<>();
+        body.put("name", targetRepoSlug);
         body.put("project", new HashMap<>());
         ((Map) body.get("project")).put("key", targetProjectKey);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug;
+        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepoSlug;
         try {
             final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                String slug = (String) response.getBody().get("slug");
-                String cloneUrl = buildCloneUrl(baseProjectKey, targetRepositorySlug, username).toString();
-                Map<String, String> result = new HashMap<>();
-                result.put("slug", slug);
-                result.put("cloneUrl", cloneUrl);
-                return result;
+                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
             }
         }
         catch (URISyntaxException e) {
             throw new BitbucketException("Invalid repository URL built while trying to fork: " + repoUrl);
         }
         catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.CONFLICT) && username != null) {
+            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                Map<String, String> result = new HashMap<>();
-                result.put("slug", targetRepositorySlug);
-                result.put("cloneUrl", buildCloneUrl(baseProjectKey, targetRepositorySlug, username).toString());
-                // Delete existing WebHooks (partipation ID might have changed)
-                deleteExistingWebHooks(baseProjectKey, targetRepositorySlug);
-                return result;
+                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepoSlug);
             }
             else {
                 throw e;
             }
         }
         catch (Exception emAll) {
-            log.error("Could not fork base repository for user " + username, emAll);
+            log.error("Could not fork base repository" + targetRepoSlug, emAll);
             throw new BitbucketException("Error while forking repository");
         }
 
@@ -653,18 +641,36 @@ public class BitbucketService implements VersionControlService {
         return getRepositorySlugFromUrl(repositoryUrl);
     }
 
-    private String buildRepositoryPath(String projectKey, String repositorySlug) {
-        return BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
-    }
+    public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {
 
-    private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
-        URL cloneUrl = null;
-        try {
-            cloneUrl = new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + username + "@" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
+        public BitbucketRepositoryUrl(String projectKey, String repositorySlug) {
+            super();
+            final var urlString = BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
+            try {
+                this.url = new URL(urlString);
+            }
+            catch (MalformedURLException e) {
+                throw new BitbucketException("Could not build clone URL", e);
+            }
         }
-        catch (MalformedURLException e) {
-            log.error("Could not build clone URL", e);
+
+        private BitbucketRepositoryUrl(String urlString) {
+            try {
+                this.url = new URL(urlString);
+            }
+            catch (MalformedURLException e) {
+                throw new BitbucketException("Could not build clone URL", e);
+            }
         }
-        return cloneUrl;
+
+        @Override
+        public VcsRepositoryUrl withUser(String username) {
+            this.username = username;
+            return new BitbucketRepositoryUrl(url.toString().replaceAll("(http://)(.*)", "$1" + username + "@$2"));
+        }
+
+        private String buildRepositoryPath(String projectKey, String repositorySlug) {
+            return BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
+        }
     }
 }
