@@ -32,7 +32,7 @@
             },
             "testCases": {
                 "headline": "Feedback",
-                "content": "In this window you can view the feedback to your submission. Please try to solve all errors to pass this programming exercise successfully."
+                "content": "In this window you can view the feedback related to your submission. Please try to solve all errors to pass this programming exercise successfully."
             },
             "testSuccess": {
                 "headline": "Task solved",
