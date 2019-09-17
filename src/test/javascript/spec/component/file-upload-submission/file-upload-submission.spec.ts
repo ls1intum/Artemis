@@ -145,9 +145,6 @@ describe('FileUploadSubmissionComponent', () => {
     it('Incorrect file type can not be submitted', fakeAsync(() => {
         // Ignore console errors and window confirm
         console.error = jest.fn();
-        window.confirm = () => {
-            return false;
-        };
 
         const fileName = 'exampleSubmission';
         comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
