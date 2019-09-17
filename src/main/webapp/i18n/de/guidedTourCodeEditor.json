@@ -11,7 +11,7 @@
             },
             "codeEditor": {
                 "headline": "Programmier-Editor",
-                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das TODO durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch jeden beliebigen Code zum in dieser Testrunde einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
+                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das TODO durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
             },
             "saveChanges": {
                 "headline": "Änderungen speichern",
@@ -20,7 +20,7 @@
             "submitChanges": {
                 "headline": "Änderungen absenden",
                 "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst.",
-                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum mehrfache Abgaben machen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum beliebig oft eine neue Lösung einreichen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
             },
             "buildLoading": {
                 "headline": "Build und Tests",
@@ -28,7 +28,7 @@
             },
             "buildStatus": {
                 "headline": "Buildstatus",
-                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
+                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht."
             },
             "testCases": {
                 "headline": "Feedback",

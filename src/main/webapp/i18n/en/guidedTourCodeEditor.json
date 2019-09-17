@@ -3,7 +3,7 @@
         "programmingExercise": {
             "fileBrowser": {
                 "headline": "File Browser",
-                "content": "In the file browser wou can view the project structure with all its folders and files. Additionally you can also create your own folders and files if necessary."
+                "content": "In the file browser you can view the project structure with all its folders and files. Additionally you can also create your own folders and files if necessary."
             },
             "exerciseFile": {
                 "headline": "Class file",
@@ -19,11 +19,11 @@
             },
             "submitChanges": {
                 "headline": "Submit changes",
-                "content": "If you are content with your implementation, then you can submit your current code by clicking 'Submit'.",
+                "content": "If you are satisfied with your implementation, then you can submit your current code by clicking 'Submit'.",
                 "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
             },
             "buildLoading": {
-                "headline": "Build und tests",
+                "headline": "Build and tests",
                 "content": "After submitting your changes, Artemis will automatically trigger the build and the tests."
             },
             "buildStatus": {
@@ -32,7 +32,7 @@
             },
             "testCases": {
                 "headline": "Feedback",
-                "content": "In this window you can view the feedback to your submission. Please try to solve all errors to pass this programming exercise successfully."
+                "content": "In this window you can view the feedback related to your submission. Please try to solve all errors to pass this programming exercise successfully."
             },
             "testSuccess": {
                 "headline": "Task solved",
