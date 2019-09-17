@@ -164,7 +164,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
-            if (allowedFileExtensions.some(extension => submissionFile.name.endsWith(extension))) {
+            if (allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.submissionFile = submissionFile;
             } else {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
