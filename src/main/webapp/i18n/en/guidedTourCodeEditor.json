@@ -3,7 +3,7 @@
         "programmingExercise": {
             "fileBrowser": {
                 "headline": "File Browser",
-                "content": "In the file browser wou can view the project structure with all its folders and files. Additionally you can also create your own folders and files if necessary."
+                "content": "In the file browser you can view the project structure with all its folders and files. Additionally you can also create your own folders and files if necessary."
             },
             "exerciseFile": {
                 "headline": "Class file",
