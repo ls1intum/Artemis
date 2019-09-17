@@ -19,7 +19,7 @@
             },
             "submitChanges": {
                 "headline": "Submit changes",
-                "content": "If you are content with your implementation, then you can submit your current code by clicking 'Submit'.",
+                "content": "If you are satisfied with your implementation, then you can submit your current code by clicking 'Submit'.",
                 "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
             },
             "buildLoading": {
