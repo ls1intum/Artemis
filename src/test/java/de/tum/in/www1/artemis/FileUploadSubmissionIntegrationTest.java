@@ -82,7 +82,7 @@ public class FileUploadSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void submitFileUploadSubmission() throws Exception {
         database.addParticipationForExercise(fileUploadExercise, "student1");
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("", false);
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("j.pdf", false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(fileUploadExercise.getId(), submission);
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(submission.getFilePath());
