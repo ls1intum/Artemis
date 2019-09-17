@@ -1,7 +1,4 @@
 import { NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
-
 import { ArtemisSharedModule } from '../../shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { RepositoryService } from '../../entities/repository/repository.service';
@@ -31,15 +28,7 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
         EditDragAndDropQuestionComponent,
         EditShortAnswerQuestionComponent,
     ],
-    providers: [RepositoryService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [RepositoryService, JhiAlertService],
     exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
 })
-export class ArtemisQuizEditModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisQuizEditModule {}

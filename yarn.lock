@@ -1512,10 +1512,15 @@
   dependencies:
     "@types/chai" "*"
 
-"@types/chai@*", "@types/chai@4.2.2":
+"@types/chai@*":
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.2.tgz#6b825013863d04868c15624ec8b7fdced88a47c6"
   integrity sha512-8V2aCcPM3WLuJvJpF6N60uUvdZb7NHjpjQlLk1QmZbTP4XZET/FX0c3TJ3K7qt4L98FS1Pifa8BVofTVuJFWVA==
+
+"@types/chai@4.2.3":
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.3.tgz#419477a3d5202bad19e14c787940a61dc9ea6407"
+  integrity sha512-VRw2xEGbll3ZiTQ4J02/hUjNqZoue1bMhoo2dgM2LXjDdyaq4q80HgBDHwpI0/VKlo4Eg+BavyQMv/NYgTetzA==
 
 "@types/chart.js@2.8.5", "@types/chart.js@^2.7.48":
   version "2.8.5"
@@ -1923,11 +1928,6 @@ acorn-walk@^6.0.1:
   resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-6.2.0.tgz#123cb8f3b84c2171f1f7fb252615b1c78a6b1a8c"
   integrity sha512-7evsyfH1cLOCdAzZAd43Cic04yKydNx0cF+7tiA19p1XnLLPU4dpCQOqpjqwokFe//vS0QqfqqjCS2JkiIs0cA==
 
-acorn@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-7.0.0.tgz#26b8d1cd9a9b700350b71c0905546f64d1284e7a"
-  integrity sha512-PaF/MduxijYYt7unVGRuds1vBC9bFxbNf+VWqhOClfdgy7RlVkQqt610ig1/yxTgsDIfW1cWDel5EBbOy3jdtQ==
-
 acorn@^5.5.3:
   version "5.7.3"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.7.3.tgz#67aa231bf8812974b85235a96771eb6bd07ea279"
@@ -2031,13 +2031,6 @@ angular-fittext@2.1.1:
   integrity sha512-z2jEwSSjn7jLQik9DcBKZDDMSzn+Hltf0c5t2pMY9Vxf80vkpvaerPfUnU4d5oGDDQeWtuZnva2kS0bjZlPVpw==
   dependencies:
     tslib "^1.9.0"
-
-angular-router-loader@0.8.5:
-  version "0.8.5"
-  resolved "https://registry.yarnpkg.com/angular-router-loader/-/angular-router-loader-0.8.5.tgz#42b378d0914c1ce412b851c1d92b80dbbe4f2fc5"
-  integrity sha512-8wggCTKGgzB1o8co3Wvj+p9pKN7T7q3C477lEz3NLjvPVzUti8rv9i45Di+4aO/k+HvzGh3s8QdNlXU2Bl4avQ==
-  dependencies:
-    loader-utils "^1.0.2"
 
 angular2-template-loader@0.6.2:
   version "0.6.2"
@@ -9593,10 +9586,10 @@ next-tick@^1.0.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
   integrity sha1-yobR/ogoFpsBICCOPchCS524NCw=
 
-ng-jhipster@0.11.0:
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.11.0.tgz#079fb7d669f2774f1875b2a2b44e6696a127f411"
-  integrity sha512-3O42asVTiEvmuprH/gB/R+CRCovEds+8AM3B7w93a6sf+0wcOandFGgTqNGqE5FQZ4C7CsHxVAk6NZHpwjti/w==
+ng-jhipster@0.11.1:
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.11.1.tgz#b07230d1a68901daab933b57eecabd4c9a30e72e"
+  integrity sha512-3r4dPTxD2xe4eU8uOe6XHpZ3RMzc7f1HDikdTQtz5kaeQnmpVjOkAImPB+reG3L9vsEZHXinwdcyeI4Y5/GlNQ==
   dependencies:
     tslib "^1.9.0"
 
@@ -14655,10 +14648,10 @@ webidl-conversions@^4.0.2:
   resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-4.0.2.tgz#a855980b1f0b6b359ba1d5d9fb39ae941faa63ad"
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
-webpack-cli@3.3.8:
-  version "3.3.8"
-  resolved "https://registry.yarnpkg.com/webpack-cli/-/webpack-cli-3.3.8.tgz#caeaebcc26f685db1736e5decd3f01aac30123ec"
-  integrity sha512-RANYSXwikSWINjHMd/mtesblNSpjpDLoYTBtP99n1RhXqVI/wxN40Auqy42I7y4xrbmRBoA5Zy5E0JSBD5XRhw==
+webpack-cli@3.3.9:
+  version "3.3.9"
+  resolved "https://registry.yarnpkg.com/webpack-cli/-/webpack-cli-3.3.9.tgz#79c27e71f94b7fe324d594ab64a8e396b9daa91a"
+  integrity sha512-xwnSxWl8nZtBl/AFJCOn9pG7s5CYUYdZxmmukv+fAHLcBIHM36dImfpQg3WfShZXeArkWlf6QRw24Klcsv8a5A==
   dependencies:
     chalk "2.4.2"
     cross-spawn "6.0.5"

@@ -3,7 +3,6 @@ import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLE
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
-import { User } from 'app/core';
 import * as $ from 'jquery';
 
 @Component({

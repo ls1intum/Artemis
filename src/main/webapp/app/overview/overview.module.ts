@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -20,10 +18,10 @@ import {
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
-    ProgrammingExerciseStudentIdeActionsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
     OverviewCourseCardComponent,
+    ProgrammingExerciseStudentIdeActionsComponent,
 } from './';
 import { ArtemisResultModule } from 'app/entities/result';
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
@@ -65,16 +63,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ProgrammingExerciseStudentIdeActionsComponent,
     ],
     entryComponents: [],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-
     exports: [ExerciseActionButtonComponent],
 })
-export class ArtemisOverviewModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisOverviewModule {}

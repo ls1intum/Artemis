@@ -9,7 +9,6 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerQuestionStatistic } from '../../../entities/short-answer-question-statistic';
-import { QuizQuestionType } from '../../../entities/quiz-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';

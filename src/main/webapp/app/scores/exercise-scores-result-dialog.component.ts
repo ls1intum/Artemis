@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
 import { Result, ResultService } from '../entities/result';
-import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';

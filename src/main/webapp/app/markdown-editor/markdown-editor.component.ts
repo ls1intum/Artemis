@@ -9,21 +9,21 @@ import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import {
-    Command,
-    BoldCommand,
-    ItalicCommand,
-    UnderlineCommand,
-    HeadingOneCommand,
-    HeadingTwoCommand,
-    HeadingThreeCommand,
-    CodeCommand,
-    LinkCommand,
     AttachmentCommand,
-    OrderedListCommand,
-    UnorderedListCommand,
-    ReferenceCommand,
+    BoldCommand,
+    CodeCommand,
     ColorPickerCommand,
+    Command,
     FullscreenCommand,
+    HeadingOneCommand,
+    HeadingThreeCommand,
+    HeadingTwoCommand,
+    ItalicCommand,
+    LinkCommand,
+    OrderedListCommand,
+    ReferenceCommand,
+    UnderlineCommand,
+    UnorderedListCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';

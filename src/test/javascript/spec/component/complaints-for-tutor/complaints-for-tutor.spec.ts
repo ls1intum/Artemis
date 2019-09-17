@@ -13,6 +13,7 @@ import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { Complaint } from 'app/entities/complaint';
+import { TranslateModule } from '@ngx-translate/core';
 
 const expect = chai.expect;
 describe('ComplaintsForTutorComponent', () => {
@@ -39,7 +40,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule],
+            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule, TranslateModule.forRoot()],
             declarations: [ComplaintsForTutorComponent],
             providers: [
                 {

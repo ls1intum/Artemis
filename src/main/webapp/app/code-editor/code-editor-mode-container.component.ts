@@ -7,11 +7,11 @@ import Interactable from '@interactjs/core/Interactable';
 
 import { ComponentCanDeactivate } from 'app/shared';
 import { ParticipationService } from 'app/entities/participation';
-import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { AnnotationArray } from 'app/entities/ace-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorSessionService } from 'app/code-editor/service';
-import { EditorState, CommitState } from 'app/code-editor/model';
+import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorGridComponent } from 'app/code-editor/layout';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 

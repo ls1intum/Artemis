@@ -1,5 +1,4 @@
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 

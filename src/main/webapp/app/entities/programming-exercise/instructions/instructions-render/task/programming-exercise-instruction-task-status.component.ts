@@ -3,8 +3,10 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
-import { TestCaseState } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import {
+    ProgrammingExerciseInstructionService,
+    TestCaseState,
+} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
 
 @Component({

@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
-import { Participation, SolutionProgrammingExerciseParticipation, StudentParticipation } from 'app/entities/participation';
+import { SolutionProgrammingExerciseParticipation, StudentParticipation } from 'app/entities/participation';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.

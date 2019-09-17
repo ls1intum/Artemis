@@ -4,7 +4,7 @@ import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
-import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { triggerChanges } from '../../utils/general.utils';
 

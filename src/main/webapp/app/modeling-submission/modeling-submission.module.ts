@@ -4,8 +4,6 @@ import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from '../shared';
 import { modelingSubmissionRoute } from './modeling-submission.route';
 import { ArtemisResultModule } from '../entities/result';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
@@ -25,14 +23,5 @@ const ENTITY_STATES = [...modelingSubmissionRoute];
         ArtemisComplaintsModule,
     ],
     declarations: [ModelingSubmissionComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
-export class ArtemisModelingSubmissionModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisModelingSubmissionModule {}
