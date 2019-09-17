@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.when;
 
@@ -167,9 +168,9 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
-        when(bambooService.copyBuildPlan(anyString(), BuildPlanType.TEMPLATE.getName(), anyString(), anyString(), BuildPlanType.TEMPLATE.getName()))
+        when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.TEMPLATE.getName()), anyString(), anyString(), matches(BuildPlanType.TEMPLATE.getName())))
                 .thenReturn(toBeImported.getTemplateBuildPlanId());
-        when(bambooService.copyBuildPlan(anyString(), BuildPlanType.SOLUTION.getName(), anyString(), anyString(), BuildPlanType.SOLUTION.getName()))
+        when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.SOLUTION.getName()), anyString(), anyString(), matches(BuildPlanType.SOLUTION.getName())))
                 .thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");
         doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
