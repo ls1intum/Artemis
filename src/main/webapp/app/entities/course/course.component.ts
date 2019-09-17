@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 
 @Component({
     selector: 'jhi-course',
@@ -18,7 +19,12 @@ export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+    constructor(
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private eventManager: JhiEventManager,
+        private deleteDialogService: DeleteDialogService,
+    ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;
@@ -51,18 +57,31 @@ export class CourseComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes the course
-     * @param courseId id the course that will be deleted
+     * Opens delete course dialog
+     * @param course that will be deleted
      */
-    deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe(
+    openDeleteCourseDialog(course: Course) {
+        if (!course) {
+            return;
+        }
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: course.title,
+            deleteQuestion: 'artemisApp.course.delete.question',
+            deleteConfirmationText: 'artemisApp.course.delete.typeNameToConfirm',
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(
             () => {
-                this.eventManager.broadcast({
-                    name: 'courseListModification',
-                    content: 'Deleted an course',
-                });
+                this.courseService.delete(course.id).subscribe(
+                    () => {
+                        this.eventManager.broadcast({
+                            name: 'courseListModification',
+                            content: 'Deleted an course',
+                        });
+                    },
+                    error => this.onError(error),
+                );
             },
-            error => this.onError(error),
+            () => {},
         );
     }
 

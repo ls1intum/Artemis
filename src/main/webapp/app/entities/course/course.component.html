@@ -133,13 +133,10 @@
                                         <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                                     </button>
-                                    <jhi-delete-button
-                                        [entityTitle]="course.title"
-                                        deleteQuestion="artemisApp.course.delete.question"
-                                        deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                                        (delete)="deleteCourse(course.id)"
-                                    >
-                                    </jhi-delete-button>
+                                    <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN']" (click)="openDeleteCourseDialog(course)" class="btn btn-danger btn-sm mr-1 mb-1">
+                                        <fa-icon [icon]="'times'"></fa-icon>
+                                        <span class="d-none d-md-inline">{{ 'entity.action.delete' | translate }}</span>
+                                    </button>
                                 </div>
                             </div>
                         </td>
