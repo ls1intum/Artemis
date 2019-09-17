@@ -28,7 +28,7 @@
             },
             "buildStatus": {
                 "headline": "Buildstatus",
-                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Aufgaben die Tests bestanden und erfolgreich gelöst wurden und welche nicht."
+                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht."
             },
             "testCases": {
                 "headline": "Feedback",
