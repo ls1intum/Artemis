@@ -12,8 +12,6 @@ import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/en
 import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -106,7 +104,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         private repositoryService: CodeEditorRepositoryService,
         private fileService: CodeEditorFileService,
         private conflictService: CodeEditorConflictStateService,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -117,7 +114,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             }
             this.gitConflictState = gitConflictState;
         });
-        this.guidedTourService.enableTour(codeEditorTour);
     }
 
     /**
