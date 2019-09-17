@@ -1,31 +1,29 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import { SinonStub, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArtemisSharedModule, CacheableImageService, CachingStrategy, SecuredImageComponent } from 'app/shared';
-import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
+import { JhiAlertErrorComponent } from 'app/shared';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { FormsModule } from '@angular/forms';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('SecuredImageComponent', () => {
+describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
     let fixture: ComponentFixture<DeleteDialogComponent>;
     let debugElement: DebugElement;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [DeleteDialogComponent],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
+            declarations: [DeleteDialogComponent, JhiAlertErrorComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
