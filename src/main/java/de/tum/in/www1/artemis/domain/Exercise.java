@@ -445,7 +445,7 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * find a relevant participation for this exercise (relevancy depends on InitializationState)
+     * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
@@ -599,9 +599,7 @@ public abstract class Exercise implements Serializable {
      */
     private Submission findAppropriateSubmission(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
-        ;
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
-        ;
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
         for (Submission submission : submissions) {
