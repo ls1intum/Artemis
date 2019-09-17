@@ -317,8 +317,7 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
-        studentIds = studentIds.replaceAll(" ", "");
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds, @RequestParam boolean allStudents) throws IOException {
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         // TODO: allow multiple options:
@@ -328,13 +327,20 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
 
-        List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        if (studentList.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
-                    .build();
+        File zipFile;
+        if (allStudents) {
+            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId);
         }
+        else {
+            studentIds = studentIds.replaceAll(" ", "");
+            List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+            if (studentList.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
+                        .build();
+            }
 
-        File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
+            zipFile = exerciseService.exportParticipations(exerciseId, studentList);
+        }
         if (zipFile == null) {
             return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
                     .build();

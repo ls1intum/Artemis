@@ -6,7 +6,10 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p jhiTranslate="instructorDashboard.exportRepos.question" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">Confirm export</p>
-        <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required></textarea>
+        <div class="checkbox">
+            <label class="control-label text-danger"> <input type="checkbox" name="allStudents" [(ngModel)]="allStudents" />Download the repositories of all students</label>
+        </div>
+        <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required [disabled]="allStudents"></textarea>
         <p>(This action can take several minutes depending on number and size of repositories.)</p>
     </div>
 

@@ -55,8 +55,10 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(exerciseId: number, students: string[]): Observable<HttpResponse<Blob>> {
+    exportRepos(exerciseId: number, students: string[], allStudents: boolean): Observable<HttpResponse<Blob>> {
+        const params = new HttpParams().set('allStudents', allStudents.toString());
         return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
+            params,
             observe: 'response',
             responseType: 'blob',
         });

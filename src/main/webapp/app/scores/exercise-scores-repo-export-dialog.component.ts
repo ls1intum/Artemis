@@ -17,6 +17,7 @@ export class ExerciseScoresRepoExportComponent {
     exercise: Exercise;
     exportInProgress: boolean;
     studentIdList: string;
+    allStudents: boolean;
 
     constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.exportInProgress = false;
@@ -29,7 +30,7 @@ export class ExerciseScoresRepoExportComponent {
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
         const studentIdList = this.studentIdList.split(',').map(e => e.trim());
-        this.exerciseService.exportRepos(exerciseId, studentIdList).subscribe(
+        this.exerciseService.exportRepos(exerciseId, studentIdList, this.allStudents).subscribe(
             response => {
                 this.jhiAlertService.success('Export of repos was successful. The exported zip file with all repositories is currently being downloaded');
                 this.activeModal.dismiss(true);
