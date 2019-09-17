@@ -321,6 +321,17 @@ public class ExerciseService {
     }
 
     /**
+     * Get participations of coding exercises of all students packed together in one zip file.
+     *
+     * @param exerciseId the id of the exercise entity
+     * @return a zip file containing all requested participations
+     */
+    @Transactional(readOnly = true)
+    public java.io.File exportParticipationsAllStudents(Long exerciseId) {
+        return exportParticipationsHelper(exerciseId, null, true);
+    }
+
+    /**
      * Get participations of coding exercises of a requested list of students packed together in one zip file.
      *
      * @param exerciseId the id of the exercise entity
@@ -329,6 +340,10 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public java.io.File exportParticipations(Long exerciseId, List<String> studentIds) {
+        return exportParticipationsHelper(exerciseId, studentIds, false);
+    }
+
+    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents) {
         Exercise exercise = findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;
@@ -339,8 +354,8 @@ public class ExerciseService {
         for (StudentParticipation participation : exercise.getParticipations()) {
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             try {
-                if (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
-                        || !studentIds.contains(studentParticipation.getStudent().getLogin())) {
+                if (!allStudents && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
+                        || !studentIds.contains(studentParticipation.getStudent().getLogin()))) {
                     // participation is not relevant for zip archive.
                     continue;
                 }
@@ -371,7 +386,8 @@ public class ExerciseService {
                 }
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
+                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents " + allStudents
+                        + " did not work as expected: " + ex);
             }
         }
         if (exercise.getParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
