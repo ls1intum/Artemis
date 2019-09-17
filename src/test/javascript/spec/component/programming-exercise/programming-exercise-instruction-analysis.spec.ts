@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Observable, of } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
@@ -14,6 +14,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { HttpResponse } from '@angular/common/http';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -88,10 +89,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
             comp.ngOnInit();
 
-            const changes: SimpleChanges = {
-                problemStatement: new SimpleChange('dolet amat', problemStatement, false),
-            };
-            comp.ngOnChanges(changes);
+            triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement, previousValue: 'dolet amat', firstChange: false });
             tick(500); // Update is debounced, otherwise we would send updates on every change.
             fixture.detectChanges();
 
@@ -146,8 +144,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
         it('should not render if no test cases were provided', () => {
             comp.problemStatement = problemStatement;
             comp.taskRegex = taskRegex;
-            const changes = { problemStatement: new SimpleChange(undefined, problemStatement, true) };
-            comp.ngOnChanges(changes);
+            triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement });
             fixture.detectChanges();
 
             expect(debugElement.nativeElement.innerHtml).to.be.undefined;
@@ -161,8 +158,13 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             comp.exerciseTestCases = exerciseTestCases;
             comp.exerciseHints = exerciseHints;
             comp.ngOnInit();
-            const changes = { problemStatement: new SimpleChange(undefined, problemStatement, false), exerciseTestCases: new SimpleChange(undefined, exerciseTestCases, false) };
-            comp.ngOnChanges(changes);
+
+            triggerChanges(
+                comp,
+                { property: 'problemStatement', currentValue: problemStatement, firstChange: false },
+                { property: 'exerciseTestCases', currentValue: exerciseTestCases },
+            );
+
             fixture.detectChanges();
             tick(500);
 

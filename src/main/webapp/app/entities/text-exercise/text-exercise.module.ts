@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { TextExerciseComponent, TextExerciseDetailComponent, textExerciseRoute, TextExerciseService, TextExerciseUpdateComponent } from './';
@@ -26,15 +24,7 @@ const ENTITY_STATES = [...textExerciseRoute];
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],
-    providers: [TextExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [TextExerciseService],
     exports: [TextExerciseComponent],
 })
-export class ArtemisTextExerciseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisTextExerciseModule {}

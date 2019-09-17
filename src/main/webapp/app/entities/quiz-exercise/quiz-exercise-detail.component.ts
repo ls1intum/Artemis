@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { Duration, Option } from './quiz-exercise-interfaces';
-import { NgbDate, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';

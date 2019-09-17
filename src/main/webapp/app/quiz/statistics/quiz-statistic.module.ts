@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from '../../shared';
 import { quizStatisticRoute } from './quiz-statistic.route';
@@ -38,14 +36,6 @@ const ENTITY_STATES = [...quizStatisticRoute];
         DragAndDropQuestionStatisticComponent,
         ShortAnswerQuestionStatisticComponent,
     ],
-    providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [QuizStatisticUtil],
 })
-export class ArtemisStatisticModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisStatisticModule {}

@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
@@ -13,6 +13,7 @@ import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter } from 'rxjs/operators';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -28,11 +29,11 @@ export class GuidedTourService {
     private onResizeMessage = false;
 
     constructor(
-        private errorHandler: ErrorHandler,
         private http: HttpClient,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private router: Router,
+        private deviceService: DeviceDetectorService,
     ) {}
 
     /**
@@ -85,7 +86,9 @@ export class GuidedTourService {
      * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
      */
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
-        return this.guidedTourAvailability.asObservable();
+        // The guided tour is currently disabled for mobile devices and tablets
+        // TODO optimize guided tour layout for mobile devices and tablets
+        return this.guidedTourAvailability.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
     }
 
     /**
@@ -136,6 +139,7 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (currentStep.closeAction) {
@@ -190,7 +194,7 @@ export class GuidedTourService {
      * Subscribe to the update method call
      * @param guidedTourState GuidedTourState.FINISHED if the tour is closed on the last step, otherwise GuidedTourState.STARTED
      */
-    private subscribeToAndUpdateGuidedTourSettings(guidedTourState: GuidedTourState) {
+    public subscribeToAndUpdateGuidedTourSettings(guidedTourState: GuidedTourState) {
         if (!this.currentTour) {
             return;
         }
@@ -215,8 +219,42 @@ export class GuidedTourService {
     }
 
     /**
+     * Pause tour for a smooth user interaction
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     */
+    public pauseTour(targetNode: HTMLElement): void {
+        if (!this.currentTour) {
+            return;
+        }
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(() => {
+                if (nextStep) {
+                    document.body.classList.remove('tour-open');
+                    this.guidedTourCurrentStepSubject.next(null);
+                    this.resumeTour(observer, nextStep);
+                }
+            });
+        });
+        observer.observe(targetNode, {
+            attributes: true,
+            childList: true,
+            characterData: true,
+        });
+    }
+
+    /**
+     * Resume tour after user interaction
+     * @param observer the current DOM MutationObserver that should be disconnected
+     */
+    public resumeTour(observer: MutationObserver, nextStep: TourStep) {
+        observer.disconnect();
+        this.currentTourStepIndex++;
+        this.guidedTourCurrentStepSubject.next(nextStep);
+    }
+
+    /**
      * Start guided tour for given guided tour
-     * @param tour: guided tour
      */
     public startTour(): void {
         if (!this.currentTour) {
@@ -245,7 +283,7 @@ export class GuidedTourService {
      * Checks if the current window size is supposed display the guided tour
      * @return true if the minimum screen size is not defined or greater than the current window.innerWidth, otherwise false
      */
-    public tourAllowedForWindowSize(): boolean {
+    private tourAllowedForWindowSize(): boolean {
         if (this.currentTour) {
             return !this.currentTour.minimumScreenSize || window.innerWidth >= this.currentTour!.minimumScreenSize;
         }
@@ -259,16 +297,14 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return false;
         }
-        if (this.currentTour.steps[this.currentTourStepIndex].selector) {
-            const selectedElement = document.querySelector(this.currentTour.steps[this.currentTourStepIndex].selector!);
+        const selector = this.currentTour.steps[this.currentTourStepIndex].selector;
+        if (selector) {
+            const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
-                this.errorHandler.handleError(
-                    // If error handler is configured this should not block the browser.
-                    console.warn(
-                        `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                            this.currentTour.settingsKey
-                        }`,
-                    ),
+                console.warn(
+                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                        this.currentTour.settingsKey
+                    }`,
                 );
                 return false;
             }
@@ -321,7 +357,7 @@ export class GuidedTourService {
      */
     public get preventBackdropFromAdvancing(): boolean {
         if (this.currentTour) {
-            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
+            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : true);
         }
         return false;
     }

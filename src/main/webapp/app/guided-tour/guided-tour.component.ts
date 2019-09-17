@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation } from './guided-tour.constants';
+import { LinkType, Orientation, OverlayPosition } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -31,11 +31,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
+    public startFade = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
     readonly LinkType = LinkType;
+    readonly OverlayPosition = OverlayPosition;
 
     constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -47,7 +49,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     handleKeyboardEvent(event: KeyboardEvent) {
         switch (event.code) {
             case 'ArrowRight': {
-                if (this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                /**
+                 * Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
+                 * If the user interaction is enabled, then the user has can only move to the next step after doing the interaction
+                 */
+                if (
+                    this.currentTourStep &&
+                    !this.currentTourStep.enableUserInteraction &&
+                    this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
+                ) {
                     this.guidedTourService.nextStep();
                 }
                 break;
@@ -98,6 +108,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
+                this.handleTransition();
                 return;
             }
             this.selectedElementRect = null;
@@ -304,23 +315,41 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get overlay style for the highlighted rectangle of the selected element
-     * @return style object for the highlighted element
+     * Get overlay style for the rectangles beside the highlighted element
+     * @return style object for the rectangle beside the highlighted element
      */
-    public getOverlayStyle() {
-        let top = 0;
-        let left = 0;
-        let height = 0;
-        let width = 0;
+    public getOverlayStyle(position: OverlayPosition) {
+        let style;
 
         if (this.selectedElementRect) {
-            top = this.selectedElementRect.top - this.getHighlightPadding();
-            left = this.selectedElementRect.left - this.getHighlightPadding();
-            height = this.selectedElementRect.height + this.getHighlightPadding() * 2;
-            width = this.selectedElementRect.width + this.getHighlightPadding() * 2;
-        }
+            const selectedElementTop = this.selectedElementRect.top - this.getHighlightPadding();
+            const selectedElementLeft = this.selectedElementRect.left - this.getHighlightPadding();
+            const selectedElementHeight = this.selectedElementRect.height + this.getHighlightPadding() * 2;
+            const selectedElementWidth = this.selectedElementRect.width + this.getHighlightPadding() * 2;
 
-        return { 'top.px': top, 'left.px': left, 'height.px': height, 'width.px': width };
+            switch (position) {
+                case OverlayPosition.TOP: {
+                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop };
+                    break;
+                }
+                case OverlayPosition.LEFT: {
+                    style = { 'top.px': selectedElementTop, 'left.px': 0, 'height.px': selectedElementHeight, 'width.px': selectedElementLeft };
+                    break;
+                }
+                case OverlayPosition.RIGHT: {
+                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
+                    break;
+                }
+                case OverlayPosition.BOTTOM: {
+                    style = { 'top.px': selectedElementTop + selectedElementHeight };
+                    break;
+                }
+                case OverlayPosition.ELEMENT: {
+                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
+                }
+            }
+        }
+        return style;
     }
 
     /**
@@ -342,7 +371,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Get Element for the current tour step selector
-     * @return {HTMLElement} current selected element for the tour step or null
+     * @return current selected element for the tour step or null
      */
     public getSelectedElement(): HTMLElement | null {
         if (!this.currentTourStep || !this.currentTourStep.selector) {
@@ -361,7 +390,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate the left position of the highlighted rectangle
-     * @return {number} left position of current tour step / highlighted element
+     * @return left position of current tour step / highlighted element
      */
     public get calculatedHighlightLeftPosition(): number {
         if (!this.selectedElementRect || !this.currentTourStep) {
@@ -390,7 +419,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate width adjustment for screen bound
-     * @return {number} widthAdjustmentForScreenBound
+     * @return widthAdjustmentForScreenBound
      */
     public get widthAdjustmentForScreenBound(): number {
         let adjustment = 0;
@@ -406,7 +435,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculate a value to add or subtract so the step should not be off screen.
-     * @return {number} step screen adjustment
+     * @return step screen adjustment
      */
     public getStepScreenAdjustment(): number {
         if (!this.selectedElementRect || !this.currentTourStep) {
@@ -428,14 +457,26 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Update tour step location and return selected element as DOMRect
      * @param selectedElement: selected element in DOM
-     * @return {selectedElementRect} selected element as DOMRect or null
+     * @return selected element as DOMRect or null
      */
     public updateStepLocation(selectedElement: HTMLElement | null): DOMRect | null {
         let selectedElementRect = null;
-
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
+            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
+                this.guidedTourService.pauseTour(selectedElement);
+            }
         }
         return selectedElementRect;
+    }
+
+    /**
+     * Sets the startFade class for the tour step div to ease the transition between tour steps
+     */
+    public handleTransition() {
+        this.startFade = true;
+        setTimeout(() => {
+            this.startFade = false;
+        }, 1000);
     }
 }

@@ -22,10 +22,6 @@ class TestSortingStructural(unittest.TestCase):
         self.assertTrue(structural_helpers.check_abstract_method_names(sort_strategy.SortStrategy, 'perform_sort'),
                         self.abstract_method_error % ('perform_sort', sort_strategy.SortStrategy.__name__))
 
-    def test_context_class(self):
-        self.assertTrue(structural_helpers.check_class_names(context, 'Context'),
-                        self.class_error % ('Context', context.__name__))
-
     def test_context_attributes(self):
         attributes = ['numbers', 'sorting_algorithm']
         self.assertTrue(structural_helpers.check_attributes(context.Context, *attributes),
@@ -34,10 +30,6 @@ class TestSortingStructural(unittest.TestCase):
     def test_context_methods(self):
         self.assertTrue(structural_helpers.check_method_names(context.Context(), 'sort'),
                         self.method_error % ('sort', context.Context.__name__))
-
-    def test_policy_class(self):
-        self.assertTrue(structural_helpers.check_class_names(policy, 'Policy'),
-                        self.class_error % ('Policy', policy.__name__))
 
     def test_policy_constructor(self):
         self.assertTrue(structural_helpers.check_constructor_args(policy.Policy, 'context'),

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
 import { adminState } from './admin.route';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisSharedModule } from 'app/shared';
 import {
     AuditsComponent,
@@ -51,15 +49,6 @@ const ENTITY_STATES = [...adminState];
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
     ],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     entryComponents: [UserManagementDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
 })
-export class ArtemisAdminModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisAdminModule {}

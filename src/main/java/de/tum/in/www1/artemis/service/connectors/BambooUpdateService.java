@@ -28,17 +28,6 @@ public class BambooUpdateService {
     @Value("${artemis.bamboo.password}")
     protected String BAMBOO_PASSWORD;
 
-    private BambooClient getBambooClient() {
-        // TODO: we might prevent console log message by passing a Settings object into Base
-        final BambooClient bambooClient = new BambooClient(new Base());
-        // setup the Bamboo Client to use the correct username and password
-
-        String[] args = new String[] { "-s", BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password", BAMBOO_PASSWORD, };
-
-        bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
-        return bambooClient;
-    }
-
     @Service
     @Profile("bitbucket")
     public class BitBucketBambooUpdateService extends BambooUpdateService implements ContinuousIntegrationUpdateService {

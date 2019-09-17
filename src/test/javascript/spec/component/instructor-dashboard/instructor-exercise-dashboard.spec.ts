@@ -11,6 +11,7 @@ import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor
 import { InstructorExerciseDashboardComponent } from 'app/instructor-exercise-dashboard';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { ChartsModule } from 'ng2-charts';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,7 +21,7 @@ describe('InstructorExerciseDashboardComponent', () => {
     let fixture: ComponentFixture<InstructorExerciseDashboardComponent>;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule, ChartsModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule, ChartsModule, TranslateModule.forRoot()],
             declarations: [
                 InstructorExerciseDashboardComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),

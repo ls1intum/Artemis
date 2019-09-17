@@ -4,7 +4,7 @@ import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
-import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
@@ -17,8 +17,9 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -92,28 +93,19 @@ describe('UpdatingResultComponent', () => {
 
     const cleanInitializeGraded = (participation = initialParticipation) => {
         comp.participation = participation;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
 
     const cleanInitializeUngraded = (participation = initialParticipation) => {
         comp.participation = participation;
         comp.showUngradedResults = true;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
 
     it('should not try to subscribe for new results if no participation is provided', () => {
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, undefined, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: undefined, firstChange: true });
         fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).to.not.have.been.called;

@@ -1,4 +1,4 @@
-import { Input, Output, OnInit, OnDestroy, EventEmitter } from '@angular/core';
+import { EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';

@@ -35,7 +35,13 @@ import {
     MockSyncStorage,
 } from '../../mocks';
 import { Result, ResultService } from 'app/entities/result';
-import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import {
+    ParticipationService,
+    ParticipationWebsocketService,
+    ProgrammingExerciseStudentParticipation,
+    SolutionProgrammingExerciseParticipation,
+    TemplateProgrammingExerciseParticipation,
+} from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -192,6 +198,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
+        // @ts-ignore
         const exercise = {
             id: 1,
             problemStatement,
@@ -200,8 +207,8 @@ describe('CodeEditorInstructorIntegration', () => {
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
         exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
-        exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
-        exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
+        exercise.templateParticipation = { ...exercise.templateParticipation, programmingExercise: exercise };
+        exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 
         getFeedbackDetailsForResultStub.returns(of([]));
         const setDomainSpy = spy(domainService, 'setDomain');
@@ -313,13 +320,15 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should be able to switch between the repos and update the child components accordingly', () => {
+        // @ts-ignore
         const exercise = {
             id: 1,
             problemStatement,
-            participations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2' },
-            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
+        exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        // @ts-ignore
+        exercise.participations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
 
         const setDomainSpy = spy(domainService, 'setDomain');
 
@@ -368,13 +377,15 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should not be able to select a repository without repositoryUrl', () => {
+        // @ts-ignore
         const exercise = {
             id: 1,
             problemStatement,
-            participations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3 },
-            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
+        // @ts-ignore
+        exercise.participations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const setDomainSpy = spy(domainService, 'setDomain');
 

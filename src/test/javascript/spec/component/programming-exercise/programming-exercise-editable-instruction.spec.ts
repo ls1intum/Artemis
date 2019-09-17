@@ -5,7 +5,7 @@ import { MockComponent } from 'ng-mocks';
 import { Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
@@ -23,6 +23,7 @@ import {
     ProgrammingExerciseEditableInstructionComponent,
     ProgrammingExerciseInstructionAnalysisComponent,
 } from 'app/entities/programming-exercise/instructions/instructions-editor';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -78,10 +79,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.detectChanges();
         tick();
 
@@ -96,10 +94,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -118,10 +113,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -149,10 +141,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.returns(subject);
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         // No test cases available, might be that the solution build never ran to create tests...
         (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
@@ -177,10 +166,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.participation = participation;
         comp.editMode = false;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();
@@ -203,10 +189,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();

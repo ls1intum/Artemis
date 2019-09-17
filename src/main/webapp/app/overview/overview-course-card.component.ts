@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ActivatedRoute, Router } from '@angular/router';

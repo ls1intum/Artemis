@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisService, ProgrammingExerciseInstructionAnalysisComponent } from './';
+import { ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisComponent, ProgrammingExerciseInstructionAnalysisService } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
@@ -11,15 +9,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisMarkdownEditorModule, ArtemisProgrammingExerciseStatusModule],
     declarations: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisComponent],
     entryComponents: [ProgrammingExerciseEditableInstructionComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }, ProgrammingExerciseInstructionAnalysisService],
+    providers: [ProgrammingExerciseInstructionAnalysisService],
     exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent],
 })
-export class ArtemisProgrammingExerciseInstructionsEditorModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisProgrammingExerciseInstructionsEditorModule {}
