@@ -452,20 +452,22 @@ public abstract class Exercise implements Serializable {
      */
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
-        for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
-                if (participation.getInitializationState() == InitializationState.INITIALIZED) {
-                    // InitializationState INITIALIZED is preferred
-                    // => if we find one, we can return immediately
-                    return participation;
-                }
-                else if (participation.getInitializationState() == InitializationState.INACTIVE) {
-                    // InitializationState INACTIVE is also ok
-                    // => if we can't find INITIALIZED, we return that one
-                    relevantParticipation = participation;
-                }
-                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
-                    return participation;
+        if (participations != null) {
+            for (StudentParticipation participation : participations) {
+                if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+                    if (participation.getInitializationState() == InitializationState.INITIALIZED) {
+                        // InitializationState INITIALIZED is preferred
+                        // => if we find one, we can return immediately
+                        return participation;
+                    }
+                    else if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                        // InitializationState INACTIVE is also ok
+                        // => if we can't find INITIALIZED, we return that one
+                        relevantParticipation = participation;
+                    }
+                    else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                        return participation;
+                    }
                 }
             }
         }
@@ -602,18 +604,20 @@ public abstract class Exercise implements Serializable {
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
-        for (Submission submission : submissions) {
-            Result result = submission.getResult();
-            if (result != null) {
-                if (result.isRated()) {
-                    submissionsWithRatedResult.add(submission);
+        if (submissions != null) {
+            for (Submission submission : submissions) {
+                Result result = submission.getResult();
+                if (result != null) {
+                    if (result.isRated()) {
+                        submissionsWithRatedResult.add(submission);
+                    }
+                    else {
+                        submissionsWithUnratedResult.add(submission);
+                    }
                 }
                 else {
-                    submissionsWithUnratedResult.add(submission);
+                    submissionsWithoutResult.add(submission);
                 }
-            }
-            else {
-                submissionsWithoutResult.add(submission);
             }
         }
 
