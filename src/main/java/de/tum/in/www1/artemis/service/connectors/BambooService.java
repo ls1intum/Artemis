@@ -311,18 +311,19 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String clonePlan(String templatePlan, String planKey, String planName) throws BambooException {
-        final var cleanPlanName = getCleanPlanName(planName);
-        planKey = planKey.replace(planName, cleanPlanName);
+    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
+        final var cleanPlanName = getCleanPlanName(targetPlanName);
+        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
-            log.debug("Clone build plan " + templatePlan + " to " + planKey);
+            log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = getBambooClient().getPlanHelper().clonePlan(templatePlan, planKey, cleanPlanName, "", "", true);
-            log.info("Clone build plan " + templatePlan + " was successful." + message);
+            String message = getBambooClient().getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
+            log.info("Clone build plan " + sourcePlanKey + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
                 log.info("Build Plan already exists. Going to recover build plan information...");
-                return planKey;
+                return targetPlanKey;
             } else {
                 log.error(clientException.getMessage(), clientException);
             }
@@ -331,7 +332,7 @@ public class BambooService implements ContinuousIntegrationService {
             throw new BambooException("Something went wrong while cloning build plan", e);
         }
 
-        return planKey;
+        return targetPlanKey;
     }
 
     @Override
@@ -371,7 +372,7 @@ public class BambooService implements ContinuousIntegrationService {
     private void deletePlan(String planKey) {
         try {
             log.info("Delete build plan " + planKey);
-            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
+            //TODO use REST API DELETE "/rest/api/latest/clone/{projectKey}-{buildKey}"
             String message = getBambooClient().getPlanHelper().deletePlan(planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {

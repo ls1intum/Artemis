@@ -846,15 +846,16 @@ public class ProgrammingExerciseService {
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
-        final var sourceTemplateId = templateExercise.getTemplateBuildPlanId();
-        final var sourceSolutionId = templateExercise.getSolutionBuildPlanId();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+        final var templateKey = templateExercise.getProjectKey();
+        final var targetKey = newExercise.getProjectKey();
+        final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
 
         // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
         // running the plan for the first time
-        continuousIntegrationService.get().clonePlan(sourceTemplateId, templateParticipation.getBuildPlanId(), templatePlanName);
-        continuousIntegrationService.get().clonePlan(sourceSolutionId, solutionParticipation.getBuildPlanId(), solutionPlanName);
+        continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
+        continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
         continuousIntegrationService.get().configureBuildPlan(templateParticipation);

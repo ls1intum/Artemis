@@ -28,6 +28,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -166,8 +167,10 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
-        when(bambooService.clonePlan("basePlanID", toBeImported.getTemplateBuildPlanId(), RepositoryType.TEMPLATE.getName())).thenReturn(toBeImported.getTemplateBuildPlanId());
-        when(bambooService.clonePlan("solutionPlanID", toBeImported.getSolutionBuildPlanId(), RepositoryType.SOLUTION.getName())).thenReturn(toBeImported.getSolutionBuildPlanId());
+        when(bambooService.copyBuildPlan(anyString(), BuildPlanType.TEMPLATE.getName(), anyString(), anyString(), BuildPlanType.TEMPLATE.getName()))
+                .thenReturn(toBeImported.getTemplateBuildPlanId());
+        when(bambooService.copyBuildPlan(anyString(), BuildPlanType.SOLUTION.getName(), anyString(), anyString(), BuildPlanType.SOLUTION.getName()))
+                .thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");
         doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
 
