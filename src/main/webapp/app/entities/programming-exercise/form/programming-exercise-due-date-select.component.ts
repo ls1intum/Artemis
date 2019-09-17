@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { Component, EventEmitter, Input, Output, HostBinding, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { hasExerciseChanged } from 'app/entities/exercise';

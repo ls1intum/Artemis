@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisQuizExerciseModule } from '../quiz-exercise/quiz-exercise.module';
 import { ArtemisTextExerciseModule } from '../text-exercise/text-exercise.module';
@@ -16,10 +14,10 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseExerciseService,
+    CourseExercisesOverviewComponent,
     coursePopupRoute,
     courseRoute,
     CourseService,
-    CourseExercisesOverviewComponent,
     CourseUpdateComponent,
 } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
@@ -57,14 +55,6 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseExercisesOverviewComponent,
     ],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent, CourseExerciseCardComponent, CourseDeletePopupComponent],
-    providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [CourseService, CourseExerciseService],
 })
-export class ArtemisCourseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisCourseModule {}

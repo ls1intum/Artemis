@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result';
-import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number) => Observable<Result | null>;

@@ -1,4 +1,4 @@
-import { Routes, Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../../core';
 import { TextExerciseComponent } from './text-exercise.component';
@@ -11,7 +11,7 @@ import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.se
 import { Course, CourseService } from 'app/entities/course';
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { map, filter } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {

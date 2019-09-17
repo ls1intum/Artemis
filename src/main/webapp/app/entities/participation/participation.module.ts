@@ -1,7 +1,5 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
@@ -47,17 +45,9 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
-    providers: [ParticipationService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ParticipationService, ParticipationPopupService],
 })
 export class ArtemisParticipationModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-
     static forRoot(): ModuleWithProviders {
         return {
             ngModule: ArtemisParticipationModule,

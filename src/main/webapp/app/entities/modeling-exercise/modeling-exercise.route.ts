@@ -1,4 +1,4 @@
-import { Routes, RouterStateSnapshot, ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../../core';
 import { ModelingExerciseComponent } from './modeling-exercise.component';

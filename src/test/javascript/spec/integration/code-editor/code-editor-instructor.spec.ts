@@ -40,7 +40,6 @@ import {
     ParticipationWebsocketService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
-    StudentParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';

@@ -8,11 +8,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { Course, CourseService } from 'app/entities/course';
-import { ResultDetailComponent, ResultService } from 'app/entities/result';
+import { Result, ResultDetailComponent, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
-import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-exercise-scores',
