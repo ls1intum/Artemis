@@ -36,3 +36,9 @@ export enum OverlayPosition {
     BOTTOM = 'bottom',
     ELEMENT = 'element',
 }
+
+export enum UserInteractionEvent {
+    CLICK = 'click',
+    ACE_EDITOR = 'ace-editor',
+    WAIT_FOR_SELECTOR = 'wait-for-selector',
+}
