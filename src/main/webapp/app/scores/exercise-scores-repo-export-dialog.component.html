@@ -17,7 +17,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="!studentIdList && !exportInProgress" class="btn btn-default">
+        <button type="submit" [disabled]="!studentIdList && !allStudents && !exportInProgress" class="btn btn-default">
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.exportRepos">Export</span>
         </button>
     </div>

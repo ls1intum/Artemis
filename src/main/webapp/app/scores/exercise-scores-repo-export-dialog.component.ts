@@ -29,8 +29,8 @@ export class ExerciseScoresRepoExportComponent {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        const studentIdList = this.studentIdList.split(',').map(e => e.trim());
-        this.exerciseService.exportRepos(exerciseId, studentIdList, this.allStudents).subscribe(
+        const studentIdList = this.studentIdList !== undefined ? this.studentIdList.split(',').map(e => e.trim()) : ['ALL'];
+        this.exerciseService.exportRepos(exerciseId, studentIdList, this.allStudents !== undefined ? this.allStudents : false).subscribe(
             response => {
                 this.jhiAlertService.success('Export of repos was successful. The exported zip file with all repositories is currently being downloaded');
                 this.activeModal.dismiss(true);
