@@ -1,0 +1,48 @@
+{
+    "tour": {
+        "programmingExercise": {
+            "fileBrowser": {
+                "headline": "Datei Browser",
+                "content": "Im Datei Browser findest die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
+            },
+            "exerciseFile": {
+                "headline": "Klassendatei",
+                "content": "Klick hier auf die Klassendatei, damit sie sich im Programmier-Editor öffnet."
+            },
+            "codeEditor": {
+                "headline": "Programmier-Editor",
+                "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das TODO durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
+            },
+            "saveChanges": {
+                "headline": "Änderungen speichern",
+                "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf Speichern klickst."
+            },
+            "submitChanges": {
+                "headline": "Änderungen absenden",
+                "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst.",
+                "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum beliebig oft eine neue Lösung einreichen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
+            },
+            "buildLoading": {
+                "headline": "Build und Tests",
+                "content": "Nachdem du deine Abgabe eingereicht hast, werden Build und Tests von Artemis automatisch gestartet."
+            },
+            "buildStatus": {
+                "headline": "Buildstatus",
+                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht.",
+                "hint": "Es können zusätzliche Tests nach dem Abgabedatum ausgeführt werden. Das heißt, das eine volle Punktzahl ist nicht sichergestellt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind. Überprüfe deine Imlementierung daher genau bevor du es final abgibst."
+            },
+            "testCases": {
+                "headline": "Feedback",
+                "content": "Hier kannst du das Feedback zu deiner gesamten Abgabe einsehen. Versuche alle Fehler zu beheben, um die Programmieraufgabe erfolgreich zu bestehen."
+            },
+            "testSuccess": {
+                "headline": "Aufgabe gelöst",
+                "content": "Hier siehst du, dass du eine Aufgabe erfolgreich gelöst hast und alle Tests erfolgreich durchgelaufen sind."
+            },
+            "testFailure": {
+                "headline": "Aufgabe ungelöst",
+                "content": "Hier kannst du die Testfälle der einzelnen Aufgaben einsehen, die noch nicht erfolgreich durchgelaufen sind."
+            }
+        }
+    }
+}

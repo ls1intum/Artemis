@@ -1,5 +1,5 @@
-import { Injectable, ErrorHandler } from '@angular/core';
-import { init, captureException } from '@sentry/browser';
+import { ErrorHandler, Injectable } from '@angular/core';
+import { captureException, init } from '@sentry/browser';
 import { VERSION } from 'app/app.constants';
 import { ProfileInfo, ProfileService } from 'app/layouts';
 

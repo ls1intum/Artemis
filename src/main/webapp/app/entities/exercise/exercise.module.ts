@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
@@ -21,14 +19,6 @@ const ENTITY_STATES = [...exercisePopupRoute];
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
     entryComponents: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
-    providers: [ExerciseService, ExerciseLtiConfigurationService, ExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ExerciseService, ExerciseLtiConfigurationService, ExercisePopupService],
 })
-export class ArtemisExerciseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisExerciseModule {}

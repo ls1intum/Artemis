@@ -9,6 +9,15 @@
         "resize": {
             "headline": "Zu kleine Bildschirmgröße",
             "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
+        },
+        "clickHint": {
+            "text": "Klicke auf das Element um die Tour fortzusetzen."
+        },
+        "typeHint": {
+            "text": "Füge eine neue Zeile ein um mit dem nächsten Schritt fortzufahren."
+        },
+        "waitHint": {
+            "text": "Bitte warte bis der nächste Schritt fertig geladen ist."
         }
     }
 }

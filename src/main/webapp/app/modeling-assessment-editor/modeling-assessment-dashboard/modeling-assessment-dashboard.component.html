@@ -68,7 +68,7 @@
                                 canOverrideAssessments
                             "
                             routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
-                            [queryParams]="{ optimal: false }"
+                            [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-success btn-sm"
                         >
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
@@ -145,7 +145,7 @@
                                 *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
                                 routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
                                 [disabled]="busy"
-                                [queryParams]="{ optimal: false }"
+                                [queryParams]="{ optimal: false, hideBackButton: true }"
                                 class="btn btn-outline-secondary btn-sm"
                             >
                                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
@@ -155,7 +155,7 @@
                             *ngIf="modelingExercise.type === MODELING && submission && submission.result"
                             routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
                             [disabled]="busy"
-                            [queryParams]="{ optimal: false }"
+                            [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-secondary btn-sm"
                         >
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Open assessment

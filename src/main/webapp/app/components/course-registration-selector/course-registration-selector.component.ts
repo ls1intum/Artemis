@@ -3,7 +3,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core';
 import { Course, CourseService } from 'app/entities/course';
-import { HttpResponse } from '@angular/common/http';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 

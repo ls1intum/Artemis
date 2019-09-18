@@ -51,6 +51,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -98,6 +99,7 @@ describe('CodeEditorStudentIntegration', () => {
                 JhiLanguageHelper,
                 WindowRef,
                 ChangeDetectorRef,
+                DeviceDetectorService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

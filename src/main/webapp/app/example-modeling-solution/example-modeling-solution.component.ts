@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingExercise, ModelingExercisePopupService, ModelingExerciseService } from 'app/entities/modeling-exercise';
+import { ModelingExercise, ModelingExerciseService } from 'app/entities/modeling-exercise';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -28,7 +28,6 @@ export class ExampleModelingSolutionComponent implements OnInit {
         private exerciseService: ModelingExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
-        private modelingExercisePopupService: ModelingExercisePopupService,
         private route: ActivatedRoute,
         private router: Router,
         private artemisMarkdown: ArtemisMarkdown,
@@ -36,9 +35,6 @@ export class ExampleModelingSolutionComponent implements OnInit {
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-
-        // Make sure the modeling exercise popup gets closed
-        this.modelingExercisePopupService.close();
 
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;

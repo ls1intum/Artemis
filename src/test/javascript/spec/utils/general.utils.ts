@@ -1,4 +1,4 @@
-import { DebugElement, OnChanges, SimpleChanges, SimpleChange } from '@angular/core';
+import { DebugElement, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 

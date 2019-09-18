@@ -1,9 +1,9 @@
-import { Injectable, OnDestroy, OnInit } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { DOMStorageStrategy } from 'ngx-cacheable/common/DOMStorageStrategy';
 import { Cacheable } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
-import { switchMap, tap, distinctUntilChanged } from 'rxjs/operators';
+import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { blobToBase64String } from 'blob-util';
 import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';

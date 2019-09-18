@@ -41,7 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
-    showBackButton: boolean;
+    hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
     canOverride = false;
@@ -94,7 +94,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             }
         });
         this.route.queryParams.subscribe(params => {
-            this.showBackButton = params['showBackButton'] === 'true';
+            this.hideBackButton = params['hideBackButton'] === 'true';
         });
     }
 
@@ -364,7 +364,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`));
                 }
             },
             (error: HttpErrorResponse) => {
