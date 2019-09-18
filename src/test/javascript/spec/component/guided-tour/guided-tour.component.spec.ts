@@ -16,6 +16,7 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { Orientation, OverlayPosition } from 'app/guided-tour/guided-tour.constants';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { ArtemisSharedModule } from 'app/shared';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,7 +42,6 @@ describe('GuidedTourComponent', () => {
 
     const courseOverviewTour: GuidedTour = {
         settingsKey: 'course_overview_tour',
-        preventBackdropFromAdvancing: true,
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
 
@@ -55,6 +55,7 @@ describe('GuidedTourComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
+                ArtemisSharedModule,
                 RouterTestingModule.withRoutes([
                     {
                         path: 'overview',
