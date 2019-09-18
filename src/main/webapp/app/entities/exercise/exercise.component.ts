@@ -16,7 +16,12 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
 
-    protected constructor(private courseService: CourseService, private translateService: TranslateService, private route: ActivatedRoute, private eventManager: JhiEventManager) {
+    protected constructor(
+        private courseService: CourseService,
+        protected translateService: TranslateService,
+        private route: ActivatedRoute,
+        protected eventManager: JhiEventManager,
+    ) {
         this.predicate = 'id';
         this.reverse = true;
     }
