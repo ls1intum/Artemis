@@ -46,12 +46,12 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should show or hide a back button', () => {
-        component.showBackButton = true;
+        component.hideBackButton = false;
         fixture.detectChanges();
         let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeTruthy();
 
-        component.showBackButton = false;
+        component.hideBackButton = true;
         fixture.detectChanges();
         backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeFalsy();
@@ -59,7 +59,7 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should emit event on back button', () => {
         spyOn(component.goBack, 'emit');
-        component.showBackButton = true;
+        component.hideBackButton = false;
         fixture.detectChanges();
 
         const backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));

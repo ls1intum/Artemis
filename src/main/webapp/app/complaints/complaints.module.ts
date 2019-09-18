@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { ComplaintsComponent } from './complaints.component';
@@ -12,14 +11,6 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
     imports: [ArtemisSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsComponent],
     exports: [ComplaintsComponent],
-    providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [JhiAlertService, ComplaintService],
 })
-export class ArtemisComplaintsModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisComplaintsModule {}

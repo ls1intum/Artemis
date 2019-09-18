@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CorrectOptionCommand, ExplanationCommand, IncorrectOptionCommand, DomainCommand, HintCommand } from 'app/markdown-editor/domainCommands';
+import { CorrectOptionCommand, DomainCommand, ExplanationCommand, HintCommand, IncorrectOptionCommand } from 'app/markdown-editor/domainCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({

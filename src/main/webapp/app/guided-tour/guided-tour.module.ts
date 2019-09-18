@@ -1,8 +1,5 @@
-import { NgModule, ErrorHandler } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { ModuleWithProviders } from '@angular/compiler/src/core';
-import { JhiLanguageService } from 'ng-jhipster';
-
-import { JhiLanguageHelper } from 'app/core';
 import { ArtemisSharedModule } from 'app/shared';
 import { GuidedTourService } from './guided-tour.service';
 import { GuidedTourComponent } from './guided-tour.component';
@@ -19,13 +16,5 @@ export class GuidedTourModule {
             ngModule: GuidedTourModule,
             providers: [ErrorHandler, GuidedTourService],
         };
-    }
-
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
     }
 }

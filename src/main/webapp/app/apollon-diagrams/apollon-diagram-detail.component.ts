@@ -11,7 +11,7 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
-    providers: [ApollonDiagramService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ApollonDiagramService, JhiAlertService],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;

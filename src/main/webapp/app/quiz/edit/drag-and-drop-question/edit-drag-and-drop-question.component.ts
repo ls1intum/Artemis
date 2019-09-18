@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef, HostListener, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
@@ -11,7 +11,7 @@ import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
-import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
+import { DomainCommand, ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';

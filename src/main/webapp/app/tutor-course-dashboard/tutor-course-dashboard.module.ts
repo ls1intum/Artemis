@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
@@ -25,23 +24,6 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
-    providers: [
-        CourseService,
-        JhiAlertService,
-        RepositoryService,
-        ResultService,
-        CourseExerciseService,
-        ParticipationService,
-        CourseScoreCalculationService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService },
-    ],
+    providers: [CourseService, JhiAlertService, RepositoryService, ResultService, CourseExerciseService, ParticipationService, CourseScoreCalculationService],
 })
-export class ArtemisTutorCourseDashboardModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisTutorCourseDashboardModule {}

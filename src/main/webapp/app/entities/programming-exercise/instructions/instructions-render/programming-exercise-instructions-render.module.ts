@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 import {
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionResultDetailComponent,
@@ -26,12 +24,4 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
     exports: [ProgrammingExerciseInstructionComponent],
     providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper, ProgrammingExerciseInstructionService, ProgrammingExercisePlantUmlService],
 })
-export class ArtemisProgrammingExerciseInstructionsRenderModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisProgrammingExerciseInstructionsRenderModule {}

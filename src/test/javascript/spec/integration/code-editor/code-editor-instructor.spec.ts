@@ -40,7 +40,6 @@ import {
     ParticipationWebsocketService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
-    StudentParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
@@ -50,6 +49,7 @@ import { MockRouter } from '../../mocks/mock-router.service';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -100,6 +100,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 JhiLanguageHelper,
                 WindowRef,
                 ChangeDetectorRef,
+                DeviceDetectorService,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },

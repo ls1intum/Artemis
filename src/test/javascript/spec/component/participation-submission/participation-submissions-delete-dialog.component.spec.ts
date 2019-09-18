@@ -5,11 +5,7 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ExerciseHintDeleteDialogComponent } from 'app/entities/exercise-hint/exercise-hint-delete-dialog.component';
-import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 import { ParticipationSubmissionDeleteDialogComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
-import { ParticipationSubmissionPopupService } from 'app/entities/participation-submission/participation-submission-popup.service';
-import { Submission } from 'app/entities/submission';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 
 describe('ParticipationSubmissionDeleteDialogComponent', () => {

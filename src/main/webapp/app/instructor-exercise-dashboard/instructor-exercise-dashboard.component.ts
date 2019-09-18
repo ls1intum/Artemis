@@ -1,7 +1,7 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';

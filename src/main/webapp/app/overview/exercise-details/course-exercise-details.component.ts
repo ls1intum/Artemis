@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, AfterViewInit, AfterViewChecked } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';

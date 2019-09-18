@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
@@ -34,14 +32,6 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
     entryComponents: [FileUploadExerciseDeleteDialogComponent],
     exports: [FileUploadExerciseComponent],
-    providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [FileUploadExerciseService, FileUploadExercisePopupService],
 })
-export class ArtemisFileUploadExerciseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisFileUploadExerciseModule {}

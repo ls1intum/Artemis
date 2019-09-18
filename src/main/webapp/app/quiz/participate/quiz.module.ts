@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 import { DeviceDetectorService } from 'ngx-device-detector';
 
 import { ArtemisSharedModule } from '../../shared';
@@ -32,15 +31,7 @@ const ENTITY_STATES = [...quizRoute];
         DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, DeviceDetectorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, DeviceDetectorService],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
 })
-export class ArtemisQuizModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisQuizModule {}
