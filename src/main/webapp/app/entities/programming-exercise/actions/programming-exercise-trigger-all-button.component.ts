@@ -31,7 +31,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     constructor(private submissionService: ProgrammingSubmissionService, private modalService: NgbModal) {}
 
     /**
-     * Opens a modal in that the user has to confirm that he wants to trigger all participations.
+     * Opens a modal in that the user has to confirm to trigger all participations.
      * This confirmation is needed as this is a performance intensive action and puts heavy load on our build system
      * and will create new results for the students (which could be confusing to them).
      */

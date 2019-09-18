@@ -609,7 +609,7 @@ public class ProgrammingExerciseResource {
             // Exercise is not released yet.
             return ResponseEntity.ok(false);
         }
-        // Is true if the exercise is released and has one result.
+        // Is true if the exercise is released and has at least one result.
         return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
     }
 }
