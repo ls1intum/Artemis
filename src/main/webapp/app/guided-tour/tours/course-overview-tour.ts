@@ -1,12 +1,14 @@
-import { LinkType, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextLinkTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
+    courseTitle: 'Einführung in die Softwaretechnik',
+    exerciseName: '',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
@@ -68,6 +70,7 @@ export const courseOverviewTour: GuidedTour = {
             headlineTranslateKey: 'tour.course-overview.course.headline',
             contentTranslateKey: 'tour.course-overview.course.content',
             orientation: Orientation.RIGHT,
+            checkForCourseOrExercise: true,
         }),
         new TextTourStep({
             highlightSelector: '.card-footer',
@@ -76,6 +79,15 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
+            highlightSelector: 'jhi-overview-course-card .card',
+            eventListenerSelector: 'body',
+            headlineTranslateKey: 'tour.course-overview.course.headline',
+            contentTranslateKey: 'tour.course-overview.course.content',
+            orientation: Orientation.RIGHT,
+            userInteractionEvent: UserInteractionEvent.CLICK,
+            checkForCourseOrExercise: true,
+        }),
+        /*new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',
             headlineTranslateKey: 'tour.course-overview.register.headline',
             contentTranslateKey: 'tour.course-overview.register.content',
@@ -90,6 +102,6 @@ export const courseOverviewTour: GuidedTour = {
             externalUrl: 'https://github.com/ls1intum/ArTEMiS',
             linkType: LinkType.BUTTON,
             orientation: Orientation.TOPLEFT,
-        }),
+        }),*/
     ],
 };

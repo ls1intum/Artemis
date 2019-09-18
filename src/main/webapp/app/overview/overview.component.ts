@@ -6,6 +6,7 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 
 @Component({
     selector: 'jhi-overview',
@@ -23,22 +24,27 @@ export class OverviewComponent implements OnInit {
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
-    ) {
-        this.loadAndFilterCourses();
-    }
+    ) {}
 
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
+                this.enableTourForCourse(courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );
     }
 
     ngOnInit(): void {
-        this.guidedTourService.enableTour(courseOverviewTour);
+        this.loadAndFilterCourses();
+    }
+
+    private enableTourForCourse(guidedTour: GuidedTour) {
+        if (guidedTour.courseTitle === '' || this.courses.find(course => course.title === guidedTour.courseTitle)) {
+            this.guidedTourService.enableTour(guidedTour);
+        }
     }
 
     private onError(error: string) {
