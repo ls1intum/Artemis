@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 

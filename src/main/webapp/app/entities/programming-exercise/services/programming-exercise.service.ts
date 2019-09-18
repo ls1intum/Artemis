@@ -8,7 +8,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
-import { Participation, SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;

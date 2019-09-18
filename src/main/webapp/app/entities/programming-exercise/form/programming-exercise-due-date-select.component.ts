@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { Component, EventEmitter, Input, Output, HostBinding, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { hasExerciseChanged } from 'app/entities/exercise';
@@ -14,7 +14,6 @@ import { hasExerciseChanged } from 'app/entities/exercise';
         <jhi-date-time-picker
             labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
             [ngModel]="exercise.dueDate"
-            [min]="TODAY"
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
@@ -58,8 +57,6 @@ import { hasExerciseChanged } from 'app/entities/exercise';
     `,
 })
 export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
-    TODAY = moment();
-
     @Input() exercise: ProgrammingExercise;
     @Output() onProgrammingExerciseUpdate = new EventEmitter<ProgrammingExercise>();
     // true => Form is valid.

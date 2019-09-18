@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, Input } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WindowRef } from 'app/core';
 import { CodeEditorFileBrowserNodeComponent } from 'app/code-editor/file-browser/code-editor-file-browser-node.component';
