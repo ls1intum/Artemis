@@ -1,4 +1,4 @@
-<div>
+<div [class.success]="testCaseState === TestCaseState.SUCCESS" [class.failed]="testCaseState === TestCaseState.FAIL">
     <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="['far', 'check-circle']" size="lg" class="test-icon text-success"></fa-icon>
     <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="['far', 'times-circle']" size="lg" class="test-icon text-danger"></fa-icon>
     <fa-icon

@@ -4,7 +4,6 @@ import { UserRouteAccessService } from '../../core';
 import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';
-import { TextExerciseDeletePopupComponent } from './text-exercise-delete-dialog.component';
 import { TextExercise } from './text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
@@ -89,18 +88,5 @@ export const textExerciseRoute: Routes = [
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const textExercisePopupRoute: Routes = [
-    {
-        path: 'text-exercise/:id/delete',
-        component: TextExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

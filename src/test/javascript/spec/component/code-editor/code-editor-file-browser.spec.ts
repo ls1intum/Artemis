@@ -29,6 +29,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { triggerChanges } from '../../utils/general.utils';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,6 +64,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             providers: [
                 WindowRef,
                 CodeEditorFileService,
+                DeviceDetectorService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
