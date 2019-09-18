@@ -126,7 +126,7 @@ spring:
         mode: HTML
     servlet:
         multipart:
-            max-file-size: 10MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
+            max-file-size: 10MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
             max-request-size: 10MB
 
 server:
