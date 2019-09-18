@@ -312,6 +312,7 @@ public class ExerciseResource {
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @param allStudents wether the repositories of all students should be downloaded
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zipped
      */
