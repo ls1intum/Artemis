@@ -371,7 +371,7 @@ public class ResultService {
         return objectMapper.writeValueAsString(resultCopy);
     }
 
-    public Boolean existsByExerciseId(Long exerciseId) {
+    public boolean existsByExerciseId(Long exerciseId) {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
 }
