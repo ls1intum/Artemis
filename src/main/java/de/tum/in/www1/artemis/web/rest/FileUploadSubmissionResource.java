@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-
-import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +19,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -67,10 +67,12 @@ public class FileUploadSubmissionResource {
 
     private final CacheManager cacheManager;
 
+    private final ObjectMapper mapper;
+
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
             FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
             UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository, FileService fileService,
-            CacheManager cacheManager) {
+            CacheManager cacheManager, ObjectMapper mapper) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -82,47 +84,35 @@ public class FileUploadSubmissionResource {
         this.resultRepository = resultRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
+        this.mapper = mapper;
     }
 
-    /**
-     * POST /file-upload-submissions : Create a new fileUploadSubmission.
-     *
-     * @param fileUploadSubmission the fileUploadSubmission to create
-     * @param exerciseId the id of the exercise
-     * @param principal the user principal
-     * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
-     * ID
-     */
-    @PostMapping("/exercises/{exerciseId}/file-upload-submissions")
-    public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-            @RequestBody FileUploadSubmission fileUploadSubmission) {
-        log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
-        if (fileUploadSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new fileUploadSubmission cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        checkAuthorization(fileUploadExercise);
-        return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
-    }
+    @PostMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
+    @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
+    public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, @PathVariable Principal principal,
+            @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
+        log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
 
-    /**
-     * PUT /file-upload-submissions : Updates an existing fileUploadSubmission.
-     *
-     * @param fileUploadSubmission the fileUploadSubmission to update
-     * @param exerciseId the id of the exercise
-     * @param principal user principal
-     * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission is not valid, or
-     * with status 500 (Internal Server Error) if the fileUploadSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("/exercises/{exerciseId}/file-upload-submissions")
-    public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-            @RequestBody FileUploadSubmission fileUploadSubmission) {
-        log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
-        if (fileUploadSubmission.getId() == null) {
-            return createFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
+        final var exercise = fileUploadExerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
+            return forbidden();
         }
-        return handleFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
+        final var validityExceptionResponse = this.checkExerciseValidity(exercise);
+        if (validityExceptionResponse != null) {
+            return validityExceptionResponse;
+        }
+
+        final FileUploadSubmission submission;
+        try {
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, principal);
+        }
+        catch (IOException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "fileUploadSubmissionCantStore",
+                    "The uploaded file could not be saved on the server")).build();
+        }
+
+        hideDetails(submission);
+        return ResponseEntity.ok(submission);
     }
 
     /**
@@ -226,22 +216,6 @@ public class FileUploadSubmissionResource {
         log.debug("REST request to delete FileUploadSubmission : {}", submissionId);
         fileUploadSubmissionRepository.deleteById(submissionId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionId.toString())).build();
-    }
-
-    @NotNull
-    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-            @RequestBody FileUploadSubmission fileUploadSubmission) {
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(fileUploadSubmission.getFilePath()));
-        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        ResponseEntity<FileUploadSubmission> responseFailure = this.checkExerciseValidity(fileUploadExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
-        fileUploadSubmission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, fileUploadExercise, principal);
-
-        hideDetails(fileUploadSubmission);
-        return ResponseEntity.ok(fileUploadSubmission);
     }
 
     /**
@@ -362,8 +336,7 @@ public class FileUploadSubmissionResource {
     }
 
     private void checkAuthorization(FileUploadExercise exercise) throws AccessForbiddenException {
-        Course course = courseService.findOne(exercise.getCourse().getId());
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }

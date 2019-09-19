@@ -19,17 +19,14 @@ export class FileUploadSubmissionService {
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
+        const formData = new FormData();
+        const submissionBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
+        formData.append('file', submissionFile);
+        formData.append('submission', submissionBlob);
         return this.http
-            .put<FileUploadSubmission>(
-                `api/exercises/${exerciseId}/file-upload-submissions`,
-                { submission: copy, file: submissionFile },
-                {
-                    headers: new HttpHeaders({
-                        'Content-Type': 'multipart/mixed',
-                    }),
-                    observe: 'response',
-                },
-            )
+            .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
+                observe: 'response',
+            })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 

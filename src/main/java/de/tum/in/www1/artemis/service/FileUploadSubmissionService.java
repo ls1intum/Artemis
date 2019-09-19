@@ -1,8 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,11 +17,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -57,9 +69,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the saved file upload submission
      */
     @Transactional
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, FileUploadExercise fileUploadExercise, Principal principal) {
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
+            Principal principal) throws IOException {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
         }
         StudentParticipation participation = optionalParticipation.get();
@@ -68,7 +81,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
         }
 
-        return save(fileUploadSubmission, participation);
+        return save(fileUploadSubmission, file, participation);
     }
 
     /**
@@ -162,7 +175,9 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the fileUploadSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, StudentParticipation participation) {
+    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation) throws IOException {
+        fileUploadSubmission.setFilePath(saveFileForSubmission(file, fileUploadSubmission));
+
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
@@ -186,6 +201,19 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         return fileUploadSubmission;
+    }
+
+    private String saveFileForSubmission(final MultipartFile file, final Submission submission) throws IOException {
+        final var exerciseId = submission.getParticipation().getExercise().getId();
+        final var submissionId = submission.getId();
+        final var filename = file.getOriginalFilename().replaceAll("\\s", "");
+        final var path = FileUploadSubmission.buildFilePath(exerciseId, submissionId) + File.separator + filename;
+        final var savedFile = new java.io.File(path);
+
+        savedFile.createNewFile();
+        Files.copy(file.getInputStream(), savedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        return path;
     }
 
     /**
