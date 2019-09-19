@@ -13,7 +13,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,8 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -63,16 +61,9 @@ public class FileUploadSubmissionResource {
 
     private final ResultRepository resultRepository;
 
-    private final FileService fileService;
-
-    private final CacheManager cacheManager;
-
-    private final ObjectMapper mapper;
-
     public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
             FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository, FileService fileService,
-            CacheManager cacheManager, ObjectMapper mapper) {
+            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -82,11 +73,18 @@ public class FileUploadSubmissionResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
-        this.fileService = fileService;
-        this.cacheManager = cacheManager;
-        this.mapper = mapper;
     }
 
+    /**
+     * POST /file-upload-submissions : Create a new fileUploadSubmission.
+     *
+     * @param fileUploadSubmission the fileUploadSubmission to create
+     * @param exerciseId the id of the exercise of the submission
+     * @param file The uploaded file belonging to the submission
+     * @param principal the user principal, i.e. the identity of the logged in user - provided by Spring
+     * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
+     * ID
+     */
     @PostMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
@@ -97,9 +95,17 @@ public class FileUploadSubmissionResource {
         if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
             return forbidden();
         }
+
+        // Check if the course hasn't been changed
         final var validityExceptionResponse = this.checkExerciseValidity(exercise);
         if (validityExceptionResponse != null) {
             return validityExceptionResponse;
+        }
+
+        // Check the file size
+        if (file.getSize() > Constants.MAX_UPLOAD_FILESIZE_BYTES) {
+            // NOTE: Maximum file size for submission is 2 MB
+            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 2MB!", "fileUploadSubmissionFileTooBig")).build();
         }
 
         final FileUploadSubmission submission;

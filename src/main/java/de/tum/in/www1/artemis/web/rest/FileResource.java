@@ -87,27 +87,21 @@ public class FileResource {
      *
      * @param file The file to save
      * @param keepFileName specifies if original file name should be kept
-     * @param isSubmission specifies if file is submitted by a student
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName,
-            @RequestParam(value = "isSubmission", required = false, defaultValue = "false") Boolean isSubmission) throws URISyntaxException {
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
 
-        if (isSubmission && file.getSize() > Constants.MAX_UPLOAD_FILESIZE_BYTES) {
-            // NOTE: Maximum file size for submission is 2 MB
-            return ResponseEntity.status(413).body("Maximum file size for submission is 2 MB!");
-        }
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         List<String> allowedFileExtensions = Arrays.asList("png", "jpg", "zip", "pdf", "svg", "jpeg");
-        if (!isSubmission && !allowedFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase)) {
+        if (!allowedFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase)) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf, .zip");
         }
 
