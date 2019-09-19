@@ -110,8 +110,8 @@ public class FileUploadSubmissionResource {
 
         // Check the pattern
         final var splittedFileName = file.getOriginalFilename().split("\\.");
-        final var fileSuffix = splittedFileName[splittedFileName.length - 1];
-        final var filePattern = String.join("|", exercise.getFilePattern().replace(" ", "").split(","));
+        final var fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
+        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replace(" ", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
