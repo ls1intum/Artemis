@@ -9,7 +9,10 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -97,7 +100,7 @@ public class FileResource {
         // NOTE: Maximum file size is set in resources/config/application.yml
         // Currently set to 10 MB
 
-        if (isSubmission && file.getSize() > 2_000_000) {
+        if (isSubmission && file.getSize() > Constants.MAX_UPLOAD_FILESIZE_BYTES) {
             // NOTE: Maximum file size for submission is 2 MB
             return ResponseEntity.status(413).body("Maximum file size for submission is 2 MB!");
         }
