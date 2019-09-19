@@ -108,6 +108,15 @@ public class FileUploadSubmissionResource {
             return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 2MB!", "fileUploadSubmissionFileTooBig")).build();
         }
 
+        // Check the pattern
+        final var splittedFileName = file.getOriginalFilename().split("\\.");
+        final var fileSuffix = splittedFileName[splittedFileName.length - 1];
+        final var filePattern = String.join("|", exercise.getFilePattern().replace(" ", "").split(","));
+        if (!fileSuffix.matches(filePattern)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
+        }
+
         final FileUploadSubmission submission;
         try {
             submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, principal);
