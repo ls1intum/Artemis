@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -116,7 +117,7 @@ public class FileUploadSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/file-upload-submissions")
     public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@PathVariable Long exerciseId, Principal principal,
-            @RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
+            @RequestBody FileUploadSubmission fileUploadSubmission) {
         log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
         if (fileUploadSubmission.getId() == null) {
             return createFileUploadSubmission(exerciseId, principal, fileUploadSubmission);
