@@ -28,7 +28,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     participation: StudentParticipation;
     result: Result;
     isActive: boolean;
-    erroredFile: File | null;
     submissionFile: File | null;
 
     ComplaintType = ComplaintType;
@@ -124,12 +123,11 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     }
                 },
                 err => {
-                    this.jhiAlertService.error('artemisApp.fileUploadExercise.error');
-                    this.erroredFile = file;
+                    this.submission!.submitted = false;
+                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
                     this.fileInput.nativeElement.value = '';
                     this.submissionFile = null;
                     this.submission!.filePath = null;
-                    this.submission!.submitted = false;
                 },
             );
         }
@@ -141,14 +139,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      */
     setFileSubmissionForExercise($event: any): void {
         if ($event.target.files.length) {
-            this.erroredFile = null;
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
             if (!allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileError', { fileName: submissionFile['name'] });
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile['name'] });
             } else {
                 this.submissionFile = submissionFile;
             }
