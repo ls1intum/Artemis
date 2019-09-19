@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { pipe, Subject, throwError, UnaryFunction, of } from 'rxjs';
+import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
@@ -10,7 +10,6 @@ import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',

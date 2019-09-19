@@ -25,6 +25,7 @@ import { SidePanelComponent } from 'app/components/side-panel/side-panel.compone
 import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,7 +43,7 @@ describe('TutorExerciseDashboardComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule, TranslateModule.forRoot()],
             declarations: [
                 TutorExerciseDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),

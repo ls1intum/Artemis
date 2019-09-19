@@ -81,6 +81,9 @@ public class ProgrammingSubmissionService {
         if (participation instanceof ProgrammingExerciseStudentParticipation
                 && ((ProgrammingExerciseStudentParticipation) peParticipation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
+            // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
+            // as the VCS-server performs the request
+            SecurityUtils.setAuthorizationObject();
             participationService.resumeExercise(peParticipation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) peParticipation);
 
             try {

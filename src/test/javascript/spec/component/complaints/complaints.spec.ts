@@ -11,6 +11,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { ComplaintsComponent } from 'app/complaints';
+import { TranslateModule } from '@ngx-translate/core';
 
 const expect = chai.expect;
 describe('ComplaintsComponent', () => {
@@ -20,7 +21,7 @@ describe('ComplaintsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule],
+            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule, TranslateModule.forRoot()],
             declarations: [ComplaintsComponent],
             providers: [
                 {

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, Renderer, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';

@@ -8,7 +8,6 @@ import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { MultipleChoiceQuestionStatistic } from '../../../entities/multiple-choice-question-statistic';
-import { QuizQuestionType } from '../../../entities/quiz-question';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';

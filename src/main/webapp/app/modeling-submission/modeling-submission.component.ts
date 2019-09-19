@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
-import { Participation, ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
+import { ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
 import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';

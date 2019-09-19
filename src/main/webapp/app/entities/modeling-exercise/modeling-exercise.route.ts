@@ -1,9 +1,8 @@
-import { Routes, RouterStateSnapshot, ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../../core';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
-import { ModelingExerciseDeletePopupComponent } from './modeling-exercise-delete-dialog.component';
 import { ModelingExerciseUpdateComponent } from 'app/entities/modeling-exercise/modeling-exercise-update.component';
 import { Injectable } from '@angular/core';
 import { Course, CourseService } from 'app/entities/course';
@@ -83,18 +82,5 @@ export const modelingExerciseRoute: Routes = [
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const modelingExercisePopupRoute: Routes = [
-    {
-        path: 'modeling-exercise/:id/delete',
-        component: ModelingExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

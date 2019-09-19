@@ -19,6 +19,8 @@ import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
 import { CodeEditorAceComponent } from 'app/code-editor/ace';
 import { ExerciseType } from 'app/entities/exercise';
 import { ButtonSize } from 'app/shared/components';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -46,6 +48,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private guidedTourService: GuidedTourService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -83,6 +86,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
+        this.guidedTourService.enableTour(codeEditorTour);
     }
 
     ngOnDestroy() {

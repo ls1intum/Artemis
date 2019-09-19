@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../../shared';
-import { JhiAlertService } from 'ng-jhipster';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { HomeComponent } from '../../home';
 import { JhiMainComponent } from '../../layouts';
@@ -31,7 +29,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         QuizReEvaluateWarningComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
-    providers: [RepositoryService, JhiAlertService, QuizReEvaluateService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [RepositoryService, JhiAlertService, QuizReEvaluateService],
     exports: [
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
@@ -40,12 +38,4 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         QuizReEvaluateWarningComponent,
     ],
 })
-export class ArtemisQuizReEvaluateModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisQuizReEvaluateModule {}

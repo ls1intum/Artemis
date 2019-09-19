@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { textAssessmentRoutes } from './text-assessment.route';
 import { TextAssessmentComponent } from './text-assessment.component';
@@ -30,14 +28,5 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         HighlightedTextAreaComponent,
     ],
     exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent, ResizableInstructionsComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
-export class ArtemisTextAssessmentModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisTextAssessmentModule {}

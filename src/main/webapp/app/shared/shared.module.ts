@@ -8,14 +8,16 @@ import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateModule } from '@ngx-translate/core';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
-    declarations: [HasAnyAuthorityDirective, SecuredImageComponent],
-    providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService],
-    entryComponents: [],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, TranslateModule],
+    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent],
+    providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
+    entryComponents: [DeleteDialogComponent],
+    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule],
 })
 export class ArtemisSharedModule {
     static forRoot() {
