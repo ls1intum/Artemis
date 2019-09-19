@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
-import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
 import { fileUploadExercise } from './mock-file-upload-exercise.service';
-import { EntityResponseType, FileUploadSubmission } from 'app/entities/file-upload-submission';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { Result } from 'app/entities/result';
 
 export const fileUploadParticipation = new StudentParticipation();

@@ -1,6 +1,6 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { AccountService, JhiLanguageHelper } from 'app/core';
+import { AccountService } from 'app/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
@@ -31,6 +31,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,6 +43,7 @@ describe('FileUploadSubmissionComponent', () => {
     let router: Router;
     let location: Location;
     let fileUploaderService: FileUploaderService;
+    let jhiAlertService: JhiAlertService;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -77,6 +79,7 @@ describe('FileUploadSubmissionComponent', () => {
                 comp.ngOnInit();
                 fixture.detectChanges();
                 fileUploaderService = TestBed.get(FileUploaderService);
+                jhiAlertService = TestBed.get(JhiAlertService);
             });
     });
 
@@ -143,22 +146,46 @@ describe('FileUploadSubmissionComponent', () => {
         expect(submitFileButton).to.be.null;
     }));
 
+    it('Too big file can not be submitted', fakeAsync(() => {
+        // Ignore console errors
+        console.error = jest.fn();
+
+        const submissionFile = new File([''], 'exampleSubmission.png');
+        Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
+        comp.submission = createFileUploadSubmission();
+        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const event = { target: { files: [submissionFile] } };
+        comp.setFileSubmissionForExercise(event);
+        fixture.detectChanges();
+
+        // check that properties are set properly
+        expect(jhiErrorSpy.callCount).to.be.equal(1);
+        expect(comp.submissionFile).to.be.undefined;
+        expect(comp.submission.filePath).to.be.undefined;
+
+        // check if fileUploadInput is available
+        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).to.exist;
+        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput.nativeElement.value).to.be.equal('');
+    }));
+
     it('Incorrect file type can not be submitted', fakeAsync(() => {
         // Ignore console errors
         console.error = jest.fn();
 
-        const fileName = 'exampleSubmission';
-        comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
-        Object.defineProperty(comp.submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
+        // Only png and pdf types are allowed
+        const submissionFile = new File([''], 'exampleSubmission.jpg');
         comp.submission = createFileUploadSubmission();
-        comp.submit();
-        tick();
+        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const event = { target: { files: [submissionFile] } };
+        comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(comp.erroredFile).to.be.not.null;
-        expect(comp.submissionFile).to.be.null;
-        expect(comp.submission.filePath).to.be.null;
+        expect(jhiErrorSpy.callCount).to.be.equal(1);
+        expect(comp.submissionFile).to.be.undefined;
+        expect(comp.submission.filePath).to.be.undefined;
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
