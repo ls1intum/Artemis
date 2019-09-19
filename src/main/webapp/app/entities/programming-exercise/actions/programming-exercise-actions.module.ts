@@ -7,9 +7,10 @@ import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammmingExerciseInstructorSubmissionStateComponent,
 } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisSharedComponentModule],
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,

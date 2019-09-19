@@ -26,7 +26,7 @@ import {
 } from 'app/code-editor';
 import { UpdatingResultComponent } from 'app/entities/result';
 import { ExerciseType } from 'app/entities/exercise';
-import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
+import { ButtonSize } from 'app/shared/components';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
