@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 import { FileUploadSubmission } from './file-upload-submission.model';
@@ -15,13 +15,21 @@ export class FileUploadSubmissionService {
      * Updates File Upload submission on the server
      * @param fileUploadSubmission that will be updated on the server
      * @param exerciseId id of the exercise
+     * @param submissionFile the file submitted that will for the exercise
      */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number): Observable<EntityResponseType> {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
         return this.http
-            .put<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, copy, {
-                observe: 'response',
-            })
+            .put<FileUploadSubmission>(
+                `api/exercises/${exerciseId}/file-upload-submissions`,
+                { submission: copy, file: submissionFile },
+                {
+                    headers: new HttpHeaders({
+                        'Content-Type': 'multipart/mixed',
+                    }),
+                    observe: 'response',
+                },
+            )
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 

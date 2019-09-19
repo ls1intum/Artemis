@@ -14,7 +14,7 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
-import { Observable } from 'rxjs';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -100,42 +100,19 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             (error: HttpErrorResponse) => this.onError(error),
         );
     }
-
     /**
      * Uploads a submission file and submits File Upload Exercise
      */
-    submit() {
-        const file = this.submissionFile;
-
-        if (!this.submission || !file) {
-            return;
-        }
-
-        this.erroredFile = null;
-        this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true, isSubmission: true }).then(
-            result => {
-                this.submission!.filePath = result.path;
-                this.submitExercise();
-            },
-            error => {
-                console.error('Error during file upload in uploadBackground()', error.message);
-                this.erroredFile = file;
-                this.fileInput.nativeElement.value = '';
-                this.submission!.filePath = null;
-                this.submissionFile = null;
-            },
-        );
-    }
-
-    /**
-     * Submits File Upload Exercise
-     */
-    private submitExercise() {
+    public submitExercise() {
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {
+            const file = this.submissionFile;
+            if (!this.submission || !file) {
+                return;
+            }
             this.submission!.submitted = true;
-            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id).subscribe(
+            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
                 response => {
                     this.submission = response.body!;
                     this.result = this.submission.result;
@@ -148,6 +125,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 },
                 err => {
                     this.jhiAlertService.error('artemisApp.fileUploadExercise.error');
+                    this.erroredFile = file;
+                    this.fileInput.nativeElement.value = '';
+                    this.submissionFile = null;
+                    this.submission!.filePath = null;
                     this.submission!.submitted = false;
                 },
             );
@@ -164,10 +145,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
-            if (allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.submissionFile = submissionFile;
-            } else {
+            if (!allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
+            } else if (submissionFile.size < MAX_SUBMISSION_FILE_SIZE) {
+                this.jhiAlertService.error('artemisApp.fileUpload.fileError', { fileName: this.submissionFile!['name'] });
+            } else {
+                this.submissionFile = submissionFile;
             }
         }
     }
