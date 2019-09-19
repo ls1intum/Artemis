@@ -1,14 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
-import { Exercise } from 'app/entities/exercise';
-import { ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { EditorMode, MarkdownEditorHeight } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
 

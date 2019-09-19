@@ -1,4 +1,4 @@
-import { ElementRef, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 

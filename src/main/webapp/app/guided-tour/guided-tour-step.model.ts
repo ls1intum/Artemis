@@ -1,8 +1,10 @@
-import { LinkType, Orientation, OrientationConfiguration } from 'app/guided-tour/guided-tour.constants';
+import { LinkType, Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
-    selector?: string;
+    highlightSelector?: string;
+    /** Selector for the node that should listen to DOM changes during user interactions to define if the next step is ready**/
+    eventListenerSelector?: string;
     /** Where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */
@@ -19,8 +21,8 @@ export abstract class TourStep {
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'
      */
     permission?: string[];
-    /** If this is set to true, then the user can interact with the elements that are within the rectangle that highlights the selected element */
-    enableUserInteraction?: boolean;
+    /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
+    userInteractionEvent?: UserInteractionEvent;
 }
 
 export class TextTourStep extends TourStep {
@@ -30,6 +32,8 @@ export class TextTourStep extends TourStep {
     subHeadlineTranslateKey?: string;
     /** Translation key for the content **/
     contentTranslateKey: string;
+    /** Translation key for the hint content **/
+    hintTranslateKey?: string;
 
     constructor(tourStep: TextTourStep) {
         super();

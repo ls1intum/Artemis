@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
@@ -9,7 +10,6 @@ import {
     Output,
     SimpleChanges,
     ViewChild,
-    ChangeDetectorRef,
     ViewEncapsulation,
 } from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';

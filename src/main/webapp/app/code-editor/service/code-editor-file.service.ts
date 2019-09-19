@@ -1,5 +1,5 @@
 import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { compose, filter, fromPairs, map, tap, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 
 /**

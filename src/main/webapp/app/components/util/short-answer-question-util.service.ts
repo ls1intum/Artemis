@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { ShortAnswerSolution } from '../../entities/short-answer-solution';
 import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
+
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
     constructor() {}

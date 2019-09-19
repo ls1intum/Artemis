@@ -211,9 +211,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     /**
-     * Returns false if user selected a file, but didn't submit the exercise, false otherwise.
+     * Returns false if user selected a file, but didn't submit the exercise, true otherwise.
      */
-    canDeactivate(): Observable<boolean> | boolean {
+    canDeactivate(): boolean {
         return !(this.submission && !this.submission.submitted && this.submissionFile);
     }
 }

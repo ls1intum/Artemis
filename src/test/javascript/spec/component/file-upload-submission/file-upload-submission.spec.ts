@@ -26,10 +26,11 @@ import { FileUploadSubmissionComponent } from 'app/file-upload-submission/file-u
 import { MomentModule } from 'ngx-moment';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
-import { fileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
+import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,11 +52,11 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisSharedModule,
                 MomentModule,
                 ArtemisComplaintsModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
             ],
             declarations: [FileUploadSubmissionComponent, MockComponent(ResizableInstructionsComponent), MockComponent(ComplaintsForTutorComponent)],
             providers: [
-                JhiLanguageHelper,
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -113,12 +114,13 @@ describe('FileUploadSubmissionComponent', () => {
     }));
 
     it('Submission and file uploaded', fakeAsync(() => {
+        // Ignore window confirm
         window.confirm = () => {
             return false;
         };
         const fileName = 'exampleSubmission';
         comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
-        comp.submission = fileUploadSubmission;
+        comp.submission = createFileUploadSubmission();
         fixture.detectChanges();
 
         // check if fileUploadLabel value is not set
@@ -142,16 +144,13 @@ describe('FileUploadSubmissionComponent', () => {
     }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
-        // Ignore console errors and window confirm
+        // Ignore console errors
         console.error = jest.fn();
-        window.confirm = () => {
-            return false;
-        };
 
         const fileName = 'exampleSubmission';
         comp.submissionFile = new File([''], fileName, { type: 'image/jpg' });
         Object.defineProperty(comp.submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
-        comp.submission = fileUploadSubmission;
+        comp.submission = createFileUploadSubmission();
         comp.submit();
         tick();
         fixture.detectChanges();
@@ -160,5 +159,11 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.erroredFile).to.be.not.null;
         expect(comp.submissionFile).to.be.null;
         expect(comp.submission.filePath).to.be.null;
+
+        // check if fileUploadInput is available
+        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).to.exist;
+        expect(fileUploadInput.nativeElement.disabled).to.be.false;
+        expect(fileUploadInput.nativeElement.value).to.be.equal('');
     }));
 });

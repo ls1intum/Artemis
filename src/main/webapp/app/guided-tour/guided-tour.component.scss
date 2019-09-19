@@ -176,6 +176,7 @@ jhi-guided-tour {
                 padding-bottom: 28px;
 
                 div > .btn,
+                iframe,
                 img {
                     display: block;
                     margin-top: 10px;
@@ -183,11 +184,16 @@ jhi-guided-tour {
                     margin-right: auto;
                 }
 
-                .click-hint {
+                .step-hint {
                     background: #f0f0f0;
                     border-radius: 3px;
+                    display: flex;
                     margin-top: 15px;
                     padding: 8px;
+
+                    &.interaction {
+                        background: rgb(23, 162, 184, 0.3);
+                    }
 
                     &__icon {
                         display: inline-block;
@@ -197,6 +203,7 @@ jhi-guided-tour {
                     &__label {
                         display: inline-block;
                         font-size: 13px;
+                        padding-top: 3px;
                         vertical-align: text-bottom;
                     }
                 }

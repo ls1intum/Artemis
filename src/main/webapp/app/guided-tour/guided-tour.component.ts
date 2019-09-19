@@ -1,8 +1,7 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, HostBinding } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation, OverlayPosition } from './guided-tour.constants';
+import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -38,8 +37,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
+    readonly UserInteractionEvent = UserInteractionEvent;
 
-    constructor(public sanitizer: DomSanitizer, public guidedTourService: GuidedTourService, public accountService: AccountService) {}
+    constructor(public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key
@@ -55,7 +55,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                  */
                 if (
                     this.currentTourStep &&
-                    !this.currentTourStep.enableUserInteraction &&
+                    !this.currentTourStep.userInteractionEvent &&
                     this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
                 ) {
                     this.guidedTourService.nextStep();
@@ -63,7 +63,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'ArrowLeft': {
-                if (this.guidedTourService.currentTourStepDisplay > 1) {
+                if (this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
                     this.guidedTourService.backStep();
                 }
                 break;
@@ -180,7 +180,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        return !this.currentTourStep.selector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
+        return (
+            !this.currentTourStep.highlightSelector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement))
+        );
     }
 
     /**
@@ -359,7 +361,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public get transform(): string | null {
         if (
             this.currentTourStep &&
-            ((!this.currentTourStep.orientation && this.currentTourStep.selector) ||
+            ((!this.currentTourStep.orientation && this.currentTourStep.highlightSelector) ||
                 this.currentTourStep.orientation === Orientation.TOP ||
                 this.currentTourStep.orientation === Orientation.TOPRIGHT ||
                 this.currentTourStep.orientation === Orientation.TOPLEFT)
@@ -374,10 +376,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return current selected element for the tour step or null
      */
     public getSelectedElement(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.selector) {
+        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.selector);
+        return document.querySelector(this.currentTourStep.highlightSelector);
+    }
+
+    public getEventListenerSelector(): HTMLElement | null {
+        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
+            return null;
+        }
+        return document.querySelector(this.currentTourStep.eventListenerSelector);
     }
 
     /**
@@ -463,8 +472,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            if (this.currentTourStep && this.currentTourStep.enableUserInteraction) {
-                this.guidedTourService.pauseTour(selectedElement);
+            if (this.currentTourStep && this.currentTourStep.userInteractionEvent) {
+                const eventListenerElement = this.getEventListenerSelector();
+                if (eventListenerElement) {
+                    selectedElement = eventListenerElement;
+                }
+                this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
             }
         }
         return selectedElementRect;
