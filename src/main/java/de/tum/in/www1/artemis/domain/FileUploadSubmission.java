@@ -5,9 +5,10 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import org.springframework.util.FileSystemUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -36,8 +37,13 @@ public class FileUploadSubmission extends Submission implements Serializable {
     public void onDelete() {
         if (filePath != null) {
             // delete old file if necessary
-            final var file = new java.io.File(filePath);
-            FileSystemUtils.deleteRecursively(file);
+            final var splittedPath = filePath.split(File.separator);
+            final var shouldBeExerciseId = splittedPath.length >= 5 ? splittedPath[4] : null;
+            if (!NumberUtils.isNumber(shouldBeExerciseId)) {
+                throw new FilePathParsingException("Unexpected String in upload file path. Should contain the exercise ID: " + shouldBeExerciseId);
+            }
+            final var exerciseId = Long.parseLong(shouldBeExerciseId);
+            fileService.manageFilesForUpdatedFilePath(filePath, null, FileUploadSubmission.buildFilePath(exerciseId, getId()), getId(), true);
         }
     }
 

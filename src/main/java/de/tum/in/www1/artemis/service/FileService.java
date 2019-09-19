@@ -171,7 +171,7 @@ public class FileService {
      * @param entityId   the id of the entity associated with the file (may be null)
      * @return the public file url that can be used by users to access the file from outside
      */
-    private String publicPathForActualPath(String actualPath, Long entityId) {
+    public String publicPathForActualPath(String actualPath, Long entityId) {
         // first extract filename
         String filename = Paths.get(actualPath).getFileName().toString();
 

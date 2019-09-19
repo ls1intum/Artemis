@@ -89,7 +89,7 @@ public class FileUploadSubmissionResource {
 
     @PostMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, @PathVariable Principal principal,
+    public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
 

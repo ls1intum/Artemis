@@ -48,9 +48,11 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final FileService fileService;
+
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
-            SimpMessageSendingOperations messagingTemplate, ResultService resultService) {
+            SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService) {
         super(submissionRepository, userService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -58,6 +60,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
         this.resultService = resultService;
+        this.fileService = fileService;
     }
 
     /**
@@ -81,7 +84,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
         }
 
-        return save(fileUploadSubmission, file, participation);
+        return save(fileUploadSubmission, file, participation, fileUploadExercise);
     }
 
     /**
@@ -175,14 +178,17 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the fileUploadSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation) throws IOException {
-        fileUploadSubmission.setFilePath(saveFileForSubmission(file, fileUploadSubmission));
+    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
+            throws IOException {
+        final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
+        fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
 
@@ -203,17 +209,21 @@ public class FileUploadSubmissionService extends SubmissionService {
         return fileUploadSubmission;
     }
 
-    private String saveFileForSubmission(final MultipartFile file, final Submission submission) throws IOException {
-        final var exerciseId = submission.getParticipation().getExercise().getId();
+    private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
+        final var exerciseId = exercise.getId();
         final var submissionId = submission.getId();
         final var filename = file.getOriginalFilename().replaceAll("\\s", "");
-        final var path = FileUploadSubmission.buildFilePath(exerciseId, submissionId) + File.separator + filename;
-        final var savedFile = new java.io.File(path);
+        final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
+        final var filePath = dirPath + File.separator + filename;
+        final var savedFile = new java.io.File(filePath);
+        final var dir = new java.io.File(dirPath);
 
-        savedFile.createNewFile();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         Files.copy(file.getInputStream(), savedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-        return path;
+        return filePath;
     }
 
     /**
