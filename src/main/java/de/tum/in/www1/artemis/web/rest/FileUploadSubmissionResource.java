@@ -131,12 +131,13 @@ public class FileUploadSubmissionResource {
     }
 
     /**
-     * GET /file-upload-submissions/:id : get the "id" fileUploadSubmission.
+     * GET /file-upload-submissions/:id : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
+    @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadExercise = (FileUploadExercise) fileUploadSubmissionService.findOne(submissionId).getParticipation().getExercise();
@@ -221,19 +222,6 @@ public class FileUploadSubmissionResource {
     }
 
     /**
-     * DELETE /file-upload-submissions/:submissionId : delete the "id" fileUploadSubmission.
-     *
-     * @param submissionId the id of the fileUploadSubmission to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("/file-upload-submissions/{submissionId}")
-    public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long submissionId) {
-        log.debug("REST request to delete FileUploadSubmission : {}", submissionId);
-        fileUploadSubmissionRepository.deleteById(submissionId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionId.toString())).build();
-    }
-
-    /**
      * Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with answer if existing and the assessments if the submission was already
      * submitted.
      *
@@ -260,12 +248,12 @@ public class FileUploadSubmissionResource {
         }
         else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "wrongExerciseType",
-                    "The exercise of the participation is not a modeling exercise.")).body(null);
+                    "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins
         // can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(fileUploadExercise.getCourse())) {
+        if (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantInCourse(fileUploadExercise.getCourse(), userService.getUserWithGroupsAndAuthorities())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -316,7 +304,7 @@ public class FileUploadSubmissionResource {
                             HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
