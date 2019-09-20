@@ -469,7 +469,7 @@ public class CourseResource {
             else if (exercise instanceof ModelingExercise) {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
-            else {
+            else if (exercise instanceof FileUploadExercise) {
                 numberOfParticipations += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 

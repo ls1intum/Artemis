@@ -147,7 +147,8 @@ public class FileUploadSubmissionIntegrationTest {
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-        return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
+        return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
+                HttpStatus.OK);
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
