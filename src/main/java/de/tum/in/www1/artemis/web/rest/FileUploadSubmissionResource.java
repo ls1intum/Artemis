@@ -253,7 +253,8 @@ public class FileUploadSubmissionResource {
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins
         // can see all answers
-        if (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantInCourse(fileUploadExercise.getCourse(), userService.getUserWithGroupsAndAuthorities())) {
+        if (!authCheckService.isOwnerOfParticipation(participation)
+                && !authCheckService.isAtLeastTeachingAssistantInCourse(fileUploadExercise.getCourse(), userService.getUserWithGroupsAndAuthorities())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
