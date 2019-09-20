@@ -12,7 +12,6 @@ import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { cloneRepositoryTour, courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -105,7 +104,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         return ParticipationStatus.MODELING_EXERCISE;
                     case ExerciseType.TEXT:
                         return ParticipationStatus.TEXT_EXERCISE;
-                    default:
+                    case ExerciseType.FILE_UPLOAD:
                         return ParticipationStatus.FILE_UPLOAD_EXERCISE;
                 }
             }
