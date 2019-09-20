@@ -220,6 +220,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
                 break;
         }
+
         submissionsObservable
             .pipe(
                 map(res => res.body),

@@ -25,6 +25,7 @@ export class FileUploaderService {
         if (supportedImageFormats.indexOf(fileExtension) === -1) {
             return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
         }
+
         /** Check file size **/
         if (file.size > MAX_FILE_SIZE) {
             return Promise.reject(new Error('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.'));
