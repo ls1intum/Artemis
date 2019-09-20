@@ -35,7 +35,7 @@ public class FileUploadSubmission extends Submission implements Serializable {
     public void onDelete() {
         if (filePath != null) {
             // delete old file if necessary
-            final var splittedPath = filePath.split(File.separator);
+            final var splittedPath = filePath.split("/");
             final var shouldBeExerciseId = splittedPath.length >= 5 ? splittedPath[4] : null;
             if (!NumberUtils.isNumber(shouldBeExerciseId)) {
                 throw new FilePathParsingException("Unexpected String in upload file path. Should contain the exercise ID: " + shouldBeExerciseId);
