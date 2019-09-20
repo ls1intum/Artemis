@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -54,6 +55,9 @@ public class FileUploadSubmissionIntegrationTest {
     ParticipationService participationService;
 
     @Autowired
+    FileService fileService;
+
+    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -70,8 +74,8 @@ public class FileUploadSubmissionIntegrationTest {
         database.addUsers(3, 1, 0);
         database.addCourseWithOneFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
-        submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission("p.pdf", true);
-        notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission("p.png", false);
+        submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
     }
 
     @AfterEach
@@ -83,10 +87,12 @@ public class FileUploadSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void submitFileUploadSubmission() throws Exception {
         database.addParticipationForExercise(fileUploadExercise, "student1");
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("file.png", false);
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(fileUploadExercise.getId(), submission);
+        String actualFilePath = FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getFilePath()).isEqualTo(submission.getFilePath());
+        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -94,7 +100,7 @@ public class FileUploadSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void setSubmittedFileUploadSubmission_incorrectFileType() throws Exception {
         database.addParticipationForExercise(fileUploadExercise, "student1");
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("file.png", false);
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.txt", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
                 HttpStatus.BAD_REQUEST);
