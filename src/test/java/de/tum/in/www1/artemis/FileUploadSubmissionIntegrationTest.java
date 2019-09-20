@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -82,7 +83,7 @@ public class FileUploadSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void submitFileUploadSubmission() throws Exception {
         database.addParticipationForExercise(fileUploadExercise, "student1");
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("j.pdf", false);
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission("file.png", false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(fileUploadExercise.getId(), submission);
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(submission.getFilePath());
@@ -145,7 +146,8 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
-        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, FileUploadSubmission.class, HttpStatus.OK);
+        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {

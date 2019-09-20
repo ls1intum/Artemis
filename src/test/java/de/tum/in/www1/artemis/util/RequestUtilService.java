@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.*;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.*;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -29,6 +29,17 @@ public class RequestUtilService {
         this.mapper = mapper;
     }
 
+    public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(paramValue);
+        MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)
+            .with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
