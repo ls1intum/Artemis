@@ -217,10 +217,7 @@ export class GuidedTourService {
      */
     public checkTourStateFinished(guidedTour: GuidedTour): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
-        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
-            return true;
-        }
-        return false;
+        return !!(tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]);
     }
 
     /**
@@ -249,7 +246,7 @@ export class GuidedTourService {
             if (nextStep.highlightSelector) {
                 this.waitForElement(nextStep.highlightSelector);
             } else {
-                this.enableNextStepClick();
+                GuidedTourService.enableNextStepClick();
             }
         } else {
             switch (userInteraction) {
@@ -265,7 +262,7 @@ export class GuidedTourService {
                     from(this.observeDomMutations(targetNode)).subscribe((mutations: MutationRecord[]) => {
                         mutations.forEach(mutation => {
                             if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                this.enableNextStepClick();
+                                GuidedTourService.enableNextStepClick();
                             }
                         });
                     });
@@ -306,7 +303,7 @@ export class GuidedTourService {
     /**
      * Remove the disabled attribute so that the next button is clickable again
      */
-    private enableNextStepClick() {
+    private static enableNextStepClick() {
         const nextButton = document.querySelector('.next-button');
         if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
             nextButton.attributes.removeNamedItem('disabled');
