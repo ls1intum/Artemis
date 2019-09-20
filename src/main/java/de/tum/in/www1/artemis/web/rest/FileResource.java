@@ -238,7 +238,7 @@ public class FileResource {
             return ResponseEntity.badRequest().build();
         }
         if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
-            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding File Upload Submission";
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding exercise";
             return ResponseEntity.status(403).body(errorMessage);
         }
         return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
