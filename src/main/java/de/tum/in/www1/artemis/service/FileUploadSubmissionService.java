@@ -68,8 +68,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param fileUploadSubmission the file upload submission that should be saved
      * @param fileUploadExercise   the corresponding file upload exercise
+     * @param file                  the file that will be stored on the server
      * @param principal            the user principal
      * @return the saved file upload submission
+     * @throws IOException if file can't be saved
      */
     @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
@@ -174,8 +176,11 @@ public class FileUploadSubmissionService extends SubmissionService {
      * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
      *
      * @param fileUploadSubmission the submission that should be saved
-     * @param participation        the participation the participation the submission belongs to
+     * @param file                 the file that will be saved on the server
+     * @param participation        the participation the submission belongs to
+     * @param exercise             the exercise the submission belongs to
      * @return the fileUploadSubmission entity that was saved to the database
+     * @throws IOException if file can't be saved
      */
     @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)

@@ -12,9 +12,7 @@ import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
- * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding submission is deleted. The workflow is
- * as follows: 1. user uploads a file -> temporary file is created and at this point we don't know if submission is already created, when submission is created file is moved to permanent location =>
- * This happens in @PreUpdate 2. When submission is deleted, the file in the permanent location is deleted => This happens in @PostRemove
+ * A FileUploadSubmission.
  */
 @Entity
 @DiscriminatorValue(value = "F")
