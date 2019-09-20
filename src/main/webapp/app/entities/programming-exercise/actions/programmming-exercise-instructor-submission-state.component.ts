@@ -1,8 +1,9 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, EventEmitter, Output } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { catchError, debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { of, Subscription, Subject } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonType } from 'app/shared/components';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -16,11 +17,13 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './programmming-exercise-instructor-submission-state.component.html',
 })
 export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exerciseId: number;
 
     hasFailedSubmissions = false;
+    hasBuildingSubmissions = false;
     buildingSummary: { [submissionState: string]: number };
     isBuildingFailedSubmissions = false;
     isTriggeringBuildAll = false;
@@ -48,10 +51,11 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
-                    debounceTime(1000),
+                    debounceTime(500),
                     tap((buildingSummary: { [submissionState: string]: number }) => {
                         this.buildingSummary = buildingSummary;
                         this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
+                        this.hasBuildingSubmissions = this.buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] > 0;
                     }),
                 )
                 .subscribe();

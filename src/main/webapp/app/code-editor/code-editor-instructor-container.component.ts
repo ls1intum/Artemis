@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
@@ -10,7 +10,6 @@ import {
     ParticipationService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
-    StudentParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
@@ -25,9 +24,9 @@ import {
     CodeEditorInstructionsComponent,
     CodeEditorSessionService,
 } from 'app/code-editor';
-import { ResultService, UpdatingResultComponent } from 'app/entities/result';
+import { UpdatingResultComponent } from 'app/entities/result';
 import { ExerciseType } from 'app/entities/exercise';
-import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
+import { ButtonSize } from 'app/shared/components';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',

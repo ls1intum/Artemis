@@ -1,11 +1,13 @@
 import { NgModule } from '@angular/core';
 import { HtmlForMarkdownPipe, KeysPipe, RemoveKeysPipe, RemovePositiveAutomaticFeedbackPipe, SafeHtmlPipe, SafeUrlPipe, SanitizeHtmlPipe, TruncatePipe, TypeCheckPipe } from './';
 import { ExerciseTypePipe } from 'app/entities/exercise';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @NgModule({
     declarations: [
         SafeHtmlPipe,
         SafeUrlPipe,
+        SafeResourceUrlPipe,
         RemoveKeysPipe,
         ExerciseTypePipe,
         KeysPipe,
@@ -26,6 +28,7 @@ import { ExerciseTypePipe } from 'app/entities/exercise';
         HtmlForMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
+        SafeResourceUrlPipe,
     ],
 })
 export class ArtemisSharedPipesModule {}

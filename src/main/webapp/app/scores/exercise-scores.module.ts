@@ -1,23 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
 import { UserRouteAccessService } from 'app/core';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
-import { HomeComponent } from 'app/home';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from 'app/layouts';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
+import { ArtemisResultModule } from 'app/entities/result';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import {
     ExerciseScoresPopupService,
     ExerciseScoresRepoExportComponent,
-    ExerciseScoresResultDialogComponent,
     ExerciseScoresRepoExportPopupComponent,
+    ExerciseScoresResultDialogComponent,
     ExerciseScoresResultResultPopupComponent,
 } from 'app/scores';
 
@@ -69,14 +65,6 @@ const ENTITY_STATES = [
         ExerciseScoresRepoExportComponent,
         ExerciseScoresRepoExportPopupComponent,
     ],
-    providers: [ExerciseScoresPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ExerciseScoresPopupService],
 })
-export class ArtemisExerciseScoresModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisExerciseScoresModule {}

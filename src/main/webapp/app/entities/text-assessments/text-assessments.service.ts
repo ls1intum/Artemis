@@ -3,7 +3,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Result } from 'app/entities/result';
-import { Participation, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response';

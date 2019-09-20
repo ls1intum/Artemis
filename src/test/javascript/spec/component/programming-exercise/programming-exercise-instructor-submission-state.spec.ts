@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
@@ -33,6 +33,12 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let triggerParticipationsStub: SinonStub;
 
     const exercise = { id: 20 } as Exercise;
+
+    const resultEtaId = '#result-eta';
+
+    const getResultEtaContainer = () => {
+        return debugElement.query(By.css(resultEtaId));
+    };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -67,12 +73,12 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     });
 
     const getTriggerAllButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-all-button'));
+        const triggerButton = debugElement.query(By.css('#trigger-all-button button'));
         return triggerButton ? triggerButton.nativeElement : null;
     };
 
     const getTriggerFailedButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-failed-button'));
+        const triggerButton = debugElement.query(By.css('#trigger-failed-button button'));
         return triggerButton ? triggerButton.nativeElement : null;
     };
 
@@ -87,6 +93,42 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(getBuildState()).to.be.null;
     });
 
+    it('should show the result eta if there is at least one building submission', fakeAsync(() => {
+        const isBuildingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
+        comp.exerciseId = exercise.id;
+
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
+
+        tick(500);
+
+        fixture.detectChanges();
+
+        const resultEta = getResultEtaContainer();
+        expect(resultEta).to.exist;
+    }));
+
+    it('should not show the result eta if there is no building submission', fakeAsync(() => {
+        const isNotBuildingSubmission = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
+        comp.exerciseId = exercise.id;
+
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
+
+        tick(500);
+
+        fixture.detectChanges();
+
+        const resultEta = getResultEtaContainer();
+        expect(resultEta).not.to.exist;
+    }));
+
     it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
         const noPendingSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
@@ -99,7 +141,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
-        tick(1000);
+        tick(500);
 
         fixture.detectChanges();
 
@@ -120,15 +162,20 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         const noPendingSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 55 },
             4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 76 },
+            5: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 76 },
         } as ExerciseSubmissionState;
-        const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
+        const compressedSummary = {
+            [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1,
+            [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1,
+            [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION]: 1,
+        };
         comp.exerciseId = exercise.id;
 
         triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
-        tick(1000);
+        tick(500);
 
         fixture.detectChanges();
 
@@ -138,6 +185,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         expect(comp.isBuildingFailedSubmissions).to.be.false;
         expect(comp.buildingSummary).to.deep.equal(compressedSummary);
 
+        expect(getResultEtaContainer()).to.exist;
         expect(getTriggerAllButton()).to.exist;
         expect(getTriggerAllButton().disabled).to.be.false;
         expect(getTriggerFailedButton()).to.exist;

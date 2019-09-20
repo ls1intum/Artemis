@@ -1,7 +1,3 @@
-import { AceEditorComponent } from 'ng2-ace-editor';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
-import { escapeStringForUseInRegex, getStringSegmentPositions } from 'app/utils/global.utils';
 import { DomainMultiOptionListCommand } from 'app/markdown-editor/domainCommands/domain-multi-option-list.command';
 
 export class TaskHintCommand extends DomainMultiOptionListCommand {
