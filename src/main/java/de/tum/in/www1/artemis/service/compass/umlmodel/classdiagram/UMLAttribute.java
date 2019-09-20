@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
@@ -15,30 +16,36 @@ public class UMLAttribute extends UMLElement {
     private String attributeType;
 
     public UMLAttribute(String name, String attributeType, String jsonElementID) {
+        super(jsonElementID);
+
         this.name = name;
         this.attributeType = attributeType;
-        this.setJsonElementID(jsonElementID);
     }
 
+    /**
+     * Set the parent class of this attribute, i.e. the UML class that contains it.
+     *
+     * @param parentClass the UML class that contains this attribute
+     */
     public void setParentClass(UMLClass parentClass) {
         this.parentClass = parentClass;
     }
 
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (element.getClass() != UMLAttribute.class) {
+        if (reference == null || reference.getClass() != UMLAttribute.class) {
             return similarity;
         }
 
-        UMLAttribute other = (UMLAttribute) element;
+        UMLAttribute referenceAttribute = (UMLAttribute) reference;
 
-        similarity += NameSimilarity.namePartiallyEqualsSimilarity(name, other.name) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
+        similarity += NameSimilarity.namePartiallyEqualsSimilarity(name, referenceAttribute.name) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, other.attributeType) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
+        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.attributeType) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
     }
 
     @Override

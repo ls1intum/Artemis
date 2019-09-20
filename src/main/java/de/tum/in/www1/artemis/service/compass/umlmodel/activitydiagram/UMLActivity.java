@@ -1,36 +1,28 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
-import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
 import java.util.List;
 
-public class UMLActivity extends UMLElement {
+public class UMLActivity extends UMLActivityElement {
 
     public final static String UML_ACTIVITY_TYPE = "Activity";
 
-    private String name;
+    private List<UMLActivityElement> activityElements;
 
-    private List<UMLActivityNode> activityNodes;
+    public UMLActivity(String name, List<UMLActivityElement> activityElements, String jsonElementID) {
+        super(name, jsonElementID);
 
-    public UMLActivity(String name, List<UMLActivityNode> activityNodes, String jsonElementID) {
-        this.name = name;
-        this.activityNodes = activityNodes;
-        this.setJsonElementID(jsonElementID);
+        this.activityElements = activityElements;
+
+        setActivityOfContainedElements();
     }
 
-    @Override
-    public double similarity(UMLElement element) {
-        if (element.getClass() != UMLActivity.class) {
-            return 0;
+    /**
+     * Sets the parent activity of all activity elements contained in this UML activity.
+     */
+    private void setActivityOfContainedElements() {
+        for (UMLActivityElement activityElement : activityElements) {
+            activityElement.setParentActivity(this);
         }
-
-        return NameSimilarity.levenshteinSimilarity(name, element.getName());
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     @Override
@@ -38,12 +30,12 @@ public class UMLActivity extends UMLElement {
         return UML_ACTIVITY_TYPE;
     }
 
-    @Override
-    public String toString() {
-        return "Activity " + getName();
-    }
-
-    public void addActivityNode(UMLActivityNode activityNode) {
-        this.activityNodes.add(activityNode);
+    /**
+     * Add an activity element to the list of activity elements contained in this UML activity.
+     *
+     * @param activityElement the activity element that should be added
+     */
+    public void addActivityElement(UMLActivityElement activityElement) {
+        activityElements.add(activityElement);
     }
 }

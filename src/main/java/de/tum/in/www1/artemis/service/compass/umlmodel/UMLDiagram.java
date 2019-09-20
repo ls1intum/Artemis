@@ -4,7 +4,7 @@ import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 
 import java.util.List;
 
-public abstract class UMLDiagram implements SimilarElement<UMLDiagram> {
+public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
     private long modelSubmissionId;
 
@@ -23,128 +23,58 @@ public abstract class UMLDiagram implements SimilarElement<UMLDiagram> {
     public abstract UMLElement getElementByJSONID(String jsonElementId);
 
     /**
-     * Get the list of connectable elements of the diagram, i.e. all elements that can be connected by relations in the respective diagram type.
+     * Get the list of first level model elements of the diagram (e.g. classes, relationships and packages of UML class diagrams, but no Attributes and Methods).
      *
-     * @return the list of connectable elements of the diagram
+     * @return the list of first level model elements of the diagram
      */
-    protected abstract List<UMLElement> getConnectableElements();
+    protected abstract List<Similarity<UMLElement>> getModelElements();
 
     /**
-     * Get the list of relations of the diagram, i.e. all elements that can connect connectable elements in the respective diagram type.
-     *
-     * @return the list of relations of the diagram
-     */
-    protected abstract List<UMLElement> getRelations();
-
-    /**
-     * Get the list of container elements of the diagram, i.e. all elements that can contain other elements in the respective diagram type.
-     *
-     * @return the list of container elements of the diagram
-     */
-    protected abstract List<UMLElement> getContainerElements();
-
-    @Override
-    public final double similarity(UMLDiagram reference) {
-        if (reference == null || reference.getClass() != this.getClass()) {
-            return 0;
-        }
-
-        double sim1 = reference.similarityScore(this);
-        double sim2 = similarityScore(reference);
-
-        // TODO CZ: is the double calculation + multiplication necessary?
-        return sim1 * sim2;
-    }
-
-    /**
-     * Compares this with another diagram to calculate the similarity. It iterates over all elements of the three element classes (connectables, relations, containers) and
-     * calculates the max similarity to elements of the reference diagram. The sum of the single element similarity scores is the total similarity score between the two diagrams.
+     * Compares this with another diagram to calculate the similarity. It iterates over all model elements and calculates the max. similarity to elements of the reference diagram.
+     * The sum of the weighted single element similarity scores is the total similarity score of the two diagrams.
      *
      * @param reference the reference UML diagram to compare this diagram with
      * @return the similarity of the diagrams as number [0-1]
      */
-    protected double similarityScore(UMLDiagram reference) {
-        List<UMLElement> connectableElements = getConnectableElements();
-        List<UMLElement> relations = getRelations();
-        List<UMLElement> containerElements = getContainerElements();
+    @Override
+    public double similarity(Similarity<UMLDiagram> reference) {
+        if (reference == null || reference.getClass() != this.getClass()) {
+            return 0;
+        }
+
+        UMLDiagram diagramReference = (UMLDiagram) reference;
+
+        // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this diagram always has less or equally many elements than the reference diagram.
+        if (getModelElements().size() > diagramReference.getModelElements().size()) {
+            return diagramReference.similarity(this);
+        }
 
         double similarity = 0;
 
-        // For calculating the weight of the similarity of every element, we consider the max. element count of both diagrams to reflect missing elements on either side in the
-        // total similarity score. E.g. if we compare two diagrams, diagramA with one class and diagramB with two classes, the highest possible similarity should be 0.5, so
-        // the weight should be 1/2, no matter if we do diagramA.similarityScore(diagramB) or diagramB.similarityScore(diagramA).
-        int maxElementCount = Math.max(connectableElements.size(), reference.getConnectableElements().size()) + Math.max(relations.size(), reference.getRelations().size()) +
-            Math.max(containerElements.size(), reference.getContainerElements().size());
+        // For calculating the weight of the similarity of every element, we consider the max. element count to reflect missing elements, i.e. it should not be possible to get a
+        // similarity of 1 if the amount of elements differs. As we know that the reference diagram has at least as many elements as this diagram, we take the element count of the
+        // reference.
+        int maxElementCount = diagramReference.getModelElements().size();
         double weight = 1.0 / maxElementCount;
 
-        for (UMLElement connectableElement : connectableElements) {
-            double similarityValue = reference.similarConnectableElementScore(connectableElement);
+        for (Similarity<UMLElement> element : getModelElements()) {
+            double similarityValue = diagramReference.similarElementScore(element);
             similarity += weight * similarityValue;
         }
 
-        for (UMLElement relation : relations) {
-            double similarityValue = reference.similarRelationScore(relation);
-            similarity += weight * similarityValue;
-        }
-
-        for (UMLElement containerElement : containerElements) {
-            double similarityValue = reference.similarContainerElementScore(containerElement);
-            similarity += weight * similarityValue;
-        }
-
-        if (similarity < 0) {
-            similarity = 0;
-        }
-        else if (similarity > 1) {
-            similarity = 1;
-        }
-
-        return similarity;
+        // Make sure that the similarity value is between 0 and 1.
+        return Math.min(Math.max(similarity, 0), 1);
     }
 
     /**
-     * Compares a reference connectable element to the list of connectable elements of this diagram and returns the maximum similarity score, i.e. the similarity between the
-     * reference element and the most similar element of the connectable element list.
+     * Compares a reference element to the list of model elements of this diagram and returns the maximum similarity score, i.e. the similarity between the reference element and
+     * the most similar element of this diagram.
      *
-     * @param referenceConnectable the reference connectable element that should be compared to the connectable elements of this diagram
-     * @return the maximum similarity score between the reference element and the list of connectable elements of this diagram
+     * @param referenceElement the reference element that should be compared to the model elements of this diagram
+     * @return the maximum similarity score of the reference element and the list of model elements of this diagram
      */
-    protected double similarConnectableElementScore(UMLElement referenceConnectable) {
-        return similarElementScore(getConnectableElements(), referenceConnectable);
-    }
-
-    /**
-     * Compares a reference relation element to the list of relation elements of this diagram and returns the maximum similarity score, i.e. the similarity between the reference
-     * element and the most similar element of the relation list.
-     *
-     * @param referenceRelation the reference relation element that should be compared to the relations of this diagram
-     * @return the maximum similarity score between the reference element and the list of relations of this diagram
-     */
-    protected double similarRelationScore(UMLElement referenceRelation) {
-        return similarElementScore(getRelations(), referenceRelation);
-    }
-
-    /**
-     * Compares a reference container element to the list of container elements of this diagram and returns the maximum similarity score, i.e. the similarity between the reference
-     * element and the most similar element of the container element list.
-     *
-     * @param referenceContainer the reference container element that should be compared to the container elements of this diagram
-     * @return the maximum similarity score between the reference element and the list of container elements of this diagram
-     */
-    protected double similarContainerElementScore(UMLElement referenceContainer) {
-        return similarElementScore(getContainerElements(), referenceContainer);
-    }
-
-    /**
-     * Compares a reference element to a list of elements and returns the maximum similarity score, i.e. the similarity between the reference element and the most similar element
-     * of the list.
-     *
-     * @param elements the list of elements that should be compared to the reference element
-     * @param referenceElement the reference element that should be compared to the elements of the list
-     * @return the maximum similarity score between the reference element and the list of elements
-     */
-    private double similarElementScore(List<UMLElement> elements, UMLElement referenceElement) {
-        return elements.stream().mapToDouble(element -> element.similarity(referenceElement)).max().orElse(0);
+    private double similarElementScore(Similarity<UMLElement> referenceElement) {
+        return getModelElements().stream().mapToDouble(element -> element.overallSimilarity(referenceElement)).max().orElse(0);
     }
 
     /**

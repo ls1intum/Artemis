@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UMLActivityDiagram extends UMLDiagram {
@@ -16,6 +17,7 @@ public class UMLActivityDiagram extends UMLDiagram {
 
     public UMLActivityDiagram(long modelSubmissionId, List<UMLActivityNode> activityNodeList, List<UMLActivity> activityList, List<UMLControlFlow> controlFlowList) {
         super(modelSubmissionId);
+
         this.activityNodeList = activityNodeList;
         this.activityList = activityList;
         this.controlFlowList = controlFlowList;
@@ -45,28 +47,38 @@ public class UMLActivityDiagram extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getConnectableElements() {
-        return getActivityNodeList() != null ? Collections.unmodifiableList(getActivityNodeList()) : Collections.emptyList();
+    protected List<Similarity<UMLElement>> getModelElements() {
+        List<Similarity<UMLElement>> modelElements = new ArrayList<>();
+        modelElements.addAll(activityNodeList);
+        modelElements.addAll(activityList);
+        modelElements.addAll(controlFlowList);
+
+        return modelElements;
     }
 
-    @Override
-    protected List<UMLElement> getRelations() {
-        return getControlFlowList() != null ? Collections.unmodifiableList(getControlFlowList()) : Collections.emptyList();
-    }
-
-    @Override
-    protected List<UMLElement> getContainerElements() {
-        return getActivityList() != null ? Collections.unmodifiableList(getActivityList()) : Collections.emptyList();
-    }
-
+    /**
+     * Get the list of activity nodes contained in this UML activity diagram.
+     *
+     * @return the list of UML activity nodes
+     */
     public List<UMLActivityNode> getActivityNodeList() {
         return activityNodeList;
     }
 
+    /**
+     * Get the list of control flow elements contained in this UML activity diagram.
+     *
+     * @return the list of UML control flow elements
+     */
     public List<UMLControlFlow> getControlFlowList() {
         return controlFlowList;
     }
 
+    /**
+     * Get the list of activities contained in this UML activity diagram.
+     *
+     * @return the list of UML activities
+     */
     public List<UMLActivity> getActivityList() {
         return activityList;
     }

@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+
+import java.util.List;
 
 public class UMLMethod extends UMLElement {
 
@@ -20,42 +21,48 @@ public class UMLMethod extends UMLElement {
     private List<String> parameters;
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
+        super(jsonElementID);
+
         this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameter;
-        this.setJsonElementID(jsonElementID);
     }
 
+    /**
+     * Set the parent class of this attribute, i.e. the UML class that contains it.
+     *
+     * @param parentClass the UML class that contains this attribute
+     */
     public void setParentClass(UMLClass parentClass) {
         this.parentClass = parentClass;
     }
 
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (element.getClass() != UMLMethod.class) {
+        if (reference == null || reference.getClass() != UMLMethod.class) {
             return similarity;
         }
 
-        UMLMethod other = (UMLMethod) element;
+        UMLMethod referenceMethod = (UMLMethod) reference;
 
         int elementCount = parameters.size() + 2;
 
         double weight = 1.0 / elementCount;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(name, other.name) * weight;
+        similarity += NameSimilarity.nameEqualsSimilarity(name, referenceMethod.name) * weight;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(returnType, other.returnType) * weight;
+        similarity += NameSimilarity.nameEqualsSimilarity(returnType, referenceMethod.returnType) * weight;
 
-        for (String oParameter : other.parameters) {
+        for (String oParameter : referenceMethod.parameters) {
             if (parameters.contains(oParameter)) {
                 similarity += weight;
             }
         }
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
     }
 
     @Override

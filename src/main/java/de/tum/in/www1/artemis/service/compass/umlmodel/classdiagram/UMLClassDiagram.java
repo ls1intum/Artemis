@@ -1,40 +1,31 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UMLClassDiagram extends UMLDiagram {
-
-    private final List<UMLPackage> packageList;
 
     private final List<UMLClass> classList;
 
     private final List<UMLRelationship> relationshipList;
 
+    private final List<UMLPackage> packageList;
+
     public UMLClassDiagram(long modelSubmissionId, List<UMLClass> classList, List<UMLRelationship> relationshipList, List<UMLPackage> packageList) {
         super(modelSubmissionId);
-        this.packageList = packageList;
+
         this.classList = classList;
         this.relationshipList = relationshipList;
-    }
-
-    @Override
-    protected double similarConnectableElementScore(UMLElement referenceElement) {
-        return classList.stream().mapToDouble(connectableElement -> connectableElement.overallSimilarity(referenceElement)).max().orElse(0);
+        this.packageList = packageList;
     }
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
         UMLElement element;
-
-        for (UMLPackage umlPackage : packageList) {
-            if (umlPackage.getJSONElementID().equals(jsonElementId)) {
-                return umlPackage;
-            }
-        }
 
         for (UMLClass umlClass : classList) {
             element = umlClass.getElementByJSONID(jsonElementId);
@@ -49,32 +40,48 @@ public class UMLClassDiagram extends UMLDiagram {
             }
         }
 
+        for (UMLPackage umlPackage : packageList) {
+            if (umlPackage.getJSONElementID().equals(jsonElementId)) {
+                return umlPackage;
+            }
+        }
+
         return null;
     }
 
     @Override
-    protected List<UMLElement> getConnectableElements() {
-        return getClassList() != null ? Collections.unmodifiableList(getClassList()) : Collections.emptyList();
+    protected List<Similarity<UMLElement>> getModelElements() {
+        List<Similarity<UMLElement>> modelElements = new ArrayList<>();
+        modelElements.addAll(classList);
+        modelElements.addAll(relationshipList);
+        modelElements.addAll(packageList);
+
+        return modelElements;
     }
 
-    @Override
-    protected List<UMLElement> getRelations() {
-        return getRelationshipList() != null ? Collections.unmodifiableList(getRelationshipList()) : Collections.emptyList();
-    }
-
-    @Override
-    protected List<UMLElement> getContainerElements() {
-        return getPackageList() != null ? Collections.unmodifiableList(getPackageList()) : Collections.emptyList();
-    }
-
+    /**
+     * Get the list of UML classes contained in this class diagram.
+     *
+     * @return the list of UML classes
+     */
     public List<UMLClass> getClassList() {
         return classList;
     }
 
+    /**
+     * Get the list of UML relationships contained in this class diagram.
+     *
+     * @return the list of UML classes
+     */
     public List<UMLRelationship> getRelationshipList() {
         return relationshipList;
     }
 
+    /**
+     * Get the list of UML packages contained in this class diagram.
+     *
+     * @return the list of UML classes
+     */
     public List<UMLPackage> getPackageList() {
         return packageList;
     }

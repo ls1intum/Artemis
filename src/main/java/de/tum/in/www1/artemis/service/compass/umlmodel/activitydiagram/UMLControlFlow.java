@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
@@ -9,31 +10,31 @@ public class UMLControlFlow extends UMLElement {
 
     private final String CONTROL_FLOW_SYMBOL = " --> ";
 
-    private UMLActivityNode source; // TODO CZ: should UMLActivity be possible source and target as well?
+    private UMLActivityElement source;
 
-    private UMLActivityNode target;
+    private UMLActivityElement target;
 
-    public UMLControlFlow(UMLActivityNode source, UMLActivityNode target, String jsonElementID) {
+    public UMLControlFlow(UMLActivityElement source, UMLActivityElement target, String jsonElementID) {
+        super(jsonElementID);
+
         this.source = source;
         this.target = target;
-
-        this.setJsonElementID(jsonElementID);
     }
 
     @Override
-    public double similarity(UMLElement element) {
-        if (element.getClass() != UMLControlFlow.class) {
+    public double similarity(Similarity<UMLElement> reference) {
+        if (reference == null || reference.getClass() != UMLControlFlow.class) {
             return 0;
         }
 
-        UMLControlFlow reference = (UMLControlFlow) element;
+        UMLControlFlow referenceControlFlow = (UMLControlFlow) reference;
 
         double similarity = 0;
 
-        similarity += reference.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += reference.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceControlFlow.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceControlFlow.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
     }
 
     @Override
@@ -51,11 +52,21 @@ public class UMLControlFlow extends UMLElement {
         return UML_CONTROL_FLOW_TYPE;
     }
 
-    public UMLActivityNode getSource() {
+    /**
+     * Get the source of this UML control flow element, i.e. the UML activity element where the control flow starts.
+     *
+     * @return the source UML activity element of this control flow element
+     */
+    public UMLActivityElement getSource() {
         return source;
     }
 
-    public UMLActivityNode getTarget() {
+    /**
+     * Get the target of this UML control flow element, i.e. the UML activity element where the control flow ends.
+     *
+     * @return the target UML activity element of this control flow element
+     */
+    public UMLActivityElement getTarget() {
         return target;
     }
 
