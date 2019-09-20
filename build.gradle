@@ -239,6 +239,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.0"
+    implementation "org.apache.tika:tika-parsers:1.22"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
