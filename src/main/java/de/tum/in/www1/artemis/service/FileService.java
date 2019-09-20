@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.tika.parser.txt.CharsetDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -420,7 +421,7 @@ public class FileService {
     }
 
     /**
-     * This replace all occurences of the target Strings with the replacement Strings in the given file and saves the file
+     * This replaces all occurences of the target Strings with the replacement Strings in the given file and saves the file
      *
      * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
      * @param startPath          the path where the start directory is located
@@ -456,7 +457,7 @@ public class FileService {
     }
 
     /**
-     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
      * order of the argument is the same
      *
      * @param filePath           the path where the file is located
@@ -475,5 +476,117 @@ public class FileService {
             fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
         }
         Files.write(replaceFilePath, fileContent.getBytes(charset));
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
+     *
+     * @see {@link #normalizeLineEndings(String) normalizeLineEndings}
+     * @param startPath          the path where the start directory is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public void normalizeLineEndingsRecursive(String startPath) throws IOException {
+        log.debug("Normalizing file endings in directory {}", startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
+        }
+
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> new File(current, name).isFile());
+
+        for (String file : files) {
+            normalizeLineEndings(directory.getAbsolutePath() + File.separator + file);
+        }
+
+        // Recursive call
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+
+        for (String subdirectory : subdirectories) {
+            if (subdirectory.equalsIgnoreCase(".git")) {
+                // ignore files in the '.git' folder
+                continue;
+            }
+            normalizeLineEndingsRecursive(directory.getAbsolutePath() + File.separator + subdirectory);
+        }
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings in a specific file.
+     * '\r\n' gets replaced to '\n'
+     * '\r' gets replaced to '\n'
+     *
+     * @param filePath           the path where the file is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public void normalizeLineEndings(String filePath) throws IOException {
+        log.debug("Normalizing line endings in file {}", filePath);
+        // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
+        Path replaceFilePath = Paths.get(filePath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        fileContent.replaceAll("\\r\\n?", "\n");
+        Files.write(replaceFilePath, fileContent.getBytes(charset));
+    }
+
+    /**
+     * This converts all files to the UTF-8 encoding recursively from the startPath.
+     *
+     * @see {@link #convertToUTF8(String) convertToUTF8}
+     * @param startPath          the path where the start directory is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public void convertToUTF8Recursive(String startPath) throws IOException {
+        log.debug("Converting files in directory {} to UTF-8", startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
+        }
+
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> new File(current, name).isFile());
+
+        for (String file : files) {
+            convertToUTF8(directory.getAbsolutePath() + File.separator + file);
+        }
+
+        // Recursive call
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+
+        for (String subdirectory : subdirectories) {
+            if (subdirectory.equalsIgnoreCase(".git")) {
+                // ignore files in the '.git' folder
+                continue;
+            }
+            convertToUTF8Recursive(directory.getAbsolutePath() + File.separator + subdirectory);
+        }
+    }
+
+    /**
+     * This converts a specific file to the UTF-8 encoding.
+     * To determine the encoding of the file, the library juniversalchardet is used.
+     *
+     * @param filePath           the path where the file is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public void convertToUTF8(String filePath) throws IOException {
+        log.debug("Converting file {} to UTF-8", filePath);
+        Path replaceFilePath = Paths.get(filePath);
+        byte[] contentArray = Files.readAllBytes(replaceFilePath);
+
+        // Part of the apache tika library in order to detect the encoding of a file
+        CharsetDetector charsetDetector = new CharsetDetector();
+
+        charsetDetector.setText(contentArray);
+        String charsetName = charsetDetector.detect().getName();
+        Charset charset = Charset.forName(charsetName);
+        log.debug("Detected charset for file {} is {}", filePath, charsetName);
+
+        String fileContent = new String(contentArray, charset);
+
+        Files.write(replaceFilePath, fileContent.getBytes(Charset.forName("UTF-8")));
     }
 }

@@ -63,9 +63,12 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final FileService fileService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+            FileService fileService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -76,6 +79,7 @@ public class ExerciseService {
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
+        this.fileService = fileService;
     }
 
     /**
@@ -364,10 +368,13 @@ public class ExerciseService {
 
                 Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
-                gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
+                gitService.get().filterLateSubmissions(repo, studentParticipation);
                 programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
+                fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
+                fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
                 // TODO: unify encoding (UTF8) and line endings (unix)
+
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
                 zippedRepoFiles.add(zippedRepoFile);

@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -366,9 +367,11 @@ public class GitService {
      * Stager Task #3: Filter late submissions Filter all commits after exercise due date
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param participation   ProgrammingExerciseStudentParticipation associated with this repo.
      */
-    public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
+    @Transactional(readOnly = true)
+    public void filterLateSubmissions(Repository repository, ProgrammingExerciseStudentParticipation participation) {
+        Exercise exercise = participation.getProgrammingExercise();
         if (exercise.getDueDate() == null) {
             // No dates set on exercise
             return;
@@ -376,7 +379,17 @@ public class GitService {
 
         try {
             Git git = new Git(repository);
+            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream().filter(s -> s.getSubmissionDate().isBefore(exercise.getDueDate()))
+                    .sorted(Comparator.comparing(Submission::getSubmissionDate).reversed()).findFirst();
 
+            if (lastValidSubmission.isPresent()) {
+                log.debug("Last valid submission for participation {} is {}", participation.toString(), lastValidSubmission.get().toString());
+                ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
+                String commitHash = programmingSubmission.getCommitHash();
+            }
+            else {
+
+            }
             // TODO: get the latest submission before the due date from the database for the user behind the repository
             // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
 
