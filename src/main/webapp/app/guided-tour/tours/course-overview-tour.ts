@@ -1,6 +1,6 @@
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, UserInteractionEvent, LinkType } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, TextLinkTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 /**
@@ -8,7 +8,7 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
  */
 export const courseOverviewTour: GuidedTour = {
     courseTitle: 'Einführung in die Softwaretechnik',
-    exerciseName: '',
+    exerciseTitle: '',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
@@ -66,11 +66,11 @@ export const courseOverviewTour: GuidedTour = {
             },
         }),
         new TextTourStep({
-            highlightSelector: 'jhi-overview-course-card .card',
+            highlightSelector: '.card',
             headlineTranslateKey: 'tour.course-overview.course.headline',
             contentTranslateKey: 'tour.course-overview.course.content',
             orientation: Orientation.RIGHT,
-            checkForCourseOrExercise: true,
+            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
         }),
         new TextTourStep({
             highlightSelector: '.card-footer',
@@ -79,20 +79,21 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: 'jhi-overview-course-card .card',
+            highlightSelector: '.card',
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.course-overview.course.headline',
             contentTranslateKey: 'tour.course-overview.course.content',
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            checkForCourseOrExercise: true,
+            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
         }),
-        /*new TextTourStep({
+        new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',
             headlineTranslateKey: 'tour.course-overview.register.headline',
             contentTranslateKey: 'tour.course-overview.register.content',
             orientation: Orientation.LEFT,
             highlightPadding: 10,
+            skipStep: true,
         }),
         new TextLinkTourStep({
             highlightSelector: '.footer .col-sm-6',
@@ -102,6 +103,7 @@ export const courseOverviewTour: GuidedTour = {
             externalUrl: 'https://github.com/ls1intum/ArTEMiS',
             linkType: LinkType.BUTTON,
             orientation: Orientation.TOPLEFT,
-        }),*/
+            skipStep: true,
+        }),
     ],
 };

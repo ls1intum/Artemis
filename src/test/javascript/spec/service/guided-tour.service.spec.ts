@@ -30,6 +30,8 @@ const expect = chai.expect;
 
 describe('GuidedTourService', () => {
     const courseOverviewTour: GuidedTour = {
+        courseTitle: '',
+        exerciseTitle: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -47,6 +49,8 @@ describe('GuidedTourService', () => {
     };
 
     const courseOverviewTourWithUserInteraction: GuidedTour = {
+        courseTitle: '',
+        exerciseTitle: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -141,9 +145,10 @@ describe('GuidedTourService', () => {
 
         async function prepareGuidedTour(tour: GuidedTour) {
             // Prepare GuidedTourService and GuidedTourComponent
-            spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
+            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
+            spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService.currentTour = tour;
             });

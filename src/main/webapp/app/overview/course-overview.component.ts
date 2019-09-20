@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -28,7 +27,6 @@ export class CourseOverviewComponent implements OnInit {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -45,7 +43,6 @@ export class CourseOverviewComponent implements OnInit {
             });
         }
         this.adjustCourseDescription();
-        this.guidedTourService.enableTour(courseExerciseOverviewTour);
     }
 
     adjustCourseDescription() {

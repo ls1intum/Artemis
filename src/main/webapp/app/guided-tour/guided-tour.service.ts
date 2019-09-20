@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationStart, NavigationEnd, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { from, fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -12,8 +12,10 @@ import { GuidedTourState, Orientation, OrientationConfiguration, UserInteraction
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { filter } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { Course } from 'app/entities/course';
+import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -48,6 +50,7 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (event instanceof NavigationStart) {
+                this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
         });
@@ -197,7 +200,9 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
+        // If the tour was already finished, then keep the state
+        const updatedTourState = this.checkTourStateFinished(this.currentTour) ? GuidedTourState.FINISHED : guidedTourState;
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, updatedTourState)
             .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
             .subscribe(guidedTourSettings => {
                 this.guidedTourSettings = guidedTourSettings.body!;
@@ -225,6 +230,7 @@ export class GuidedTourService {
     public resetTour(): void {
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
+        this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
     }
 
@@ -246,35 +252,41 @@ export class GuidedTourService {
                 this.enableNextStepClick();
             }
         } else {
-            const observer = new MutationObserver(mutations => {
-                let mutationCount = 0;
-                mutations.forEach(mutation => {
-                    switch (userInteraction) {
-                        case UserInteractionEvent.CLICK: {
-                            if (mutationCount < 1) {
-                                // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
-                                mutationCount += 1;
-                                observer.disconnect();
-                                this.nextStep();
-                            }
-                            break;
-                        }
-                        case UserInteractionEvent.ACE_EDITOR: {
+            switch (userInteraction) {
+                case UserInteractionEvent.CLICK: {
+                    from(this.observeDomMutations(targetNode))
+                        .pipe(take(1))
+                        .subscribe(mutation => {
+                            this.nextStep();
+                        });
+                    break;
+                }
+                case UserInteractionEvent.ACE_EDITOR: {
+                    from(this.observeDomMutations(targetNode)).subscribe((mutations: MutationRecord[]) => {
+                        mutations.forEach(mutation => {
                             if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                observer.disconnect();
                                 this.enableNextStepClick();
                             }
-                            break;
-                        }
-                    }
-                });
+                        });
+                    });
+                    break;
+                }
+            }
+        }
+    }
+
+    public observeDomMutations(targetNode: HTMLElement) {
+        return new Promise(resolve => {
+            const observer = new MutationObserver(mutations => {
+                observer.disconnect();
+                resolve(mutations);
             });
             observer.observe(targetNode, {
                 attributes: true,
                 childList: true,
                 characterData: true,
             });
-        }
+        });
     }
 
     /**
@@ -310,7 +322,7 @@ export class GuidedTourService {
         }
 
         // Filter tour steps according to permissions
-        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
+        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
         this.currentTourStepIndex = 0;
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
@@ -489,6 +501,44 @@ export class GuidedTourService {
         setTimeout(() => {
             this.currentTour = cloneDeep(guidedTour);
             this.guidedTourAvailability.next(true);
-        });
+            if (this.checkTourStateFinished(guidedTour)) {
+                this.startTour();
+            }
+        }, 1000);
+    }
+
+    /**
+     * Check if the course and exercise for the tour are available on the course-exercise component
+     * @param course for which the guided tour availability should be checked
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour) {
+        if (course && course.exercises) {
+            if (guidedTour.exerciseTitle === '' || course.exercises.find(exercise => exercise.title === guidedTour.exerciseTitle)) {
+                this.enableTour(guidedTour);
+            }
+        }
+    }
+
+    /**
+     * Check if the course list contains the course for which the tour is available
+     * @param courses which can contain the needed course for the tour
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour) {
+        if (guidedTour.courseTitle === '' || courses.find(course => course.title === guidedTour.courseTitle)) {
+            this.enableTour(guidedTour);
+        }
+    }
+
+    /**
+     * Check if the exercise list contains the exercise for which the tour is available
+     * @param exercise which can contain the needed exercise for the tour
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForExerciseOverview(exercise: Exercise, guidedTour: GuidedTour) {
+        if (guidedTour.exerciseTitle === '' || exercise.title === guidedTour.exerciseTitle) {
+            this.enableTour(guidedTour);
+        }
     }
 }

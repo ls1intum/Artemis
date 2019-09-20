@@ -17,6 +17,7 @@ import {
     StudentParticipation,
 } from 'app/entities/participation';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { courseExerciseDetailTour } from 'app/guided-tour/tours/course-exercise-detail-tour';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -84,6 +85,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
+                this.guidedTourService.enableTourForExerciseOverview(this.exercise, courseExerciseDetailTour);
             });
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
@@ -93,6 +95,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
+                this.guidedTourService.enableTourForExerciseOverview(this.exercise, courseExerciseDetailTour);
             });
         }
     }

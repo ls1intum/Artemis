@@ -16,6 +16,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
+    private guidedTour: GuidedTour;
 
     constructor(
         private courseService: CourseService,
@@ -31,7 +32,7 @@ export class OverviewComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.enableTourForCourse(courseOverviewTour);
+                this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );
@@ -39,12 +40,6 @@ export class OverviewComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadAndFilterCourses();
-    }
-
-    private enableTourForCourse(guidedTour: GuidedTour) {
-        if (guidedTour.courseTitle === '' || this.courses.find(course => course.title === guidedTour.courseTitle)) {
-            this.guidedTourService.enableTour(guidedTour);
-        }
     }
 
     private onError(error: string) {

@@ -41,6 +41,8 @@ describe('GuidedTourComponent', () => {
     });
 
     const courseOverviewTour: GuidedTour = {
+        courseTitle: '',
+        exerciseTitle: '',
         settingsKey: 'course_overview_tour',
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };

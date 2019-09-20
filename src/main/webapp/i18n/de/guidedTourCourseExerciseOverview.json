@@ -36,20 +36,10 @@
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
                 "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
-            }
-        },
-        "cloneRepository": {
-            "clone": {
-                "headline": "Repository klonen",
-                "content": "Klicke auf den Button 'Repository klonen' um das Repository für the aktuelle Aufgabe zu klonen."
-            },
-            "useSourceTree": {
-                "headline": "In SourceTree klonen",
-                "content": "Klicke auf den Button 'In SourceTree klonen' um das Repository in SourceTree zu klonen. Als Alternative kannst du auch die angegebene URL kopieren und es in deiner git Anwendung zu verwenden."
             },
             "sourceTreeTutorial": {
                 "headline": "SourceTree Anleitung",
-                "content": "Wenn du mit SourceTree noch nicht vertraut bist, dann werfe doch einen Blick in unser Anleitungsvideo für SourceTree."
+                "content": "Während dein persönliches Repository aufgesetzt wird, kannst einen Blick in unser Anleitungsvideo für SourceTree werfen und lernen, wie man ein Repository klont, wenn du mit SourceTree noch nicht vertraut bist."
             }
         }
     }

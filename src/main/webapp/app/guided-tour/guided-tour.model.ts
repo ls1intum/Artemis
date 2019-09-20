@@ -4,7 +4,7 @@ export interface GuidedTour {
     /** Title of the course for which the tour should be displayed */
     courseTitle: string;
     /** Name of the exercise for which the tour should be displayed */
-    exerciseName: string;
+    exerciseTitle: string;
     /** Identifier for tour */
     settingsKey: string;
     /** Steps fo the tour */

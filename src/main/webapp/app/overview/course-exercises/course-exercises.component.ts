@@ -8,6 +8,8 @@ import * as moment from 'moment';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { sum } from 'lodash';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -54,6 +56,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private route: ActivatedRoute,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -87,6 +90,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.applyFiltersAndOrder();
         });
+
+        this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
     }
 
     ngOnDestroy(): void {

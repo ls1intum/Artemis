@@ -120,7 +120,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public subscribeToResizeEvent() {
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
         });
     }
 
@@ -129,7 +129,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
         });
     }
 
@@ -148,7 +148,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     public scrollToAndSetElement(): void {
-        this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
+        this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
 
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
@@ -180,9 +180,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        return (
-            !this.currentTourStep.highlightSelector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement))
-        );
+        return !this.currentTourStep.highlightSelector || (this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
     }
 
     /**
@@ -379,7 +377,28 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.highlightSelector);
+        if (!this.currentTourStep.targetSelectorToCheckForCourse && !this.currentTourStep.targetSelectorToCheckForExercise) {
+            return document.querySelector(this.currentTourStep.highlightSelector);
+        }
+        if (this.currentTourStep.targetSelectorToCheckForCourse) {
+            return this.getSelectorForCourseOrExercise(this.currentTourStep.targetSelectorToCheckForCourse, this.guidedTourService.currentTour!.courseTitle);
+        }
+        if (this.currentTourStep.targetSelectorToCheckForExercise) {
+            return this.getSelectorForCourseOrExercise(this.currentTourStep.targetSelectorToCheckForExercise, this.guidedTourService.currentTour!.exerciseTitle);
+        }
+        return null;
+    }
+
+    private getSelectorForCourseOrExercise(targetSelector: string, title: string): HTMLElement | null {
+        let parentNode: HTMLElement;
+        const targetNodes = document.querySelectorAll(targetSelector);
+        for (let i = 0; i < targetNodes.length; i++) {
+            if (targetNodes[i].textContent && targetNodes[i].textContent!.includes(title)) {
+                parentNode = targetNodes[i] as HTMLElement;
+                return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
+            }
+        }
+        return null;
     }
 
     public getEventListenerSelector(): HTMLElement | null {
@@ -468,11 +487,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param selectedElement: selected element in DOM
      * @return selected element as DOMRect or null
      */
-    public updateStepLocation(selectedElement: HTMLElement | null): DOMRect | null {
+    public updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            if (this.currentTourStep && this.currentTourStep.userInteractionEvent) {
+            if (this.currentTourStep && this.currentTourStep.userInteractionEvent && !isResizeOrScroll) {
                 const eventListenerElement = this.getEventListenerSelector();
                 if (eventListenerElement) {
                     selectedElement = eventListenerElement;
