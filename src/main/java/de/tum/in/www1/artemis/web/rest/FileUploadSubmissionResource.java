@@ -76,7 +76,7 @@ public class FileUploadSubmissionResource {
     }
 
     /**
-     * POST /file-upload-submissions : Create a new fileUploadSubmission.
+     * POST /file-upload-submissions : Submit file upload exercise with file.
      *
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param exerciseId the id of the exercise of the submission
