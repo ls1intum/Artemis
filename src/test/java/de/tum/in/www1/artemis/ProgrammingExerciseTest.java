@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ProblemStatementUpdate;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -98,6 +99,24 @@ class ProgrammingExerciseTest {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
         updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void updateProblemStatement() throws Exception {
+        String newProblem = "a new problem statement";
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        ProblemStatementUpdate problemStatementUpdate = new ProblemStatementUpdate();
+        problemStatementUpdate.setExerciseId(programmingExerciseId);
+        problemStatementUpdate.setProblemStatement(newProblem);
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody("/api/programming-exercises-problem", problemStatementUpdate, ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+
+        SecurityUtils.setAuthorizationObject();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findById(programmingExerciseId).get();
+        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 
 }

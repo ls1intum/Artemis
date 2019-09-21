@@ -326,7 +326,8 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneProgrammingExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course)
+                .title("programming exercise");
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
