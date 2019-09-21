@@ -75,6 +75,9 @@ public class DatabaseUtilService {
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
+    FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
     SubmissionRepository submissionRepository;
 
     @Autowired
@@ -120,6 +123,7 @@ public class DatabaseUtilService {
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
+        fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
@@ -368,7 +372,7 @@ public class DatabaseUtilService {
 
     public FileUploadExercise createFileUploadExerciseWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         course.addExercises(fileUploadExercise);
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
@@ -500,6 +504,35 @@ public class DatabaseUtilService {
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        Result result = new Result();
+        result.setSubmission(fileUploadSubmission);
+        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setScore(100L);
+        result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission.setResult(result);
+        fileUploadSubmission.getParticipation().addResult(result);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
     }
 
     @Transactional
