@@ -716,11 +716,13 @@ public class ProgrammingExerciseService {
     /**
      * Delete a programming exercise, including its template and solution participations.
      *
-     * @param programmingExercise to delete.
+     * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional
-    public void delete(ProgrammingExercise programmingExercise, boolean deleteBaseReposBuildPlans) {
+    public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
+        // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
+        // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
             if (programmingExercise.getTemplateBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
