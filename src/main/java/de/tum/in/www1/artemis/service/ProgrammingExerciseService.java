@@ -626,6 +626,20 @@ public class ProgrammingExerciseService {
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
+    public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        if (programmingExerciseOpt.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+            throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
+        }
+        programmingExercise.setProblemStatement(problemStatement);
+        return programmingExercise;
+    }
+
     /**
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
