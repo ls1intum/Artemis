@@ -124,6 +124,9 @@ spring:
                 size: 2
     thymeleaf:
         mode: HTML
+    output:
+        ansi:
+            console-available: true
     servlet:
         multipart:
             max-file-size: 10MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
