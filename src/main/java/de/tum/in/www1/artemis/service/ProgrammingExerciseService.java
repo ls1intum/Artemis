@@ -602,19 +602,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method saves the template and solution participations of the programming exercise
-     *
-     * @param programmingExercise The programming exercise for which the participations should get saved
-     */
-    public void saveParticipations(ProgrammingExercise programmingExercise) {
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-    }
-
-    /**
      * Squash all commits of the given repository into one.
      * 
      * @param repoUrl of the repository to squash.

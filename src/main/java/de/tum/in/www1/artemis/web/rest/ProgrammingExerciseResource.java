@@ -161,11 +161,7 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
-        // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
-        // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
@@ -335,9 +331,6 @@ public class ProgrammingExerciseResource {
             programmingExercise.getSolutionParticipation().setProgrammingExercise(programmingExercise);
         }
         programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
-        // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
-
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
