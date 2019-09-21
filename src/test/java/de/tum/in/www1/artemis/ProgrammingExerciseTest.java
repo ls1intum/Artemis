@@ -3,10 +3,13 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -62,9 +65,17 @@ class ProgrammingExerciseTest {
         database.resetDatabase();
     }
 
-    @Test
+    ProgrammingExercise executeUpdateRequest(ProgrammingExercise programmingExercise) throws Exception {
+        return request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+    }
+
+    @ParameterizedTest
+    // Number of requests executed in the test.
+    @ValueSource(ints = { 1, 2, 3, 5 })
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void updateProgrammingExercise() throws Exception {
+    void updateProgrammingExercise(int numberOfUpdates) throws Exception {
+        SecurityUtils.setAuthorizationObject();
+
         String newProblem = "new problem";
         String newTitle = "new Title";
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
@@ -75,18 +86,22 @@ class ProgrammingExerciseTest {
         when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getSolutionBuildPlanId())).thenReturn(true);
         when(versionControlService.repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl())).thenReturn(true);
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise;
+        // We execute varying numbers of updates because we noticed different behaviors on successive requests.
+        for (int i : Collections.nCopies(numberOfUpdates, 0)) {
+            updatedProgrammingExercise = executeUpdateRequest(programmingExercise);
 
-        // The result from the put response should be updated with the new data.
-        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
-        assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
+            // The result from the put response should be updated with the new data.
+            assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+            assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
 
-        SecurityUtils.setAuthorizationObject();
-        // There should still be only 1 programming exercise.
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
-        // The programming exercise in the db should also be updated.
-        ProgrammingExercise fromDb = programmingExerciseRepository.findById(programmingExercise.getId()).get();
-        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
-        assertThat(fromDb.getTitle()).isEqualTo(newTitle);
+            // There should still be only 1 programming exercise.
+            assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+            // The programming exercise in the db should also be updated.
+            ProgrammingExercise fromDb = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+            assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
+            assertThat(fromDb.getTitle()).isEqualTo(newTitle);
+        }
+
     }
 }
