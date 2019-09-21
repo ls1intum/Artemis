@@ -47,7 +47,7 @@ class ProgrammingExerciseScheduleServiceTest {
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 10;
+    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 200;
 
     @BeforeEach
     void init() {
