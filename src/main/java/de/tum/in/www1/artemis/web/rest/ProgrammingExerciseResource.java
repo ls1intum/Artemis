@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -69,6 +70,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final GroupNotificationService groupNotificationService;
@@ -79,8 +82,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
+            StudentParticipationRepository studentParticipationRepository, GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -89,6 +92,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
     }
@@ -164,6 +168,7 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -275,6 +280,7 @@ public class ProgrammingExerciseResource {
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
 
+            programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
             return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -333,6 +339,7 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
         }
