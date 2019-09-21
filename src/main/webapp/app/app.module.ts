@@ -81,6 +81,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
 
 @NgModule({
     imports: [
@@ -124,6 +125,7 @@ import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateS
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,
         ArtemisTextAssessmentModule,
+        ArtemisFileUploadSubmissionModule,
         ArtemisInstructorCourseStatsDashboardModule,
         ArtemisInstructorExerciseStatsDashboardModule,
         ArtemisTutorCourseDashboardModule,
