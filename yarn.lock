@@ -6049,10 +6049,10 @@ gaze@^1.0.0:
   dependencies:
     globule "^1.0.0"
 
-generator-jhipster@6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-6.3.0.tgz#749478d410a16893795c99c5366917f9518759db"
-  integrity sha512-MOz4aly1bXyRQbN5wYJLqAf34qHIqU0yBHJr9Ad6jhf727qt716LJ2CZfW6AWtVjcY1fcSUEnrji53Agf0UeUg==
+generator-jhipster@6.3.1:
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-6.3.1.tgz#c48c7bf4921e7fdf2b622a7eb17776088aaf5b36"
+  integrity sha512-1v3vbk5/C+vrBvEGw2pl4TfgPe2YHhr1T3ROfEjCItgbo9hBWdhcwbAZOLCvaNAc8eYN4DYz+fOoTBnuNnjipw==
   dependencies:
     axios "0.19.0"
     chalk "2.4.2"
@@ -7776,7 +7776,12 @@ isurl@^1.0.0-alpha5:
     has-to-string-tag-x "^1.2.0"
     is-object "^1.0.1"
 
-jasmine-core@3.4.0, jasmine-core@~3.4.0:
+jasmine-core@3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.5.0.tgz#132c23e645af96d85c8bca13c8758b18429fc1e4"
+  integrity sha512-nCeAiw37MIMA9w9IXso7bRaLl+c/ef3wnxsoSAlYrzS+Ot0zTG6nU8G/cIfGkqpkjX2wNaIW9RFG0TwIFnG6bA==
+
+jasmine-core@~3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.4.0.tgz#2a74618e966026530c3518f03e9f845d26473ce3"
   integrity sha512-HU/YxV4i6GcmiH4duATwAbJQMlE0MsDIR5XmSVxURxKHn3aGAdbY1/ZJFmVRbKtnLwIxxMJD7gYaPsypcbYimg==
@@ -14032,10 +14037,10 @@ ts-jest@24.1.0, ts-jest@^24.0.0:
     semver "^5.5"
     yargs-parser "10.x"
 
-ts-loader@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.1.0.tgz#999cb0a7644f9c7c6c0901802dce50ceb0a76e5b"
-  integrity sha512-7JedeOu2rsYHQDEr2fwmMozABwbQTZXEaEMZPSIWG7gpzRefOLJCqwdazcegHtyaxp04PeEgs/b0m08WMpnIzQ==
+ts-loader@6.1.2:
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.1.2.tgz#ff6bc767334970226438949fbde2e211147a1325"
+  integrity sha512-dudxFKm0Ellrg/gLNlu+97/UgwvoMK0SdUVImPUSzq3IcRUVtShylZvcMX+CgvCQL1BEKb913NL0gAP1GA/OFw==
   dependencies:
     chalk "^2.3.0"
     enhanced-resolve "^4.0.0"
