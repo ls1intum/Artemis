@@ -26,16 +26,16 @@
         </span>
     </div>
     <jhi-programming-exercise-trigger-all-button [exerciseId]="exerciseId"></jhi-programming-exercise-trigger-all-button>
-    <button
+    <jhi-button
         id="trigger-failed-button"
-        class="btn btn-primary ml-3"
+        class="ml-3"
         [disabled]="!hasFailedSubmissions"
-        (click)="triggerBuildOfFailedSubmissions()"
-        [ngbTooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip' | translate"
-    >
-        <fa-icon icon="redo" [spin]="isBuildingFailedSubmissions"></fa-icon>
-        <span jhiTranslate="artemisApp.programmingExercise.resubmitFailed">Trigger failed</span>
-    </button>
+        [isLoading]="isBuildingFailedSubmissions"
+        [icon]="'redo'"
+        [title]="'artemisApp.programmingExercise.resubmitFailed'"
+        [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+        (onClick)="triggerBuildOfFailedSubmissions()"
+    ></jhi-button>
 </div>
 <ng-template #loadingState>
     <fa-icon icon="circle-notch" [spin]="true"></fa-icon>

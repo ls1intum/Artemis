@@ -12,7 +12,6 @@ import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { cloneRepositoryTour, courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -34,6 +33,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
     readonly MODELING_EXERCISE = ParticipationStatus.MODELING_EXERCISE;
     readonly TEXT_EXERCISE = ParticipationStatus.TEXT_EXERCISE;
+    readonly FILE_UPLOAD_EXERCISE = ParticipationStatus.FILE_UPLOAD_EXERCISE;
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
@@ -93,10 +93,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
+        } else if (
+            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
+            this.hasParticipations(this.exercise)
+        ) {
             const participation = this.exercise.participations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return this.exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
+                switch (this.exercise.type) {
+                    case ExerciseType.MODELING:
+                        return ParticipationStatus.MODELING_EXERCISE;
+                    case ExerciseType.TEXT:
+                        return ParticipationStatus.TEXT_EXERCISE;
+                    case ExerciseType.FILE_UPLOAD:
+                        return ParticipationStatus.FILE_UPLOAD_EXERCISE;
+                }
             }
         }
 

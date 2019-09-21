@@ -50,7 +50,7 @@ public class AuditEventService {
     public void removeOldAuditEvents() {
         persistenceAuditEventRepository.findByAuditEventDateBefore(Instant.now().minus(jHipsterProperties.getAuditEvents().getRetentionPeriod(), ChronoUnit.DAYS))
                 .forEach(auditEvent -> {
-                    log.debug("Deleting audit data {}", auditEvent.toString());
+                    log.debug("Deleting audit data {}", auditEvent);
                     persistenceAuditEventRepository.delete(auditEvent);
                 });
     }
@@ -64,6 +64,6 @@ public class AuditEventService {
     }
 
     public Optional<AuditEvent> find(Long id) {
-        return Optional.ofNullable(persistenceAuditEventRepository.findById(id)).filter(Optional::isPresent).map(Optional::get).map(auditEventConverter::convertToAuditEvent);
+        return persistenceAuditEventRepository.findById(id).map(auditEventConverter::convertToAuditEvent);
     }
 }

@@ -3,6 +3,7 @@ import { catchError } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonType } from 'app/shared/components';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -10,19 +11,22 @@ import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-programming-exercise-trigger-all-button',
     template: `
-        <button
+        <jhi-button
             id="trigger-all-button"
-            class="btn btn-danger ml-3"
-            [disabled]="disabled || isTriggeringBuildAll"
-            (click)="openTriggerAllModal()"
-            [ngbTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | translate"
+            class="ml-3"
+            [disabled]="disabled"
+            [btnType]="ButtonType.ERROR"
+            [isLoading]="isTriggeringBuildAll"
+            [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
+            [icon]="'redo'"
+            [title]="'artemisApp.programmingExercise.resubmitAll'"
+            (onClick)="openTriggerAllModal()"
         >
-            <fa-icon icon="redo" [spin]="isTriggeringBuildAll"></fa-icon>
-            <span jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</span>
-        </button>
+        </jhi-button>
     `,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent {
+    ButtonType = ButtonType;
     @Input() exerciseId: number;
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();

@@ -43,7 +43,7 @@ jobs:
         language: java
         jdk: openjdk12
         install: skip
-        script: ./gradlew checkstyleMain -x yarn_install -x webpackBuildDev -x webpack
+        script: ./gradlew checkstyleMain -x yarn_install -x webpack
       - stage: Lint
         name: "TypeScript Formatting"
         language: node_js
