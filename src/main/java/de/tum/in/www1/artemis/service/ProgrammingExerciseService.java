@@ -626,6 +626,15 @@ public class ProgrammingExerciseService {
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
+    /**
+     * Updates the problem statement of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise Id.
+     * @param problemStatement markdown of the problem statement.
+     * @return the updated ProgrammingExercise object.
+     * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
+     * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
+     */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
