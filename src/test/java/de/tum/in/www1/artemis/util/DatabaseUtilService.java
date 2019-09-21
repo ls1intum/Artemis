@@ -207,6 +207,7 @@ public class DatabaseUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/template.git");
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
@@ -218,6 +219,7 @@ public class DatabaseUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/solution.git");
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
