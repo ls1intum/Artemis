@@ -67,7 +67,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                log.error("Invoking scheduled task programming exercise with id " + exercise.getId() + ".");
+                log.info("Invoking scheduled task programming exercise with id " + exercise.getId() + ".");
                 programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {
