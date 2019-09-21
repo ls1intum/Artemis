@@ -62,12 +62,7 @@ class ProgrammingExerciseTest {
         database.resetDatabase();
     }
 
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void updateProgrammingExercise() throws Exception {
-        String newProblem = "new problem";
-        String newTitle = "new Title";
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
+    void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
         when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getTemplateBuildPlanId())).thenReturn(true);
@@ -89,4 +84,20 @@ class ProgrammingExerciseTest {
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
         assertThat(fromDb.getTitle()).isEqualTo(newTitle);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExerciseOnce() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExerciseTwice() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+        updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
+    }
+
 }
