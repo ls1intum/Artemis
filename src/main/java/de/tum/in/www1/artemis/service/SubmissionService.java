@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 abstract class SubmissionService {
 
-    private SubmissionRepository submissionRepository;
+    protected SubmissionRepository submissionRepository;
 
     private UserService userService;
 

@@ -752,6 +752,14 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
+     * @return List<ProgrammingExercise>
+     */
+    public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
+        return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    /**
      * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.

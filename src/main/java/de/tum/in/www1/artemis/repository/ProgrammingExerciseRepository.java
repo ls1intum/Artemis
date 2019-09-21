@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,4 +77,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#id}")
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesHintsAndBaseParticipations(Long id);
+
+    /**
+     * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
+     * This can't be done as a standard query as the property contains the word 'And'.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 }

@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -69,11 +71,14 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
+    @Transactional(readOnly = true)
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) throws EntityNotFoundException {
-        Optional<ProgrammingExerciseStudentParticipation> participation;
-        participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
-        if (!participation.isPresent())
+        Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+        if (participation.isEmpty()) {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exerciseId + " and user " + username);
+        }
+        // Make sure the template participation is not a proxy object in this case
+        Hibernate.initialize(participation.get().getProgrammingExercise().getTemplateParticipation());
         return participation.get();
     }
 

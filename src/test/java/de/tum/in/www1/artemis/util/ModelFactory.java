@@ -30,8 +30,11 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
+            Course course) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise = (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
+        fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
@@ -88,6 +91,15 @@ public class ModelFactory {
             textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
         return textSubmission;
+    }
+
+    public static FileUploadSubmission generateFileUploadSubmission(boolean submitted) {
+        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+        fileUploadSubmission.setSubmitted(submitted);
+        if (submitted) {
+            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return fileUploadSubmission;
     }
 
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
