@@ -49,7 +49,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const rowClass = 'datatable-body-row';
     const saveTestCasesButton = '#save-test-cases-button';
     const resetWeightsButton = '#reset-weights-button';
-    const triggerSubmissionRunButton = '#trigger-all-button';
+    const triggerSubmissionRunButton = '#trigger-all-button > button';
 
     const exerciseId = 1;
     const testCases1 = [
