@@ -269,7 +269,7 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
-    commandLine "./gradlew", "test", "-x", "webpackBuildDev", "-x", "webpack"
+    commandLine "./gradlew", "test", "-x", "webpack"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -332,11 +332,11 @@ checkstyle {
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpackBuildDev", "-x", "webpack"
+    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpack"
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webpackBuildDev", "-x", "webpack", "-x", "test"
+    commandLine "./gradlew", "build", "-x", "webpack", "-x", "test"
 }
 
 // Available commands:
