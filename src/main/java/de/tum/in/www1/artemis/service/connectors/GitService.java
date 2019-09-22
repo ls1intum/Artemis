@@ -382,28 +382,32 @@ public class GitService {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream().filter(s -> s.getSubmissionDate().isBefore(exercise.getDueDate()))
                     .sorted(Comparator.comparing(Submission::getSubmissionDate).reversed()).findFirst();
 
+            String commitHash;
+
             if (lastValidSubmission.isPresent()) {
                 log.debug("Last valid submission for participation {} is {}", participation.toString(), lastValidSubmission.get().toString());
                 ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
-                String commitHash = programmingSubmission.getCommitHash();
+                commitHash = programmingSubmission.getCommitHash();
             }
             else {
-
+                log.debug("Last valid submission is not present for participation {}", participation.toString());
+                // Get last commit before deadline
+                Date since = Date.from(Instant.EPOCH);
+                Date until = Date.from(exercise.getDueDate().toInstant());
+                RevFilter between = CommitTimeRevFilter.between(since, until);
+                Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
+                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
+                commitHash = latestCommitBeforeDeadline.getId().getName();
             }
+            log.debug("Last commit hash is {} for participation {}", commitHash, participation);
             // TODO: get the latest submission before the due date from the database for the user behind the repository
             // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
 
             // TODO: in case the above TASKS do not work, use the below code as fallback
-            // Get last commit before deadline
-            Date since = Date.from(Instant.EPOCH);
-            Date until = Date.from(exercise.getDueDate().toInstant());
-            RevFilter between = CommitTimeRevFilter.between(since, until);
-            Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-            RevCommit latestCommitBeforeDeadline = commits.iterator().next();
 
             git.close();
 
-            reset(repository, latestCommitBeforeDeadline.getId().getName());
+            reset(repository, commitHash);
 
         }
         catch (GitAPIException ex) {
