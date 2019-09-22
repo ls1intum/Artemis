@@ -116,7 +116,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
     /**
      * Get the confidence of the last compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
      *
-     * @return The confidence of the last compass result
+     * @return The confidence of the last compass result, -1 if no compass result is available
      */
     public double getLastAssessmentConfidence() {
         if (isUnassessed()) {
@@ -129,7 +129,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
     /**
      * Get the coverage for the last assessed compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
      *
-     * @return The coverage of the last compass results
+     * @return The coverage of the last compass result, -1 if no compass result is available
      */
     public double getLastAssessmentCoverage() {
         if (isUnassessed()) {

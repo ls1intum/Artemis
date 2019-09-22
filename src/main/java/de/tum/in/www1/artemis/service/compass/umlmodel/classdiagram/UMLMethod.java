@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+import java.util.Collections;
 import java.util.List;
 
 public class UMLMethod extends UMLElement {
@@ -30,34 +31,51 @@ public class UMLMethod extends UMLElement {
     }
 
     /**
-     * Set the parent class of this attribute, i.e. the UML class that contains it.
+     * Set the parent class of this method, i.e. the UML class that contains it.
      *
-     * @param parentClass the UML class that contains this attribute
+     * @param parentClass the UML class that contains this method
      */
     public void setParentClass(UMLClass parentClass) {
         this.parentClass = parentClass;
+    }
+
+    /**
+     * Get the return type of this method.
+     *
+     * @return the return type of this method as String
+     */
+    String getReturnType() {
+        return returnType;
+    }
+
+    /**
+     * Get the parameter list of this method.
+     *
+     * @return the list of parameters (as Strings) of this method
+     */
+    List<String> getParameters() {
+        return parameters;
     }
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference == null || reference.getClass() != UMLMethod.class) {
+        if (!(reference instanceof UMLMethod)) {
             return similarity;
         }
 
         UMLMethod referenceMethod = (UMLMethod) reference;
 
         int elementCount = parameters.size() + 2;
-
         double weight = 1.0 / elementCount;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(name, referenceMethod.name) * weight;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceMethod.getName()) * weight;
+        similarity += NameSimilarity.nameEqualsSimilarity(returnType, referenceMethod.getReturnType()) * weight;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(returnType, referenceMethod.returnType) * weight;
-
-        for (String oParameter : referenceMethod.parameters) {
-            if (parameters.contains(oParameter)) {
+        List<String> referenceParameters = referenceMethod.getParameters() != null ? referenceMethod.getParameters() : Collections.emptyList();
+        for (String referenceParameter : referenceParameters) {
+            if (parameters.contains(referenceParameter)) {
                 similarity += weight;
             }
         }

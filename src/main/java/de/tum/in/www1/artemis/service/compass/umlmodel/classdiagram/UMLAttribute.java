@@ -31,19 +31,28 @@ public class UMLAttribute extends UMLElement {
         this.parentClass = parentClass;
     }
 
+    /**
+     * Get the type of this attribute.
+     *
+     * @return the attribute type as String
+     */
+    String getAttributeType() {
+        return attributeType;
+    }
+
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference == null || reference.getClass() != UMLAttribute.class) {
+        if (!(reference instanceof UMLAttribute)) {
             return similarity;
         }
 
         UMLAttribute referenceAttribute = (UMLAttribute) reference;
 
-        similarity += NameSimilarity.namePartiallyEqualsSimilarity(name, referenceAttribute.name) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceAttribute.getName()) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.attributeType) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
+        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.getAttributeType()) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
         return ensureSimilarityRange(similarity);
     }

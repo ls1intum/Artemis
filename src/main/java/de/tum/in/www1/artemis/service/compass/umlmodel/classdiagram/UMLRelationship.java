@@ -5,6 +5,11 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import static de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity.nameEqualsSimilarity;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
 public class UMLRelationship extends UMLElement {
 
     public enum UMLRelationshipType {
@@ -66,7 +71,7 @@ public class UMLRelationship extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (reference == null || reference.getClass() != UMLRelationship.class) {
+        if (!(reference instanceof UMLRelationship)) {
             return 0;
         }
 
@@ -75,53 +80,37 @@ public class UMLRelationship extends UMLElement {
         double similarity = 0;
         double weight = 1;
 
-        similarity += referenceRelationship.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += referenceRelationship.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceRelationship.getSource().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceRelationship.getTarget().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        if (!referenceRelationship.sourceRole.isEmpty() || !this.sourceRole.isEmpty()) {
-            if (referenceRelationship.sourceRole.equals(this.sourceRole)) {
-                similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-            }
-            weight += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+        if (isNotEmpty(referenceRelationship.sourceRole) || isNotEmpty(sourceRole)) {
+            similarity += nameEqualsSimilarity(referenceRelationship.sourceRole, sourceRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
+            weight += RELATION_ROLE_OPTIONAL_WEIGHT;
         }
-        if (!referenceRelationship.targetRole.isEmpty() || !this.targetRole.isEmpty()) {
-            if (referenceRelationship.targetRole.equals(this.targetRole)) {
-                similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-            }
-            weight += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+        if (isNotEmpty(referenceRelationship.targetRole) || isNotEmpty(targetRole)) {
+            similarity += nameEqualsSimilarity(referenceRelationship.targetRole, targetRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
+            weight += RELATION_ROLE_OPTIONAL_WEIGHT;
         }
-        if (!referenceRelationship.sourceMultiplicity.isEmpty() || !this.sourceMultiplicity.isEmpty()) {
-            if (referenceRelationship.sourceMultiplicity.equals(this.sourceMultiplicity)) {
-                similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            }
-            weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+        if (isNotEmpty(referenceRelationship.sourceMultiplicity) || isNotEmpty(sourceMultiplicity)) {
+            similarity += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            weight += RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
-        if (!referenceRelationship.targetMultiplicity.isEmpty() || !this.targetMultiplicity.isEmpty()) {
-            if (referenceRelationship.targetMultiplicity.equals(this.targetMultiplicity)) {
-                similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            }
-            weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+        if (isNotEmpty(referenceRelationship.targetMultiplicity) || isNotEmpty(targetMultiplicity)) {
+            similarity += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            weight += RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
 
         // bidirectional associations can be swapped
         if (type == UMLRelationshipType.CLASS_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
-            if (referenceRelationship.targetRole.equals(this.sourceRole)) {
-                similarityReverse += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-            }
-            if (referenceRelationship.sourceRole.equals(this.targetRole)) {
-                similarityReverse += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-            }
-            if (referenceRelationship.targetMultiplicity.equals(this.sourceMultiplicity)) {
-                similarityReverse += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            }
-            if (referenceRelationship.sourceMultiplicity.equals(this.targetMultiplicity)) {
-                similarityReverse += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-            }
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetRole, sourceRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceRole, targetRole) * RELATION_ROLE_OPTIONAL_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.targetMultiplicity, sourceMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            similarityReverse += nameEqualsSimilarity(referenceRelationship.sourceMultiplicity, targetMultiplicity) * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
 
-            similarityReverse += referenceRelationship.source.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-            similarityReverse += referenceRelationship.target.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+            similarityReverse += referenceRelationship.getSource().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+            similarityReverse += referenceRelationship.getTarget().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
             similarity = Math.max(similarity, similarityReverse);
         }

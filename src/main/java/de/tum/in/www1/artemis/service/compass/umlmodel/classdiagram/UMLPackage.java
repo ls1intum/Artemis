@@ -36,9 +36,9 @@ public class UMLPackage extends UMLElement{
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference == null || reference.getClass() == UMLPackage.class) {
+        if (reference instanceof UMLPackage) {
             UMLPackage referencePackage = (UMLPackage) reference;
-            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.name);
+            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
         }
 
         return ensureSimilarityRange(similarity);

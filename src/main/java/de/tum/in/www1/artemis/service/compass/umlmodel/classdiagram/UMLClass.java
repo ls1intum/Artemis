@@ -60,14 +60,14 @@ public class UMLClass extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference == null || reference.getClass() != UMLClass.class) {
+        if (!(reference instanceof UMLClass)) {
             return similarity;
         }
         UMLClass referenceClass = (UMLClass) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceClass.name) * CompassConfiguration.CLASS_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceClass.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
         // TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
-        if (this.type == referenceClass.type) {
+        if (type == referenceClass.type) {
             similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
         }
 
@@ -82,19 +82,25 @@ public class UMLClass extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (reference == null || reference.getClass() != UMLClass.class) {
+        if (!(reference instanceof UMLClass)) {
             return 0;
+        }
+
+        UMLClass referenceClass = (UMLClass) reference;
+
+        // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this class always has less or equally many elements than the reference class.
+        if (getElementCount() > referenceClass.getElementCount()) {
+            return referenceClass.overallSimilarity(this);
         }
 
         double similarity = 0;
 
-        UMLClass referenceClass = (UMLClass) reference;
-
-        // For calculating the weight of the similarity of every element, we consider the max. element count of both classes to reflect missing elements on either side in the total
-        // similarity score. E.g. if we compare two classes, classA with one attribute and classB with two attributes, the highest possible similarity between these classes should
-        // be 2/3 (name/type + one attribute can be similar), so the weight should be 1/3, no matter if we do classA.overallSimilarity(classB) or classB.overallSimilarity(classA).
-        int maxElementCount = Math.max(attributes.size() + methods.size(), referenceClass.getAttributes().size() + referenceClass.getMethods().size()) + 1;
-        double weight = 1.0 / maxElementCount;
+        // For calculating the weight of the similarity of every element, we consider the max. element count to reflect missing elements, i.e. it should not be possible to get a
+        // similarity of 1 if the amount of elements differs. E.g. if we compare two classes, classA with one attribute and classB with two attributes, the highest possible
+        // similarity between these classes should be 2/3 (name/type + one attribute can be similar), so the weight should be 1/3, no matter if we do
+        // classA.overallSimilarity(classB) or classB.overallSimilarity(classA). As we know that the reference class has at least as many elements as this class, we take the
+        // element count of the reference.
+        double weight = 1.0 / referenceClass.getElementCount();
 
         // check similarity of class name and type
         similarity += weight * similarity(referenceClass);
@@ -170,7 +176,7 @@ public class UMLClass extends UMLElement {
      * @return the UML element if one could be found for the given id, null otherwise
      */
     UMLElement getElementByJSONID(String jsonElementId) {
-        if (this.getJSONElementID().equals(jsonElementId)) {
+        if (getJSONElementID().equals(jsonElementId)) {
             return this;
         }
 
