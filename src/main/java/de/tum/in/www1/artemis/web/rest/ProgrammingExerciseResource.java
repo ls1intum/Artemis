@@ -166,12 +166,12 @@ public class ProgrammingExerciseResource {
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
 
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-        return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.created(new URI("/api/programming-exercises/" + savedProgrammingExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedProgrammingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
     /**
@@ -206,8 +206,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        // make sure that we use the values from the database and not the once which might have been
-        // altered in the client
+        // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
 
         // Check if exercise title is set
@@ -280,6 +279,7 @@ public class ProgrammingExerciseResource {
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
 
+            // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
             programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
             return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
@@ -325,25 +325,15 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
-        // When updating the participations, we need to make sure that the exercise is attached to each of them.
-        // Otherwise we would remove the link between participation and exercise.
-        if (programmingExercise.getTemplateParticipation() != null) {
-            programmingExercise.getTemplateParticipation().setProgrammingExercise(programmingExercise);
-        }
-        if (programmingExercise.getSolutionParticipation() != null) {
-            programmingExercise.getSolutionParticipation().setProgrammingExercise(programmingExercise);
-        }
-        programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
         // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
+        // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
     /**

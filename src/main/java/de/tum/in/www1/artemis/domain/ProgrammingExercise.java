@@ -54,14 +54,12 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
-    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
     private TemplateProgrammingExerciseParticipation templateParticipation;
 
-    // @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "solution_participation_id")
     @JsonIgnoreProperties("programmingExercise")
     private SolutionProgrammingExerciseParticipation solutionParticipation;
