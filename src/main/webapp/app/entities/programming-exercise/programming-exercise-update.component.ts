@@ -94,9 +94,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             (res: HttpErrorResponse) => this.onError(res),
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
-        if (this.programmingExercise.id === undefined) {
-            this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
-        } else {
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
+        if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
     }
