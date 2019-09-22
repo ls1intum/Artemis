@@ -74,6 +74,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
                     }),
                 )
                 .subscribe(
@@ -86,7 +87,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
-        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
     }
 
     ngOnDestroy() {

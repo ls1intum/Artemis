@@ -242,41 +242,57 @@ export class GuidedTourService {
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
-        if (nextStep && userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (nextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector);
-            } else {
-                GuidedTourService.enableNextStepClick();
+        switch (userInteraction) {
+            case UserInteractionEvent.WAIT_FOR_SELECTOR: {
+                if (nextStep && nextStep.highlightSelector) {
+                    this.waitForElement(nextStep.highlightSelector);
+                } else {
+                    GuidedTourService.enableNextStepClick();
+                }
+                break;
             }
-        } else {
-            switch (userInteraction) {
-                case UserInteractionEvent.CLICK: {
-                    from(this.observeDomMutations(targetNode))
-                        .pipe(take(1))
-                        .subscribe(mutation => {
-                            this.nextStep();
-                        });
-                    break;
-                }
-                case UserInteractionEvent.ACE_EDITOR: {
-                    from(this.observeDomMutations(targetNode)).subscribe((mutations: MutationRecord[]) => {
-                        mutations.forEach(mutation => {
-                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                GuidedTourService.enableNextStepClick();
-                            }
-                        });
+            case UserInteractionEvent.CLICK: {
+                from(this.observeDomMutations(targetNode, userInteraction))
+                    .pipe(take(1))
+                    .subscribe(() => {
+                        this.nextStep();
                     });
-                    break;
-                }
+                break;
+            }
+            case UserInteractionEvent.ACE_EDITOR: {
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
+                        GuidedTourService.enableNextStepClick();
+                    });
+                });
+                break;
             }
         }
     }
 
-    public observeDomMutations(targetNode: HTMLElement) {
+    public observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
         return new Promise(resolve => {
             const observer = new MutationObserver(mutations => {
-                observer.disconnect();
-                resolve(mutations);
+                switch (userInteraction) {
+                    case UserInteractionEvent.CLICK: {
+                        observer.disconnect();
+                        resolve(mutations);
+                        break;
+                    }
+                    case UserInteractionEvent.ACE_EDITOR: {
+                        mutations.forEach(mutation => {
+                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                                observer.disconnect();
+                                resolve(mutations);
+                            }
+                        });
+                        break;
+                    }
+                    default: {
+                        observer.disconnect();
+                        resolve(mutations);
+                    }
+                }
             });
             observer.observe(targetNode, {
                 attributes: true,
@@ -495,9 +511,9 @@ export class GuidedTourService {
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
          */
         setTimeout(() => {
+            // if (!this.checkTourStateFinished(guidedTour)) {
             this.currentTour = cloneDeep(guidedTour);
             this.guidedTourAvailability.next(true);
-            // if (!this.checkTourStateFinished(guidedTour)) {
             this.startTour();
             // }
         }, 1000);
