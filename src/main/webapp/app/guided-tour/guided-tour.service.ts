@@ -317,7 +317,6 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-
         // Filter tour steps according to permissions
         this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
         this.currentTourStepIndex = 0;
@@ -498,9 +497,9 @@ export class GuidedTourService {
         setTimeout(() => {
             this.currentTour = cloneDeep(guidedTour);
             this.guidedTourAvailability.next(true);
-            if (this.checkTourStateFinished(guidedTour)) {
-                this.startTour();
-            }
+            // if (!this.checkTourStateFinished(guidedTour)) {
+            this.startTour();
+            // }
         }, 1000);
     }
 
@@ -533,7 +532,7 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExerciseOverview(exercise: Exercise, guidedTour: GuidedTour) {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
         if (guidedTour.exerciseTitle === '' || exercise.title === guidedTour.exerciseTitle) {
             this.enableTour(guidedTour);
         }

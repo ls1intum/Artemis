@@ -395,7 +395,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         for (let i = 0; i < targetNodes.length; i++) {
             if (targetNodes[i].textContent && targetNodes[i].textContent!.includes(title)) {
                 parentNode = targetNodes[i] as HTMLElement;
-                return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
+                // Check if parent node is the same node as the highlightSelector element
+                if (parentNode.className.includes(this.currentTourStep.highlightSelector.replace('.', ''))) {
+                    return parentNode;
+                } else {
+                    return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
+                }
             }
         }
         return null;

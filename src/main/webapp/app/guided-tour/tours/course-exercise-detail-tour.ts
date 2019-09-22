@@ -3,10 +3,10 @@ import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
-export const courseExerciseDetailTour: GuidedTour = {
+export const programmingExerciseDetailTour: GuidedTour = {
     courseTitle: 'Einführung in die Softwaretechnik',
     exerciseTitle: 'Programming Exercise',
-    settingsKey: 'programming_course_exercise_detail_tour',
+    settingsKey: 'programming_exercise_detail_tour',
     steps: [
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .success',

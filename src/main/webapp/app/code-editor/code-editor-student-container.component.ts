@@ -86,7 +86,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
-        this.guidedTourService.enableTour(codeEditorTour);
+        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
     }
 
     ngOnDestroy() {

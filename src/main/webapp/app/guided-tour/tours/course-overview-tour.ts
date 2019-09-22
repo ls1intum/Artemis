@@ -67,13 +67,14 @@ export const courseOverviewTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.card',
+            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
             headlineTranslateKey: 'tour.course-overview.course.headline',
             contentTranslateKey: 'tour.course-overview.course.content',
             orientation: Orientation.RIGHT,
-            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
         }),
         new TextTourStep({
             highlightSelector: '.card-footer',
+            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
             headlineTranslateKey: 'tour.course-overview.course-footer.headline',
             contentTranslateKey: 'tour.course-overview.course-footer.content',
             orientation: Orientation.RIGHT,
