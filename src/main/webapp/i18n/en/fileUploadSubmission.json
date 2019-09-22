@@ -15,7 +15,17 @@
             "detail": {
                 "title": "File Upload Submission"
             },
-            "filePath": "File Path"
+            "filePath": "File Path",
+            "feedbackResult": "You received {{ credits }} credits for {{ part }} part",
+            "feedbackResultDetail": "with following feedback: {{ detailText }}",
+            "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
+            "file": "File",
+            "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 2 MB",
+            "fileExtensionError": "Incorrect file extension. Please upload a file with one of the allowed file extensions listed below.",
+            "fileUploadError": "Your submission for file {{ fileName }} failed!",
+            "submitted": "Submitted",
+            "submittedFile": "File {{ filename }} was submitted as a solution for exercise",
+            "download": "Download file"
         }
     }
 }
