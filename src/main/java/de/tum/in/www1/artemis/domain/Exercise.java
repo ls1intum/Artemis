@@ -100,7 +100,7 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<StudentParticipation> participations = new HashSet<>();
+    private Set<StudentParticipation> studentParticipations = new HashSet<>();
 
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -298,29 +298,29 @@ public abstract class Exercise implements Serializable {
         this.categories = categories;
     }
 
-    public Set<StudentParticipation> getParticipations() {
-        return participations;
+    public Set<StudentParticipation> getStudentParticipations() {
+        return studentParticipations;
     }
 
     public Exercise participations(Set<StudentParticipation> participations) {
-        this.participations = participations;
+        this.studentParticipations = participations;
         return this;
     }
 
     public Exercise addParticipation(StudentParticipation participation) {
-        this.participations.add(participation);
+        this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
     }
 
     public Exercise removeParticipation(StudentParticipation participation) {
-        this.participations.remove(participation);
+        this.studentParticipations.remove(participation);
         participation.setExercise(null);
         return this;
     }
 
-    public void setParticipations(Set<StudentParticipation> participations) {
-        this.participations = participations;
+    public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
     }
 
     public Course getCourse() {
@@ -593,7 +593,7 @@ public abstract class Exercise implements Serializable {
             participation.setExercise(null);
 
             // add participation into an array
-            setParticipations(Sets.newHashSet(participation));
+            setStudentParticipations(Sets.newHashSet(participation));
         }
     }
 

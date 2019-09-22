@@ -34,7 +34,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T09:47:12+02:00'),
             assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
             maxScore: 12.0,
-            participations: [
+            studentParticipations: [
                 {
                     id: 248,
                     initializationState: 'FINISHED',
@@ -61,7 +61,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-17T17:50:08+02:00'),
             assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
             maxScore: 12.0,
-            participations: [
+            studentParticipations: [
                 {
                     id: 249,
                     initializationState: 'FINISHED',
@@ -87,7 +87,7 @@ describe('CourseStatisticsComponent', () => {
             title: 'test 18.06. 1',
             dueDate: moment('2019-06-18T07:56:41+02:00'),
             maxScore: 12.0,
-            participations: [],
+            studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfParticipations: 0,
             numberOfAssessments: 0,
@@ -100,7 +100,7 @@ describe('CourseStatisticsComponent', () => {
             dueDate: moment('2019-06-16T18:15:03+02:00'),
             assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
             maxScore: 12.0,
-            participations: [
+            studentParticipations: [
                 {
                     id: 246,
                     initializationState: 'FINISHED',

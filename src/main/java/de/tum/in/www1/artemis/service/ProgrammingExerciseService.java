@@ -122,14 +122,15 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
-        if (!exerciseOpt.isPresent())
+        if (exerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
+        }
         ProgrammingExercise programmingExercise = exerciseOpt.get();
         // All student repository builds and the builds of the template & solution repository must be triggered now!
         Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
         participations.add(programmingExercise.getSolutionParticipation());
         participations.add(programmingExercise.getTemplateParticipation());
-        participations.addAll(programmingExercise.getParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
+        participations.addAll(programmingExercise.getStudentParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
 
         List<ProgrammingSubmission> submissions = new ArrayList<>();
 

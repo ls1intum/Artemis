@@ -83,12 +83,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
+            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
+            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(this.exercise.participations[0])) {
+                if (!this.hasResults(this.exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
@@ -97,7 +97,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
             this.hasParticipations(this.exercise)
         ) {
-            const participation = this.exercise.participations[0];
+            const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
                 switch (this.exercise.type) {
                     case ExerciseType.MODELING:
@@ -112,14 +112,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
         if (!this.hasParticipations(this.exercise)) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
     }
 
     hasParticipations(exercise: Exercise): boolean {
-        return exercise.participations && exercise.participations.length > 0;
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {
@@ -168,7 +168,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.participations = [participation];
+                        this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -195,7 +195,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.participations = [participation];
+                        this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                 },
