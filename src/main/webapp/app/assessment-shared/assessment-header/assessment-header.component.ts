@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result';
 
 /**
- * The <jhi-assessment-header> component is shared between the modeling and text assessment interfaces.
+ * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
  * This guarantees a unified look and feel for both interfaces.
- * Depending Components need to perform actions based on the save/submit/cancel/resolveConflict/nextSubmission/goBack outputs.
+ * Depending Components need to perform actions based on the save/submit/cancel/resolveConflict/nextSubmission/navigateBack outputs.
  */
 @Component({
     selector: 'jhi-assessment-header',
@@ -13,8 +13,8 @@ import { Result } from 'app/entities/result';
     styleUrls: ['./assessment-header.component.scss'],
 })
 export class AssessmentHeaderComponent {
-    @Input() hideBackButton: boolean;
-    @Output() goBack = new EventEmitter<void>();
+    @Input() showBackButton = true;
+    @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
     @Input() busy: boolean;
