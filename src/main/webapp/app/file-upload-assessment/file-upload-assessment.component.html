@@ -15,4 +15,74 @@
     (nextSubmission)="assessNextOptimal()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
+    <div *ngIf="notFound" class="alert alert-warning text-center mt-4" role="alert">
+        <p>{{ 'artemisApp.fileUploadAssessment.notFound' | translate }}</p>
+    </div>
+
+    <div class="row justify-content-end mt-4">
+        <div class="col text-right">
+            <span *ngIf="result && participation && showResult"><jhi-updating-result [participation]="participation"></jhi-updating-result></span>
+            <h6 *ngIf="result && result.assessor" style="color:red">
+                {{ 'artemisApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
+                <span>- {{ 'artemisApp.textAssessment.submissionLocked' | translate }}</span>
+            </h6>
+        </div>
+    </div>
+
+    <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
+        <div class="row flex-nowrap col-12">
+            <div class="card flex-grow-1 mr-4">
+                <div class="card-header text-white bg-primary" jhiTranslate="artemisApp.textAssessment.studentSubmission">
+                    Student submission
+                </div>
+                <div class="card-body">
+                    <div *ngIf="submission.filePath" class="card-text">
+                        <a [href]="submission.filePath!" target="_blank">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                        <span class="ml-1 badge badge-info">
+                            {{ attachmentExtension(submission.filePath!) | uppercase }}
+                        </span>
+                    </div>
+                    <button class="btn btn-success" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+                </div>
+            </div>
+
+            <jhi-resizable-instructions
+                class="resizable-submission card"
+                id="instructions"
+                [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
+                [formattedProblemStatement]="formattedProblemStatement"
+                [formattedGradingInstructions]="formattedGradingInstructions"
+                [formattedSampleSolution]="formattedSampleSolution"
+                [toggleCollapse]="toggleCollapse.bind(this)"
+            >
+                <div resizingbar class="resizing-bar"><span></span></div>
+            </jhi-resizable-instructions>
+        </div>
+    </div>
+
+    <ng-container *ngIf="!busy && !notFound">
+        <div class="row mt-3">
+            <h4 class="col-12" jhiTranslate="artemisApp.textAssessment.detail.feedback">Feedback</h4>
+            <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+            <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+                <div class="alert alert-secondary text-center" role="alert">
+                    <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
+                </div>
+            </div>
+            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
+                <jhi-file-upload-assessment-detail
+                    [index]="i + 1"
+                    [(assessment)]="referencedFeedback[i]"
+                    (assessmentChange)="updateAssessment(assessment, i + 1)"
+                    (deleteAssessment)="deleteAssessment($event)"
+                ></jhi-file-upload-assessment-detail>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
+            <div class="col-12 col-lg-8 col-xl-6">
+                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
+            </div>
+        </div>
+    </ng-container>
 </jhi-assessment-layout>

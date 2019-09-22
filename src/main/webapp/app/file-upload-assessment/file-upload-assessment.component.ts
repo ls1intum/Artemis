@@ -255,10 +255,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     onSaveAssessment() {
-        // if (!this.fileUploadAssessmentsService.isFeedbackTextValid(this.feedback)) {
-        //     this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
-        //    return;
-        //  }
         this.fileUploadAssessmentsService.saveAssessment(this.assessments, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
