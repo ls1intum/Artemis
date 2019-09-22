@@ -178,7 +178,7 @@ class UMLClassTest {
     void getElementByJSONID_noElementFound() {
         UMLElement element = umlClass.getElementByJSONID("nonExistingId");
 
-        assertThat(element).isEqualTo(null);
+        assertThat(element).isNull();
     }
 
     @Test

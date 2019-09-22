@@ -38,7 +38,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      */
     @Override
     public double similarity(Similarity<UMLDiagram> reference) {
-        if (reference == null || reference.getClass() != this.getClass()) {
+        if (reference == null || !reference.getClass().isInstance(this)) {
             return 0;
         }
 
