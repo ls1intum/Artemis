@@ -586,7 +586,7 @@ public class DatabaseUtilService {
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+            result = modelingAssessmentService.submitManualAssessment(submission.getId(), exercise, submission.getSubmissionDate());
         }
         return result;
     }
