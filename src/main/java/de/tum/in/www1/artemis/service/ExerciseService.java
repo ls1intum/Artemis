@@ -328,11 +328,16 @@ public class ExerciseService {
      * Get participations of coding exercises of all students packed together in one zip file.
      *
      * @param exerciseId the id of the exercise entity
+     * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param addStudentName whether the student name should be added to the project
+     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
+     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportParticipationsAllStudents(Long exerciseId) {
-        return exportParticipationsHelper(exerciseId, null, true);
+    public java.io.File exportParticipationsAllStudents(Long exerciseId, boolean filterLateSubmissions, boolean addStudentName, boolean squashAfterInstructor,
+            boolean normalizeCodeStyle) {
+        return exportParticipationsHelper(exerciseId, null, true, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
     }
 
     /**
@@ -340,14 +345,20 @@ public class ExerciseService {
      *
      * @param exerciseId the id of the exercise entity
      * @param studentIds TUM Student-Login ID of requested students
+     * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param addStudentName whether the student name should be added to the project
+     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
+     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds) {
-        return exportParticipationsHelper(exerciseId, studentIds, false);
+    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, boolean addStudentName, boolean squashAfterInstructor,
+            boolean normalizeCodeStyle) {
+        return exportParticipationsHelper(exerciseId, studentIds, false, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
     }
 
-    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents) {
+    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions, boolean addStudentName,
+            boolean squashAfterInstructor, boolean normalizeCodeStyle) {
         Exercise exercise = findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;
@@ -368,12 +379,23 @@ public class ExerciseService {
 
                 Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
-                gitService.get().filterLateSubmissions(repo, studentParticipation);
-                programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
-                gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
-                fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
-                fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
-                // TODO: unify encoding (UTF8) and line endings (unix)
+                if (filterLateSubmissions) {
+                    log.debug("Filter late submissions for participation {}", participation.toString());
+                    gitService.get().filterLateSubmissions(repo, studentParticipation);
+                }
+                if (addStudentName) {
+                    log.debug("Adding student name to participation {}", participation.toString());
+                    programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
+                }
+                if (squashAfterInstructor) {
+                    log.debug("Squashing commits for participation {}", participation.toString());
+                    gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
+                }
+                if (normalizeCodeStyle) {
+                    log.debug("Normalizing code style for participation {}", participation.toString());
+                    fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
+                    fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
+                }
 
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);

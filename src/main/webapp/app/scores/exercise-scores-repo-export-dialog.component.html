@@ -9,6 +9,22 @@
         <div class="checkbox">
             <label class="control-label text-danger"> <input type="checkbox" name="allStudents" [(ngModel)]="allStudents" />Download the repositories of all students</label>
         </div>
+        <div class="checkbox">
+            <label class="control-label text-danger"> <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="filterLateSubmissions" />Filter late submissions</label>
+        </div>
+        <div class="checkbox">
+            <label class="control-label text-danger"> <input type="checkbox" name="addStudentName" [(ngModel)]="addStudentName" />Add student names</label>
+        </div>
+        <div class="checkbox">
+            <label class="control-label text-danger">
+                <input type="checkbox" name="squashAfterInstructor" [(ngModel)]="squashAfterInstructor" />Squash all changes after instructor into one commit</label
+            >
+        </div>
+        <div class="checkbox">
+            <label class="control-label text-danger">
+                <input type="checkbox" name="normalizeCodeStyle" [(ngModel)]="normalizeCodeStyle" />Normalize code style (line endings, encoding)</label
+            >
+        </div>
         <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required [disabled]="allStudents"></textarea>
         <p>(This action can take several minutes depending on number and size of repositories.)</p>
     </div>

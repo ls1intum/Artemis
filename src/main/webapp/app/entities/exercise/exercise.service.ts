@@ -55,8 +55,22 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(exerciseId: number, students: string[], allStudents: boolean): Observable<HttpResponse<Blob>> {
-        const params = new HttpParams().set('allStudents', allStudents.toString());
+    exportRepos(
+        exerciseId: number,
+        students: string[],
+        allStudents: boolean,
+        filterLateSubmissions: boolean,
+        addStudentName: boolean,
+        squashAfterInstructor: boolean,
+        normalizeCodeStyle: boolean,
+    ): Observable<HttpResponse<Blob>> {
+        const params = new HttpParams()
+            .set('allStudents', allStudents.toString())
+            .set('filterLateSubmissions', filterLateSubmissions.toString())
+            .set('addStudentName', addStudentName.toString())
+            .set('squashAfterInstructor', squashAfterInstructor.toString())
+            .set('normalizeCodeStyle', normalizeCodeStyle.toString());
+
         return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
             params,
             observe: 'response',

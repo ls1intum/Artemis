@@ -312,13 +312,19 @@ public class ExerciseResource {
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
-     * @param allStudents wether the repositories of all students should be downloaded
+     * @param allStudents whether the repositories of all students should be downloaded
+     * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param addStudentName whether the student name should be added to the project
+     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
+     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zipped
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds, @RequestParam boolean allStudents) throws IOException {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds, @RequestParam boolean allStudents,
+            @RequestParam boolean filterLateSubmissions, @RequestParam boolean addStudentName, @RequestParam boolean squashAfterInstructor,
+            @RequestParam boolean normalizeCodeStyle) throws IOException {
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         // TODO: allow multiple options:
@@ -330,7 +336,7 @@ public class ExerciseResource {
 
         File zipFile;
         if (allStudents) {
-            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId);
+            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
         }
         else {
             studentIds = studentIds.replaceAll(" ", "");
@@ -340,7 +346,7 @@ public class ExerciseResource {
                         .build();
             }
 
-            zipFile = exerciseService.exportParticipations(exerciseId, studentList);
+            zipFile = exerciseService.exportParticipations(exerciseId, studentList, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
         }
         if (zipFile == null) {
             return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
