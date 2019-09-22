@@ -21,7 +21,7 @@ public abstract class UMLActivityElement extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (reference == null || reference.getClass() != UMLActivityElement.class) {
+        if (!(reference instanceof UMLActivityElement)) {
             return 0;
         }
 

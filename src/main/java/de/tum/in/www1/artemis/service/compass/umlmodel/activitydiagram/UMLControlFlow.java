@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLControlFlow extends UMLElement {
 
@@ -23,16 +22,17 @@ public class UMLControlFlow extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (reference == null || reference.getClass() != UMLControlFlow.class) {
+        if (!(reference instanceof UMLControlFlow)) {
             return 0;
         }
 
         UMLControlFlow referenceControlFlow = (UMLControlFlow) reference;
 
         double similarity = 0;
+        double weight = 0.5;
 
-        similarity += referenceControlFlow.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += referenceControlFlow.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceControlFlow.getSource().similarity(source) * weight;
+        similarity += referenceControlFlow.getTarget().similarity(target) * weight;
 
         return ensureSimilarityRange(similarity);
     }
