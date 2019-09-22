@@ -82,6 +82,7 @@ import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/p
 import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
+import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/file-upload-assessment.module';
 
 @NgModule({
     imports: [
@@ -126,6 +127,7 @@ import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/fi
         ArtemisTextModule,
         ArtemisTextAssessmentModule,
         ArtemisFileUploadSubmissionModule,
+        ArtemisFileUploadAssessmentModule,
         ArtemisInstructorCourseStatsDashboardModule,
         ArtemisInstructorExerciseStatsDashboardModule,
         ArtemisTutorCourseDashboardModule,

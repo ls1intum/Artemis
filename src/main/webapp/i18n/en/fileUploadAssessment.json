@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "fileUploadAssessment": {
+            "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}",
+            "messages": {
+                "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions."
+            },
+            "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
+            "updateAfterComplaintFailed": "Updating the Assessment failed.",
+            "detail": {
+                "scoreFor": "Assessment for part {{ index }}"
+            },
+            "submissionFile": "Submission File",
+            "notFound": "We haven't found any new file upload submission without an assessment, please go back.",
+            "addFeedback": "Add new Feedback",
+            "assessInstruction": "Please, click the \"Add new Feedback\" button.",
+            "deleteAssessment": "Delete Assessment {{ index }} ?"
+        }
+    }
+}

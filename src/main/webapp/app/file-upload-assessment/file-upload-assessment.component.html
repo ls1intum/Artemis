@@ -1,0 +1,18 @@
+<jhi-assessment-layout
+    [showBackButton]="true"
+    (navigateBack)="goToExerciseDashboard()"
+    [isLoading]="isLoading"
+    [busy]="busy"
+    [isAssessor]="isAssessor"
+    [isAtLeastInstructor]="isAtLeastInstructor"
+    [canOverride]="canOverride"
+    [result]="result"
+    [assessmentsAreValid]="assessmentsAreValid"
+    [complaint]="complaint"
+    (save)="onSaveAssessment()"
+    (submit)="onSubmitAssessment()"
+    (cancel)="onCancelAssessment()"
+    (nextSubmission)="assessNextOptimal()"
+    (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+>
+</jhi-assessment-layout>
