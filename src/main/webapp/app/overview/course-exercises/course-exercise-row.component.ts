@@ -50,14 +50,14 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exercise.id);
         if (cachedParticipations && cachedParticipations.length > 0) {
-            this.exercise.participations = cachedParticipations;
+            this.exercise.studentParticipations = cachedParticipations;
         }
         this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
-                this.exercise.participations =
-                    this.exercise.participations && this.exercise.participations.length > 0
-                        ? this.exercise.participations.map(el => {
+                this.exercise.studentParticipations =
+                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
+                        ? this.exercise.studentParticipations.map(el => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
@@ -65,8 +65,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
-        if (this.exercise.participations.length > 0) {
-            this.exercise.participations[0].exercise = this.exercise;
+        if (this.exercise.studentParticipations.length > 0) {
+            this.exercise.studentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
@@ -124,18 +124,18 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+            } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+            } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(exercise.participations[0])) {
+                if (!this.hasResults(exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
-            const participation = exercise.participations[0];
+            const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
                 return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
@@ -143,14 +143,14 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
         if (!this.hasParticipations(exercise)) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
     }
 
     hasParticipations(exercise: Exercise): boolean {
-        return exercise.participations && exercise.participations.length > 0;
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {

@@ -127,7 +127,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
         templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
         solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
-        participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
+        participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
     @AfterEach

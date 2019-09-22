@@ -276,7 +276,7 @@ export class CourseExerciseService {
                 const exercise = participation.exercise;
                 exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-                exercise.participations = [participation];
+                exercise.studentParticipations = [participation];
                 return participation;
             }
         }

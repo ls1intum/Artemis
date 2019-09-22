@@ -140,13 +140,14 @@ public class FileUploadSubmissionResource {
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadExercise = (FileUploadExercise) fileUploadSubmissionService.findOne(submissionId).getParticipation().getExercise();
+        var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
+        var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             return forbidden();
         }
-        var fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
+        fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
         hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
@@ -322,8 +323,8 @@ public class FileUploadSubmissionResource {
         if (fileUploadSubmission.getParticipation() != null) {
             fileUploadSubmission.getParticipation().setSubmissions(null);
             fileUploadSubmission.getParticipation().setResults(null);
-
-            Exercise exercise = fileUploadSubmission.getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
             if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -332,7 +333,6 @@ public class FileUploadSubmissionResource {
                 }
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
                     studentParticipation.setStudent(null);
                 }
             }

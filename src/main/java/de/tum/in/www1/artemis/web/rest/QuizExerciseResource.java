@@ -178,7 +178,7 @@ public class QuizExerciseResource {
         for (QuizExercise quizExercise : result) {
             quizExercise.setQuizQuestions(null);
             // not required in the returned json body
-            quizExercise.setParticipations(null);
+            quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
         }
         return result;

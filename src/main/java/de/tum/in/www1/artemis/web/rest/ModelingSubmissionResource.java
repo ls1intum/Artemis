@@ -179,13 +179,15 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmissionService.findOne(submissionId).getParticipation().getExercise();
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
-        ModelingSubmission modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
+        modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+
         studentParticipation.setExercise(modelingExercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
@@ -375,7 +377,8 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setSubmissions(null);
             modelingSubmission.getParticipation().setResults(null);
 
-            Exercise exercise = modelingSubmission.getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
             if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -384,7 +387,6 @@ public class ModelingSubmissionResource {
                 }
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
                     studentParticipation.setStudent(null);
                 }
             }

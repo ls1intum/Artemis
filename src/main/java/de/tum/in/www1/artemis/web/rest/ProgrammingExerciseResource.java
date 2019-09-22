@@ -385,7 +385,7 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);
@@ -433,7 +433,7 @@ public class ProgrammingExerciseResource {
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
-            programmingExercise.setParticipations(participations);
+            programmingExercise.setStudentParticipations(participations);
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();

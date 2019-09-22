@@ -121,16 +121,15 @@ public class ComplaintResource {
         Optional<Complaint> complaint = complaintService.getByResultId(resultId);
 
         if (complaint.isPresent() && complaint.get().getResult() != null) {
-            Exercise exercise = complaint.get().getResult().getParticipation().getExercise();
+            var participation = (StudentParticipation) complaint.get().getResult().getParticipation();
+            Exercise exercise = participation.getExercise();
             if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 complaint.get().getResult().setAssessor(null);
 
                 if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                     // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
                     complaint.get().filterSensitiveInformation();
-                    if (complaint.get().getResult().getParticipation() instanceof StudentParticipation) {
-                        ((StudentParticipation) complaint.get().getResult().getParticipation()).filterSensitiveInformation();
-                    }
+                    participation.filterSensitiveInformation();
                 }
             }
         }
