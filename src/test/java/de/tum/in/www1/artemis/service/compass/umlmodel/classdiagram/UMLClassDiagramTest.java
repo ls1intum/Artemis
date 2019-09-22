@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Collections;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 class UMLClassDiagramTest {
 
@@ -19,22 +20,28 @@ class UMLClassDiagramTest {
 
     @Mock
     UMLClass umlClass1;
+
     @Mock
     UMLClass umlClass2;
+
     @Mock
     UMLClass umlClass3;
 
     @Mock
     UMLRelationship umlRelationship1;
+
     @Mock
     UMLRelationship umlRelationship2;
+
     @Mock
     UMLRelationship umlRelationship3;
 
     @Mock
     UMLPackage umlPackage1;
+
     @Mock
     UMLPackage umlPackage2;
+
     @Mock
     UMLPackage umlPackage3;
 
@@ -49,7 +56,7 @@ class UMLClassDiagramTest {
         MockitoAnnotations.initMocks(this);
 
         classDiagram = new UMLClassDiagram(123456789, List.of(umlClass1, umlClass2, umlClass3), List.of(umlRelationship1, umlRelationship2, umlRelationship3),
-            List.of(umlPackage1, umlPackage2, umlPackage3));
+                List.of(umlPackage1, umlPackage2, umlPackage3));
 
         when(umlClass1.getElementByJSONID("class1")).thenReturn(umlClass1);
         when(umlClass2.getElementByJSONID("class2")).thenReturn(umlClass2);
@@ -82,7 +89,7 @@ class UMLClassDiagramTest {
     void getElementByJSONID_getClass() {
         UMLElement element = classDiagram.getElementByJSONID("class1");
 
-        assertThat(element).isEqualTo(umlClass2);
+        assertThat(element).isEqualTo(umlClass1);
     }
 
     @Test
@@ -110,7 +117,7 @@ class UMLClassDiagramTest {
     void getElementByJSONID_getPackage() {
         UMLElement element = classDiagram.getElementByJSONID("package3");
 
-        assertThat(element).isEqualTo(umlPackage2);
+        assertThat(element).isEqualTo(umlPackage3);
     }
 
     @Test
@@ -124,7 +131,8 @@ class UMLClassDiagramTest {
     void getModelElements() {
         List<Similarity<UMLElement>> elementList = classDiagram.getModelElements();
 
-        assertThat(elementList).containsExactlyInAnyOrder(umlClass1, umlClass2, umlClass3, umlRelationship1, umlRelationship2, umlRelationship3, umlPackage1, umlPackage2, umlPackage3);
+        assertThat(elementList).containsExactlyInAnyOrder(umlClass1, umlClass2, umlClass3, umlRelationship1, umlRelationship2, umlRelationship3, umlPackage1, umlPackage2,
+                umlPackage3);
     }
 
     @Test

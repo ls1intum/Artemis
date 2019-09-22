@@ -1,8 +1,14 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -10,14 +16,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.util.reflection.FieldSetter;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 
 class UMLDiagramTest {
 
@@ -27,12 +28,16 @@ class UMLDiagramTest {
 
     @Mock
     UMLElement umlElement1;
+
     @Mock
     UMLElement umlElement2;
+
     @Mock
     UMLElement umlElement3;
+
     @Mock
     UMLElement referenceElement1;
+
     @Mock
     UMLElement referenceElement2;
 

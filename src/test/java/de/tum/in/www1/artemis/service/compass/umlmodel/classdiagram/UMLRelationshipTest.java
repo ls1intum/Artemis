@@ -1,12 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.reflection.FieldSetter;
-
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
@@ -15,20 +8,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.internal.util.reflection.FieldSetter;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+
 class UMLRelationshipTest {
 
-    UMLRelationship relationship;
+    private UMLRelationship relationship;
 
     @Mock
     UMLRelationship referenceRelationship;
 
     @Mock
     UMLClass source1;
+
     @Mock
     UMLClass source2;
 
     @Mock
     UMLClass target1;
+
     @Mock
     UMLClass target2;
 
@@ -114,8 +117,8 @@ class UMLRelationshipTest {
         when(target1.similarity(target2)).thenReturn(0.34);
         when(target2.similarity(target1)).thenReturn(0.34);
         double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 0.12 * RELATION_ELEMENT_WEIGHT + 0.34 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 *
-            RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 0.12 * RELATION_ELEMENT_WEIGHT + 0.34 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT
+                + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -138,8 +141,8 @@ class UMLRelationshipTest {
     void similarity_differentSourceRole() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "differentRole");
         double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity =
-            (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
+                / expectedWeight;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -150,8 +153,8 @@ class UMLRelationshipTest {
     void similarity_differentTargetRole() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "differentRole");
         double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity =
-            (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
+                / expectedWeight;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -162,8 +165,8 @@ class UMLRelationshipTest {
     void similarity_differentSourceMultiplicity() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "differentMultiplicity");
         double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity =
-            (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
+                / expectedWeight;
 
         double similarity = relationship.similarity(referenceRelationship);
 
@@ -174,8 +177,8 @@ class UMLRelationshipTest {
     void similarity_differentTargetMultiplicity() throws NoSuchFieldException {
         FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "differentMultiplicity");
         double expectedWeight = 1 + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + 2 * RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-        double expectedSimilarity =
-            (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT) / expectedWeight;
+        double expectedSimilarity = (RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_OPTIONAL_WEIGHT + RELATION_MULTIPLICITY_OPTIONAL_WEIGHT)
+                / expectedWeight;
 
         double similarity = relationship.similarity(referenceRelationship);
 

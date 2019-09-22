@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Collections;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 class UMLActivityDiagramTest {
 
@@ -19,22 +20,28 @@ class UMLActivityDiagramTest {
 
     @Mock
     UMLActivityNode umlActivityNode1;
+
     @Mock
     UMLActivityNode umlActivityNode2;
+
     @Mock
     UMLActivityNode umlActivityNode3;
 
     @Mock
     UMLActivity umlActivity1;
+
     @Mock
     UMLActivity umlActivity2;
+
     @Mock
     UMLActivity umlActivity3;
 
     @Mock
     UMLControlFlow umlControlFlow1;
+
     @Mock
     UMLControlFlow umlControlFlow2;
+
     @Mock
     UMLControlFlow umlControlFlow3;
 
@@ -42,8 +49,8 @@ class UMLActivityDiagramTest {
     void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        activityDiagram = new UMLActivityDiagram(123456789, List.of(umlActivityNode1, umlActivityNode2, umlActivityNode3),
-            List.of(umlActivity1, umlActivity2, umlActivity3), List.of(umlControlFlow1, umlControlFlow2, umlControlFlow3));
+        activityDiagram = new UMLActivityDiagram(123456789, List.of(umlActivityNode1, umlActivityNode2, umlActivityNode3), List.of(umlActivity1, umlActivity2, umlActivity3),
+                List.of(umlControlFlow1, umlControlFlow2, umlControlFlow3));
 
         when(umlActivityNode1.getJSONElementID()).thenReturn("activityNode1");
         when(umlActivityNode2.getJSONElementID()).thenReturn("activityNode2");
@@ -91,7 +98,6 @@ class UMLActivityDiagramTest {
         assertThat(element).isEqualTo(umlControlFlow2);
     }
 
-
     @Test
     void getElementByJSONID_notExisting() {
         UMLElement element = activityDiagram.getElementByJSONID("nonExistingElement");
@@ -104,7 +110,7 @@ class UMLActivityDiagramTest {
         List<Similarity<UMLElement>> elementList = activityDiagram.getModelElements();
 
         assertThat(elementList).containsExactlyInAnyOrder(umlActivityNode1, umlActivityNode2, umlActivityNode3, umlActivity1, umlActivity2, umlActivity3, umlControlFlow1,
-            umlControlFlow2, umlControlFlow3);
+                umlControlFlow2, umlControlFlow3);
     }
 
     @Test

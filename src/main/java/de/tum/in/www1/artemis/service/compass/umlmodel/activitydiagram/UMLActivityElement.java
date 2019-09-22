@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import javax.annotation.Nullable;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import javax.annotation.Nullable;
 
 public abstract class UMLActivityElement extends UMLElement {
 

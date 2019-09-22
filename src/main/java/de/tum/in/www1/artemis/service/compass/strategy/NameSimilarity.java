@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import java.util.Objects;
+
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 public class NameSimilarity {
 

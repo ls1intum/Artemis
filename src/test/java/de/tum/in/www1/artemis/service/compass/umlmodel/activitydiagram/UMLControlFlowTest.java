@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 class UMLControlFlowTest {
 
@@ -19,10 +20,13 @@ class UMLControlFlowTest {
 
     @Mock
     UMLActivityElement sourceElement1;
+
     @Mock
     UMLActivityElement sourceElement2;
+
     @Mock
     UMLActivityElement targetElement1;
+
     @Mock
     UMLActivityElement targetElement2;
 

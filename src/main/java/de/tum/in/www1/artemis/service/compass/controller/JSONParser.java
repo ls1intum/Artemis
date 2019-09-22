@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
 import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +21,10 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
 public class JSONParser {
@@ -170,8 +170,8 @@ public class JSONParser {
             }
 
             if (source != null && target != null) {
-                UMLRelationship newRelation = new UMLRelationship(source, target, UMLRelationshipType.valueOf(relationshipType), relationship.get(JSONMapping.elementID).getAsString(),
-                        relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
+                UMLRelationship newRelation = new UMLRelationship(source, target, UMLRelationshipType.valueOf(relationshipType),
+                        relationship.get(JSONMapping.elementID).getAsString(), relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                         relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                         relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
                         relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());

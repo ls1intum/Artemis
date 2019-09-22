@@ -7,9 +7,9 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 public class SimilarityDetector {
 

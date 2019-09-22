@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import com.google.common.base.CaseFormat;
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-
 import static de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity.nameEqualsSimilarity;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
+import com.google.common.base.CaseFormat;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLRelationship extends UMLElement {
 
@@ -57,7 +58,7 @@ public class UMLRelationship extends UMLElement {
     private UMLRelationshipType type;
 
     public UMLRelationship(UMLClass source, UMLClass target, UMLRelationshipType type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
-                           String targetMultiplicity) {
+            String targetMultiplicity) {
         super(jsonElementID);
 
         this.source = source;

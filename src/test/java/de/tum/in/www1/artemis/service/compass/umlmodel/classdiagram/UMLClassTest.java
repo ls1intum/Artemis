@@ -1,22 +1,24 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.reflection.FieldSetter;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.internal.util.reflection.FieldSetter;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 class UMLClassTest {
 
@@ -27,19 +29,25 @@ class UMLClassTest {
 
     @Mock
     UMLAttribute attribute1;
+
     @Mock
     UMLAttribute attribute2;
+
     @Mock
     UMLAttribute attribute3;
+
     @Mock
     UMLAttribute attribute4;
 
     @Mock
     UMLMethod method1;
+
     @Mock
     UMLMethod method2;
+
     @Mock
     UMLMethod method3;
+
     @Mock
     UMLMethod method4;
 

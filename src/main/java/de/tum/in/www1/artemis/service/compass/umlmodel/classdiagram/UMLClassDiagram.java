@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class UMLClassDiagram extends UMLDiagram {
 

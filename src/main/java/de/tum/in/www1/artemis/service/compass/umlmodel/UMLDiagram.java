@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-
 import java.util.List;
+
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 
 public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
