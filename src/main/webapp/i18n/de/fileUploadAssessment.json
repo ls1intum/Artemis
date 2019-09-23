@@ -8,7 +8,7 @@
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "detail": {
-                "scoreFor": "Bewertung für das Teil {{ index }}"
+                "scoreFor": "Feedback-Titel eingeben"
             },
             "submissionFile": "Submission Datei",
             "notFound": "Wir haben keine neue Datei Upload Submission ohne Bewertung gefunden, bitte gehe zurück.",

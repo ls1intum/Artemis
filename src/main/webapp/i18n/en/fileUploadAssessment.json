@@ -8,7 +8,7 @@
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
             "updateAfterComplaintFailed": "Updating the Assessment failed.",
             "detail": {
-                "scoreFor": "Assessment for part {{ index }}"
+                "scoreFor": "Enter feedback title"
             },
             "submissionFile": "Submission File",
             "notFound": "We haven't found any new file upload submission without an assessment, please go back.",

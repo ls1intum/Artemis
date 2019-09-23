@@ -1,9 +1,7 @@
 <div class="card mb-3">
     <div class="card-header">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
-        <h4 class="card-title">
-            {{ 'artemisApp.fileUploadAssessment.detail.scoreFor' | translate: { index: index } }}
-        </h4>
+        <input placeholder="{{ 'artemisApp.fileUploadAssessment.detail.scoreFor' | translate }}" (ngModelChange)="emitChanges()" />
     </div>
     <div class="card-body">
         <div class="form-group row">
