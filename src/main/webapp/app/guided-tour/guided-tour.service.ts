@@ -227,7 +227,6 @@ export class GuidedTourService {
     public resetTour(): void {
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
-        this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
     }
 
@@ -511,11 +510,11 @@ export class GuidedTourService {
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
          */
         setTimeout(() => {
-            // if (!this.checkTourStateFinished(guidedTour)) {
-            this.currentTour = cloneDeep(guidedTour);
-            this.guidedTourAvailability.next(true);
-            this.startTour();
-            // }
+            if (!this.checkTourStateFinished(guidedTour)) {
+                this.currentTour = cloneDeep(guidedTour);
+                this.guidedTourAvailability.next(true);
+                this.startTour();
+            }
         }, 1000);
     }
 

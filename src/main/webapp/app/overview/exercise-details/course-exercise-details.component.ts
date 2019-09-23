@@ -17,7 +17,7 @@ import {
     StudentParticipation,
 } from 'app/entities/participation';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { programmingExerciseDetailTour } from 'app/guided-tour/tours/course-exercise-detail-tour';
+import { programmingExerciseDetailTour, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -163,6 +163,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
             this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseDetailTour);
+            if (this.currentResult!.successful) {
+                this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+            }
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }

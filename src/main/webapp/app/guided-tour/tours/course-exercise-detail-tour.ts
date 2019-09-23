@@ -54,3 +54,27 @@ export const programmingExerciseDetailTour: GuidedTour = {
         }),
     ],
 };
+
+export const programmingExerciseSuccess: GuidedTour = {
+    courseTitle: 'Einführung in die Softwaretechnik',
+    exerciseTitle: 'Programming Exercise',
+    settingsKey: 'programming_exercise_success_tour',
+    steps: [
+        new TextTourStep({
+            highlightSelector: 'jhi-programming-exercise-instructions-step-wizard',
+            headlineTranslateKey: 'tour.programmingExercise.reviewResult.headline',
+            contentTranslateKey: 'tour.programmingExercise.reviewResult.content',
+        }),
+        new TextTourStep({
+            highlightSelector: 'jhi-programming-exercise-instructions [id^=plantUml]',
+            headlineTranslateKey: 'tour.programmingExercise.umlSuccess.headline',
+            contentTranslateKey: 'tour.programmingExercise.umlSuccess.content',
+            highlightPadding: 10,
+            orientation: Orientation.RIGHT,
+        }),
+        new TextTourStep({
+            headlineTranslateKey: 'tour.programmingExercise.exerciseSuccess.headline',
+            contentTranslateKey: 'tour.programmingExercise.exerciseSuccess.content',
+        }),
+    ],
+};

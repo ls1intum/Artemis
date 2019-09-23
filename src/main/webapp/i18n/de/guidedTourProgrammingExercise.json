@@ -56,6 +56,14 @@
             "resolveTasks": {
                 "headline": "Übung abschließen",
                 "content": "Öffne Eclipse wieder und löse die übrigen Aufgaben, um diese Übung erfolgreich abzuschließen."
+            },
+            "reviewResult": {
+                "headline": "Überprüfe dein Ergebnis",
+                "content": "Überprüfe, ob alle Tests erfolgreich durchgelaufen sind."
+            },
+            "exerciseSuccess": {
+                "headline": "Herzlichen Glückwunsch!",
+                "content": "Du hast hiermit deine erste Programmieraufgaube auf Artemis gelöst!"
             }
         }
     }

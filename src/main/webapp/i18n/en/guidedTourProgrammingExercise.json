@@ -56,6 +56,14 @@
             "resolveTasks": {
                 "headline": "Complete exercise",
                 "content": "Please open Eclipse again and resolve the remaining tasks to complete the exercise."
+            },
+            "reviewResult": {
+                "headline": "Review your result",
+                "content": "Please check if all tests have been executed successfully."
+            },
+            "exerciseSuccess": {
+                "headline": "Congratulations!",
+                "content": "You have successfully solved your first programming exercise on ArTEMiS with git!"
             }
         }
     }

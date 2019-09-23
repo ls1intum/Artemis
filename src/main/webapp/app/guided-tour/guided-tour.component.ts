@@ -329,7 +329,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
             switch (position) {
                 case OverlayPosition.TOP: {
-                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop };
+                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
                     break;
                 }
                 case OverlayPosition.LEFT: {
@@ -341,7 +341,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case OverlayPosition.BOTTOM: {
-                    style = { 'top.px': selectedElementTop + selectedElementHeight };
+                    style = { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
                     break;
                 }
                 case OverlayPosition.ELEMENT: {
