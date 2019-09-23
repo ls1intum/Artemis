@@ -41,7 +41,7 @@ public class ModelFactory {
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
         exercise.setCourse(course);
-        exercise.setParticipations(new HashSet<>());
+        exercise.setStudentParticipations(new HashSet<>());
         exercise.setExampleSubmissions(new HashSet<>());
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);

@@ -168,7 +168,7 @@ public class ModelingExerciseResource {
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);

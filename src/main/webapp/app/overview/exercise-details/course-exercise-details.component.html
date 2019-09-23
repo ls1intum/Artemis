@@ -30,7 +30,7 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.participations && exercise.participations[0]">
+                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
                 </jhi-programming-exercise-instructions>
             </div>
             <ng-template #exerciseTemplate>
@@ -123,7 +123,7 @@
                                 </h4>
                             </div>
                             <div class="col text-left">
-                                <jhi-result [result]="result" [participation]="exercise.participations[0]" showUngradedResults="true" short="true"></jhi-result>
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
                                 <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -114,7 +115,8 @@ public class ModelingAssessmentService extends AssessmentService {
      */
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
         super.cancelAssessmentOfSubmission(modelingSubmission);
-        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         compassService.cancelAssessmentForSubmission(modelingExercise, modelingSubmission.getId());
     }
 

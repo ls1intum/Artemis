@@ -254,7 +254,7 @@ public class CourseService {
         Map<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
 
         for (Exercise exercise : exercisesOfCourse) {
-            Set<StudentParticipation> participations = exercise.getParticipations();
+            Set<StudentParticipation> participations = exercise.getStudentParticipations();
             boolean exerciseHasDueDate = exercise.getDueDate() != null;
 
             for (StudentParticipation participation : participations) {
@@ -293,7 +293,7 @@ public class CourseService {
      * @return the best result a student had within the time of the exercise
      */
     @Transactional(readOnly = true)
-    public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
+    public Result choseResultInParticipation(StudentParticipation participation, boolean hasDueDate) {
         List<Result> results = new ArrayList<>(participation.getResults());
 
         // TODO take the field result.isRated into account

@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -341,39 +342,28 @@ public class ProgrammingExerciseResource {
      *
      * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
      * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping("/programming-exercises-problem")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
-        // fetch course from database to make sure client didn't change groups
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        ProgrammingExercise updatedProgrammingExercise;
+        try {
+            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(problemStatementUpdate.getExerciseId(), problemStatementUpdate.getProblemStatement());
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        catch (IllegalAccessException ex) {
             return forbidden();
         }
-
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if (errorResponse != null) {
-            return errorResponse;
+        catch (EntityNotFoundException ex) {
+            return notFound();
         }
-
-        programmingExercise.setProblemStatement(problemStatementUpdate.getProblemStatement());
-
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(updatedProgrammingExercise);
     }
 
     /**
@@ -395,7 +385,7 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);
@@ -443,7 +433,7 @@ public class ProgrammingExerciseResource {
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
-            programmingExercise.setParticipations(participations);
+            programmingExercise.setStudentParticipations(participations);
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();

@@ -329,7 +329,7 @@ public class QuizScheduleService {
         }
     }
 
-    private void removeUnnecessaryObjectsBeforeSendingToClient(Participation participation) {
+    private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
         if (participation.getExercise() != null) {
             // we do not need the course and lectures
             participation.getExercise().setCourse(null);

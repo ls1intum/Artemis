@@ -122,14 +122,15 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
-        if (!exerciseOpt.isPresent())
+        if (exerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
+        }
         ProgrammingExercise programmingExercise = exerciseOpt.get();
         // All student repository builds and the builds of the template & solution repository must be triggered now!
         Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
         participations.add(programmingExercise.getSolutionParticipation());
         participations.add(programmingExercise.getTemplateParticipation());
-        participations.addAll(programmingExercise.getParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
+        participations.addAll(programmingExercise.getStudentParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
 
         List<ProgrammingSubmission> submissions = new ArrayList<>();
 
@@ -627,6 +628,29 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Updates the problem statement of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise Id.
+     * @param problemStatement markdown of the problem statement.
+     * @return the updated ProgrammingExercise object.
+     * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
+     * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
+     */
+    public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        if (programmingExerciseOpt.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+            throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
+        }
+        programmingExercise.setProblemStatement(problemStatement);
+        return programmingExercise;
+    }
+
+    /**
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
@@ -702,11 +726,13 @@ public class ProgrammingExerciseService {
     /**
      * Delete a programming exercise, including its template and solution participations.
      *
-     * @param programmingExercise to delete.
+     * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional
-    public void delete(ProgrammingExercise programmingExercise, boolean deleteBaseReposBuildPlans) {
+    public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
+        // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
+        // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
             if (programmingExercise.getTemplateBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());

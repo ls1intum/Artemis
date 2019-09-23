@@ -48,9 +48,9 @@
                             loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
                             loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                             !exercise ||
-                            !exercise.participations ||
-                            !exercise.participations.length ||
-                            (exercise.participations.length && !repositoryUrl(exercise.participations[0]))
+                            !exercise.studentParticipations ||
+                            !exercise.studentParticipations.length ||
+                            (exercise.studentParticipations.length && !repositoryUrl(exercise.studentParticipations[0]))
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
@@ -73,7 +73,7 @@
             <!-- action buttons -->
             <div>
                 <button
-                    *ngIf="!exercise.participations || !exercise.participations.length"
+                    *ngIf="!exercise.studentParticipations || !exercise.studentParticipations.length"
                     (click)="createAssignmentParticipation()"
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-primary mr-2"
@@ -83,7 +83,7 @@
                     <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
                 </button>
                 <button
-                    *ngIf="exercise.participations && exercise.participations.length"
+                    *ngIf="exercise.studentParticipations && exercise.studentParticipations.length"
                     (click)="resetAssignmentParticipation()"
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-danger"
