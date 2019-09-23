@@ -9,7 +9,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import * as moment from 'moment';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisTestModule } from '../test.module';
@@ -171,6 +170,7 @@ describe('GuidedTourService', () => {
             spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
             spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = tour;
                 guidedTourService.currentTour = tour;
             });
         }

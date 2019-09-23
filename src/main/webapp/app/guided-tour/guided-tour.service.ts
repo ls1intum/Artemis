@@ -53,7 +53,6 @@ export class GuidedTourService {
             if (event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
-                console.log('navigation finish');
             }
         });
 
@@ -332,7 +331,6 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      */
     public startTour(): void {
-        console.log('start tour');
         if (!this.availableTourForComponent) {
             return;
         }
