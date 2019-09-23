@@ -59,7 +59,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result submitManualAssessment(long resultId, ModelingExercise exercise, ZonedDateTime submissionDate) {
         // TODO CZ: use AssessmentService#submitResult() function instead
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
-            .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
+                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
