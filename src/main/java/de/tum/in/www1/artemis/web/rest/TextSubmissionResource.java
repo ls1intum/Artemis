@@ -118,22 +118,8 @@ public class TextSubmissionResource {
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        hideDetails(textSubmission);
+        this.textSubmissionService.hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
-    }
-
-    // TODO: move this code to textSubmission which invokes the general part with super.hideDetails()
-    private void hideDetails(@RequestBody TextSubmission textSubmission) {
-        // do not send old submissions or old results to the client
-        if (textSubmission.getParticipation() != null) {
-            textSubmission.getParticipation().setSubmissions(null);
-            textSubmission.getParticipation().setResults(null);
-
-            if (textSubmission.getParticipation().getExercise() != null) {
-                // make sure sensitive information are not sent to the client
-                textSubmission.getParticipation().getExercise().filterSensitiveInformation();
-            }
-        }
     }
 
     /**

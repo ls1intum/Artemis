@@ -126,7 +126,7 @@ public class FileUploadSubmissionResource {
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        hideDetails(submission);
+        this.fileUploadSubmissionService.hideDetails(submission);
         return ResponseEntity.ok(submission);
     }
 
@@ -148,7 +148,7 @@ public class FileUploadSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        hideDetails(fileUploadSubmission);
+        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -311,38 +311,5 @@ public class FileUploadSubmissionResource {
         }
 
         return null;
-    }
-
-    /**
-     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
-     * database without explicitly saving them.
-     */
-    private void hideDetails(FileUploadSubmission fileUploadSubmission) {
-        // do not send old submissions or old results to the client
-        if (fileUploadSubmission.getParticipation() != null) {
-            fileUploadSubmission.getParticipation().setSubmissions(null);
-            fileUploadSubmission.getParticipation().setResults(null);
-
-            Exercise exercise = fileUploadSubmission.getParticipation().getExercise();
-            if (exercise != null) {
-                // make sure that sensitive information is not sent to the client for students
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                    exercise.filterSensitiveInformation();
-                    fileUploadSubmission.setResult(null);
-                }
-                // remove information about the student from the submission for tutors to ensure a double-blind assessment
-                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-                    studentParticipation.setStudent(null);
-                }
-            }
-        }
-    }
-
-    private void checkAuthorization(FileUploadExercise exercise) throws AccessForbiddenException {
-        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
-        }
     }
 }

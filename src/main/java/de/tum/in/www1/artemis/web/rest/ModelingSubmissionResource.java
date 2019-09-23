@@ -95,7 +95,7 @@ public class ModelingSubmissionResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -120,7 +120,7 @@ public class ModelingSubmissionResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -187,7 +187,7 @@ public class ModelingSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(modelingExercise);
-        hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -235,7 +235,7 @@ public class ModelingSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -362,33 +362,6 @@ public class ModelingSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-    /**
-     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
-     * database without explicitly saving them.
-     */
-    private void hideDetails(ModelingSubmission modelingSubmission) {
-        // do not send old submissions or old results to the client
-        if (modelingSubmission.getParticipation() != null) {
-            modelingSubmission.getParticipation().setSubmissions(null);
-            modelingSubmission.getParticipation().setResults(null);
-
-            Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null) {
-                // make sure that sensitive information is not sent to the client for students
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                    exercise.filterSensitiveInformation();
-                    modelingSubmission.setResult(null);
-                }
-                // remove information about the student from the submission for tutors to ensure a double-blind assessment
-                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-                    studentParticipation.setStudent(null);
-                }
-            }
-        }
     }
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
