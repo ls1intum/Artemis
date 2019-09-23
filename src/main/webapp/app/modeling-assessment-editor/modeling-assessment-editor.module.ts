@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { RouterModule } from '@angular/router';
@@ -31,14 +29,5 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     exports: [ModelingAssessmentEditorComponent],
     entryComponents: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
-export class ArtemisModelingAssessmentEditorModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisModelingAssessmentEditorModule {}

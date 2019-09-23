@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result';
 
 /**
@@ -13,7 +13,7 @@ import { Result } from 'app/entities/result';
     styleUrls: ['./assessment-header.component.scss'],
 })
 export class AssessmentHeaderComponent {
-    @Input() showBackButton = true;
+    @Input() hideBackButton: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;

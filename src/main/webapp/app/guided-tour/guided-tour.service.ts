@@ -8,11 +8,12 @@ import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { GuidedTourState, Orientation, OrientationConfiguration } from './guided-tour.constants';
+import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { AccountService } from 'app/core';
 import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter } from 'rxjs/operators';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -27,7 +28,13 @@ export class GuidedTourService {
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
 
-    constructor(private http: HttpClient, private jhiAlertService: JhiAlertService, private accountService: AccountService, private router: Router) {}
+    constructor(
+        private http: HttpClient,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
+        private router: Router,
+        private deviceService: DeviceDetectorService,
+    ) {}
 
     /**
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
@@ -79,7 +86,9 @@ export class GuidedTourService {
      * @return Observable(true) if the guided tour is available for the current component, otherwise Observable(false)
      */
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
-        return this.guidedTourAvailability.asObservable();
+        // The guided tour is currently disabled for mobile devices and tablets
+        // TODO optimize guided tour layout for mobile devices and tablets
+        return this.guidedTourAvailability.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
     }
 
     /**
@@ -188,7 +197,6 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-
         this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
             .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
             .subscribe(guidedTourSettings => {
@@ -196,6 +204,18 @@ export class GuidedTourService {
             });
 
         this.resetTour();
+    }
+
+    /**
+     * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
+     * @param guidedTour that should be checked for the finished state
+     */
+    public checkTourStateFinished(guidedTour: GuidedTour): boolean {
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
+        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -209,8 +229,80 @@ export class GuidedTourService {
     }
 
     /**
+     * Enable a smooth user interaction
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     * @param userInteraction the user interaction to complete the tour step
+     */
+    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
+        if (!this.currentTour) {
+            return;
+        }
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+
+        if (nextStep && userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
+            if (nextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector);
+            } else {
+                this.enableNextStepClick();
+            }
+        } else {
+            const observer = new MutationObserver(mutations => {
+                let mutationCount = 0;
+                mutations.forEach(mutation => {
+                    switch (userInteraction) {
+                        case UserInteractionEvent.CLICK: {
+                            if (mutationCount < 1) {
+                                // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
+                                mutationCount += 1;
+                                observer.disconnect();
+                                this.nextStep();
+                            }
+                            break;
+                        }
+                        case UserInteractionEvent.ACE_EDITOR: {
+                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                                observer.disconnect();
+                                this.enableNextStepClick();
+                            }
+                            break;
+                        }
+                    }
+                });
+            });
+            observer.observe(targetNode, {
+                attributes: true,
+                childList: true,
+                characterData: true,
+            });
+        }
+    }
+
+    /**
+     * Wait for the next step selector to appear in the DOM and continue with the next step
+     * @param nextStepSelector the selector string of the next element that should appear in the DOM
+     */
+    private waitForElement(nextStepSelector: string) {
+        const interval = setInterval(() => {
+            const nextElement = document.querySelector(nextStepSelector);
+            if (nextElement) {
+                clearInterval(interval);
+                this.nextStep();
+            }
+        }, 1000);
+    }
+
+    /**
+     * Remove the disabled attribute so that the next button is clickable again
+     */
+    private enableNextStepClick() {
+        const nextButton = document.querySelector('.next-button');
+        if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
+            nextButton.attributes.removeNamedItem('disabled');
+        }
+    }
+
+    /**
      * Start guided tour for given guided tour
-     * @param tour: guided tour
      */
     public startTour(): void {
         if (!this.currentTour) {
@@ -249,16 +341,16 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    private checkSelectorValidity(): boolean {
+    public checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }
-        const selector = this.currentTour.steps[this.currentTourStepIndex].selector;
+        const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
                 console.warn(
-                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].selector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
+                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
                         this.currentTour.settingsKey
                     }`,
                 );
@@ -313,7 +405,7 @@ export class GuidedTourService {
      */
     public get preventBackdropFromAdvancing(): boolean {
         if (this.currentTour) {
-            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : false);
+            return this.currentTour && (this.currentTour.preventBackdropFromAdvancing ? this.currentTour.preventBackdropFromAdvancing : true);
         }
         return false;
     }
@@ -368,7 +460,7 @@ export class GuidedTourService {
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
      * @return Observable<EntityResponseType>: updated guided tour settings
      */
-    private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
+    public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');

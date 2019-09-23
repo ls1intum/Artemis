@@ -10,7 +10,6 @@ import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
-import { CourseDeletePopupComponent } from './course-delete-dialog.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -85,21 +84,5 @@ export const courseRoute: Routes = [
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const coursePopupRoute: Routes = [
-    {
-        path: 'course/:id/delete',
-        component: CourseDeletePopupComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: ['ROLE_ADMIN'],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

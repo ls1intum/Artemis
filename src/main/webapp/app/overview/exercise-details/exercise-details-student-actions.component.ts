@@ -12,7 +12,6 @@ import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { cloneRepositoryTour, courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -34,6 +33,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
     readonly MODELING_EXERCISE = ParticipationStatus.MODELING_EXERCISE;
     readonly TEXT_EXERCISE = ParticipationStatus.TEXT_EXERCISE;
+    readonly FILE_UPLOAD_EXERCISE = ParticipationStatus.FILE_UPLOAD_EXERCISE;
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
@@ -83,33 +83,43 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
+            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
+            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(this.exercise.participations[0])) {
+                if (!this.hasResults(this.exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
-            const participation = this.exercise.participations[0];
+        } else if (
+            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
+            this.hasParticipations(this.exercise)
+        ) {
+            const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return this.exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
+                switch (this.exercise.type) {
+                    case ExerciseType.MODELING:
+                        return ParticipationStatus.MODELING_EXERCISE;
+                    case ExerciseType.TEXT:
+                        return ParticipationStatus.TEXT_EXERCISE;
+                    case ExerciseType.FILE_UPLOAD:
+                        return ParticipationStatus.FILE_UPLOAD_EXERCISE;
+                }
             }
         }
 
         if (!this.hasParticipations(this.exercise)) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
     }
 
     hasParticipations(exercise: Exercise): boolean {
-        return exercise.participations && exercise.participations.length > 0;
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {
@@ -158,7 +168,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.participations = [participation];
+                        this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -185,7 +195,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.participations = [participation];
+                        this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                 },
@@ -213,8 +223,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * Start the clone repository guided tour if the user has not viewed and finished the tour yet
      */
     startCloneRepositoryGuidedTour() {
-        const tourSetting = this.guidedTourService.guidedTourSettings.filter(setting => setting.guidedTourKey === courseExerciseOverviewTour.settingsKey);
-        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() !== GuidedTourState[GuidedTourState.FINISHED]) {
+        if (this.guidedTourService.checkTourStateFinished(courseExerciseOverviewTour)) {
             this.guidedTourService.enableTour(cloneRepositoryTour);
             // Set timeout for clone repository button to render
             setTimeout(() => {

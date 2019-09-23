@@ -31,6 +31,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     notificationText: string | null;
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
+    dueDateInvalid = false;
 
     maxScorePattern = MAX_SCORE_PATTERN;
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -57,7 +58,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
-        this.loadProgrammingLanguageTemplate(language);
+        // Don't override the problem statement with the template in edit mode.
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(language);
+        }
     }
 
     get selectedProgrammingLanguage() {
@@ -93,9 +97,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             (res: HttpErrorResponse) => this.onError(res),
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
-        if (this.programmingExercise.id === undefined) {
-            this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
-        } else {
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
+        if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
     }
@@ -187,5 +190,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 console.log('Error while getting template instruction file!', err);
             },
         );
+    }
+
+    public onProgrammingExerciseUpdate(programmingExercise: ProgrammingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 }

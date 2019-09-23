@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { DATE_FORMAT } from 'app/shared/constants/input.constants';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -48,28 +47,6 @@ export class AttachmentService {
 
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
-    }
-
-    /**
-     * Requests an access token from the server to download the file. If the access token was generated successfully, the file is then downloaded.
-     *
-     * @param downloadUrl url that is stored in the attachment model
-     */
-    downloadAttachment(downloadUrl: string) {
-        const fileName = downloadUrl.split('/').slice(-1)[0];
-        const newWindow = window.open('about:blank');
-        this.http
-            .get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })
-            .toPromise()
-            .then(
-                (result: HttpResponse<String>) => {
-                    newWindow!.location.href = `${downloadUrl}?access_token=${result.body}`;
-                },
-                () => {
-                    newWindow!.close();
-                },
-            );
-        return newWindow;
     }
 
     protected convertDateFromClient(attachment: Attachment): Attachment {

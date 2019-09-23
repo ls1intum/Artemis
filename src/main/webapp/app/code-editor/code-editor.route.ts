@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { PendingChangesGuard } from 'app/shared';
-import { CodeEditorStudentContainerComponent, CodeEditorInstructorContainerComponent } from './';
+import { CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent } from './';
 
 export const codeEditorRoute: Routes = [
     {

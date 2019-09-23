@@ -1,12 +1,22 @@
 import './vendor.ts';
 
-import { ErrorHandler, NgModule } from '@angular/core';
+import { ErrorHandler, NgModule, Sanitizer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgJhipsterModule } from 'ng-jhipster';
+import {
+    JhiAlertService,
+    JhiConfigService,
+    JhiLanguageService,
+    JhiModuleConfig,
+    JhiPaginationUtil,
+    JhiResolvePagingParams,
+    missingTranslationHandler,
+    NgJhipsterModule,
+    translatePartialLoader,
+} from 'ng-jhipster';
 import { Angulartics2Module } from 'angulartics2';
 import * as moment from 'moment';
 
@@ -70,6 +80,8 @@ import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
 
 @NgModule({
     imports: [
@@ -113,6 +125,7 @@ import { ArtemisParticipationModule } from 'app/entities/participation/participa
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,
         ArtemisTextAssessmentModule,
+        ArtemisFileUploadSubmissionModule,
         ArtemisInstructorCourseStatsDashboardModule,
         ArtemisInstructorExerciseStatsDashboardModule,
         ArtemisTutorCourseDashboardModule,
@@ -130,6 +143,18 @@ import { ArtemisParticipationModule } from 'app/entities/participation/participa
         ArtemisConnectionNotificationModule,
         ArtemisListOfComplaintsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
+        TranslateModule.forRoot({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: translatePartialLoader,
+                deps: [HttpClient],
+            },
+            missingTranslationHandler: {
+                provide: MissingTranslationHandler,
+                useFactory: missingTranslationHandler,
+                deps: [JhiConfigService],
+            },
+        }),
     ],
     declarations: [
         JhiMainComponent,
@@ -156,6 +181,7 @@ import { ArtemisParticipationModule } from 'app/entities/participation/participa
         JhiWebsocketService,
         ParticipationDataProvider,
         PendingChangesGuard,
+        TranslateService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.
@@ -189,6 +215,26 @@ import { ArtemisParticipationModule } from 'app/entities/participation/participa
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
             multi: true,
+        },
+        {
+            provide: JhiLanguageService,
+            useClass: JhiLanguageService,
+            deps: [TranslateService, JhiConfigService],
+        },
+        {
+            provide: JhiResolvePagingParams,
+            useClass: JhiResolvePagingParams,
+            deps: [JhiPaginationUtil],
+        },
+        {
+            provide: JhiAlertService,
+            useClass: JhiAlertService,
+            deps: [Sanitizer, JhiConfigService, TranslateService],
+        },
+        {
+            provide: JhiConfigService,
+            useClass: JhiConfigService,
+            deps: [JhiModuleConfig],
         },
     ],
     bootstrap: [JhiMainComponent],

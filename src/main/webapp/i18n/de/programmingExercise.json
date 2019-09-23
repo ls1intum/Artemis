@@ -5,6 +5,7 @@
                 "title": "Programmieraufgaben",
                 "createLabel": "Neue Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
+                "generateLabel": "Neue Programmieraufgabe generieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
@@ -31,6 +32,11 @@
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+            },
+            "buildAndTestStudentSubmissionsAfterDueDate": {
+                "title": "Automatischer Build & Testlauf aller Studentenabgaben nach dem Abgabedatum",
+                "description": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist.",
+                "invalid": "Bitte gebe ein vaildes Datum nach dem Abgabedatum ein."
             },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
@@ -92,8 +98,8 @@
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
-            "resubmitFailed": "Alle erneut ausführen",
-            "resubmitFailedTootip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
+            "resubmitFailed": "Gescheiterte Teilnahmen erneut ausführen",
+            "resubmitFailedTooltip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Gescheiterte Teilnahmen besitzen kein Ergebnis für die letzte Abgabe. Gescheiterte Abgaben können bei Kommunikationsfehlern zwischen dem CI System und Artemis entstehen. Die entstehenden Ergebnisse werden als bewertet gekennzeichnet.",
             "buildingSubmissions": "Laufende Abgaben: {{number}}",
             "failedSubmissions": "Gescheiterte Abgaben: {{number}}",
             "resultETA": "Ergebnis Wartezeit: {{eta}}",

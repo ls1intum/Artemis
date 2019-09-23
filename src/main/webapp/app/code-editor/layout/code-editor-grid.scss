@@ -73,6 +73,7 @@ Code-Editor Layout Styles
         display: flex;
         flex-flow: column nowrap;
         height: 200px;
+        margin-top: -20px;
 
         // Hide the grip lines if the editor-bottom content template is empty.
         .rg-bottom-bottom {
@@ -179,12 +180,20 @@ Collapsable styling
 .editor-sidebar-right:not(.collapsed--horizontal) {
     .editable-instruction-container__status {
         display: grid;
-        grid-template-columns: repeat(2, minmax(max-content, 1fr));
-        grid-column-gap: 10px;
+        grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 2fr);
 
         > :not(:first-child) {
             border-left: 1px solid rgba(0, 0, 0, 0.125);
             padding-left: 20px;
+        }
+
+        &__item:not(:last-child) {
+            margin-right: 15px;
+        }
+
+        .instructions-status {
+            display: flex;
+            justify-content: center;
         }
     }
 }

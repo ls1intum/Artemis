@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 
-import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, PRESENTATION_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
+import { ABSOLUTE_SCORE, Course, CourseScoreCalculationService, CourseService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
@@ -264,7 +264,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     };
                 }
 
-                exercise.participations.forEach(participation => {
+                exercise.studentParticipations.forEach(participation => {
                     if (participation.results && participation.results.length > 0) {
                         const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                         if (participationResult && participationResult.rated) {
@@ -312,7 +312,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         }
                     }
                 });
-                if (!exercise.participations || exercise.participations.length === 0) {
+                if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotParticipated', false);
                 }
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];

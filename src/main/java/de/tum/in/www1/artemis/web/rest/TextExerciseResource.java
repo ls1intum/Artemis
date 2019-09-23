@@ -195,7 +195,7 @@ public class TextExerciseResource {
         List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setCourse(null);
         }
 

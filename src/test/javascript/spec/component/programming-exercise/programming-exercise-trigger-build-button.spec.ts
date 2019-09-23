@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
-import { AccountService, WindowRef } from 'app/core';
-import { JhiLanguageHelper } from 'app/core';
-import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
@@ -14,13 +12,13 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -88,11 +86,8 @@ describe('TriggerBuildButtonSpec', () => {
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         comp.exercise = { id: 4 };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
 
+        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
 
         // Button should not show if there is no failed submission.
@@ -110,13 +105,9 @@ describe('TriggerBuildButtonSpec', () => {
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         comp.exercise = { id: 5 };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
 
+        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
         getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
-
         fixture.detectChanges();
 
         let triggerButton = getTriggerButton();

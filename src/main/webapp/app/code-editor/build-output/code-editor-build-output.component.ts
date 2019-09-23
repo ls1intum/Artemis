@@ -1,12 +1,11 @@
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { RepositoryService } from 'app/entities/repository/repository.service';
 import { Result, ResultService } from '../../entities/result';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 import { Feedback } from 'app/entities/feedback';
-import { of, Observable, Subscription } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';

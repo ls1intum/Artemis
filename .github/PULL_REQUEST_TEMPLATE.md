@@ -2,12 +2,16 @@
 <!-- If your pull request is not ready for review yet, create a draft pull request! -->
 
 ### Checklist
-- [ ] I tested the changes and all related features on the test server https://artemistest.ase.in.tum.de.
-- [ ] I documented my source code using the JavaDoc / JSDoc style.
-- [ ] I added integration test cases for the server (Spring) related to the features
-- [ ] I added integration test cases for the client (Jest) related to the features
-- [ ] I added screenshots/screencast of my UI changes
-- [ ] I translated all the newly inserted strings
+- [ ] I tested *all* changes and *all* related features with different users (student, tutor, instructor, admin) on the test server https://artemistest.ase.in.tum.de.
+- [ ] Server: I added multiple integration tests (Spring) related to the features
+- [ ] Server: I added `@PreAuthorize` and check the course groups for all new REST Calls (security)
+- [ ] Server: I implemented the changes with a good performance and prevented too many database calls
+- [ ] Server: I documented the Java code using JavaDoc style.
+- [ ] Client: I added multiple integration tests (Jest) related to the features
+- [ ] Client: I added `authorities` to all new routes and check the course groups for displaying navigation elements (links, buttons)
+- [ ] Client: I documented the TypeScript code using JSDoc style.
+- [ ] Client: I added multiple screenshots/screencasts of my UI changes
+- [ ] Client: I translated all the newly inserted strings into German and English
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->

@@ -5,7 +5,6 @@ import { AccountService, JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
-import { QuizQuestionType } from '../../../entities/quiz-question';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';

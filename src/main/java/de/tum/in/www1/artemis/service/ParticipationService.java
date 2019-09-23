@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -393,13 +392,10 @@ public class ParticipationService {
      * @return resumed participation
      */
     public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
-        // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
-        // as the VCS-server performs the request
-        SecurityUtils.setAuthorizationObject();
 
         // Reload programming exercise from database so that the template participation is available
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
-        if (!programmingExercise.isPresent()) {
+        if (programmingExercise.isEmpty()) {
             return null;
         }
         participation = copyBuildPlan(participation);
@@ -646,7 +642,7 @@ public class ParticipationService {
      */
     @Transactional(readOnly = true)
     public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
+        return exercises.isEmpty() ? new LinkedList<>() : studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**

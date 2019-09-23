@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { ArtemisSharedModule } from 'app/shared';
@@ -35,6 +33,7 @@ import { ArtemisTableModule } from 'app/components/table/table.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -69,6 +68,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseManageTestCasesComponent,
+        // Form components
+        ProgrammingExerciseDueDateSelectComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -86,12 +87,4 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
     providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
-export class ArtemisProgrammingExerciseModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisProgrammingExerciseModule {}

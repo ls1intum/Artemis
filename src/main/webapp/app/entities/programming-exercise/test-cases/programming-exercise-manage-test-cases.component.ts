@@ -1,10 +1,10 @@
-import { Component, HostListener, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription } from 'rxjs';
-import { distinctUntilChanged, tap, catchError } from 'rxjs/operators';
-import { differenceWith as _differenceWith, intersectionWith as _intersectionWith, differenceBy as _differenceBy, unionBy as _unionBy } from 'lodash';
+import { catchError, distinctUntilChanged, tap } from 'rxjs/operators';
+import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';

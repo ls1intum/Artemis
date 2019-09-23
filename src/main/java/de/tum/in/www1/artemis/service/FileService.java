@@ -18,13 +18,17 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
 @Service
 public class FileService {
@@ -87,7 +91,7 @@ public class FileService {
                 try {
                     File oldFile = new File(actualPathForPublicPath(oldFilePath));
 
-                    if (!oldFile.delete()) {
+                    if (!FileSystemUtils.deleteRecursively(oldFile)) {
                         log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
                     }
                     else {
@@ -144,9 +148,20 @@ public class FileService {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
+        if (publicPath.contains("files/file-upload-exercises")) {
+            final var uploadSubpath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
+            final var shouldBeExerciseId = uploadSubpath[0];
+            final var shouldBeSubmissionId = uploadSubpath.length >= 3 ? uploadSubpath[2] : null;
+            if (!NumberUtils.isNumber(shouldBeExerciseId) || !NumberUtils.isNumber(shouldBeSubmissionId)) {
+                throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath);
+            }
+            final var exerciseId = Long.parseLong(shouldBeExerciseId);
+            final var submissionId = Long.parseLong(shouldBeSubmissionId);
+            return FileUploadSubmission.buildFilePath(exerciseId, submissionId);
+        }
 
         // path is unknown => cannot convert
-        throw new RuntimeException("Unknown Filepath: " + publicPath);
+        throw new FilePathParsingException("Unknown Filepath: " + publicPath);
     }
 
     /**
@@ -156,7 +171,7 @@ public class FileService {
      * @param entityId   the id of the entity associated with the file (may be null)
      * @return the public file url that can be used by users to access the file from outside
      */
-    private String publicPathForActualPath(String actualPath, Long entityId) {
+    public String publicPathForActualPath(String actualPath, Long entityId) {
         // first extract filename
         String filename = Paths.get(actualPath).getFileName().toString();
 
@@ -179,9 +194,21 @@ public class FileService {
         if (actualPath.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
+        if (actualPath.contains(Constants.FILE_UPLOAD_EXERCISES_FILEPATH)) {
+            final var path = Paths.get(actualPath);
+            final long exerciseId;
+            try {
+                final var shouldBeExerciseId = path.getName(2).toString();
+                exerciseId = Long.parseLong(shouldBeExerciseId);
+            }
+            catch (IllegalArgumentException e) {
+                throw new FilePathParsingException("Unexpected String in upload file path. Course ID should be present here: " + actualPath);
+            }
+            return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
+        }
 
         // path is unknown => cannot convert
-        throw new RuntimeException("Unknown Filepath: " + actualPath);
+        throw new FilePathParsingException("Unknown Filepath: " + actualPath);
     }
 
     /**
@@ -323,7 +350,7 @@ public class FileService {
             fw = new FileWriter(tempFile);
         }
         catch (IOException ex) {
-            throw new RuntimeException("File " + filePath + " should be updated but does not exist.");
+            throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
         reader = new BufferedReader(fr);

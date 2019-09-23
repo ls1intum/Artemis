@@ -89,7 +89,7 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
-        Participation participation = participationService.startExercise(quizExercise, principal.getName());
+        StudentParticipation participation = participationService.startExercise(quizExercise, principal.getName());
         participation.setExercise(quizExercise);
         if (!quizExercise.isEnded() || !quizExercise.isIsOpenForPractice()) {
             return ResponseEntity.badRequest().headers(
