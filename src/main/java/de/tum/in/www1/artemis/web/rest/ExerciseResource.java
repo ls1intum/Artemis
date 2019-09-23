@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -314,6 +317,7 @@ public class ExerciseResource {
      * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @param allStudents whether the repositories of all students should be downloaded
      * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      * @param addStudentName whether the student name should be added to the project
      * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
      * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
@@ -323,20 +327,30 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds, @RequestParam boolean allStudents,
-            @RequestParam boolean filterLateSubmissions, @RequestParam boolean addStudentName, @RequestParam boolean squashAfterInstructor,
-            @RequestParam boolean normalizeCodeStyle) throws IOException {
+            @RequestParam boolean filterLateSubmissions, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ") Date filterLateSubmissionsDate,
+            @RequestParam boolean addStudentName, @RequestParam boolean squashAfterInstructor, @RequestParam boolean normalizeCodeStyle) throws IOException {
         Exercise exercise = exerciseService.findOne(exerciseId);
 
         // TODO: allow multiple options:
         // - one boolean flag per stager task (see exportParticipations)
         // - one boolean flag that all student submissions should be downloaded
 
+        ZonedDateTime filterLateSubmissionsZonedDateTime;
+
+        if (filterLateSubmissionsDate == null) {
+            filterLateSubmissionsZonedDateTime = exercise.getDueDate();
+        }
+        else {
+            filterLateSubmissionsZonedDateTime = ZonedDateTime.ofInstant(filterLateSubmissionsDate.toInstant(), ZoneId.systemDefault());
+        }
+
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
 
         File zipFile;
         if (allStudents) {
-            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName, squashAfterInstructor,
+                    normalizeCodeStyle);
         }
         else {
             studentIds = studentIds.replaceAll(" ", "");
@@ -346,7 +360,8 @@ public class ExerciseResource {
                         .build();
             }
 
-            zipFile = exerciseService.exportParticipations(exerciseId, studentList, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+            zipFile = exerciseService.exportParticipations(exerciseId, studentList, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName,
+                    squashAfterInstructor, normalizeCodeStyle);
         }
         if (zipFile == null) {
             return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))

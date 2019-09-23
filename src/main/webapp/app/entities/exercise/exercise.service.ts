@@ -60,6 +60,7 @@ export class ExerciseService {
         students: string[],
         allStudents: boolean,
         filterLateSubmissions: boolean,
+        filterLateSubmissionsDate: moment.Moment | null,
         addStudentName: boolean,
         squashAfterInstructor: boolean,
         normalizeCodeStyle: boolean,
@@ -67,6 +68,7 @@ export class ExerciseService {
         const params = new HttpParams()
             .set('allStudents', allStudents.toString())
             .set('filterLateSubmissions', filterLateSubmissions.toString())
+            .set('filterLateSubmissionsDate', filterLateSubmissionsDate == null ? '' : filterLateSubmissionsDate.toJSON())
             .set('addStudentName', addStudentName.toString())
             .set('squashAfterInstructor', squashAfterInstructor.toString())
             .set('normalizeCodeStyle', normalizeCodeStyle.toString());

@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
+import { Moment } from 'moment';
+
 import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
@@ -19,6 +21,7 @@ export class ExerciseScoresRepoExportComponent {
     studentIdList: string;
     allStudents: boolean;
     filterLateSubmissions: boolean;
+    filterLateSubmissionsDate: Moment | null;
     addStudentName: boolean;
     squashAfterInstructor: boolean;
     normalizeCodeStyle: boolean;
@@ -27,6 +30,7 @@ export class ExerciseScoresRepoExportComponent {
         this.exportInProgress = false;
         this.allStudents = false;
         this.filterLateSubmissions = true;
+        this.filterLateSubmissionsDate = null;
         this.addStudentName = true;
         this.squashAfterInstructor = true;
         this.normalizeCodeStyle = true;
@@ -45,6 +49,7 @@ export class ExerciseScoresRepoExportComponent {
                 studentIdList,
                 this.allStudents !== undefined ? this.allStudents : false,
                 this.filterLateSubmissions !== undefined ? this.filterLateSubmissions : true,
+                this.filterLateSubmissionsDate !== undefined ? this.filterLateSubmissionsDate : null,
                 this.addStudentName !== undefined ? this.addStudentName : true,
                 this.squashAfterInstructor !== undefined ? this.squashAfterInstructor : true,
                 this.normalizeCodeStyle !== undefined ? this.normalizeCodeStyle : true,

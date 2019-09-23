@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -329,15 +330,16 @@ public class ExerciseService {
      *
      * @param exerciseId the id of the exercise entity
      * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      * @param addStudentName whether the student name should be added to the project
      * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
      * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportParticipationsAllStudents(Long exerciseId, boolean filterLateSubmissions, boolean addStudentName, boolean squashAfterInstructor,
-            boolean normalizeCodeStyle) {
-        return exportParticipationsHelper(exerciseId, null, true, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+    public java.io.File exportParticipationsAllStudents(Long exerciseId, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, boolean addStudentName,
+            boolean squashAfterInstructor, boolean normalizeCodeStyle) {
+        return exportParticipationsHelper(exerciseId, null, true, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor, normalizeCodeStyle);
     }
 
     /**
@@ -346,19 +348,21 @@ public class ExerciseService {
      * @param exerciseId the id of the exercise entity
      * @param studentIds TUM Student-Login ID of requested students
      * @param filterLateSubmissions whether late submissions should be filtered out
+     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      * @param addStudentName whether the student name should be added to the project
      * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
      * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, boolean addStudentName, boolean squashAfterInstructor,
-            boolean normalizeCodeStyle) {
-        return exportParticipationsHelper(exerciseId, studentIds, false, filterLateSubmissions, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate,
+            boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
+        return exportParticipationsHelper(exerciseId, studentIds, false, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor,
+                normalizeCodeStyle);
     }
 
-    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions, boolean addStudentName,
-            boolean squashAfterInstructor, boolean normalizeCodeStyle) {
+    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions,
+            ZonedDateTime filterLateSubmissionsDate, boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
         Exercise exercise = findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;

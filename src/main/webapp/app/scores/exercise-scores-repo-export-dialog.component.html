@@ -12,6 +12,9 @@
         <div class="checkbox">
             <label class="control-label text-danger"> <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="filterLateSubmissions" />Filter late submissions</label>
         </div>
+        <div class="form-group">
+            <jhi-date-time-picker [(ngModel)]="filterLateSubmissionsDate" [disabled]="!filterLateSubmissions" name="filterLateSubmissionsDate"></jhi-date-time-picker>
+        </div>
         <div class="checkbox">
             <label class="control-label text-danger"> <input type="checkbox" name="addStudentName" [(ngModel)]="addStudentName" />Add student names</label>
         </div>
