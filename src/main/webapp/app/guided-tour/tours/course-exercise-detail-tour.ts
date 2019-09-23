@@ -64,6 +64,7 @@ export const programmingExerciseSuccess: GuidedTour = {
             highlightSelector: 'jhi-programming-exercise-instructions-step-wizard',
             headlineTranslateKey: 'tour.programmingExercise.reviewResult.headline',
             contentTranslateKey: 'tour.programmingExercise.reviewResult.content',
+            orientation: Orientation.TOP,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions [id^=plantUml]',
