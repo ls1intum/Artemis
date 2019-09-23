@@ -110,6 +110,7 @@ describe('GuidedTourComponent', () => {
             spyOn(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
 
