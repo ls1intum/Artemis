@@ -4,3 +4,6 @@
         <span *ngIf="feedback.detailText">{{ 'artemisApp.fileUploadSubmission.feedbackResultDetail' | translate: { detailText: feedback.detailText } }} </span>
     </p>
 </div>
+<div *ngIf="generalFeedback">
+    <p>General Feedback: {{ generalFeedback.detailText }}</p>
+</div>

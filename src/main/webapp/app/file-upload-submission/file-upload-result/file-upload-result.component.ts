@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Feedback } from 'app/entities/feedback';
 import { Result } from 'app/entities/result';
+import { partition } from 'lodash';
 
 @Component({
     selector: 'jhi-file-upload-result',
@@ -8,13 +9,16 @@ import { Result } from 'app/entities/result';
 })
 export class FileUploadResultComponent {
     public feedbacks: Feedback[];
+    public generalFeedback: Feedback;
 
     @Input()
     public set result(result: Result) {
         if (!result) {
             return;
         }
-        this.feedbacks = result.feedbacks.filter(feedback => feedback.reference);
+        const groupedFeedback = partition(result.feedbacks, feedback => feedback.reference);
+        this.feedbacks = groupedFeedback[0];
+        this.generalFeedback = groupedFeedback[1][0];
     }
     constructor() {}
 }
