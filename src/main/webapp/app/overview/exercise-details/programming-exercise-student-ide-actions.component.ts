@@ -42,7 +42,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     participationStatus(): ParticipationStatus {
         if (!this.hasParticipations()) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
@@ -55,7 +55,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * @return True, if the exercise has any participation, false otherwise
      */
     hasParticipations(): boolean {
-        return this.exercise.participations && this.exercise.participations.length > 0;
+        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0;
     }
 
     /**
@@ -80,7 +80,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.participations = [participation];
+                        this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     this.jhiAlertService.success('artemisApp.exercise.personalRepository');
@@ -98,7 +98,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     importIntoIntelliJ() {
         const title = this.exercise.title;
         const id = this.exercise.id;
-        const repo = this.repositoryUrl(this.exercise.participations[0]);
+        const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
         this.javaBridge.clone(repo, title, id, this.courseId);
     }
 

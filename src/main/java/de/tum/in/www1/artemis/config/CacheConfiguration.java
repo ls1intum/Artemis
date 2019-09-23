@@ -51,7 +51,7 @@ public class CacheConfiguration {
             createIfNotExists(cm, Course.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName() + ".exercises", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".participations", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".studentParticipations", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName() + ".exampleSubmissions", jcacheConfiguration);
             createIfNotExists(cm, LtiOutcomeUrl.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, LtiUserId.class.getName(), jcacheConfiguration);

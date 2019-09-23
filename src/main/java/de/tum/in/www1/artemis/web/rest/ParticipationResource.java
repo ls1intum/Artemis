@@ -351,7 +351,7 @@ public class ParticipationResource {
             // remove unnecessary elements
             Exercise exercise = participation.getExercise();
             exercise.setCourse(null);
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setTutorParticipations(null);
             exercise.setExampleSubmissions(null);
             exercise.setAttachments(null);

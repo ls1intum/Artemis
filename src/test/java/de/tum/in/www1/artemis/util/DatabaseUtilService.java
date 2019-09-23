@@ -57,7 +57,7 @@ public class DatabaseUtilService {
     StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    StudentParticipationRepository participationRepo;
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
@@ -73,6 +73,9 @@ public class DatabaseUtilService {
 
     @Autowired
     TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
+    FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
     SubmissionRepository submissionRepository;
@@ -120,11 +123,10 @@ public class DatabaseUtilService {
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
+        fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
-        solutionProgrammingExerciseParticipationRepo.deleteAll();
-        templateProgrammingExerciseParticipationRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
@@ -203,6 +205,7 @@ public class DatabaseUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/template.git");
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
@@ -214,6 +217,7 @@ public class DatabaseUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/solution.git");
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
@@ -320,15 +324,14 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneProgrammingExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course)
+                .title("programming exercise");
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
         courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        assertThat(programmingExerciseRepository.findAll()).as("programming exercise is initialized").hasSize(1);
 
         return courseRepo.findById(course.getId()).get();
     }
@@ -368,7 +371,7 @@ public class DatabaseUtilService {
 
     public FileUploadExercise createFileUploadExerciseWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         course.addExercises(fileUploadExercise);
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
@@ -503,6 +506,35 @@ public class DatabaseUtilService {
     }
 
     @Transactional
+    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmissions(fileUploadSubmission);
+        Result result = new Result();
+        result.setSubmission(fileUploadSubmission);
+        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setScore(100L);
+        result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission.setResult(result);
+        fileUploadSubmission.getParticipation().addResult(result);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    @Transactional
     public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
@@ -556,10 +588,11 @@ public class DatabaseUtilService {
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
         if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return result;
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {

@@ -58,7 +58,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
-        this.loadProgrammingLanguageTemplate(language);
+        // Don't override the problem statement with the template in edit mode.
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(language);
+        }
     }
 
     get selectedProgrammingLanguage() {
@@ -94,9 +97,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             (res: HttpErrorResponse) => this.onError(res),
         );
         // If an exercise is created, load our readme template so the problemStatement is not empty
-        if (this.programmingExercise.id === undefined) {
-            this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
-        } else {
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
+        if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
     }

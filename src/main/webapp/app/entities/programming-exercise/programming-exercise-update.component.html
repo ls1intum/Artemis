@@ -1,8 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">
-                Create new Programming Exercise
+            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
+                Generate new Programming Exercise
             </h4>
             <h4 *ngIf="programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
                 Edit Programming Exercise
@@ -226,7 +226,8 @@
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="dueDateInvalid || editForm.form.invalid || isSaving" class="btn btn-primary">
-                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span *ngIf="programmingExercise.id" jhiTranslate="entity.action.save">Save</span
+                    ><span *ngIf="programmingExercise.id === undefined" jhiTranslate="entity.action.generate">Generate</span>
                 </button>
             </div>
         </form>

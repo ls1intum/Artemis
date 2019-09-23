@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -95,8 +96,8 @@ public class ComplaintResponseResource {
 
         // All tutors and higher can see this, and also the students who first open the complaint
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
-
-        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.get().getComplaint().getResult().getParticipation();
+        Exercise exercise = studentParticipation.getExercise();
 
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             complaintResponse.get().getComplaint().setStudent(null);
@@ -128,7 +129,8 @@ public class ComplaintResponseResource {
 
         canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
 
-        Exercise exercise = complaintResponse.get().getComplaint().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.get().getComplaint().getResult().getParticipation();
+        Exercise exercise = studentParticipation.getExercise();
 
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             complaintResponse.get().getComplaint().setStudent(null);
@@ -144,7 +146,8 @@ public class ComplaintResponseResource {
     private void canUserReadComplaintResponse(ComplaintResponse complaintResponse, String username) {
         // All tutors and higher can see this, and also the students who first open the complaint
         User originalAuthor = complaintResponse.getComplaint().getStudent();
-        Exercise exercise = complaintResponse.getComplaint().getResult().getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.getComplaint().getResult().getParticipation();
+        Exercise exercise = studentParticipation.getExercise();
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !originalAuthor.getLogin().equals(username)) {
             throw new AccessForbiddenException("Insufficient permission for this complaint response");
         }

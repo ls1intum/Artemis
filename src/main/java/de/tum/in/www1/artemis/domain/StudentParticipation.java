@@ -89,7 +89,7 @@ public class StudentParticipation extends Participation {
 
     private <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
         Optional<Submission> optionalSubmission = findLatestSubmission();
-        if (!optionalSubmission.isPresent()) {
+        if (optionalSubmission.isEmpty()) {
             return Optional.empty();
         }
 
@@ -122,6 +122,15 @@ public class StudentParticipation extends Participation {
      */
     public Optional<TextSubmission> findLatestTextSubmission() {
         return findLatestSubmissionOfType(TextSubmission.class);
+    }
+
+    /**
+     * Same functionality as findLatestSubmission() with the difference that this function only returns the found submission, if it is a file upload submission.
+     *
+     * @return the latest file upload submission or null
+     */
+    public Optional<FileUploadSubmission> findLatestFileUploadSubmission() {
+        return findLatestSubmissionOfType(FileUploadSubmission.class);
     }
 
     @Override

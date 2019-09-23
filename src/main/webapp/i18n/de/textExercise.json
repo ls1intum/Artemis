@@ -9,9 +9,6 @@
             "created": "Textaufgabe mit ID {{ param }} erstellt",
             "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
             "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
-            "delete": {
-                "question": "Soll die Textaufgabe \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
-            },
             "detail": {
                 "title": "Textaufgabe"
             },

@@ -651,8 +651,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>) buildResultDetails.get("details");
-            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
-                .getProgrammingLanguage();
+            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
             if (!details.isEmpty()) {
                 result.setHasFeedback(true);
             }

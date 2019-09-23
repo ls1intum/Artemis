@@ -6,6 +6,8 @@ export const fileUploadExercise = new FileUploadExercise();
 fileUploadExercise.id = 2;
 fileUploadExercise.title = 'some title';
 fileUploadExercise.maxScore = 20;
+fileUploadExercise.filePattern = 'pdf,png';
+fileUploadExercise.problemStatement = 'Example problem statement';
 
 export class MockFileUploadExerciseService {
     create = (fileUploadExercise: FileUploadExercise) => of();

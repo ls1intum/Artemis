@@ -30,6 +30,8 @@ public final class Constants {
 
     public static final String LECTURE_ATTACHMENT_FILEPATH = "uploads" + File.separator + "attachments" + File.separator + "lecture" + File.separator;
 
+    public static final String FILE_UPLOAD_EXERCISES_FILEPATH = "uploads" + File.separator + "file-upload-exercises" + File.separator;
+
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String FILEPATH_COMPASS = "compass";
@@ -74,6 +76,8 @@ public final class Constants {
     public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
+
+    public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
 
     private Constants() {
     }
