@@ -15,20 +15,6 @@
     (nextSubmission)="assessNextOptimal()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-    <div *ngIf="notFound" class="alert alert-warning text-center mt-4" role="alert">
-        <p>{{ 'artemisApp.fileUploadAssessment.notFound' | translate }}</p>
-    </div>
-
-    <div class="row justify-content-end mt-4">
-        <div class="col text-right">
-            <span *ngIf="result && participation && showResult"><jhi-updating-result [participation]="participation"></jhi-updating-result></span>
-            <h6 *ngIf="result && result.assessor" style="color:red">
-                {{ 'artemisApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
-                <span>- {{ 'artemisApp.textAssessment.submissionLocked' | translate }}</span>
-            </h6>
-        </div>
-    </div>
-
     <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
         <div class="row flex-nowrap col-12">
             <div class="card flex-grow-1 mr-4">

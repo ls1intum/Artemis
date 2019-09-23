@@ -127,12 +127,16 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.submission = submission;
                 const studentParticipation = this.submission.participation as StudentParticipation;
                 this.exercise = studentParticipation.exercise as FileUploadExercise;
+                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
                 this.checkPermissions();
                 this.busy = false;
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
+                this.isLoading = false;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
@@ -363,6 +367,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
         this.checkPermissions();
         this.busy = false;
+        this.isLoading = false;
     }
 
     getComplaint(): void {
