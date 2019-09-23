@@ -29,6 +29,7 @@ export class GuidedTourService {
     private guidedTourAvailability = new Subject<boolean>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
+    private availableTourForComponent: GuidedTour | null;
 
     constructor(
         private http: HttpClient,
@@ -52,6 +53,7 @@ export class GuidedTourService {
             if (event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
+                console.log('navigation finish');
             }
         });
 
@@ -227,6 +229,7 @@ export class GuidedTourService {
     public resetTour(): void {
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
+        this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
     }
 
@@ -329,9 +332,13 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      */
     public startTour(): void {
-        if (!this.currentTour) {
+        console.log('start tour');
+        if (!this.availableTourForComponent) {
             return;
         }
+        // Keep current tour null until start tour is triggered, else it could be somehow accessed through nextStep() calls
+        this.currentTour = this.availableTourForComponent;
+
         // Filter tour steps according to permissions
         this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
         this.currentTourStepIndex = 0;
@@ -511,6 +518,7 @@ export class GuidedTourService {
          */
         setTimeout(() => {
             this.currentTour = cloneDeep(guidedTour);
+            this.availableTourForComponent = this.currentTour;
             this.guidedTourAvailability.next(true);
             if (!this.checkTourStateFinished(guidedTour)) {
                 this.startTour();

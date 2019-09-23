@@ -75,7 +75,6 @@ export const courseExerciseOverviewTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.start-exercise',
-            eventListenerSelector: '.clone-repository',
             targetSelectorToCheckForExercise: 'jhi-course-exercise-row',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',

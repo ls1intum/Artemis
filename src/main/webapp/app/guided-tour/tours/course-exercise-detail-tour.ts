@@ -23,7 +23,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: 'jhi-programming-exercise-instructions-task-status .test-status--linked',
+            highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',

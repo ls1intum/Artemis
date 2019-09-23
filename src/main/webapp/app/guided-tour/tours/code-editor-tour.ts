@@ -65,7 +65,7 @@ export const codeEditorTour: GuidedTour = {
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
-            highlightPadding: 20,
+            highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
