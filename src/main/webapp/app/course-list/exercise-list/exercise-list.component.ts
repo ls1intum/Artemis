@@ -101,10 +101,11 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                     // Search through all exercises and the participations within each of them to obtain the target participation
                     const filteredExercise = this.course.exercises.find(
                         exercise =>
-                            exercise.participations != null && exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !== undefined,
+                            exercise.studentParticipations != null &&
+                            exercise.studentParticipations.find(exerciseParticipation => exerciseParticipation.id === participationId) !== undefined,
                     );
                     if (filteredExercise) {
-                        const participation = filteredExercise.participations.find(currentParticipation => currentParticipation.id === participationId);
+                        const participation = filteredExercise.studentParticipations.find(currentParticipation => currentParticipation.id === participationId);
                         // Just make sure we have indeed found the desired participation
                         if (participation && participation.id === participationId) {
                             this.participationDataProvider.participationStorage = participation;
@@ -128,7 +129,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
 
             if (this.hasParticipations(exercise)) {
                 // Reconnect 'participation --> exercise' in case it is needed
-                exercise.participations[0].exercise = exercise;
+                exercise.studentParticipations[0].exercise = exercise;
             }
 
             // If the User is a student: subscribe the release Websocket of every quizExercise
@@ -191,7 +192,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             .subscribe(
                 participation => {
                     if (participation) {
-                        exercise.participations = [participation];
+                        exercise.studentParticipations = [participation];
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -213,7 +214,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             .subscribe(
                 participation => {
                     if (participation) {
-                        exercise.participations = [participation];
+                        exercise.studentParticipations = [participation];
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -263,18 +264,18 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+            } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+            } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(exercise.participations[0])) {
+                if (!this.hasResults(exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
-            const participation = exercise.participations[0];
+            const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
                 return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
@@ -282,14 +283,14 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
 
         if (!this.hasParticipations(exercise)) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
     }
 
     hasParticipations(exercise: Exercise): boolean {
-        return exercise.participations && exercise.participations.length > 0;
+        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {

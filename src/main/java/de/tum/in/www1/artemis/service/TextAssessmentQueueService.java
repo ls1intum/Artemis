@@ -126,10 +126,11 @@ public class TextAssessmentQueueService {
         if (textSubmissionList.isEmpty()) {
             return result;
         }
-        TextExercise currentExercise = (TextExercise) textSubmissionList.get(0).getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionList.get(0).getParticipation();
+        TextExercise currentExercise = (TextExercise) studentParticipation.getExercise();
         List<TextCluster> clusters = textClusterRepository.findAllByExercise(currentExercise);
 
-        if (textSubmissionList.stream().map(submission -> submission.getParticipation().getExercise()).anyMatch(elem -> elem != currentExercise)) {
+        if (textSubmissionList.stream().map(submission -> ((StudentParticipation) submission.getParticipation()).getExercise()).anyMatch(elem -> elem != currentExercise)) {
             throw new IllegalArgumentException("All TextSubmissions have to be from the same Exercise");
         }
         textSubmissionList.forEach(textSubmission -> {

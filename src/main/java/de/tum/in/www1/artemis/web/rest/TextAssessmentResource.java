@@ -125,14 +125,13 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise, user);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
-        if (result.getParticipation().getExercise().getAssessmentDueDate() == null
-                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+        if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
+            messagingTemplate.convertAndSend("/topic/participation/" + studentParticipation.getId() + "/newResults", result);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user) && result.getParticipation() != null
-                && result.getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+            studentParticipation.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
@@ -205,7 +204,8 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
         User user = userService.getUserWithGroupsAndAuthorities();
         final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
-        final Exercise exercise = result.getParticipation().getExercise();
+        final StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+        final Exercise exercise = studentParticipation.getExercise();
         checkAuthorization(exercise, user);
 
         if (!(exercise instanceof TextExercise)) {

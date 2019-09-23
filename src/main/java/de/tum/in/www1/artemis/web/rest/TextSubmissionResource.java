@@ -129,9 +129,10 @@ public class TextSubmissionResource {
             textSubmission.getParticipation().setSubmissions(null);
             textSubmission.getParticipation().setResults(null);
 
-            if (textSubmission.getParticipation().getExercise() != null) {
+            StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+            if (studentParticipation.getExercise() != null) {
                 // make sure sensitive information are not sent to the client
-                textSubmission.getParticipation().getExercise().filterSensitiveInformation();
+                studentParticipation.getExercise().filterSensitiveInformation();
             }
         }
     }

@@ -8,9 +8,8 @@ import { VERSION } from 'app/app.constants';
 export class FooterComponent {
     readonly email = 'mailto:artemis.ase@in.tum.de';
     readonly imprintUrl = 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint';
-    readonly bugReportUrl = 'https://github.com/ls1intum/Artemis/issues/new?labels=bug&template=bug-report.md';
-    readonly featureRequestUrl = 'https://github.com/ls1intum/Artemis/issues/new?labels=feature&template=feature-request.md';
-    get releaseNotesUrl(): string {
-        return `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
-    }
+    private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
+    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
+    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
+    readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 }

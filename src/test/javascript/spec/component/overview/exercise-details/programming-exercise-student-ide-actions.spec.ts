@@ -132,7 +132,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     it('should clone the correct repository in the IDE', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const progExercise = { id: 42, title: 'Test Title' } as Exercise;
-        progExercise.participations = [participation];
+        progExercise.studentParticipations = [participation];
         comp.exercise = progExercise;
         comp.courseId = 456;
 

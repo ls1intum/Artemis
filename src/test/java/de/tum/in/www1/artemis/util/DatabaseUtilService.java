@@ -59,7 +59,7 @@ public class DatabaseUtilService {
     StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    StudentParticipationRepository participationRepo;
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
@@ -129,8 +129,6 @@ public class DatabaseUtilService {
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
-        solutionProgrammingExerciseParticipationRepo.deleteAll();
-        templateProgrammingExerciseParticipationRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
@@ -210,6 +208,7 @@ public class DatabaseUtilService {
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
         participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-exercise.git");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/template.git");
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
@@ -222,6 +221,7 @@ public class DatabaseUtilService {
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
         participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-solution.git");
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/solution.git");
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
@@ -618,10 +618,11 @@ public class DatabaseUtilService {
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
         if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return result;
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {

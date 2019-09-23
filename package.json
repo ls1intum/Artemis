@@ -1,6 +1,6 @@
 {
     "name": "Artemis",
-    "version": "3.7.0",
+    "version": "3.7.1",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -127,8 +127,8 @@
         "html-webpack-plugin": "3.2.0",
         "husky": "3.0.5",
         "jasmine-core": "3.5.0",
-        "jest-junit": "^8.0.0",
-        "lint-staged": "9.2.5",
+        "jest-junit": "8.0.0",
+        "lint-staged": "9.3.0",
         "merge-jsons-webpack-plugin": "1.0.19",
         "mini-css-extract-plugin": "0.8.0",
         "mocha": "6.2.0",

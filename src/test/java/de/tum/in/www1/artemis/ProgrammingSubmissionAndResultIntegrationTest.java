@@ -3,17 +3,12 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.net.URL;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.json.simple.JSONObject;
@@ -142,7 +137,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
         templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
         solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
-        participationIds = exercise.getParticipations().stream().map(Participation::getId).collect(Collectors.toList());
+        participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
     @AfterEach
@@ -329,8 +324,10 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        Long participationId = getParticipationIdByType(participationType, 0);
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        when(gitServiceMock.getLastCommitHash(any())).thenReturn(objectId);
+        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
+        when(gitServiceMock.getLastCommitHash(repositoryUrl)).thenReturn(objectId);
         triggerBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
@@ -341,7 +338,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Long participationId = getParticipationIdByType(participationType, 0);
         SecurityUtils.setAuthorizationObject();
         Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
 
@@ -365,8 +361,10 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        Long participationId = getParticipationIdByType(participationType, 0);
+        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        when(gitServiceMock.getLastCommitHash(any())).thenReturn(objectId);
+        when(gitServiceMock.getLastCommitHash(repositoryUrl)).thenReturn(objectId);
         triggerInstructorBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
@@ -377,7 +375,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Long participationId = getParticipationIdByType(participationType, 0);
         SecurityUtils.setAuthorizationObject();
         Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
 

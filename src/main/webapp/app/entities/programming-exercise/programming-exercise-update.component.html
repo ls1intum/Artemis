@@ -1,8 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">
-                Create new Programming Exercise
+            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
+                Generate new Programming Exercise
             </h4>
             <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
                 Edit Programming Exercise
@@ -236,6 +236,8 @@
                         <span jhiTranslate="entity.action.save">Save</span>
                     </ng-container>
                     <fa-icon *ngIf="isSaving" icon="circle-notch" [spin]="true"></fa-icon>
+                    <span *ngIf="!isSaving && programmingExercise.id" jhiTranslate="entity.action.save">Save</span>
+                    <span *ngIf="!isSaving && programmingExercise.id === undefined" jhiTranslate="entity.action.generate">Generate</span>
                 </button>
             </div>
         </form>
