@@ -70,7 +70,8 @@ public class AutomaticSubmissionService {
             List<Submission> unsubmittedSubmissions = submissionRepository.findAllUnsubmittedModelingAndTextSubmissions();
             for (Submission unsubmittedSubmission : unsubmittedSubmissions) {
 
-                Exercise exercise = unsubmittedSubmission.getParticipation().getExercise();
+                var participation = (StudentParticipation) unsubmittedSubmission.getParticipation();
+                Exercise exercise = participation.getExercise();
 
                 if (!exercise.isEnded() || unsubmittedSubmission.getSubmissionDate() == null || unsubmittedSubmission.getSubmissionDate().isAfter(exercise.getDueDate())) {
                     continue;
@@ -87,7 +88,7 @@ public class AutomaticSubmissionService {
                     notifyCompassAboutNewModelingSubmission((ModelingSubmission) unsubmittedSubmission, (ModelingExercise) exercise);
                 }
 
-                StudentParticipation studentParticipation = (StudentParticipation) unsubmittedSubmission.getParticipation();
+                StudentParticipation studentParticipation = (StudentParticipation) participation;
                 String username = studentParticipation.getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
                     messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);

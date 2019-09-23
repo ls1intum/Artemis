@@ -179,13 +179,15 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmissionService.findOne(submissionId).getParticipation().getExercise();
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
-        ModelingSubmission modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
+        modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+
         studentParticipation.setExercise(modelingExercise);
         this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);

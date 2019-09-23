@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -160,8 +161,9 @@ public class SubmissionResource {
     }
 
     private Course findCourseFromSubmission(Submission submission) {
-        if (submission.getParticipation().getExercise() != null && submission.getParticipation().getExercise().getCourse() != null) {
-            return submission.getParticipation().getExercise().getCourse();
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourse() != null) {
+            return studentParticipation.getExercise().getCourse();
         }
 
         return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourse();

@@ -140,13 +140,14 @@ public class FileUploadSubmissionResource {
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadExercise = (FileUploadExercise) fileUploadSubmissionService.findOne(submissionId).getParticipation().getExercise();
+        var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
+        var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             return forbidden();
         }
-        var fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
+        fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
@@ -277,7 +278,6 @@ public class FileUploadSubmissionResource {
             fileUploadSubmission.setParticipation(null);
 
             Result result = fileUploadSubmission.getResult();
-            result.getFeedbacks();
             if (result != null && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
                 result.setAssessor(null);
             }
