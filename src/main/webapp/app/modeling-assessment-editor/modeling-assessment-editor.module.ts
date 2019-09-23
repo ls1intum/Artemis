@@ -11,7 +11,7 @@ import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-asses
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment-shared';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 

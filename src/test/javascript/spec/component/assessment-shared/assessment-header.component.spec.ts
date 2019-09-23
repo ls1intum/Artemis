@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
-import { AssessmentHeaderComponent } from 'app/assessment-shared';
+import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result';

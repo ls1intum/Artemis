@@ -3,12 +3,15 @@ import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ArtemisAssessmentSharedModule, AssessmentComplaintAlertComponent, AssessmentHeaderComponent, AssessmentLayoutComponent } from 'app/assessment-shared';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { JhiLanguageHelper } from 'app/core';
 import { Complaint } from 'app/entities/complaint';
+import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment-shared/assessment-complaint-alert/assessment-complaint-alert.component';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;

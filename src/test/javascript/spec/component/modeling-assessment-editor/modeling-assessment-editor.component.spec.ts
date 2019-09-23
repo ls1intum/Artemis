@@ -13,7 +13,8 @@ import { BehaviorSubject } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService, JhiLanguageHelper, User } from 'app/core';
 import { MockAccountService } from '../../helpers/mock-account.service';
-import { AssessmentHeaderComponent, AssessmentLayoutComponent } from 'app/assessment-shared';
+import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
+import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Course } from 'app/entities/course';
 
