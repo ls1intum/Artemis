@@ -18,12 +18,14 @@
     <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
         <div class="row flex-nowrap col-12">
             <div class="card flex-grow-1 mr-4">
-                <div class="card-header text-white bg-primary" jhiTranslate="artemisApp.textAssessment.studentSubmission">
-                    Student submission
+                <div class="card-header bg-primary text-white" style="position: relative; display: flex;flex-flow: column nowrap;">
+                    <span class="flex-fill"></span>
+                    <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
                 </div>
+
                 <div class="card-body">
                     <div *ngIf="submission.filePath" class="card-text">
-                        <a [href]="submission.filePath!" target="_blank">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                        <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
                         <span class="ml-1 badge badge-info">
                             {{ attachmentExtension(submission.filePath!) | uppercase }}
                         </span>
@@ -58,7 +60,7 @@
             <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
                 <jhi-assessment-detail
                     [(assessment)]="referencedFeedback[i]"
-                    (assessmentChange)="updateAssessment(assessment, i + 1)"
+                    (assessmentChange)="updateAssessment(assessment)"
                     (deleteAssessment)="deleteAssessment($event)"
                 ></jhi-assessment-detail>
             </div>

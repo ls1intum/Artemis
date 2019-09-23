@@ -26,6 +26,7 @@ import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ExerciseType } from 'app/entities/exercise';
 import { filter } from 'rxjs/operators';
+import { FileService } from 'app/shared';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -83,6 +84,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private translateService: TranslateService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
+        private fileService: FileService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
@@ -124,19 +126,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
             (submission: FileUploadSubmission) => {
-                this.submission = submission;
-                const studentParticipation = this.submission.participation as StudentParticipation;
-                this.exercise = studentParticipation.exercise as FileUploadExercise;
-                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-                this.checkPermissions();
-                this.busy = false;
-
+                this.handleReceivedSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
-                this.isLoading = false;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
@@ -150,6 +143,51 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 }
             },
         );
+    }
+
+    private loadSubmission(submissionId: number): void {
+        this.fileUploadSubmissionService
+            .get(submissionId)
+            .pipe(filter(res => !!res))
+            .subscribe(
+                res => {
+                    this.handleReceivedSubmission(res.body!);
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.goToExerciseDashboard();
+                    } else {
+                        this.onError('');
+                    }
+                },
+            );
+    }
+
+    private handleReceivedSubmission(submission: FileUploadSubmission): void {
+        this.submission = submission;
+        const studentParticipation = this.submission.participation as StudentParticipation;
+        this.exercise = studentParticipation.exercise as FileUploadExercise;
+        this.result = this.submission.result;
+        if (this.result.hasComplaint) {
+            this.getComplaint();
+        }
+        if (!this.result.feedbacks) {
+            this.result.feedbacks = [];
+        }
+
+        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
+        this.submission.participation.results = [this.result];
+        this.result.participation = this.submission.participation;
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+            this.jhiAlertService.clear();
+            this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
+        }
+        this.checkPermissions();
+        this.busy = false;
+        this.isLoading = false;
     }
 
     /**
@@ -325,51 +363,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detectChanges();
     }
 
-    private loadSubmission(submissionId: number): void {
-        this.fileUploadSubmissionService
-            .get(submissionId)
-            .pipe(filter(res => !!res))
-            .subscribe(
-                res => {
-                    this.handleReceivedSubmission(res.body!);
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.goToExerciseDashboard();
-                    } else {
-                        this.onError('');
-                    }
-                },
-            );
-    }
-
-    private handleReceivedSubmission(submission: FileUploadSubmission): void {
-        this.submission = submission;
-        const studentParticipation = this.submission.participation as StudentParticipation;
-        this.exercise = studentParticipation.exercise as FileUploadExercise;
-        this.result = this.submission.result;
-        if (this.result.hasComplaint) {
-            this.getComplaint();
-        }
-        if (!this.result.feedbacks) {
-            this.result.feedbacks = [];
-        }
-
-        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
-        this.submission.participation.results = [this.result];
-        this.result.participation = this.submission.participation;
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
-            this.jhiAlertService.clear();
-            this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
-        }
-        this.checkPermissions();
-        this.busy = false;
-        this.isLoading = false;
-    }
-
     getComplaint(): void {
         this.complaintService.findByResultId(this.result.id).subscribe(
             res => {
@@ -391,8 +384,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    updateAssessment(assessment: Feedback, index: number) {
-        assessment.reference = index.toString();
+    updateAssessment(assessment: Feedback) {
         this.validateAssessment();
     }
 
@@ -422,12 +414,16 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             credits = credits.filter(credit => credit !== null && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
+        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0) || f.reference)) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
         }
 
         this.totalScore = credits.reduce((a, b) => a + b, 0);
+    }
+
+    downloadFile(filePath: string) {
+        this.fileService.downloadAttachment(filePath);
     }
 
     private checkPermissions() {

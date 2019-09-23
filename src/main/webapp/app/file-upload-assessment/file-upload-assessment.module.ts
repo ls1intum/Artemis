@@ -7,10 +7,19 @@ import { SortByModule } from 'app/components/pipes';
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
 import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared';
+import { ModelingAssessmentModule } from 'app/modeling-assessment';
 
 const ENTITY_STATES = [...fileUploadAssessmentRoutes];
 @NgModule({
-    imports: [SortByModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, ArtemisResultModule, ArtemisTextAssessmentModule, ArtemisAssessmentSharedModule],
+    imports: [
+        SortByModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        ArtemisTextAssessmentModule,
+        ArtemisAssessmentSharedModule,
+        ModelingAssessmentModule,
+    ],
     declarations: [FileUploadAssessmentComponent],
     exports: [FileUploadAssessmentComponent],
     providers: [],
