@@ -47,23 +47,23 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for submitting a manual assessment/result. It updates the completion date, sets the assessment type to MANUAL and sets the assessor attribute.
-     * Furthermore, it saves the result in the database.
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the submission of the given submissionId, updates the completion date,
+     * sets the assessment type to MANUAL and sets the assessor attribute and saves the result in the database.
      *
-     * @param result   the result the assessment belongs to
+     * @param submissionId the id of the submission for which the result should be submitted
      * @param exercise the exercise the assessment belongs to
      * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Result result, ModelingExercise exercise, ZonedDateTime submissionDate) {
+    public Result submitManualAssessment(long submissionId, ModelingExercise exercise, ZonedDateTime submissionDate) {
         // TODO CZ: use AssessmentService#submitResult() function instead
+        Result result = resultRepository.findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("No result for given submissionId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for
-        // modeling and text exercises (i.e. total score is sum of feedback credits)
-        resultRepository.save(result);
-        return result;
+        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
+        // feedback credits)
+        return resultRepository.save(result);
     }
 
     /**
@@ -101,8 +101,7 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
-        // Note: This also saves the feedback objects in the database because of the 'cascade =
-        // CascadeType.ALL' option.
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);
     }
 
