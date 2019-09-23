@@ -409,12 +409,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLClassDiagram model) {
         Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
-        try {
-            automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
-        }
-        catch (IOException e) {
-            log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
-        }
+        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
     }
 
     /**

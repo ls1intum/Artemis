@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,9 +29,8 @@ public class AutomaticAssessmentController {
      * @param index                manages all assessments
      * @param elementIdFeedbackMap maps elementIds to feedbacks
      * @param model                the UML model - contains all elements with its jsonIds
-     * @throws IOException if the score for the element is null
      */
-    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassDiagram model) throws IOException {
+    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassDiagram model) {
         for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
@@ -163,16 +161,15 @@ public class AutomaticAssessmentController {
 
         int missing = 0;
 
-        Context childContext = new Context(umlClass.getSimilarityID());
-
         for (UMLAttribute attribute : umlClass.getAttributes()) {
             Optional<Assessment> assessmentOptional = index.getAssessment(attribute.getSimilarityID());
 
             if (!assessmentOptional.isPresent()) {
                 missing++;
             }
-            else if (assessmentOptional.get().hasContext(childContext)) {
-                Score score = assessmentOptional.get().getScore(childContext);
+            else {
+                Score score = assessmentOptional.get().getScore(attribute.getContext());
+
                 if (score == null) {
                     log.warn("Unable to find score for attribute " + attribute.getJSONElementID());
                 }
@@ -188,8 +185,8 @@ public class AutomaticAssessmentController {
             if (!assessmentOptional.isPresent()) {
                 missing++;
             }
-            else if (assessmentOptional.get().hasContext(childContext)) {
-                Score score = assessmentOptional.get().getScore(childContext);
+            else {
+                Score score = assessmentOptional.get().getScore(method.getContext());
 
                 if (score == null) {
                     log.warn("Unable to find score for method " + method.getJSONElementID());
