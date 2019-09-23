@@ -89,4 +89,20 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
         this.intellijState.opened = exerciseId;
         this.intellijStateSubject.next(this.intellijState);
     }
+
+    onBuildStarted() {
+        this.window.nativeWindow.intellij.onBuildStarted();
+    }
+
+    onBuildFinished() {
+        this.window.nativeWindow.intellij.onBuildFinished();
+    }
+
+    onBuildFailed(message: string) {
+        this.window.nativeWindow.intellij.onBuildFailed(message);
+    }
+
+    onTestResult(success: boolean, message: string) {
+        this.window.nativeWindow.intellij.onTestResult(success, message);
+    }
 }

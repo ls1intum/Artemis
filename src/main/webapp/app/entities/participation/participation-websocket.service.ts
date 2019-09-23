@@ -203,7 +203,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If there is no observable for the participation a new one will be created.
      *
      * @param participationId Id of Participation of which result to subscribe to
-     * @param exercise Exercise to which the Participation belongs
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
         this.createResultWSConnectionIfNotExisting(participationId);

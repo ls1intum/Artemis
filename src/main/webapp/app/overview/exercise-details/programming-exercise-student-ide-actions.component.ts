@@ -6,6 +6,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { IntelliJState } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -27,7 +29,12 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
 
     @Input() smallButtons: boolean;
 
-    constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private javaBridge: JavaBridgeService) {}
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private courseExerciseService: CourseExerciseService,
+        private javaBridge: JavaBridgeService,
+        private ideBuildAndTestService: IdeBuildAndTestService,
+    ) {}
 
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
@@ -107,5 +114,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     submitChanges() {
         this.javaBridge.submit();
+    }
+
+    buildAndTest() {
+        this.ideBuildAndTestService.buildAndTestExercise(this.exercise as ProgrammingExercise);
     }
 }
