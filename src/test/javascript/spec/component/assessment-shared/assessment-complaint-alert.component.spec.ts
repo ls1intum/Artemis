@@ -1,4 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AssessmentComplaintAlertComponent } from 'app/assessment-shared';
 import { ArtemisTestModule } from '../../test.module';
@@ -11,7 +12,7 @@ describe('AssessmentComplaintAlertComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [AssessmentComplaintAlertComponent],
         }).compileComponents();
     }));

@@ -1,5 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { TranslateModule } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisAssessmentSharedModule, AssessmentComplaintAlertComponent, AssessmentHeaderComponent, AssessmentLayoutComponent } from 'app/assessment-shared';
@@ -15,7 +16,7 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
             declarations: [],
             providers: [JhiAlertService, JhiLanguageHelper],
         }).compileComponents();
@@ -57,12 +58,12 @@ describe('AssessmentLayoutComponent', () => {
     });
 
     it('should show or hide a back button', () => {
-        component.showBackButton = true;
+        component.hideBackButton = false;
         fixture.detectChanges();
         let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeTruthy();
 
-        component.showBackButton = false;
+        component.hideBackButton = true;
         fixture.detectChanges();
         backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeFalsy();

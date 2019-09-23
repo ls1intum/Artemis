@@ -1,4 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -23,7 +24,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
+            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
             declarations: [],
             providers: [JhiAlertService, JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' })],
         }).compileComponents();
@@ -45,15 +46,15 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should show or hide a back button', () => {
         const route = fixture.debugElement.injector.get(ActivatedRoute) as Mutable<ActivatedRoute>;
         const queryParamMap = route.queryParamMap as BehaviorSubject<ParamMap>;
-        queryParamMap.next(convertToParamMap({ showBackButton: 'true' }));
+        queryParamMap.next(convertToParamMap({ hideBackButton: 'true' }));
         fixture.detectChanges();
         let assessmentHeaderComponent: AssessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent)).componentInstance;
-        expect(assessmentHeaderComponent.showBackButton).toBeTruthy();
+        expect(assessmentHeaderComponent.hideBackButton).toBeTruthy();
 
-        queryParamMap.next(convertToParamMap({ showBackButton: undefined }));
+        queryParamMap.next(convertToParamMap({ hideBackButton: undefined }));
         fixture.detectChanges();
         assessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent)).componentInstance;
-        expect(assessmentHeaderComponent.showBackButton).toBeFalsy();
+        expect(assessmentHeaderComponent.hideBackButton).toBeFalsy();
     });
 
     it('should propagate isAtLeastInstructor', () => {
