@@ -147,7 +147,7 @@ describe('GuidedTourService', () => {
             // Prepare GuidedTourService and GuidedTourComponent
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
-            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
+            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(false);
             spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService.currentTour = tour;
