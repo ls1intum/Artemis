@@ -22,8 +22,9 @@ public class FileUploadAssessmentService extends AssessmentService {
     private final FeedbackRepository feedbackRepository;
 
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
-                                       ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-                                       ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService, FeedbackRepository feedbackRepository) {
+            ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
+            ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService,
+            FeedbackRepository feedbackRepository) {
         super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;

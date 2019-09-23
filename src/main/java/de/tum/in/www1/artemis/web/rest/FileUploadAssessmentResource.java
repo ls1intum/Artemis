@@ -42,8 +42,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     private final SimpMessageSendingOperations messagingTemplate;
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService,
-                                        FileUploadExerciseService fileUploadExerciseService, UserService userService, FileUploadSubmissionService fileUploadSubmissionService,
-                                        SimpMessageSendingOperations messagingTemplate) {
+            FileUploadExerciseService fileUploadExerciseService, UserService userService, FileUploadSubmissionService fileUploadSubmissionService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
 
         this.fileUploadAssessmentService = fileUploadAssessmentService;
@@ -98,7 +98,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PutMapping("/file-upload-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-                                                           @RequestBody List<Feedback> feedbacks) {
+            @RequestBody List<Feedback> feedbacks) {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
@@ -114,7 +114,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-            || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
@@ -146,7 +146,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         }
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-            && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+                && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 

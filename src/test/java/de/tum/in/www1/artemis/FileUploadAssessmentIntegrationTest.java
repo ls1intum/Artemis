@@ -95,7 +95,7 @@ public class FileUploadAssessmentIntegrationTest {
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
         Result updatedResult = request.putWithResponseBody("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-            Result.class, HttpStatus.OK);
+                Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
@@ -108,7 +108,7 @@ public class FileUploadAssessmentIntegrationTest {
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
         Result result = request.putWithResponseBody("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class,
-            HttpStatus.OK);
+                HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
@@ -125,7 +125,7 @@ public class FileUploadAssessmentIntegrationTest {
         params.add("submit", "true");
 
         Result result = request.putWithResponseBodyAndParams("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class,
-            HttpStatus.OK, params);
+                HttpStatus.OK, params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
