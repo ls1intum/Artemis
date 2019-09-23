@@ -403,7 +403,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             if (targetNodes[i].textContent && targetNodes[i].textContent!.includes(title)) {
                 parentNode = targetNodes[i] as HTMLElement;
                 // Check if parent node is the same node as the highlightSelector element
-                if (parentNode.parentNode && parentNode.parentNode.querySelector(this.currentTourStep.highlightSelector)) {
+                if (
+                    parentNode.parentNode &&
+                    parentNode.parentNode.querySelector(this.currentTourStep.highlightSelector) === parentNode.querySelector(this.currentTourStep.highlightSelector)
+                ) {
                     return parentNode;
                 } else {
                     return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
