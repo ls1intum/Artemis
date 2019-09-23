@@ -9,6 +9,10 @@
                 "headline": "Current week",
                 "content": "The exercises of the current week will be displayed on top of the exercise list."
             },
+            "currentExercise": {
+                "headline": "Current Exercise",
+                "content": "In this tutorial we will have a look at this exercise."
+            },
             "exerciseType": {
                 "headline": "Exercise type",
                 "content": "The exercise type can be distinguished by the exercise icon."

@@ -9,6 +9,10 @@
                 "headline": "Aktuelle Woche",
                 "content": "Die Aufgaben der aktuellen Woche werden in diesem Reiter an oberster Stelle gelistet."
             },
+            "currentExercise": {
+                "headline": "Aktuelle Aufgabe",
+                "content": "In diesem Tutorial schauen wir uns diese Aufgabe an."
+            },
             "exerciseType": {
                 "headline": "Aufgabentyp",
                 "content": "Du erkennst den Typ einer Aufgabe anhand des Icons."
