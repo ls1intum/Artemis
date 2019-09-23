@@ -47,18 +47,19 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the submission of the given submissionId, updates the completion date,
-     * sets the assessment type to MANUAL and sets the assessor attribute and saves the result in the database.
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
+     * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
      *
-     * @param submissionId the id of the submission for which the result should be submitted
+     * @param resultId the id of the result that should be submitted
      * @param exercise the exercise the assessment belongs to
      * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(long submissionId, ModelingExercise exercise, ZonedDateTime submissionDate) {
+    public Result submitManualAssessment(long resultId, ModelingExercise exercise, ZonedDateTime submissionDate) {
         // TODO CZ: use AssessmentService#submitResult() function instead
-        Result result = resultRepository.findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("No result for given submissionId could be found"));
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
