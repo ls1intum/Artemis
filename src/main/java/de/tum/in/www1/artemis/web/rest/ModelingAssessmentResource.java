@@ -219,7 +219,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             // return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             // }
             // else {
-            modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
+            result = modelingAssessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
                 compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
             }

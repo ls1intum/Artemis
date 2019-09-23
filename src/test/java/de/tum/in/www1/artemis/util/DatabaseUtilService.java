@@ -585,10 +585,11 @@ public class DatabaseUtilService {
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
         if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
+            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return result;
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {
