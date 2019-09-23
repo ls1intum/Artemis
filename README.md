@@ -5,7 +5,7 @@
 
 This application was generated using JHipster 6.3.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.3.1](http://www.jhipster.tech/documentation-archive/v6.3.1).
 
-**Current version:** 3.7.0
+**Current version:** 3.7.1
 
 ## Main features
 Artemis supports the following exercises:
