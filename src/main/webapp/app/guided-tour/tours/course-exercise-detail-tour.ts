@@ -4,8 +4,8 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const programmingExerciseDetailTour: GuidedTour = {
-    courseTitle: 'Einführung in die Softwaretechnik',
-    exerciseTitle: 'Programming Exercise',
+    courseTitle: 'Introduction to Software Engineering',
+    exerciseTitle: 'G01E01 Programming Git Tutorial',
     settingsKey: 'programming_exercise_detail_tour',
     steps: [
         new TextTourStep({
@@ -56,8 +56,8 @@ export const programmingExerciseDetailTour: GuidedTour = {
 };
 
 export const programmingExerciseSuccess: GuidedTour = {
-    courseTitle: 'Einführung in die Softwaretechnik',
-    exerciseTitle: 'Programming Exercise',
+    courseTitle: 'Introduction to Software Engineering',
+    exerciseTitle: 'G01E01 Programming Git Tutorial',
     settingsKey: 'programming_exercise_success_tour',
     steps: [
         new TextTourStep({

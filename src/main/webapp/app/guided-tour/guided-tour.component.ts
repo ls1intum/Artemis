@@ -135,7 +135,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Check if the current user has the permission to view the tour step
-     * @return {boolean} if the current user has the permission to view the tour step
+     * @return true if the current user has the permission to view the tour step, otherwise false
      */
     public hasUserPermissionForCurrentTourStep(): boolean {
         if (!this.currentTourStep) {
@@ -174,7 +174,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Check if the tour step element would be visible on screen
-     * @return {boolean} if tour step is visible on screen
+     * @return true if tour step is visible on screen, otherwise false
      */
     public isTourOnScreen(): boolean {
         if (!this.currentTourStep) {
@@ -186,8 +186,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Define if HTMLElement is visible in current viewport
      * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
-     * @param element: HTMLElement
-     * @return {boolean} if element is in viewport
+     * @param element that should be checked
+     * @return true if element is in viewport, otherwise false
      */
     public elementInViewport(element: HTMLElement | null): boolean {
         if (!element) {
@@ -213,7 +213,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Handle backdrop clicking event of the user
-     * @param {event} event payload
+     * @param event: event payload
      */
     public backdropClick(event: Event): void {
         if (this.guidedTourService.preventBackdropFromAdvancing) {
@@ -225,7 +225,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Check if the current tour step has a bottom orientation
-     * @return {boolean} if the current tour step orientation is bottom
+     * @return true if the current tour step orientation is bottom, otherwise false
      */
     public isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
@@ -252,7 +252,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * @return {number} top position for current tour step
+     * @return top position for current tour step
      */
     public get topPosition(): number | null {
         if (!this.currentTourStep || !this.selectedElementRect) {
@@ -266,7 +266,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * @return {number} left position for current tour step
+     * @return left position for current tour step
      */
     public get leftPosition(): number | null {
         if (!this.currentTourStep || !this.selectedElementRect) {
@@ -301,7 +301,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Gets defined padding around the highlighted rectangle
-     * @return {number} highlight padding
+     * @return highlight padding for current tour step
      */
     public getHighlightPadding(): number {
         if (this.currentTourStep) {
@@ -370,7 +370,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get Element for the current tour step selector
+     * Get Element for the current tour step hightlight selector
      * @return current selected element for the tour step or null
      */
     public getSelectedElement(): HTMLElement | null {
@@ -389,6 +389,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return null;
     }
 
+    /**
+     * This method checks the node of the targetSelector if the node itself or any child elements contain the given title
+     * This title could be the course title or the exercise title
+     *
+     * @param targetSelector string for the query selector to get the node that should be checked for the title string
+     * @param title course or exercise title
+     */
     private getSelectorForCourseOrExercise(targetSelector: string, title: string): HTMLElement | null {
         let parentNode: HTMLElement;
         const targetNodes = document.querySelectorAll(targetSelector);
@@ -406,8 +413,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return null;
     }
 
+    /**
+     * Get Element for the current tour step event listener selector
+     * @return selected element for the event listener or null
+     */
     public getEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
+        if (!this.currentTourStep || !this.currentTourStep.eventListenerSelector) {
             return null;
         }
         return document.querySelector(this.currentTourStep.eventListenerSelector);

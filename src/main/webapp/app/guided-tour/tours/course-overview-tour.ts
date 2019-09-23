@@ -7,8 +7,8 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
-    courseTitle: 'Einführung in die Softwaretechnik',
-    exerciseTitle: 'Programming Exercise',
+    courseTitle: 'Introduction to Software Engineering',
+    exerciseTitle: 'G01E01 Programming Git Tutorial',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({

@@ -3,8 +3,8 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
-    courseTitle: 'Einführung in die Softwaretechnik',
-    exerciseTitle: 'Programming Exercise',
+    courseTitle: 'Introduction to Software Engineering',
+    exerciseTitle: 'G01E01 Programming Git Tutorial',
     settingsKey: 'course_exercise_overview_tour',
     steps: [
         new TextTourStep({

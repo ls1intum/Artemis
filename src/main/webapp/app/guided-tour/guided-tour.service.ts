@@ -384,7 +384,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the current step is the last tour step
+     * @return true if the current step is the last tour step, otherwise false
      */
     public get isOnLastStep(): boolean {
         if (!this.currentTour) {
@@ -394,7 +394,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the current step is the first tour step
+     * @return true if the current step is the first tour step, otherwise false
      */
     public get isOnFirstStep(): boolean {
         return this.currentTourStepIndex === 0;
