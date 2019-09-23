@@ -91,6 +91,18 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    public <T, R> R patchWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+
+        if (res.getResponse().getStatus() >= 299) {
+            return null;
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))

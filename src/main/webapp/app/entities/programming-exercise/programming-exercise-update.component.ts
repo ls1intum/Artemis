@@ -58,7 +58,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
-        this.loadProgrammingLanguageTemplate(language);
+        // Don't override the problem statement with the template in edit mode.
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(language);
+        }
     }
 
     get selectedProgrammingLanguage() {

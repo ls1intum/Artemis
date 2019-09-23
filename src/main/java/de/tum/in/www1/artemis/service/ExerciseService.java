@@ -282,8 +282,7 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            programmingExerciseService.get().delete(programmingExercise, deleteBaseReposBuildPlans);
+            programmingExerciseService.get().delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             exerciseRepository.delete(exercise);
