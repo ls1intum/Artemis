@@ -949,6 +949,6 @@ public class ProgrammingExerciseService {
         newExercise.setTutorParticipations(null);
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);
-        newExercise.setParticipations(null);
+        newExercise.setStudentParticipations(null);
     }
 }

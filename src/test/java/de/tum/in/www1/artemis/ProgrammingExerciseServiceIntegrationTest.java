@@ -118,7 +118,7 @@ public class ProgrammingExerciseServiceIntegrationTest {
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();
         assertThat(newlyImported.getStudentQuestions()).isNull();
-        assertThat(newlyImported.getParticipations()).isNull();
+        assertThat(newlyImported.getStudentParticipations()).isNull();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases().size()).isEqualTo(programmingExercise.getTestCases().size());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));

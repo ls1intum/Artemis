@@ -163,7 +163,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
-        toBeImported.setParticipations(null);
+        toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfParticipations(template.getNumberOfParticipations());
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
