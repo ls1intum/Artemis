@@ -30,7 +30,7 @@ export class AssessmentLayoutComponent {
     @Input() conflicts: Conflict[] | null;
     @Input() assessmentsAreValid: boolean;
     ComplaintType = ComplaintType;
-    @Input() complaint: Complaint;
+    @Input() complaint: Complaint | null;
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
