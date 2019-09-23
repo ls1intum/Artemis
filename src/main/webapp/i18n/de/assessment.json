@@ -3,6 +3,7 @@
         "assessment": {
             "assessment": "Bewertung",
             "generalFeedback": "Allgemeines Feedback",
+            "automaticGenerated": "Automatisch erstelles Feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
                 "assessmentDueDateOver": "Das Fälligkeitsdatum der Bewertung für diese Aufgabe ist vorbei."
@@ -13,6 +14,11 @@
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
                 "resolveConflict": "Konflikte behandeln"
+            },
+            "detail": {
+                "assessmentTitle": "Titel eingeben",
+                "feedback": "Feedback",
+                "scoreFor": "Bewertung für"
             }
         }
     }

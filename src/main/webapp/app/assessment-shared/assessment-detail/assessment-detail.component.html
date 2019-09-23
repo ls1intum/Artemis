@@ -2,14 +2,14 @@
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
         <h4 class="card-title">
-            {{ 'artemisApp.textAssessment.detail.scoreFor' | translate }} "<span
-                class="highlight"
-                [ngClass]="highlightColor"
-                [innerHtml]="block?.text || assessment.reference"
-            ></span
-            >"
+            {{ 'artemisApp.assessment.detail.scoreFor' | translate }}
+            <span *ngIf="block?.text; else inputTitle"> "<span class="highlight" [ngClass]="highlightColor" [innerHtml]="block?.text || assessment.reference"></span>" </span>
         </h4>
-        <span class="badge badge-secondary float-right" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.textAssessment.automaticGenerated' | translate }}">
+
+        <ng-template #inputTitle>
+            <input placeholder="{{ 'artemisApp.assessment.detail.assessmentTitle' | translate }}" [(ngModel)]="assessment.reference" (ngModelChange)="emitChanges()" />
+        </ng-template>
+        <span class="badge badge-secondary float-right" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.assessment.automaticGenerated' | translate }}">
             <fa-icon [icon]="'robot'"></fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>
         </span>
@@ -20,7 +20,7 @@
             <input class="col" type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="emitChanges()" [readOnly]="disabled" [disabled]="disabled" />
         </div>
         <div class="form-group row">
-            <label class="col-3" jhiTranslate="artemisApp.textAssessment.detail.feedback"></label>
+            <label class="col-3" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
             <textarea class="col form-control" rows="2" [(ngModel)]="assessment.detailText" (ngModelChange)="emitChanges()" [readOnly]="disabled" [disabled]="disabled"></textarea>
         </div>
     </div>

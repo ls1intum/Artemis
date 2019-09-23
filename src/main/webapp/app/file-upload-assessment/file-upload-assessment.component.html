@@ -48,7 +48,7 @@
 
     <ng-container *ngIf="!busy && !notFound">
         <div class="row mt-3">
-            <h4 class="col-12" jhiTranslate="artemisApp.textAssessment.detail.feedback">Feedback</h4>
+            <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
             <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
             <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
                 <div class="alert alert-secondary text-center" role="alert">
@@ -56,12 +56,11 @@
                 </div>
             </div>
             <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
-                <jhi-file-upload-assessment-detail
-                    [index]="i + 1"
+                <jhi-assessment-detail
                     [(assessment)]="referencedFeedback[i]"
                     (assessmentChange)="updateAssessment(assessment, i + 1)"
                     (deleteAssessment)="deleteAssessment($event)"
-                ></jhi-file-upload-assessment-detail>
+                ></jhi-assessment-detail>
             </div>
         </div>
         <div class="row mt-2">

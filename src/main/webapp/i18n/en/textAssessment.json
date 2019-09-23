@@ -28,8 +28,6 @@
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
-                "scoreFor": "Assessment for",
-                "feedback": "Feedback",
                 "credits": {
                     "one": "{{credits}} credit",
                     "many": "{{credits}} credits"

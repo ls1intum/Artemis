@@ -7,26 +7,33 @@ import { TextSelectDirective } from './text-assessment-editor/text-select.direct
 import { TextAssessmentEditorComponent } from './text-assessment-editor/text-assessment-editor.component';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisResultModule } from 'app/entities/result';
-import { TextAssessmentDetailComponent } from './text-assessment-detail/text-assessment-detail.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 import { SortByModule } from 'app/components/pipes';
 import { RouterModule } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { HighlightedTextAreaComponent } from 'app/text-assessment/highlighted-text-area/highlighted-text-area.component';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
-    imports: [CommonModule, SortByModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, ArtemisResultModule, ArtemisComplaintsForTutorModule],
+    imports: [
+        CommonModule,
+        SortByModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisAssessmentSharedModule,
+    ],
     declarations: [
         TextAssessmentComponent,
         TextSelectDirective,
         TextAssessmentEditorComponent,
-        TextAssessmentDetailComponent,
         TextAssessmentDashboardComponent,
         ResizableInstructionsComponent,
         HighlightedTextAreaComponent,
     ],
-    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent, ResizableInstructionsComponent],
+    exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
 export class ArtemisTextAssessmentModule {}
