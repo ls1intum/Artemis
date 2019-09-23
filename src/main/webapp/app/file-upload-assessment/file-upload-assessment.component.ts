@@ -310,25 +310,23 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         );
     }
     onSubmitAssessment() {
-        if (!this.assessmentsAreValid) {
-            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
-            const confirm = window.confirm(confirmationMessage);
-            if (confirm) {
-                this.validateAssessment();
-                if (!this.assessmentsAreValid) {
-                    this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
-                    return;
-                }
-
-                this.fileUploadAssessmentsService.saveAssessment(this.assessments, this.submission.id, true).subscribe(
-                    result => {
-                        this.result = result;
-                        this.updateParticipationWithResult();
-                        this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
-                    },
-                    (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-                );
+        const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+        const confirm = window.confirm(confirmationMessage);
+        if (confirm) {
+            this.validateAssessment();
+            if (!this.assessmentsAreValid) {
+                this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+                return;
             }
+
+            this.fileUploadAssessmentsService.saveAssessment(this.assessments, this.submission.id, true).subscribe(
+                result => {
+                    this.result = result;
+                    this.updateParticipationWithResult();
+                    this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
+                },
+                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            );
         }
     }
 
@@ -342,17 +340,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.goToExerciseDashboard();
             });
         }
-    }
-
-    private loadFeedbacks(feedbacks: Feedback[]): void {
-        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
-        } else {
-            this.generalFeedback = new Feedback();
-        }
-        this.referencedFeedback = feedbacks;
     }
 
     private updateParticipationWithResult(): void {

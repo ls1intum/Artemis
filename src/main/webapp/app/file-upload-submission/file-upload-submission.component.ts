@@ -93,6 +93,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.setSubmittedFile();
                     }
                 }
+                if (data.results && data.results.length > 0) {
+                    this.result = data.results[0] as Result;
+                }
 
                 this.isActive =
                     this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
