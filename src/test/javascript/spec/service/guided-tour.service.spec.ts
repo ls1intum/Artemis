@@ -9,6 +9,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import * as moment from 'moment';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisTestModule } from '../test.module';
@@ -24,6 +25,8 @@ import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { Course } from 'app/entities/course';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,6 +62,24 @@ describe('GuidedTourService', () => {
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
                 userInteractionEvent: UserInteractionEvent.CLICK,
+            }),
+            new TextTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                orientation: Orientation.TOPLEFT,
+            }),
+        ],
+    };
+
+    const tourWithCourseAndExercise: GuidedTour = {
+        courseTitle: 'Introduction to Software Engineering',
+        exerciseTitle: 'G01E01 Programming Git Tutorial',
+        settingsKey: 'tour_with_course_and_exericse',
+        preventBackdropFromAdvancing: true,
+        steps: [
+            new TextTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
             }),
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -143,16 +164,18 @@ describe('GuidedTourService', () => {
                 });
         });
 
-        async function prepareGuidedTour(tour: GuidedTour) {
+        function prepareGuidedTour(tour: GuidedTour) {
             // Prepare GuidedTourService and GuidedTourComponent
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
-            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(false);
+            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
             spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService.currentTour = tour;
             });
+        }
 
+        async function startCourseOverviewTour(tour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
@@ -172,7 +195,8 @@ describe('GuidedTourService', () => {
 
         describe('Tours without user interaction', () => {
             beforeEach(async () => {
-                await prepareGuidedTour(courseOverviewTour);
+                prepareGuidedTour(courseOverviewTour);
+                await startCourseOverviewTour(courseOverviewTour);
             });
 
             it('should start and finish the course overview guided tour', async () => {
@@ -210,13 +234,78 @@ describe('GuidedTourService', () => {
 
         describe('Tours with user interaction', () => {
             beforeEach(async () => {
-                await prepareGuidedTour(courseOverviewTourWithUserInteraction);
+                prepareGuidedTour(courseOverviewTourWithUserInteraction);
+                await startCourseOverviewTour(courseOverviewTourWithUserInteraction);
             });
 
             it('should disable the next button', () => {
                 guidedTourComponentFixture.detectChanges();
                 const nextButton = guidedTourComponentFixture.debugElement.nativeElement.querySelector('.next-button').disabled;
                 expect(nextButton).to.exist;
+            });
+        });
+
+        describe('Tour for a certain course and exercise', () => {
+            const exercise1 = {
+                id: 1,
+                title: 'G01E01 Programming Git Tutorial',
+            } as Exercise;
+
+            const exercise2 = {
+                id: 1,
+                title: 'Test Exercise',
+            } as Exercise;
+
+            const course1 = {
+                id: 1,
+                title: 'Introduction to Software Engineering',
+                exercises: [exercise2, exercise1],
+            } as Course;
+
+            const course2 = {
+                id: 1,
+                title: 'Test Course',
+            } as Course;
+
+            beforeEach(async () => {
+                prepareGuidedTour(tourWithCourseAndExercise);
+            });
+
+            it('should start the tour for the matching course title', () => {
+                let courses = [course1];
+                // enable tour for matching course title
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                guidedTourService.currentTour = null;
+
+                courses = [course2];
+                // tour not available for not matching titles
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+            });
+
+            it('should start the tour for the matching exercise title', () => {
+                let courses = [course1];
+                // enable tour for matching course title
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                guidedTourService.currentTour = null;
+
+                courses = [course2];
+                // tour not available for not matching titles
+                guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+            });
+
+            it('should start the tour for the matching course / exercise title', () => {
+                // enable tour for matching course / exercise title
+                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                guidedTourService.currentTour = null;
+
+                // tour not available for not matching course / exercise title
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
             });
         });
     });

@@ -510,12 +510,12 @@ export class GuidedTourService {
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
          */
         setTimeout(() => {
+            this.currentTour = cloneDeep(guidedTour);
+            this.guidedTourAvailability.next(true);
             if (!this.checkTourStateFinished(guidedTour)) {
-                this.currentTour = cloneDeep(guidedTour);
-                this.guidedTourAvailability.next(true);
                 this.startTour();
             }
-        }, 1000);
+        }, 500);
     }
 
     /**

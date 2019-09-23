@@ -36,7 +36,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.exercise-row',
+            highlightSelector: '.row',
             targetSelectorToCheckForExercise: 'jhi-course-exercise-row',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseType.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseType.content',
