@@ -26,7 +26,7 @@ export class IdeBuildAndTestService {
 
         // Trigger a build for the current participation
         this.submissionService.triggerBuild(participationId).subscribe();
-        // this.javaBridge.onBuildStarted();
+        this.javaBridge.onBuildStarted();
 
         // Listen for the new result on the websocket
         this.participationWebsocketService

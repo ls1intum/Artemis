@@ -30,7 +30,7 @@
         buttonLabel="Build & Test"
         [buttonLoading]="false"
         [smallButton]="smallButtons"
-        *ngIf="exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+        *ngIf="isOpenedInIntelliJ && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
     >
     </jhi-ide-button>
 </div>
