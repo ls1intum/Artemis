@@ -205,9 +205,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const stepScreenAdjustment = this.getStepScreenAdjustment();
 
         if (this.isBottom()) {
-            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.pageYOffset + window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight;
         } else {
-            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.pageYOffset + window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight;
         }
     }
 
@@ -294,7 +294,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
+            topPosition = window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
         }
         return topPosition;
     }

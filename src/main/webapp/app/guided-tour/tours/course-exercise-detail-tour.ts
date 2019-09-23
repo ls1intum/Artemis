@@ -27,7 +27,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
-            highlightPadding: 20,
+            highlightPadding: 5,
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
@@ -40,6 +40,17 @@ export const programmingExerciseDetailTour: GuidedTour = {
             closeAction: () => {
                 clickOnElement('.modal-header .close');
             },
+        }),
+        new TextTourStep({
+            highlightSelector: 'jhi-programming-exercise-instructions [id^=plantUml]',
+            headlineTranslateKey: 'tour.programmingExercise.umlFailure.headline',
+            contentTranslateKey: 'tour.programmingExercise.umlFailure.content',
+            highlightPadding: 10,
+            orientation: Orientation.RIGHT,
+        }),
+        new TextTourStep({
+            headlineTranslateKey: 'tour.programmingExercise.resolveTasks.headline',
+            contentTranslateKey: 'tour.programmingExercise.resolveTasks.content',
         }),
     ],
 };

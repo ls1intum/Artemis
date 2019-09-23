@@ -162,6 +162,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.participations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
+            this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseDetailTour);
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
@@ -174,7 +175,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                           })
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
-                this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseDetailTour);
             }
         });
     }
