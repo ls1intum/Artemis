@@ -228,10 +228,10 @@ public class FileUploadSubmissionResource {
      * @param participationId the participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the participation as body
      */
-    @GetMapping("/file-upload-editor/{participationId}")
+    @GetMapping("participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
+        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -277,6 +277,7 @@ public class FileUploadSubmissionResource {
             fileUploadSubmission.setParticipation(null);
 
             Result result = fileUploadSubmission.getResult();
+            result.getFeedbacks();
             if (result != null && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
                 result.setAssessor(null);
             }
