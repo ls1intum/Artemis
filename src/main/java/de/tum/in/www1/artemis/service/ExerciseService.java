@@ -385,7 +385,6 @@ public class ExerciseService {
                     continue;
                 }
 
-                log.error("DOWNLOAD PATH IS " + repoDownloadClonePath);
                 Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation, repoDownloadClonePath);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
 
