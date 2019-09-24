@@ -379,7 +379,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.highlightSelector);
+        const selectedElement = document.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
+        const instructions = selectedElement.closest('.instructions__content__markdown');
+        if (instructions && instructions.scrollHeight > window.innerHeight && instructions.querySelector(this.currentTourStep.highlightSelector)) {
+            selectedElement.scrollIntoView({ block: 'center' });
+        }
+        return selectedElement;
     }
 
     public getEventListenerSelector(): HTMLElement | null {
