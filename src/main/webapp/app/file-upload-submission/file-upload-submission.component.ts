@@ -15,6 +15,7 @@ import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -58,6 +59,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
+        private fileUploadAssessmentService: FileUploadAssessmentsService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
@@ -89,10 +91,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }
-                if (submission.result) {
-                    this.result = submission.result;
-                }
 
+                if (submission.result) {
+                    if (this.submission.submitted && submission.result.completionDate) {
+                        this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                            this.result = assessmentResult;
+                        });
+                    } else {
+                        this.result = submission.result;
+                    }
+                }
                 this.isActive =
                     this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
             },

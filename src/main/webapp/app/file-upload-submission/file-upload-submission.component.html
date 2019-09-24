@@ -63,11 +63,6 @@
                 </div>
             </div>
         </div>
-        <div *ngIf="result && result.feedbacks && result.feedbacks.length > 0" class="col-md-12 col-lg-10 col-xl-8">
-            <b><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</b>
-            <br />
-            <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
-        </div>
     </div>
 
     <div class="card-body">
@@ -79,6 +74,11 @@
             <span class="ml-1 badge badge-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
+        </div>
+        <div *ngIf="result?.feedbacks && result.feedbacks.length > 0">
+            <br />
+            <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
+            <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
         </div>
         <div class="row mt-4" *ngIf="result && result.completionDate && result.hasFeedback && !hasComplaint && !hasRequestMoreFeedback">
             <button

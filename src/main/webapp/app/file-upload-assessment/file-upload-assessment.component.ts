@@ -168,23 +168,24 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.exercise = studentParticipation.exercise as FileUploadExercise;
         this.result = this.submission.result;
-        if (this.result.hasComplaint) {
-            this.getComplaint();
+        if (this.result) {
+            if (this.result.hasComplaint) {
+                this.getComplaint();
+            }
+            if (!this.result.feedbacks) {
+                this.result.feedbacks = [];
+            }
+            this.submission.participation.results = [this.result];
+            this.result.participation = this.submission.participation;
+            if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.info('artemisApp.assessment.messages.lock');
+            }
         }
-        if (!this.result.feedbacks) {
-            this.result.feedbacks = [];
-        }
-
         this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
         this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
-        this.submission.participation.results = [this.result];
-        this.result.participation = this.submission.participation;
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
-            this.jhiAlertService.clear();
-            this.jhiAlertService.info('artemisApp.assessment.messages.lock');
-        }
         this.checkPermissions();
         this.busy = false;
         this.isLoading = false;
