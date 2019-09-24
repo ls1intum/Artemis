@@ -16,6 +16,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -102,6 +103,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                             this.result = assessmentResult;
                         });
+                        this.complaintService
+                            .findByResultId(this.submission.result.id)
+                            .pipe(filter(res => !!res.body))
+                            .subscribe(res => {
+                                if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
+                                    this.hasRequestMoreFeedback = true;
+                                } else {
+                                    this.hasComplaint = true;
+                                }
+                            });
                     } else {
                         this.result = submission.result;
                     }

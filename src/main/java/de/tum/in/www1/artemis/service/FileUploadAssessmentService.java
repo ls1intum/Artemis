@@ -3,13 +3,14 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class FileUploadAssessmentService extends AssessmentService {
@@ -37,13 +38,15 @@ public class FileUploadAssessmentService extends AssessmentService {
      * This function is used for submitting a manual assessment/result. It updates the completion date, sets the assessment type to MANUAL and sets the assessor attribute.
      * Furthermore, it saves the result in the database.
      *
-     * @param result   the result the assessment belongs to
+     * @param resultId   the result the assessment belongs to
      * @param fileUploadExercise the exercise the assessment belongs to
      * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitAssessment(Result result, FileUploadExercise fileUploadExercise, ZonedDateTime submissionDate) {
+    public Result submitAssessment(long resultId, FileUploadExercise fileUploadExercise, ZonedDateTime submissionDate) {
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(fileUploadExercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(fileUploadExercise.getMaxScore());

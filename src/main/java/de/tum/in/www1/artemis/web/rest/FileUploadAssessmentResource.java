@@ -107,7 +107,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
         Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise);
         if (submit) {
-            fileUploadAssessmentService.submitAssessment(result, fileUploadExercise, fileUploadSubmission.getSubmissionDate());
+            fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
