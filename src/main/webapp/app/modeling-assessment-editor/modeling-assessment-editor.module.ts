@@ -9,10 +9,9 @@ import { AssessmentInstructionsModule } from 'app/assessment-instructions/assess
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment-shared';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
@@ -25,7 +24,6 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         AssessmentInstructionsModule,
         ModelingAssessmentModule,
         FontAwesomeModule,
-        ArtemisComplaintsForTutorModule,
         ArtemisAssessmentSharedModule,
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],

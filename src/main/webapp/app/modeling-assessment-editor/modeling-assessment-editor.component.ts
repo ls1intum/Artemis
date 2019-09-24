@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { filter } from 'rxjs/operators';
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
-export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentEditorComponent implements OnInit {
     submission: ModelingSubmission | null;
     model: UMLModel | null;
     modelingExercise: ModelingExercise | null;
@@ -41,7 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
-    showBackButton: boolean;
+    hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
     canOverride = false;
@@ -91,11 +91,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             }
         });
         this.route.queryParamMap.subscribe(queryParams => {
-            this.showBackButton = queryParams.get('showBackButton') === 'true';
+            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
         });
     }
-
-    ngOnDestroy() {}
 
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(

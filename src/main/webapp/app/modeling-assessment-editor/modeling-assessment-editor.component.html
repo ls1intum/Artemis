@@ -1,5 +1,5 @@
 <jhi-assessment-layout
-    [showBackButton]="showBackButton"
+    [hideBackButton]="hideBackButton"
     (navigateBack)="goToExerciseDashboard()"
     [isLoading]="isLoading"
     [busy]="busy"
@@ -53,13 +53,5 @@
                 <span jhiTranslate="modelingAssessmentEditor.highlightingColors.missingAssessment">missing assessment</span>
             </div>
         </div>
-    </div>
-    <div class="mt-3" *ngIf="complaint">
-        <jhi-complaints-for-tutor-form
-            [complaint]="complaint"
-            [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
-            (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-        >
-        </jhi-complaints-for-tutor-form>
     </div>
 </jhi-assessment-layout>
