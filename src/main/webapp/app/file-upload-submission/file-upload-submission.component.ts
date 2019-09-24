@@ -15,7 +15,6 @@ import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { Feedback } from 'app/entities/feedback';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -165,22 +164,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');
         this.submittedFileExtension = fileName[fileName.length - 1];
-    }
-
-    /**
-     * Find "General Feedback" item for Result, if it exists.
-     * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
-     * @return General Feedback item, if it exists and if it has a Feedback Text.
-     */
-    get generalFeedback(): Feedback | null {
-        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
-            if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
-                return feedbackWithoutReference;
-            }
-        }
-
-        return null;
     }
 
     /**
