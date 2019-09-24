@@ -92,6 +92,14 @@
                 "testCasesUpdated": "The test cases were updated successfully.",
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
             },
+            "export": {
+                "downloadAllStudents": "Download the repositories of all students",
+                "filterLateSubmissions": "Filter late submissions",
+                "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
+                "addStudentName": "Add student name to project",
+                "squashAfterInstructor": "Squash all changes after instructor into one commit",
+                "normalizeCodeStyle": "Normalize code style (line endings, encoding)"
+            },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
             "resubmitAll": "Trigger all",

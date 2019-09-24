@@ -92,6 +92,14 @@
                 "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
                 "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}."
             },
+            "export": {
+                "downloadAllStudents": "Lade Repositories von allen Studenten herunter",
+                "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
+                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe",
+                "addStudentName": "Name der Studenten zum Projekt hinzufügen",
+                "squashAfterInstructor": "Alle Commits des Studenten in ein Commit zusammenfassen",
+                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)"
+            },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
             "resubmitAll": "Alle erneut ausführen",
