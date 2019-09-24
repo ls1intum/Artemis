@@ -18,7 +18,7 @@ public abstract class VcsRepositoryUrl {
 
     public abstract VcsRepositoryUrl withUser(final String username);
 
-    public URL getRegularUrl() {
+    public URL getURL() {
         return this.url;
     }
 

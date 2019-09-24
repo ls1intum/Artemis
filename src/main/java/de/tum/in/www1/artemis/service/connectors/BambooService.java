@@ -191,9 +191,6 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
-        if (!isBuildPlanEnabled(participation.getBuildPlanId())) {
-            return;
-        }
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
@@ -349,17 +346,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Updates the configured repository for a given plan to the given Bamboo Server repository.
-     *
-     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
-     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
-     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
-     * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoName              The lower level identifier of the repository.
-     * @return                      a message that indicates the result of the plan repository update.
-     * @throws BambooException      if a communication issue occurs.
-     */
+    @Override
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
         return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
     }

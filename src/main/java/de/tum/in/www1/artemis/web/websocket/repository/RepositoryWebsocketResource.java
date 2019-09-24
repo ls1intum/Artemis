@@ -136,12 +136,12 @@ public class RepositoryWebsocketResource {
 
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
         String topic = "/topic/test-repository/" + exerciseId + "/files";
 
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getRegularUrl());
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getURL());
         }
         catch (IllegalAccessException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

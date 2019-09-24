@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -326,10 +326,10 @@ public class ProgrammingExerciseService {
         String templatePlanName = BuildPlanType.TEMPLATE.getName();
         String solutionPlanName = BuildPlanType.SOLUTION.getName();
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
 
         // Save participations to get the ids required for the webhooks
         templateParticipation.setProgrammingExercise(programmingExercise);
@@ -337,9 +337,9 @@ public class ProgrammingExerciseService {
         templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName).getRegularUrl();
-        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName).getRegularUrl();
-        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName).getRegularUrl();
+        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
+        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
+        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
@@ -877,7 +877,7 @@ public class ProgrammingExerciseService {
      * @param templateExercise The template exercise which plans should get copied
      * @param newExercise The new exercise to which all plans should get copied
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
@@ -885,6 +885,7 @@ public class ProgrammingExerciseService {
         final var templateKey = templateExercise.getProjectKey();
         final var targetKey = newExercise.getProjectKey();
         final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetExerciseProjectKey = newExercise.getProjectKey();
 
         // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
         // running the plan for the first time
@@ -892,8 +893,18 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
-        continuousIntegrationService.get().configureBuildPlan(templateParticipation);
-        continuousIntegrationService.get().configureBuildPlan(solutionParticipation);
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTemplateRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getSolutionRepositoryName());
+        try {
+            continuousIntegrationService.get().triggerBuild(templateParticipation);
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException e) {
+            log.error("Unable to trigger imported build plans", e);
+            throw e;
+        }
     }
 
     /**
@@ -926,7 +937,7 @@ public class ProgrammingExerciseService {
      */
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
 
     /**

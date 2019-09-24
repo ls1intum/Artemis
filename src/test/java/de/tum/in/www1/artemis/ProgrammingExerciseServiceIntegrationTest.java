@@ -173,7 +173,7 @@ public class ProgrammingExerciseServiceIntegrationTest {
         when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.SOLUTION.getName()), anyString(), anyString(), matches(BuildPlanType.SOLUTION.getName())))
                 .thenReturn(toBeImported.getSolutionBuildPlanId());
         when(bambooService.enablePlan(anyString())).thenReturn("");
-        doCallRealMethod().when(bitbucketService).getCloneURL(anyString(), anyString());
+        doCallRealMethod().when(bitbucketService).getCloneRepositoryUrl(anyString(), anyString());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
     }
@@ -183,9 +183,9 @@ public class ProgrammingExerciseServiceIntegrationTest {
         final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
         final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl("http://template-url"));
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl("http://solution-url"));
-        when(bitbucketService.getCloneURL(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl("http://tests-url"));
+        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl("http://template-url"));
+        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl("http://solution-url"));
+        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl("http://tests-url"));
 
         return programmingExerciseService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }

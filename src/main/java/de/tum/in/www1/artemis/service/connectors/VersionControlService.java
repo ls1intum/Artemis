@@ -50,7 +50,7 @@ public interface VersionControlService {
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneURL(String projectKey, String repositorySlug);
+    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.

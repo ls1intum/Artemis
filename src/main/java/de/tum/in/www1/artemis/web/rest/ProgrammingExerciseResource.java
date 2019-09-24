@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -332,8 +333,15 @@ public class ProgrammingExerciseResource {
 
         final var template = optionalTemplate.get();
         final var imported = programmingExerciseService.importProgrammingExerciseBasis(template, newExercise);
+        HttpHeaders responseHeaders;
         programmingExerciseService.importRepositories(template, imported);
-        programmingExerciseService.importBuildPlans(template, imported);
+        try {
+            programmingExerciseService.importBuildPlans(template, imported);
+            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
+        }
+        catch (HttpException e) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
+        }
 
         // Remove unnecessary fields
         imported.setTestCases(null);
@@ -341,7 +349,7 @@ public class ProgrammingExerciseResource {
         imported.setSolutionParticipation(null);
         imported.setExerciseHints(null);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle())).body(imported);
+        return ResponseEntity.ok().headers(responseHeaders).body(imported);
     }
 
     /**

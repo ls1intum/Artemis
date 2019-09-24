@@ -173,4 +173,16 @@ public interface ContinuousIntegrationService {
      * @return the message indicating the result of the enabling operation.
      */
     String enablePlan(String planKey);
+
+    /**
+     * Updates the configured repository for a given plan to the given Bamboo Server repository.
+     *
+     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
+     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
+     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
+     * @param repoProjectName       The key of the project that contains the repository.
+     * @param repoName              The lower level identifier of the repository.
+     * @return                      a message that indicates the result of the plan repository update.
+     */
+    String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
 }
