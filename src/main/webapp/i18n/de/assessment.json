@@ -19,6 +19,16 @@
                 "assessmentTitle": "Titel eingeben",
                 "feedback": "Feedback",
                 "scoreFor": "Bewertung für"
+            },
+            "messages": {
+                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+                "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
+                "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
+                "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
+                "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",
+                "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+                "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             }
         }
     }

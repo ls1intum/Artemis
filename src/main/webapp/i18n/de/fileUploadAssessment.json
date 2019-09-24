@@ -2,16 +2,16 @@
     "artemisApp": {
         "fileUploadAssessment": {
             "editorTitle": "Bewertung Editor für Datei Upload Übung {{ title }}",
-            "messages": {
-                "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest."
-            },
-            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
-            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "submissionFile": "Submission Datei",
             "notFound": "Wir haben keine neue Datei Upload Submission ohne Bewertung gefunden, bitte gehe zurück.",
             "addFeedback": "Neues Feedback hinzufügen",
             "assessInstruction": "Bitte klickst du auf \"Neues Feedback hinzufügen\".",
-            "deleteAssessment": "Bewertung {{ index }} löschen ?"
+            "deleteAssessment": "Bewertung {{ index }} löschen ?",
+            "error": {
+                "invalidAssessments": "Deine Bewertung ist nicht gültig!",
+                "invalidScoreMustBeNumber": "Das Score-Feld muss eine Zahl sein und darf nicht leer sein!",
+                "invalidNeedScoreOrFeedbackAndTitle": "Jedes Feedback-Element muss mindestens ein Title und eine Punktzahl oder ein Feedback enthalten."
+            }
         }
     }
 }
