@@ -573,4 +573,11 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
     }
+
+    @GetMapping(value = "/programming-exercises/{programmingExerciseId}/set-test-cases-changed", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> setTestCasesChanged(@PathVariable Long programmingExerciseId) {
+        programmingExerciseService.setTestCasesChanged(programmingExerciseId, true);
+        return ResponseEntity.ok().build();
+    }
 }

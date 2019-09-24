@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -771,5 +772,20 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException, AccessForbiddenException {
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        if (programmingExerciseOpt.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        boolean hasPermissions = authCheckService.isAtLeastInstructorForExercise(programmingExercise);
+        if (!hasPermissions) {
+            throw new AccessForbiddenException("User is not allowed to access programming exercise with id " + programmingExerciseId);
+        }
+
+        programmingExercise.setTestCasesChanged(testCasesChanged);
+        return programmingExercise;
     }
 }
