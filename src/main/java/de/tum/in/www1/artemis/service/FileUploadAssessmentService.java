@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +74,10 @@ public class FileUploadAssessmentService extends AssessmentService {
         if (result.getCompletionDate() != null) {
             checkAssessmentDueDate(fileUploadExercise);
         }
-        checkGeneralFeedback(fileUploadAssessment);
+        final long generalFeedbackCount = fileUploadAssessment.stream().filter(feedback -> feedback.getCredits() == 0).count();
+        if (generalFeedbackCount > 1) {
+            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+        }
 
         result.setHasComplaint(false);
         result.setExampleResult(fileUploadSubmission.isExampleSubmission());
