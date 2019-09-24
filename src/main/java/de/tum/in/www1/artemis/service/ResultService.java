@@ -48,11 +48,13 @@ public class ResultService {
 
     private final ObjectMapper objectMapper;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     private final ProgrammingExerciseTestCaseService testCaseService;
 
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService) {
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseTestCaseService testCaseService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -176,6 +178,7 @@ public class ResultService {
             // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 extractTestCasesFromResult(programmingExercise, result);
+                programmingExerciseService.setTestCasesChanged(programmingExercise.getId(), false);
             }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
