@@ -21,7 +21,6 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
 import { fileUploadAssessmentRoutes } from 'app/file-upload-assessment/file-upload-assessment.route';
@@ -29,7 +28,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
-import { FileUploadAssessmentDetailComponent } from 'app/file-upload-assessment/file-upload-assessment-detail/file-upload-assessment-detail.component';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,12 +48,18 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([fileUploadAssessmentRoutes[0]])],
+            imports: [
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                RouterTestingModule.withRoutes([fileUploadAssessmentRoutes[0]]),
+                ArtemisAssessmentSharedModule,
+                ModelingAssessmentModule,
+                TranslateModule.forRoot(),
+            ],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ResizableInstructionsComponent),
-                MockComponent(FileUploadAssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [
@@ -103,7 +110,7 @@ describe('FileUploadAssessmentComponent', () => {
                 resultString: '1 of 12 points',
                 completionDate: moment('2019-07-09T11:51:23.251Z'),
                 successful: false,
-                score: 8,
+                score: 1,
                 rated: true,
                 hasFeedback: false,
                 submission: comp.submission,
@@ -115,13 +122,8 @@ describe('FileUploadAssessmentComponent', () => {
 
             fixture.detectChanges();
 
-            // check if assessNextButton is available
-            const assessNextButton = debugElement.query(By.css('#assessNextButton'));
-            expect(assessNextButton).to.exist;
-
-            // check if getTextSubmissionForExerciseWithoutAssessment() is called and works
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(unassessedSubmission));
-            assessNextButton.nativeElement.click();
+            comp.assessNextOptimal();
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
             expect(comp.unassessedSubmission).to.be.deep.equal(unassessedSubmission);
 
