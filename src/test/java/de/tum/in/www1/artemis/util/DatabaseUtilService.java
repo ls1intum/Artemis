@@ -516,8 +516,8 @@ public class DatabaseUtilService {
     }
 
     @Transactional
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
-            String assessorLogin) {
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
@@ -525,6 +525,7 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
         result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        result.setFeedbacks(feedbacks);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.setResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
@@ -532,6 +533,12 @@ public class DatabaseUtilService {
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<Feedback>());
     }
 
     @Transactional

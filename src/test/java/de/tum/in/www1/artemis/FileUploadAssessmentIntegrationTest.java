@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,13 +93,15 @@ public class FileUploadAssessmentIntegrationTest {
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
 
         Result updatedResult = request.putWithResponseBody("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(updatedResult.getFeedbacks().size()).isEqualTo(2);
     }
 
     @Test
@@ -123,14 +126,18 @@ public class FileUploadAssessmentIntegrationTest {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
-        Result result = request.putWithResponseBodyAndParams("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class,
-                HttpStatus.OK, params);
+        Result result = request.putWithResponseBodyAndParams("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+                params);
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
 
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(result.getFeedbacks().size()).isEqualTo(2);
+        assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
+        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test

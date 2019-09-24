@@ -132,4 +132,18 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         return course;
     }
+
+    public static List<Feedback> generateFeedback() {
+        List<Feedback> feedbacks = new ArrayList<>();
+        Feedback positiveFeedback = new Feedback();
+        positiveFeedback.setCredits(2D);
+        positiveFeedback.setReference("theory");
+        feedbacks.add(positiveFeedback);
+        Feedback negativeFeedback = new Feedback();
+        negativeFeedback.setCredits(-1D);
+        negativeFeedback.setDetailText("Bad solution");
+        negativeFeedback.setReference("practice");
+        feedbacks.add(negativeFeedback);
+        return feedbacks;
+    }
 }
