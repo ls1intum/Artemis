@@ -961,16 +961,12 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations for the given student including all results
+     * Get all participations for the given student and exercises combined with their submissions with a result
      *
-     * @param studentId the user id of the student
-     * @return the list of participations of the given student including all results
+     * @param studentId the id of the student for which the participations should be found
+     * @param exercises the exercises for which participations should be found
+     * @return student's participations
      */
-    @Transactional(readOnly = true)
-    public List<StudentParticipation> findWithResultsByStudentId(Long studentId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdWithEagerResults(studentId, exercises);
-    }
-
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentId(Long studentId, Set<Exercise> exercises) {
         return studentParticipationRepository.findAllByStudentIdWithSubmissionsWithResult(studentId, exercises);
     }
