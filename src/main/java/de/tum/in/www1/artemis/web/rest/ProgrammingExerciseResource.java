@@ -326,7 +326,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndBaseParticipations(sourceExerciseId);
+        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
         if (optionalTemplate.isEmpty()) {
             return notFound();
         }
