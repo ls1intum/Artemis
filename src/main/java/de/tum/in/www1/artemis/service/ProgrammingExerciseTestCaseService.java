@@ -83,6 +83,7 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
 
+        programmingExerciseService.setTestCasesChanged(exerciseId, true);
         return updatedTests;
     }
 
@@ -98,6 +99,7 @@ public class ProgrammingExerciseTestCaseService {
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1);
         }
+        programmingExerciseService.setTestCasesChanged(exerciseId, true);
         return testCases;
     }
 
