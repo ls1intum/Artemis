@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { HighlightedTextAreaComponent } from 'app/text-assessment/highlighted-text-area/highlighted-text-area.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment-shared';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
