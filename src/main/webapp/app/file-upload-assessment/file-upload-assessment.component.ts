@@ -1,19 +1,15 @@
-/* angular */
 import { Component, OnInit, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-
-/* 3rd party*/
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import * as moment from 'moment';
+import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
-
-/* application */
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { AccountService, WindowRef } from 'app/core';
 import { StudentParticipation } from 'app/entities/participation';
