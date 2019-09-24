@@ -71,8 +71,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return this.jhiAlertService.error('artemisApp.fileUploadExercise.error', null, undefined);
         }
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
-            (data: StudentParticipation) => {
-                this.participation = data;
+            (submission: FileUploadSubmission) => {
+                this.participation = <StudentParticipation>submission.participation;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
@@ -85,15 +85,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.numberOfAllowedComplaints = allowedComplaints;
                     });
                 }
-
-                if (data.submissions && data.submissions.length > 0) {
-                    this.submission = data.submissions[0] as FileUploadSubmission;
-                    if (this.submission && this.submission.submitted) {
-                        this.setSubmittedFile();
-                    }
+                this.submission = submission;
+                if (this.submission.submitted) {
+                    this.setSubmittedFile();
                 }
-                if (data.results && data.results.length > 0) {
-                    this.result = data.results[0] as Result;
+                if (submission.result) {
+                    this.result = submission.result;
                 }
 
                 this.isActive =
