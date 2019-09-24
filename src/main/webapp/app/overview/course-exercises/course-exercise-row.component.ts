@@ -65,7 +65,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
-        if (this.exercise.studentParticipations.length > 0) {
+        if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
