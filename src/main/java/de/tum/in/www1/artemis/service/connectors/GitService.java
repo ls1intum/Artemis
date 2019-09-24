@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -368,18 +369,18 @@ public class GitService {
      *
      * @param repository Local Repository Object.
      * @param participation   ProgrammingExerciseStudentParticipation associated with this repo.
+     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
     @Transactional(readOnly = true)
-    public void filterLateSubmissions(Repository repository, ProgrammingExerciseStudentParticipation participation) {
-        Exercise exercise = participation.getProgrammingExercise();
-        if (exercise.getDueDate() == null) {
-            // No dates set on exercise
+    public void filterLateSubmissions(Repository repository, ProgrammingExerciseStudentParticipation participation, ZonedDateTime filterLateSubmissionsDate) {
+        if (filterLateSubmissionsDate == null) {
+            // No date set in client and exercise has no due date
             return;
         }
 
         try {
             Git git = new Git(repository);
-            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream().filter(s -> s.getSubmissionDate().isBefore(exercise.getDueDate()))
+            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream().filter(s -> s.getSubmissionDate().isBefore(filterLateSubmissionsDate))
                     .sorted(Comparator.comparing(Submission::getSubmissionDate).reversed()).findFirst();
 
             String commitHash;
@@ -393,7 +394,7 @@ public class GitService {
                 log.debug("Last valid submission is not present for participation {}", participation.toString());
                 // Get last commit before deadline
                 Date since = Date.from(Instant.EPOCH);
-                Date until = Date.from(exercise.getDueDate().toInstant());
+                Date until = Date.from(filterLateSubmissionsDate.toInstant());
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
                 RevCommit latestCommitBeforeDeadline = commits.iterator().next();

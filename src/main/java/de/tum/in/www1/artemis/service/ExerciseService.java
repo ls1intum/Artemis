@@ -385,7 +385,7 @@ public class ExerciseService {
                 gitService.get().resetToOriginMaster(repo); // start with clean state
                 if (filterLateSubmissions) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
-                    gitService.get().filterLateSubmissions(repo, studentParticipation);
+                    gitService.get().filterLateSubmissions(repo, studentParticipation, filterLateSubmissionsDate);
                 }
                 if (addStudentName) {
                     log.debug("Adding student name to participation {}", participation.toString());
