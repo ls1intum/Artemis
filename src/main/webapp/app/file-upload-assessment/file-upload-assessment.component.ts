@@ -152,6 +152,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .subscribe(
                 res => {
                     this.handleReceivedSubmission(res.body!);
+                    this.loadFeedbacks(this.result.feedbacks);
                 },
                 (error: HttpErrorResponse) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
@@ -463,6 +464,17 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.jhiAlertService.error('artemisApp.assessment.updateAfterComplaintFailed');
             },
         );
+    }
+
+    private loadFeedbacks(feedbacks: Feedback[]): void {
+        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.credits == 0);
+        if (generalFeedbackIndex !== -1) {
+            this.generalFeedback = feedbacks[generalFeedbackIndex];
+            feedbacks.splice(generalFeedbackIndex, 1);
+        } else {
+            this.generalFeedback = new Feedback();
+        }
+        this.referencedFeedback = feedbacks;
     }
 
     private onError(error: string) {
