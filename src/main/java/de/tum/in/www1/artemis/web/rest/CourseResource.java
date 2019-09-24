@@ -95,7 +95,8 @@ public class CourseResource {
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -290,13 +291,7 @@ public class CourseResource {
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
         Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
-        // this would also improve the performance for other REST calls
-
-        // type
-        Set<Exercise> activeExercises = courses.stream().flatMap(c -> c.getExercises().stream()).collect(Collectors.toSet());
 
         long startParticipationCall = System.currentTimeMillis();
         List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentId(user.getId(), activeExercises);
@@ -314,7 +309,7 @@ public class CourseResource {
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
-                + " exercises for user " + principal.getName());
+                + " exercises for user " + user.getLogin());
 
         return courses;
     }
