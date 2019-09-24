@@ -175,8 +175,7 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(submission).isNotNull();
         assertThat(submission.getResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getResult().getFeedbacks().size()).isEqualTo(2);
-
+        assertThat(submission.getResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
