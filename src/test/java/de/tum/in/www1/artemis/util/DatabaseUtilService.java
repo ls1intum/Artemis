@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.respository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 
@@ -108,6 +109,9 @@ public class DatabaseUtilService {
 
     @Autowired
     ModelingAssessmentService modelingAssessmentService;
+
+    @Autowired
+    ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
     ObjectMapper mapper;
@@ -706,13 +710,7 @@ public class DatabaseUtilService {
     @Transactional
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
         final var lazyExcercise = programmingExerciseRepository.findAll().get(0);
-        final var exercise = programmingExerciseRepository.findOneWithEagerEverything(lazyExcercise);
-        // exercises.forEach(exercise -> {
-        // exercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(exercise.getTemplateParticipation()));
-        // exercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(exercise.getSolutionParticipation()));
-        // });
-
-        return exercise;
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExcercise);
     }
 
     @Transactional
