@@ -17,7 +17,6 @@ import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
 import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
-import { ProgrammingExerciseImportPopupComponent, ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -79,7 +78,7 @@ export const programmingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/programming-exercise/:id/import/:targetCourseId',
+        path: 'course/:courseId/programming-exercise/import/:id',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -129,16 +128,6 @@ export const programmingExercisePopupRoute: Routes = [
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'course/:courseId/programming-exercise-import',
-        component: ProgrammingExerciseImportPopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

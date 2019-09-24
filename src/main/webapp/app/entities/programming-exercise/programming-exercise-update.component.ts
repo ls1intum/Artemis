@@ -10,6 +10,7 @@ import { ProgrammingExerciseService } from './services/programming-exercise.serv
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -76,33 +77,41 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise = programmingExercise;
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage;
         });
-        this.activatedRoute.params.subscribe(params => {
-            if (params['targetCourseId']) {
-                const targetCourseId = params['targetCourseId'];
-                this.isImport = true;
-                this.courseService.find(targetCourseId).subscribe(res => (this.programmingExercise.course = res.body!));
+        // If it is an import, just get the course, otherwise handle the edit and new cases
+        this.activatedRoute.url
+            .pipe(
+                tap(segments => (this.isImport = segments.some(segment => segment.path === 'import'))),
+                switchMap(() => this.activatedRoute.params),
+                tap(params => {
+                    if (this.isImport) {
+                        const targetCourseId = params['courseId'];
+                        this.isImport = true;
+                        this.courseService.find(targetCourseId).subscribe(res => (this.programmingExercise.course = res.body!));
 
-                this.programmingExercise.dueDate = null;
-                this.programmingExercise.assessmentDueDate = null;
-                this.programmingExercise.releaseDate = null;
-                this.programmingExercise.shortName = '';
-                this.programmingExercise.title = '';
-            }
-            if (params['courseId']) {
-                const courseId = params['courseId'];
-                this.courseService.find(courseId).subscribe(res => {
-                    const course = res.body!;
-                    this.programmingExercise.course = course;
-                    this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
-                    this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
-                        (categoryRes: HttpResponse<string[]>) => {
-                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                        },
-                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                    );
-                });
-            }
-        });
+                        this.programmingExercise.dueDate = null;
+                        this.programmingExercise.assessmentDueDate = null;
+                        this.programmingExercise.releaseDate = null;
+                        this.programmingExercise.shortName = '';
+                        this.programmingExercise.title = '';
+                    } else {
+                        if (params['courseId']) {
+                            const courseId = params['courseId'];
+                            this.courseService.find(courseId).subscribe(res => {
+                                const course = res.body!;
+                                this.programmingExercise.course = course;
+                                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
+                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
+                                    (categoryRes: HttpResponse<string[]>) => {
+                                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                                    },
+                                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                );
+                            });
+                        }
+                    }
+                }),
+            )
+            .subscribe();
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;

@@ -23,7 +23,6 @@ import {
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
     ProgrammingExerciseImportComponent,
-    ProgrammingExerciseImportPopupComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -71,7 +70,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseManageTestCasesComponent,
         ProgrammingExerciseImportComponent,
-        ProgrammingExerciseImportPopupComponent,
         // Form components
         ProgrammingExerciseDueDateSelectComponent,
     ],
@@ -86,7 +84,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
-        ProgrammingExerciseImportPopupComponent,
         ProgrammingExerciseImportComponent,
         FaIconComponent,
     ],

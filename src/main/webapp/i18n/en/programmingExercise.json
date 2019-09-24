@@ -106,6 +106,8 @@
             "resultETA": "Result ETA: {{eta}}",
             "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system.",
             "import": {
+                "attention": "Attention! ",
+                "markdownWarning": "You can edit the problem statement after importing the exercise.",
                 "loading": "Loading...",
                 "table": {
                     "title": "Title",

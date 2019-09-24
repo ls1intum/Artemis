@@ -107,6 +107,8 @@
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems."
         },
         "import": {
+            "attention": "Achtung! ",
+            "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
             "loading": "Lade...",
             "table": {
                 "title": "Titel",

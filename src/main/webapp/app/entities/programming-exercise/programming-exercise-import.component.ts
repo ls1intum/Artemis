@@ -1,11 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { switchMap, tap } from 'rxjs/operators';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services';
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Course, CourseService } from 'app/entities/course';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/components/table';
 
 enum TableColumn {
@@ -122,57 +120,5 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      */
     openImport(exercise: ProgrammingExercise) {
         this.activeModal.close(exercise);
-    }
-}
-
-@Component({
-    selector: 'jhi-programming-exercise-import-popup',
-    template: '',
-})
-export class ProgrammingExerciseImportPopupComponent implements OnInit, OnDestroy {
-    private routeSub: Subscription;
-    private ngbModalRef: NgbModalRef | null = null;
-
-    constructor(private route: ActivatedRoute, private modalService: NgbModal, private router: Router, private courseService: CourseService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            this.open(params['courseId']);
-        });
-    }
-
-    private open(courseId: number): Promise<NgbModalRef> {
-        return new Promise<NgbModalRef>((resolve, reject) => {
-            if (this.ngbModalRef != null) {
-                resolve(this.ngbModalRef);
-            }
-
-            setTimeout(() => {
-                this.courseService.find(courseId).subscribe(res => {
-                    const course = res.body!;
-                    this.ngbModalRef = this.createImportModalRef(course);
-                    resolve(this.ngbModalRef);
-                });
-            }, 0);
-        });
-    }
-
-    private createImportModalRef(course: Course): NgbModalRef {
-        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: ProgrammingExercise) => {
-                this.router.navigateByUrl(`/course/${result.course!!.id}/programming-exercise/${result.id}/import/${course.id}`);
-                this.ngbModalRef = null;
-            },
-            reason => {
-                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                this.ngbModalRef = null;
-            },
-        );
-        return modalRef;
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }

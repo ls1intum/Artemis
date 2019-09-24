@@ -18,7 +18,7 @@
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-import-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
-            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-import'] } }]"
+            (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel">

@@ -21,6 +21,6 @@ export class ProgrammingExercisePagingService {
             .set('sortingOrder', pageable.sortingOrder)
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
-        return this.http.get(`${this.resourceUrl}/pageable`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }
