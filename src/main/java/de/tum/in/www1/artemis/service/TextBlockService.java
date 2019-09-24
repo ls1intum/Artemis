@@ -21,6 +21,7 @@ public class TextBlockService {
      * As line breaks are stored and handled in UNIX style (also on Windows), we always use '\n' instead of the platform-dependent separator.
      */
     private static final String LINE_SEPARATOR = "\\n";
+
     private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
 
     /**
