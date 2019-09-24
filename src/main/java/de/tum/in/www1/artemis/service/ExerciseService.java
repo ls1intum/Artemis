@@ -19,6 +19,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -65,6 +66,9 @@ public class ExerciseService {
     private final QuizScheduleService quizScheduleService;
 
     private final FileService fileService;
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String REPO_DOWNLOAD_CLONE_PATH;
 
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
@@ -362,6 +366,9 @@ public class ExerciseService {
 
     private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions,
             ZonedDateTime filterLateSubmissionsDate, boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
+        // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+        String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
+
         Exercise exercise = findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;
@@ -378,22 +385,25 @@ public class ExerciseService {
                     continue;
                 }
 
-                boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(studentParticipation.getRepositoryUrlAsUrl());
-
-                Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
+                log.error("DOWNLOAD PATH IS " + repoDownloadClonePath);
+                Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation, repoDownloadClonePath);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
+
                 if (filterLateSubmissions) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
                     gitService.get().filterLateSubmissions(repo, studentParticipation, filterLateSubmissionsDate);
                 }
+
                 if (addStudentName) {
                     log.debug("Adding student name to participation {}", participation.toString());
                     programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 }
+
                 if (squashAfterInstructor) {
                     log.debug("Squashing commits for participation {}", participation.toString());
                     gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 }
+
                 if (normalizeCodeStyle) {
                     log.debug("Normalizing code style for participation {}", participation.toString());
                     fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
@@ -401,21 +411,12 @@ public class ExerciseService {
                 }
 
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                Path zippedRepoFile = gitService.get().zipRepository(repo);
+                Path zippedRepoFile = gitService.get().zipRepository(repo, repoDownloadClonePath);
                 zippedRepoFiles.add(zippedRepoFile);
-                boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                if (!allowInlineEditor || !repoAlreadyExists) {
-                    // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
-                    // --> we are free to delete
-                    log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                    gitService.get().deleteLocalRepository(studentParticipation);
-                }
-                else {
-                    // finish with clean state
-                    gitService.get().checkoutBranch(repo);
-                    gitService.get().deleteLocalBranch(repo, "stager");
-                    gitService.get().resetToOriginMaster(repo);
-                }
+
+                // We can always delete the repository as it won't be used by the student (seperate path)
+                log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
+                gitService.get().deleteLocalRepository(studentParticipation, repoDownloadClonePath);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents " + allStudents
