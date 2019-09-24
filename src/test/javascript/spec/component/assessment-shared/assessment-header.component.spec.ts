@@ -1,9 +1,10 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, ActivatedRouteSnapshot } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
-import { AssessmentHeaderComponent } from 'app/assessment-shared';
+import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result';
@@ -58,14 +59,14 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should emit event on back button', () => {
-        spyOn(component.goBack, 'emit');
+        spyOn(component.navigateBack, 'emit');
         component.hideBackButton = false;
         fixture.detectChanges();
 
         const backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
 
         backButton.nativeElement.click();
-        expect(component.goBack.emit).toHaveBeenCalledTimes(1);
+        expect(component.navigateBack.emit).toHaveBeenCalledTimes(1);
     });
 
     it('should hide right side row-container if loading', () => {
@@ -175,7 +176,6 @@ describe('AssessmentHeaderComponent', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
-        component.isAtLeastInstructor = false;
         component.hasComplaint = false;
         fixture.detectChanges();
 
