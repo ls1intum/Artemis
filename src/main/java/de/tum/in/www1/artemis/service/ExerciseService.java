@@ -287,8 +287,7 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            programmingExerciseService.get().delete(programmingExercise, deleteBaseReposBuildPlans);
+            programmingExerciseService.get().delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             exerciseRepository.delete(exercise);
@@ -307,7 +306,7 @@ public class ExerciseService {
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (exercise instanceof ProgrammingExercise) {
-            for (StudentParticipation participation : exercise.getParticipations()) {
+            for (StudentParticipation participation : exercise.getStudentParticipations()) {
                 participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
             }
 
@@ -315,7 +314,7 @@ public class ExerciseService {
                 return;    // in this case, we are done
             }
 
-            for (StudentParticipation participation : exercise.getParticipations()) {
+            for (StudentParticipation participation : exercise.getStudentParticipations()) {
                 participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
             }
 
@@ -370,7 +369,7 @@ public class ExerciseService {
             log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return null;
         }
-        for (StudentParticipation participation : exercise.getParticipations()) {
+        for (StudentParticipation participation : exercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             try {
                 if (!allStudents && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
@@ -423,7 +422,7 @@ public class ExerciseService {
                         + " did not work as expected: " + ex);
             }
         }
-        if (exercise.getParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
+        if (exercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
             log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
             return null;
         }
@@ -462,7 +461,7 @@ public class ExerciseService {
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path finalZipFilePath = null;
         if (exercise instanceof ProgrammingExercise) {
-            exercise.getParticipations().forEach(participation -> {
+            exercise.getStudentParticipations().forEach(participation -> {
                 ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
                 try {
                     if (studentParticipation.getRepositoryUrl() != null) {     // ignore participations without repository URL and without student
@@ -481,7 +480,7 @@ public class ExerciseService {
                 }
             });
 
-            if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
+            if (!exercise.getStudentParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
                 try {
                     // create a large zip file with all zipped repos and provide it for download
                     log.info("Create zip file for all repositories");

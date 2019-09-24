@@ -54,25 +54,25 @@ public class ComplaintService {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        User originalSubmissor = studentParticipation.getStudent();
-        Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
+        User student = studentParticipation.getStudent();
+        Long courseId = studentParticipation.getExercise().getCourse().getId();
 
-        long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
+        long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
         if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
-        if (!isTimeOfComplaintValid(originalResult, originalResult.getParticipation().getExercise())) {
+        if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise())) {
             throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
         }
-        if (!originalSubmissor.getLogin().equals(principal.getName())) {
+        if (!student.getLogin().equals(principal.getName())) {
             throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
 
         originalResult.setHasComplaint(true);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
-        complaint.setStudent(originalSubmissor);
+        complaint.setStudent(student);
         complaint.setResult(originalResult);
         try {
             // Store the original result with the complaint

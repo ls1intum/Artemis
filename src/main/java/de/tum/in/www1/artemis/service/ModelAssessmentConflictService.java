@@ -109,9 +109,9 @@ public class ModelAssessmentConflictService {
     private void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(conflict -> {
             conflict.getCausingConflictingResult()
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
+                    .setResult(resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(conflict.getCausingConflictingResult().getResult().getId()).get());
             conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
+                    .setResult(resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(conflictingResult.getResult().getId()).get()));
         });
     }
 

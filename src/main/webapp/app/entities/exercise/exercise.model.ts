@@ -59,7 +59,7 @@ export abstract class Exercise implements BaseEntity {
     public categories: string[];
     public type: ExerciseType;
 
-    public participations: StudentParticipation[];
+    public studentParticipations: StudentParticipation[];
     public tutorParticipations: TutorParticipation[];
     public course: Course | null;
     public participationStatus: ParticipationStatus;

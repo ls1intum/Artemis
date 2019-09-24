@@ -6,7 +6,7 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "http://repo.spring.io/plugins-release" }
+        maven { url "https://repo.spring.io/plugins-release" }
         maven { url "https://plugins.gradle.org/m2/" }
         jcenter()
     }
@@ -103,7 +103,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks "bootRun"
 
 group = "de.tum.in.www1.artemis"
-version = "3.7.0"
+version = "3.7.1"
 description = "Interactive Learning with Individual Feedback"
 
 springBoot {
@@ -190,9 +190,9 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.9.9"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.9.9"
     implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.9.9"
-    implementation "javax.cache:cache-api"
+    implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP"
+    implementation "com.zaxxer:HikariCP:3.4.1"
     implementation "org.apache.commons:commons-lang3:3.9"
     implementation "org.apache.commons:commons-text:1.8"
     implementation "commons-io:commons-io"
@@ -200,7 +200,6 @@ dependencies {
     implementation "org.ehcache:ehcache"
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
-    implementation "org.hibernate:hibernate-envers"
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.liquibase:liquibase-core"
 //    liquibaseRuntime "org.liquibase:liquibase-core"
@@ -271,7 +270,7 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
-    commandLine "./gradlew", "test", "-x", "webpackBuildDev", "-x", "webpack"
+    commandLine "./gradlew", "test", "-x", "webpack"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -334,11 +333,11 @@ checkstyle {
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpackBuildDev", "-x", "webpack"
+    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpack"
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webpackBuildDev", "-x", "webpack", "-x", "test"
+    commandLine "./gradlew", "build", "-x", "webpack", "-x", "test"
 }
 
 // Available commands:

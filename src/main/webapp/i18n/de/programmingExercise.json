@@ -5,6 +5,7 @@
                 "title": "Programmieraufgaben",
                 "createLabel": "Neue Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
+                "generateLabel": "Neue Programmieraufgabe generieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"

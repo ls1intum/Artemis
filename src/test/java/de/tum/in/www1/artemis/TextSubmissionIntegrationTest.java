@@ -97,7 +97,7 @@ public class TextSubmissionIntegrationTest {
 
         Exercise returnedExercise = request.get("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Exercise.class);
 
-        assertThat(returnedExercise.getParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
+        assertThat(returnedExercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }
 
     @Test

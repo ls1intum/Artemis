@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -415,13 +416,14 @@ public class CompassService {
         Result result = modelingSubmission.getResult();
 
         if (result == null || !AssessmentType.MANUAL.equals(result.getAssessmentType())) {
-            long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+            StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+            long exerciseId = studentParticipation.getExercise().getId();
             if (automaticResultMaps.containsKey(exerciseId)) {
                 result = automaticResultMaps.get(exerciseId).get(modelingSubmission.getId());
             }
 
             if (result == null) {
-                result = new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation());
+                result = new Result().submission(modelingSubmission).participation(studentParticipation);
             }
         }
 

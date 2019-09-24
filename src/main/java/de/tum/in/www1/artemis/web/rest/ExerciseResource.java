@@ -394,7 +394,7 @@ public class ExerciseResource {
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
-            exercise.setParticipations(new HashSet<>());
+            exercise.setStudentParticipations(new HashSet<>());
 
             for (StudentParticipation participation : participations) {
 
