@@ -1,17 +1,12 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgJhipsterModule } from 'ng-jhipster';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { CookieModule } from 'ngx-cookie';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import {
-    faAngleDown,
-    faAngleRight,
     faAngleDoubleDown,
     faAngleDoubleUp,
+    faAngleDown,
+    faAngleRight,
+    faAngleUp,
     faArchive,
     faArrowLeft,
     faArrowRight,
@@ -20,12 +15,14 @@ import {
     faBan,
     faBars,
     faBell,
+    faBold,
     faBook,
     faCalendarAlt,
     faChalkboardTeacher,
     faChartPie,
     faCheck,
     faCheckCircle,
+    faCheckDouble,
     faChevronDown,
     faChevronLeft,
     faChevronRight,
@@ -34,19 +31,13 @@ import {
     faCircleNotch,
     faClock,
     faCloud,
+    faCode,
     faCodeBranch,
+    faCompress,
+    faCopy,
     faDownload,
     faEdit,
-    faCheckDouble,
-    faKeyboard,
-    faProjectDiagram,
-    faFileUpload,
-    faFilePowerpoint,
-    faThLarge,
-    faAngleUp,
-    faSortAmountUp,
-    faSortAmountDown,
-    faUndo,
+    faEquals,
     faEraser,
     faExclamationCircle,
     faExclamationTriangle,
@@ -54,81 +45,88 @@ import {
     faEye,
     faFile,
     faFileExport,
+    faFilePowerpoint,
+    faFileUpload,
     faFlag,
     faFolder,
     faFolderOpen,
     faFont,
     faGraduationCap,
+    faGripLines,
+    faGripLinesVertical,
     faHdd,
+    faHeading,
     faHeart,
     faHome,
+    faImage,
     faInfoCircle,
+    faItalic,
+    faKeyboard,
+    faLink,
     faList,
     faListAlt,
+    faListOl,
+    faListUl,
+    faPaperclip,
     faPencilAlt,
     faPlayCircle,
     faPlus,
-    faQuestionCircle,
+    faProjectDiagram,
     faQuestion,
+    faQuestionCircle,
+    faQuoteLeft,
     faRedo,
     faRoad,
+    faRobot,
     faSave,
     faSearch,
     faSignal,
     faSignInAlt,
     faSignOutAlt,
     faSort,
+    faSortAmountDown,
+    faSortAmountUp,
     faSortDown,
+    faSortNumericDown,
+    faSortNumericUp,
     faSortUp,
     faSpinner,
     faSync,
     faTachometerAlt,
     faTasks,
     faTerminal,
+    faThLarge,
     faThList,
     faTimes,
     faTimesCircle,
     faTrash,
     faTrashAlt,
+    faUnderline,
+    faUndo,
     faUnlink,
     faUpload,
     faUser,
     faUserPlus,
     faWrench,
-    faBold,
-    faItalic,
-    faUnderline,
-    faLink,
-    faHeading,
-    faQuoteLeft,
-    faCode,
-    faCopy,
-    faListOl,
-    faListUl,
-    faImage,
-    faPaperclip,
-    faGripLinesVertical,
-    faGripLines,
-    faCompress,
-    faEquals,
-    faRobot,
+    faHandPointUp,
+    faICursor,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
     faCheckCircle as farCheckCircle,
     faCheckSquare as farCheckSquare,
     faCircle as farCircle,
+    faCommentDots as farCommentDots,
+    faDotCircle as farDotCircle,
     faFileAlt as farFileAlt,
     faFileCode as farFileCode,
     faFileImage as farFileImage,
     faListAlt as farListAlt,
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
-    faCommentDots as farCommentDots,
     faSave as farSave,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
-    faDotCircle as farDotCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 @NgModule({
@@ -194,6 +192,8 @@ export class ArtemisIconsModule {
         library.addIcons(faAngleDown);
         library.addIcons(faSortAmountUp);
         library.addIcons(faSortAmountDown);
+        library.addIcons(faSortNumericUp);
+        library.addIcons(faSortNumericDown);
         library.addIcons(faChalkboardTeacher);
         library.addIcons(faCheckCircle);
         library.addIcons(faFileExport);
@@ -261,5 +261,7 @@ export class ArtemisIconsModule {
         library.addIcons(faAngleDoubleUp);
         library.addIcons(faCompress);
         library.addIcons(faEquals);
+        library.addIcons(faHandPointUp);
+        library.addIcons(faICursor);
     }
 }

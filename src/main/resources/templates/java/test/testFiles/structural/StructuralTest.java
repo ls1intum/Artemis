@@ -3,24 +3,47 @@ package ${packageName};
 import static org.junit.Assert.*;
 import ${packageName}.testutils.*;
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.*;
 import org.json.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
- *
- * This test evaluates if the following specified elements of a given class in the structure oracle are
+ * @version 2.2 (01.09.2019)
+ * <br><br>
+ * This test and its subclasses evaluate if the following specified elements of a given class in the structure oracle are
  * correctly implemented (in case they are specified):
- *
- * 1) The hierarchy, i.e. if a specified superclass is extended and if specified interfaces are implemented,
- * 2) The declared constructors their including access modifiers and parameters,
- * 3) The declared methods including their access modifiers, parameters and return type,
- * 4) The declared attributes including their access modifiers and types,
- * 5) The declared enum values of an enum.
+ * <br><br>
+ * 1) {@link ClassTest} checks the class itself, i.e. if a specified superclass is extended and if specified interfaces and annotations are implemented<br>
+ * 2) {@link ConstructorTest} checks declared constructors their including access modifiers, annotations and parameters<br>
+ * 3) {@link MethodTest} checks the declared methods including their access modifiers, annotations, parameters and return type<br>
+ * 4) {@link AttributeTest} checks the declared attributes including their access modifiers, annotations and types and the declared enum values of an enum<br>
+ * <br><br>
+ * All these elements are tests based on the test.json that specifies the structural oracle, i.e. how the solution has to look like in terms
+ * of structural elements. Note: the file test.json can be automatically generated in Artemis based on the diff between template and solution repo.
+ * However, the file test.json needs to be manually adapted afterwards because not all cases can be identified properly in an automatic manner.
+ * <br><br>
+ * To deactivate a check, simply remove the specified elements in the test.json file.
+ * If no constructors should be tested for correctness, please remove {@link ConstructorTest}, otherwise and empty test will be executed (limitation of Junit).
+ * If no methods should be tested for correctness, please remove {@link MethodTest}, otherwise and empty test will be executed (limitation of Junit)
+ * If no attributes and no enums should be tested for correctness, please remove {@link AttributeTest}, otherwise and empty test will be executed (limitation of Junit)
  */
 public class StructuralTest {
+
+    protected static final String JSON_PROPERTY_SUPERCLASS = "superclass";
+    protected static final String JSON_PROPERTY_INTERFACES = "interfaces";
+    protected static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
+    protected static final String JSON_PROPERTY_MODIFIERS = "modifiers";
+    protected static final String JSON_PROPERTY_PARAMETERS = "parameters";
+    protected static final String JSON_PROPERTY_CONSTRUCTORS = "constructors";
+    protected static final String JSON_PROPERTY_CLASS = "class";
+    protected static final String JSON_PROPERTY_ATTRIBUTES = "attributes";
+    protected static final String JSON_PROPERTY_METHODS = "methods";
+    protected static final String JSON_PROPERTY_PACKAGE = "package";
+    protected static final String JSON_PROPERTY_NAME = "name";
+    protected static final String JSON_PROPERTY_TYPE = "type";
+    protected static final String JSON_PROPERTY_RETURN_TYPE = "returnType";
 
     protected String expectedClassName;
     protected String expectedPackageName;
@@ -82,6 +105,39 @@ public class StructuralTest {
         }
 
         return allModifiersAreImplemented;
+    }
+
+    protected boolean checkAnnotations(Annotation[] observedAnnotations, JSONArray expectedAnnotations) {
+
+        // If both the observed and expected elements have no annotations, then they match.
+        // A note: for technical reasons, we get in case of no observed annotations, a string array with an empty string.
+        if(observedAnnotations.length == 0 && expectedAnnotations.length() == 0) {
+            return true;
+        }
+
+        // If the number of the annotations does not match, then the annotations per se do not match either.
+        if(observedAnnotations.length != expectedAnnotations.length()) {
+            return false;
+        }
+
+        // Otherwise check if each expected annotation is contained in the array of the observed ones.
+        // If at least one isn't, then the modifiers don't match.
+        for(Object expectedAnnotation : expectedAnnotations) {
+            boolean expectedAnnotationFound = false;
+            String expectedAnnotationAsString = (String) expectedAnnotation;
+            for (Annotation observedAnnotation : observedAnnotations) {
+                if (expectedAnnotationAsString.equals(observedAnnotation.annotationType().getSimpleName())) {
+                    expectedAnnotationFound = true;
+                    break;
+                }
+            }
+
+            if(expectedAnnotationFound == false) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

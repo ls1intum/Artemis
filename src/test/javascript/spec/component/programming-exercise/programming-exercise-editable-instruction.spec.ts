@@ -1,35 +1,29 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks/mock-result.service';
-import {
-    ProgrammingExercise,
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionTestcaseStatusComponent,
-    ProgrammingExerciseParticipationService,
-    ProgrammingExerciseTestCaseService,
-} from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/programming-exercise-instruction.service';
-import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/extensions/programming-exercise-plant-uml.extension';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import {
+    ProgrammingExerciseEditableInstructionComponent,
+    ProgrammingExerciseInstructionAnalysisComponent,
+} from 'app/entities/programming-exercise/instructions/instructions-editor';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,24 +45,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule],
-            declarations: [
-                ProgrammingExerciseInstructionStepWizardComponent,
-                ProgrammingExerciseEditableInstructionComponent,
-                MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
-                MockComponent(MarkdownEditorComponent),
-                ProgrammingExerciseInstructionComponent,
-                SafeHtmlPipe,
-            ],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgbModule, ArtemisProgrammingExerciseInstructionsEditorModule],
+            declarations: [MockComponent(ProgrammingExerciseInstructionAnalysisComponent), MockComponent(MarkdownEditorComponent)],
             providers: [
-                ProgrammingExerciseInstructionService,
-                ProgrammingExerciseTaskExtensionWrapper,
-                ProgrammingExercisePlantUmlExtensionWrapper,
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: ResultService, useClass: MockResultService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
@@ -97,25 +79,22 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -125,16 +104,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('should update test cases if a new test case result comes in', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
@@ -151,6 +130,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).to.be.empty;
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
@@ -159,10 +141,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.returns(subject);
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         // No test cases available, might be that the solution build never ran to create tests...
         (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
@@ -177,6 +156,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['testX', 'testY']);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
@@ -184,10 +166,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.participation = participation;
         comp.editMode = false;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();
@@ -201,20 +180,23 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const saveProblemStatementButton = debugElement.query(By.css('#save-instructions-button'));
         expect(saveProblemStatementButton).not.to.exist;
+
+        fixture.destroy();
+        flush();
     }));
 
     it('should re-render the preview html after changes to the problem statement have been made', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, exercise, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();
 
         expect(generateHtmlSubjectStub).to.have.been.calledOnce;
+
+        fixture.destroy();
+        flush();
     }));
 });

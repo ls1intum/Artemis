@@ -5,7 +5,7 @@
         <button
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-text-exercise"
-            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'text-exercise-new'] } }]"
+            [routerLink]="['/course', course.id, 'text-exercise', 'new']"
         >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="artemisApp.textExercise.home.createLabel">
@@ -66,7 +66,7 @@
                             <button
                                 *ngIf="textExercise.isAtLeastInstructor"
                                 type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'text-exercise/' + textExercise.id + '/edit' } }]"
+                                [routerLink]="['/text-exercise', textExercise.id, 'edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
@@ -74,14 +74,7 @@
                                 <fa-icon icon="pencil-alt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
-                            <button
-                                *ngIf="textExercise.isAtLeastInstructor"
-                                type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'text-exercise/' + textExercise.id + '/delete' } }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1"
-                            >
+                            <button *ngIf="textExercise.isAtLeastInstructor" type="submit" (click)="openDeleteTextExerciseDialog(textExercise)" class="btn btn-danger btn-sm mr-1">
                                 <fa-icon icon="times"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>

@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +32,19 @@ public class ProgrammingExerciseParticipationResource {
 
     private ProgrammingSubmissionService submissionService;
 
+    private ProgrammingExerciseService programmingExerciseService;
+
+    private AuthorizationCheckService authCheckService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ResultService resultService, ProgrammingSubmissionService submissionService) {
+            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseService programmingExerciseService,
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
+        this.programmingExerciseService = programmingExerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -105,9 +114,9 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
-        ProgrammingSubmission submission;
+        Optional<ProgrammingSubmission> submissionOpt;
         try {
-            submission = submissionService.getLatestPendingSubmission(participationId);
+            submissionOpt = submissionService.getLatestPendingSubmission(participationId);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
@@ -115,7 +124,39 @@ public class ProgrammingExerciseParticipationResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
-        return ResponseEntity.ok(submission);
+        // Remove participation, is not needed in the response.
+        submissionOpt.ifPresent(submission -> submission.setParticipation(null));
+        return ResponseEntity.ok(submissionOpt.orElse(null));
+    }
+
+    /**
+     * For every student participation of a programming exercise, try to find a pending submission.
+     *
+     * @param exerciseId for which to search pending submissions.
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
+     */
+    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+        ProgrammingExercise programmingExercise;
+        try {
+            programmingExercise = programmingExerciseService.findById(exerciseId);
+        }
+        catch (EntityNotFoundException ex) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
+        // Remove unnecessary data to make response smaller (exercise, student of participation).
+        pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+            Optional<ProgrammingSubmission> submissionOpt = entry.getValue();
+            // Remove participation, is not needed in the response.
+            submissionOpt.ifPresent(submission -> submission.setParticipation(null));
+            return submissionOpt;
+        }));
+        return ResponseEntity.ok(pendingSubmissions);
     }
 
     /**

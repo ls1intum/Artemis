@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,19 +13,15 @@ import de.tum.in.www1.artemis.domain.Submission;
 /**
  * Spring Data repository for the Submission entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    /**
-     * @param submitted  choose which submitted state you want
-     * @param exerciseId the id of the exercise you want the stats about
-     * @return number of submission for the given exerciseId, with the submitted status expressed by the flag
-     */
-    long countBySubmittedAndParticipation_Exercise_Id(boolean submitted, Long exerciseId);
-
     @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false and not submission.participation is null")
     List<Submission> findAllUnsubmittedModelingAndTextSubmissions();
+
+    /* Get all submissions from a participation_id and load result at the same time */
+    @EntityGraph(attributePaths = { "result" })
+    List<Submission> findAllByParticipationId(Long participationId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
@@ -46,4 +43,20 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsByParticipationId(long participationId);
 
     List<Submission> findByParticipationId(long participationId);
+
+    /**
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
+
+    /**
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
 }

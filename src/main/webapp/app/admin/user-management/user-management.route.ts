@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Route } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 
 import { UserManagementComponent, UserManagementDetailComponent, UserManagementUpdateComponent } from 'app/admin';
@@ -9,6 +9,11 @@ import { User, UserService } from 'app/core';
 export class UserMgmtResolve implements Resolve<any> {
     constructor(private userService: UserService) {}
 
+    /**
+     * Resolve route to find the user before the route is activated
+     * @param route  contains the information about a route associated with a component loaded in an outlet at a particular moment in time
+     * @param state  represents the state of the router at a moment in time
+     */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const login = route.params['login'] ? route.params['login'] : null;
         if (login) {

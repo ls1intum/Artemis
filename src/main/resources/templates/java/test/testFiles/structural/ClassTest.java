@@ -1,38 +1,28 @@
 package ${packageName};
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.1 (02.06.2019)
- *
- * This test evaluates the hierarchy of the class, i.e. if the class is abstract
- * or an interface or an enum and also if the class extends another class and if
- * it implements an interface, based on its definition in the structure oracle.
+ * @version 2.2 (01.09.2019)
+ * <br><br>
+ * This test evaluates the hierarchy of the class, i.e. if the class is abstract or an interface or an enum and also if the class extends another superclass and if
+ * it implements the interfaces and annotations, based on its definition in the structure oracle (test.json).
  */
 @RunWith(Parameterized.class)
 public class ClassTest extends StructuralTest {
 
-    private static final String JSON_PROPERTY_SUPERCLASS = "superclass";
-	private static final String JSON_PROPERTY_INTERFACES = "interfaces";
-	private static final String JSON_PROPERTY_CLASS = "class";
-	private static final String JSON_PROPERTY_PACKAGE = "package";
-	private static final String JSON_PROPERTY_NAME = "name";
-
-	public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 
@@ -62,12 +52,12 @@ public class ClassTest extends StructuralTest {
         }
         return testData;
     }
-    
+
     private static boolean hasAdditionalProperties(JSONObject jsonObject) {
-    	List<String> keys = new ArrayList<String>(jsonObject.keySet());
-    	keys.remove(JSON_PROPERTY_NAME);
-    	keys.remove(JSON_PROPERTY_PACKAGE);
-    	return keys.size() > 0;
+        List<String> keys = new ArrayList<String>(jsonObject.keySet());
+        keys.remove(JSON_PROPERTY_NAME);
+        keys.remove(JSON_PROPERTY_PACKAGE);
+        return keys.size() > 0;
     }
 
     /**
@@ -132,6 +122,14 @@ public class ClassTest extends StructuralTest {
                         + " Please implement the interface and its methods.");
                 }
             }
+        }
+
+        if(expectedClassPropertiesJSON.has(JSON_PROPERTY_ANNOTATIONS)) {
+            JSONArray expectedAnnotations = expectedClassPropertiesJSON.getJSONArray(JSON_PROPERTY_ANNOTATIONS);
+            Annotation[] observedAnnotations = observedClass.getAnnotations();
+
+            boolean annotationsAreRight = checkAnnotations(observedAnnotations, expectedAnnotations);
+            assertTrue("Problem: the annotation(s) of the class '" + expectedClassName + "' are not implemented as expected.", annotationsAreRight);
         }
     }
 }

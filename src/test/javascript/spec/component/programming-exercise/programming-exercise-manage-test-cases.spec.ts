@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
@@ -25,6 +25,8 @@ import { ArtemisTableModule } from 'app/components/table/table.module';
 chai.use(sinonChai);
 const expect = chai.expect;
 
+// TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
+// The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
 describe('ProgrammingExerciseManageTestCases', () => {
     let comp: ProgrammingExerciseManageTestCasesComponent;
     let fixture: ComponentFixture<ProgrammingExerciseManageTestCasesComponent>;
@@ -88,14 +90,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     afterEach(() => {
         notifyTestCasesSpy.restore();
-
-        routeSubject.complete();
-        routeSubject = new Subject();
-        // @ts-ignore
-        (route as MockActivatedRoute).setSubject(routeSubject);
     });
 
-    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', () => {
+    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
 
@@ -113,9 +110,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
         const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
         expect(saveWeightsButton).to.exist;
         expect(saveWeightsButton.nativeElement.disabled).to.be.true;
-    });
 
-    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
+        tick();
+        fixture.destroy();
+    }));
+
+    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
@@ -134,9 +134,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
         const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
         expect(saveWeightsButton).to.exist;
         expect(saveWeightsButton.nativeElement.disabled).to.be.true;
-    });
 
-    it('should enter edit mode when an edit button is clicked to edit weights', () => {
+        tick();
+        fixture.destroy();
+    }));
+
+    it('should enter edit mode when an edit button is clicked to edit weights', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
@@ -182,7 +185,11 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
         expect(editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal('20');
-    });
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
 
     it('should be able to update the value of the afterDueDate boolean', async () => {
         comp.ngOnInit();
@@ -220,5 +227,8 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
             { id: testThatWasUpdated.id, weight: testThatWasUpdated.weight, afterDueDate: testThatWasUpdated.afterDueDate },
         ]);
+
+        await new Promise(resolve => setTimeout(resolve));
+        fixture.destroy();
     });
 });

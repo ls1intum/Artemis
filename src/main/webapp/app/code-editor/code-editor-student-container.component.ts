@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import { ParticipationService, StudentParticipation } from 'app/entities/participation';
-import { CodeEditorContainer } from './code-editor-mode-container.component';
+import { CodeEditorContainer } from './';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
@@ -18,7 +18,9 @@ import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
 import { CodeEditorAceComponent } from 'app/code-editor/ace';
 import { ExerciseType } from 'app/entities/exercise';
-import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
+import { ButtonSize } from 'app/shared/components';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -46,6 +48,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private guidedTourService: GuidedTourService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -83,6 +86,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
+        this.guidedTourService.enableTour(codeEditorTour);
     }
 
     ngOnDestroy() {

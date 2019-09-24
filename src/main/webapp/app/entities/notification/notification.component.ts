@@ -1,18 +1,15 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { JhiEventManager, JhiAlertService, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
 import { AccountService, User } from 'app/core';
-import { LectureService } from '../lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from 'app/entities/notification/notification.service';
 import { Notification } from 'app/entities/notification/notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { SystemNotification } from 'app/entities/system-notification';
-import { NotificationMgmtDeleteDialogComponent } from 'app/admin';
 import * as moment from 'moment';
 
 @Component({

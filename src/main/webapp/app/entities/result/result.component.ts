@@ -43,6 +43,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
+    @Input() showTestNames = false;
 
     textColorClass: string;
     hasFeedback: boolean;
@@ -57,7 +58,6 @@ export class ResultComponent implements OnInit, OnChanges {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
@@ -218,6 +218,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
+        modalRef.componentInstance.showTestNames = this.showTestNames;
     }
 
     downloadBuildResult(participationId: number) {

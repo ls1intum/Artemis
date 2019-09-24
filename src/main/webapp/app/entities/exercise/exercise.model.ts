@@ -32,6 +32,7 @@ export const enum ParticipationStatus {
     QUIZ_FINISHED = 'quiz-finished',
     MODELING_EXERCISE = 'modeling-exercise',
     TEXT_EXERCISE = 'text-exercise',
+    FILE_UPLOAD_EXERCISE = 'file-upload-exercise',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
     INACTIVE = 'inactive',
@@ -61,7 +62,7 @@ export abstract class Exercise implements BaseEntity {
     public categories: string[];
     public type: ExerciseType;
 
-    public participations: StudentParticipation[];
+    public studentParticipations: StudentParticipation[];
     public tutorParticipations: TutorParticipation[];
     public course: Course | null;
     public participationStatus: ParticipationStatus;

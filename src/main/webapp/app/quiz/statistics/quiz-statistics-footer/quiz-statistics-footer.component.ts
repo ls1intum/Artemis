@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';

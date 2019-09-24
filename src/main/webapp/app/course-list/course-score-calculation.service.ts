@@ -85,8 +85,8 @@ export class CourseScoreCalculationService {
     }
 
     getParticipationForExercise(exercise: Exercise): Participation | null {
-        if (exercise.participations != null && exercise.participations.length > 0) {
-            const exerciseParticipation: StudentParticipation = exercise.participations[0];
+        if (exercise.studentParticipations != null && exercise.studentParticipations.length > 0) {
+            const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
             return this.convertDateForParticipationFromServer(exerciseParticipation);
         } else {
             return null;

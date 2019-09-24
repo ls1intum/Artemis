@@ -10,7 +10,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { Result } from 'app/entities/result';
-import { ModelingExercise, ModelingExercisePopupService } from 'app/entities/modeling-exercise';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
@@ -57,7 +57,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
-        private modelingExercisePopupService: ModelingExercisePopupService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
@@ -82,10 +81,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         if (this.readOnly || this.toComplete) {
             this.assessmentMode = true;
         }
-
-        // Make sure the modeling exercise popup gets closed
-        this.modelingExercisePopupService.close();
-
         this.loadAll();
     }
 
@@ -302,7 +297,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
             await this.router.navigate([`/course/${courseId}/`]);
-            this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
+            this.router.navigate(['/modeling-exercise/' + this.exerciseId + '/edit']);
         }
     }
 

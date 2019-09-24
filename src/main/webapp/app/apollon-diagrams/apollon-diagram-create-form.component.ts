@@ -16,10 +16,16 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
 
     constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private jhiAlertService: JhiAlertService) {}
 
+    /**
+     * Adds focus on the title input field
+     */
     ngAfterViewInit() {
         this.titleInput.nativeElement.focus();
     }
 
+    /**
+     * Saves the diagram
+     */
     save() {
         this.isSaving = true;
         this.apollonDiagramService.create(this.apollonDiagram).subscribe(
@@ -35,6 +41,9 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
         );
     }
 
+    /**
+     * Closes the modal
+     */
     dismiss() {
         this.activeModal.dismiss('cancel');
     }

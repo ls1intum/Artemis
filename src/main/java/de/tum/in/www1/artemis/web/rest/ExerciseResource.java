@@ -102,7 +102,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User student = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
         if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
@@ -112,7 +112,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
     /**
@@ -185,6 +185,9 @@ public class ExerciseResource {
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
+
+        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
         Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -363,7 +366,7 @@ public class ExerciseResource {
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
-            exercise.setParticipations(new HashSet<>());
+            exercise.setStudentParticipations(new HashSet<>());
 
             for (StudentParticipation participation : participations) {
 

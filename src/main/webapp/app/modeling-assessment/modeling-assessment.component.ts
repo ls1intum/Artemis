@@ -3,7 +3,6 @@ import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLE
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
-import { User } from 'app/core';
 import * as $ from 'jquery';
 
 @Component({
@@ -47,10 +46,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             interact('.resizable')
                 .resizable({
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
-                    restrictSize: {
-                        min: { width: 15 },
-                        max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500 },
-                    },
+                    modifiers: [
+                        interact.modifiers!.restrictSize({
+                            min: { width: 15, height: 0 },
+                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 2000 },
+                        }),
+                    ],
                     inertia: true,
                 })
                 .on('resizestart', function(event: any) {

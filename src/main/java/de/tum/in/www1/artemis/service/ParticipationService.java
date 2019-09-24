@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -376,6 +375,15 @@ public class ParticipationService {
         return participation;
     }
 
+    /*
+     * Get all submissions of a participationId
+     * @param participationId of submission
+     * @return List<submission>
+     */
+    public List<Submission> getSubmissionsWithParticipationId(long participationId) {
+        return submissionRepository.findAllByParticipationId(participationId);
+    }
+
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *
@@ -384,13 +392,10 @@ public class ParticipationService {
      * @return resumed participation
      */
     public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
-        // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
-        // as the VCS-server performs the request
-        SecurityUtils.setAuthorizationObject();
 
         // Reload programming exercise from database so that the template participation is available
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
-        if (!programmingExercise.isPresent()) {
+        if (programmingExercise.isEmpty()) {
             return null;
         }
         participation = copyBuildPlan(participation);
@@ -615,6 +620,29 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
+    }
+
+    /**
+     * Get all participations for the given student including all results
+     *
+     * @param userId the id of the user for which the participations should be found
+     * @return the list of participations of the given student including all results for all possible exercises
+     */
+    @Transactional(readOnly = true)
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId) {
+        return studentParticipationRepository.findByStudentIdWithEagerResults(userId);
+    }
+
+    /**
+     * Get all participations for the given student including all results for the given exercises
+     *
+     * @param userId the id of the user for which the participations should be found
+     * @param exercises the exercises for which participations should be found
+     * @return the list of participations of the given student including all results
+     */
+    @Transactional(readOnly = true)
+    public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
+        return exercises.isEmpty() ? new LinkedList<>() : studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**

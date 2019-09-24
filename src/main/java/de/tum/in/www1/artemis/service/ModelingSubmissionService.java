@@ -73,7 +73,7 @@ public class ModelingSubmissionService extends SubmissionService {
                 submissions.add(submission.get());
             }
             // avoid infinite recursion
-            participation.getExercise().setParticipations(null);
+            participation.getExercise().setStudentParticipations(null);
         }
         return submissions;
     }
@@ -283,8 +283,8 @@ public class ModelingSubmissionService extends SubmissionService {
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
-
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         if (automaticResult != null) {
             automaticResult.setSubmission(modelingSubmission);
@@ -379,7 +379,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByCourseId(Long courseId) {
@@ -388,7 +388,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {

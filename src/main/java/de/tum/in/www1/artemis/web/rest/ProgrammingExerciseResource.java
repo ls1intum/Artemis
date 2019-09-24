@@ -9,7 +9,10 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,13 +28,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -63,6 +71,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final GroupNotificationService groupNotificationService;
@@ -73,8 +83,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
+            StudentParticipationRepository studentParticipationRepository, GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -83,6 +93,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
     }
@@ -150,14 +161,18 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
+        // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
+        // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
 
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-        return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.created(new URI("/api/programming-exercises/" + savedProgrammingExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedProgrammingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
     /**
@@ -170,12 +185,12 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
-        }
-
         if (programmingExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The programming exercise is not set", "programmingExerciseNotSet")).body(null);
+        }
+
+        if (programmingExercise.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
 
         if (programmingExercise.getCourse() == null) {
@@ -192,8 +207,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        // make sure that we use the values from the database and not the once which might have been
-        // altered in the client
+        // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
 
         // Check if exercise title is set
@@ -266,6 +280,8 @@ public class ProgrammingExerciseResource {
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
 
+            // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
+            programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
             return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -310,24 +326,15 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
-        // When updating the participations, we need to make sure that the exercise is attached to each of them.
-        // Otherwise we would remove the link between participation and exercise.
-        if (programmingExercise.getTemplateParticipation() != null) {
-            programmingExercise.getTemplateParticipation().setProgrammingExercise(programmingExercise);
-        }
-        if (programmingExercise.getSolutionParticipation() != null) {
-            programmingExercise.getSolutionParticipation().setProgrammingExercise(programmingExercise);
-        }
-        programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
         // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-
+        // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
     /**
@@ -335,39 +342,28 @@ public class ProgrammingExerciseResource {
      *
      * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
      * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping("/programming-exercises-problem")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
-        // fetch course from database to make sure client didn't change groups
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        ProgrammingExercise updatedProgrammingExercise;
+        try {
+            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(problemStatementUpdate.getExerciseId(), problemStatementUpdate.getProblemStatement());
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        catch (IllegalAccessException ex) {
             return forbidden();
         }
-
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if (errorResponse != null) {
-            return errorResponse;
+        catch (EntityNotFoundException ex) {
+            return notFound();
         }
-
-        programmingExercise.setProblemStatement(problemStatementUpdate.getProblemStatement());
-
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(updatedProgrammingExercise);
     }
 
     /**
@@ -389,7 +385,7 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);
@@ -437,7 +433,7 @@ public class ProgrammingExerciseResource {
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
-            programmingExercise.setParticipations(participations);
+            programmingExercise.setStudentParticipations(participations);
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();

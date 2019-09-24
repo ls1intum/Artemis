@@ -12,6 +12,7 @@
             "resumeExercise": "Aufgabe fortführen",
             "openCodeEditor": "Programmier-Editor öffnen",
             "openModelingEditor": "Modelierungs-Editor öffnen",
+            "importIntoIntelliJ": "In IntelliJ öffnen",
             "cloneRepository": "Repository klonen",
             "clonePersonalRepository": "Klonen dein persönliches Repository für diese Übung:",
             "repositoryPassword": "Dein Passwort lautet:",
@@ -21,7 +22,8 @@
             "goToBuildPlan": "Zum Build-Plan gehen",
             "openTextEditor": "Text-Editor öffnen",
             "copyUrl": "URL kopieren",
-            "copiedUrl": "URL kopiert"
+            "copiedUrl": "URL kopiert",
+            "uploadFile": "Datei hochladen"
         }
     }
 }

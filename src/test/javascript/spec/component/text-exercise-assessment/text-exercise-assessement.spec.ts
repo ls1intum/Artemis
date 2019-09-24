@@ -31,6 +31,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,7 +49,7 @@ describe('TextAssessmentComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
+            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
             declarations: [
                 TextAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

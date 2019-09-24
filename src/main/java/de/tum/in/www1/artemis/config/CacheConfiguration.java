@@ -47,12 +47,11 @@ public class CacheConfiguration {
             createIfNotExists(cm, User.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Authority.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".authorities", jcacheConfiguration);
-            createIfNotExists(cm, PersistentToken.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".persistentTokens", jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, Course.class.getName() + ".exercises", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".participations", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".studentParticipations", jcacheConfiguration);
             createIfNotExists(cm, Exercise.class.getName() + ".exampleSubmissions", jcacheConfiguration);
             createIfNotExists(cm, LtiOutcomeUrl.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, LtiUserId.class.getName(), jcacheConfiguration);
@@ -157,6 +156,8 @@ public class CacheConfiguration {
             createIfNotExists(cm, ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
             createIfNotExists(cm, ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };

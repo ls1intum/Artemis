@@ -1,10 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as moment from 'moment';
+import { FileService } from 'app/shared';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -41,6 +42,7 @@ export class LectureAttachmentsComponent implements OnInit {
         private attachmentService: AttachmentService,
         private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
+        private fileService: FileService,
     ) {}
 
     ngOnInit() {
@@ -135,23 +137,11 @@ export class LectureAttachmentsComponent implements OnInit {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.isDownloadingAttachmentLink = downloadUrl;
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
-            response => {
-                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename')!);
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-                this.isDownloadingAttachmentLink = null;
-            },
-            error => {
-                this.isDownloadingAttachmentLink = null;
-            },
-        );
+        if (!this.isDownloadingAttachmentLink) {
+            this.isDownloadingAttachmentLink = downloadUrl;
+            this.fileService.downloadAttachment(downloadUrl);
+            this.isDownloadingAttachmentLink = null;
+        }
     }
 
     /**

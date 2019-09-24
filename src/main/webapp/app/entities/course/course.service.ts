@@ -5,11 +5,9 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
 import { Course } from './course.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
-import { Participation } from '../participation/participation.model';
 import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
@@ -19,7 +17,6 @@ import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -279,7 +276,7 @@ export class CourseExerciseService {
                 const exercise = participation.exercise;
                 exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-                exercise.participations = [participation];
+                exercise.studentParticipations = [participation];
                 return participation;
             }
         }

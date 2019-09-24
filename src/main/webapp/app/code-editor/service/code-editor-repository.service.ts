@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { pipe, Subject, throwError, UnaryFunction } from 'rxjs';
+import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
@@ -19,6 +19,18 @@ export enum DomainType {
 export enum RepositoryError {
     CHECKOUT_CONFLICT = 'checkoutConflict',
 }
+
+type FileSubmission = { [fileName: string]: string | null };
+
+type FileSubmissionError = { error: RepositoryError; participationId: number; fileName: string };
+
+/**
+ * Type guard for checking if the file submission received through the websocket is an error object.
+ * @param toBeDetermined either a FileSubmission or a FileSubmissionError.
+ */
+const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
+    return !!(toBeDetermined as FileSubmissionError).error;
+};
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -106,7 +118,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements ICodeEditorRepositoryFileService, OnDestroy {
-    private fileUpdateSubject = new Subject<{ [fileName: string]: string | null }>();
+    private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
 
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
@@ -163,15 +175,33 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
         if (this.fileUpdateUrl) {
             this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
         }
-        this.fileUpdateSubject = new Subject<{ [p: string]: string | null }>();
+
+        this.fileUpdateSubject = new Subject<FileSubmission>();
 
         this.jhiWebsocketService.subscribe(this.fileUpdateUrl);
         this.jhiWebsocketService
             .receive(this.fileUpdateUrl)
-            .pipe(this.handleWebsocketErrorResponse())
-            .subscribe(res => this.fileUpdateSubject.next(res), err => this.fileUpdateSubject.error(err));
-        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        return this.fileUpdateSubject as Observable<{ [fileName: string]: string | null }>;
+            .pipe(
+                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
+                    if (checkIfSubmissionIsError(fileSubmission)) {
+                        // The subject gets informed about all errors.
+                        this.fileUpdateSubject.error(fileSubmission);
+                        // Checkout conflict handling.
+                        if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
+                            this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                        }
+                        return;
+                    }
+                    this.fileUpdateSubject.next(fileSubmission);
+                }),
+                catchError(() => of()),
+            )
+            .subscribe();
+        // TODO: This is a hotfix for the subscribe/unsubscribe mechanism of the websocket service. Without this, the SEND might be sent before the SUBSCRIBE.
+        setTimeout(() => {
+            this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
+        });
+        return this.fileUpdateSubject.asObservable();
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
@@ -181,14 +211,4 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     deleteFile = (fileName: string) => {
         return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
-
-    private handleWebsocketErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
-        pipe(
-            catchError((err: { error: string }) => {
-                if (err.error === RepositoryError.CHECKOUT_CONFLICT) {
-                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                }
-                return throwError(err);
-            }),
-        );
 }

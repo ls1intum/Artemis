@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -16,12 +16,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission';
+import { Submission } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -69,6 +71,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
+    readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
 
     stats = {
         toReview: {
@@ -97,6 +100,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
+        private fileUploadSubmissionService: FileUploadSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
@@ -118,15 +122,22 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
 
-                if (this.exercise.type === this.ExerciseType_TEXT) {
-                    const textExercise = this.exercise as TextExercise;
-                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
-                } else if (this.exercise.type === this.ExerciseType_MODELING) {
-                    this.modelingExercise = this.exercise as ModelingExercise;
-                    if (this.modelingExercise.sampleSolutionModel) {
-                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
-                        this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
-                    }
+                switch (this.exercise.type) {
+                    case ExerciseType.TEXT:
+                        const textExercise = this.exercise as TextExercise;
+                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
+                        break;
+                    case ExerciseType.MODELING:
+                        this.modelingExercise = this.exercise as ModelingExercise;
+                        if (this.modelingExercise.sampleSolutionModel) {
+                            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                            this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                        }
+                        break;
+                    case ExerciseType.FILE_UPLOAD:
+                        const fileUploadExercise = this.exercise as FileUploadExercise;
+                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(fileUploadExercise.sampleSolution);
+                        break;
                 }
 
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
@@ -198,10 +209,16 @@ export class TutorExerciseDashboardComponent implements OnInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        if (this.exercise.type === ExerciseType.TEXT) {
-            submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+        switch (this.exercise.type) {
+            case ExerciseType.TEXT:
+                submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
+            case ExerciseType.MODELING:
+                submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
         }
 
         submissionsObservable
@@ -236,10 +253,16 @@ export class TutorExerciseDashboardComponent implements OnInit {
      */
     private getSubmissionWithoutAssessment(): void {
         let submissionObservable: Observable<Submission> = of();
-        if (this.exercise.type === ExerciseType.TEXT) {
-            submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+        switch (this.exercise.type) {
+            case ExerciseType.TEXT:
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
+            case ExerciseType.MODELING:
+                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
         }
 
         submissionObservable.subscribe(
@@ -305,20 +328,24 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
 
-        const queryParams: any = {};
         let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
             submission = 'new';
         }
 
-        if (this.exercise.type === ExerciseType.TEXT) {
-            route = `/text/${this.exercise.id}/assessment/${submission}`;
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
-            queryParams.showBackButton = true;
+        switch (this.exercise.type) {
+            case ExerciseType.TEXT:
+                route = `/text/${this.exercise.id}/assessment/${submission}`;
+                break;
+            case ExerciseType.MODELING:
+                route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                route = `/file-upload-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
+                break;
         }
-        this.router.navigate([route], { queryParams });
+        this.router.navigate([route]);
     }
 
     back() {

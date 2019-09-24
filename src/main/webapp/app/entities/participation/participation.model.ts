@@ -1,6 +1,4 @@
-import { User } from './../../core';
 import { BaseEntity } from 'app/shared';
-import { Exercise } from '../exercise';
 import { Result } from '../result';
 import { Submission } from '../submission';
 import { Moment } from 'moment';

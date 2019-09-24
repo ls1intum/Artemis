@@ -39,9 +39,6 @@
                 "submission": "Submission",
                 "modelingSubmission": "Modeling Submission",
                 "quizSubmission": "Quiz Submission",
-                "programmingSubmission": "Programming Submission",
-                "textSubmission": "Text Submission",
-                "fileUploadSubmission": "File Upload Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
                 "quizStatistic": "Statistic",
@@ -56,8 +53,6 @@
                 "apollonDiagram": "Apollon-Diagramm",
                 "programmingSubmission": "Programming Submission",
                 "dragAndDropMapping": "Drag And Drop Mapping",
-                "textExercise": "Text Exercise",
-                "fileUploadExercise": "File Upload Exercise",
                 "textSubmission": "Text Submission",
                 "fileUploadSubmission": "File Upload Submission",
                 "shortAnswerQuestionStatistic": "Short Answer Question Statistic",
@@ -97,7 +92,9 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "noNotifications": "Keine neuen Mitteilungen verfügbar",
+            "guidedTour": "Guided Tour",
+            "startTour": "Tour starten",
+            "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
         "form": {
@@ -171,6 +168,7 @@
             "editInEditor": "In Editor bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "editLink": "Link bearbeiten",
+            "generate": "Generieren",
             "open": "Öffnen",
             "save": "Speichern",
             "saving": "Speichern...",

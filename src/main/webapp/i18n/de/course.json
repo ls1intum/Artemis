@@ -11,7 +11,8 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der Kurs {{ param }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
             },
             "detail": {
                 "title": "Kurs"
@@ -38,7 +39,7 @@
             "textExercises": "Textaufgabe",
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
-            "fileUploadExercises": "Datei Upload Aufgabe (Beta)",
+            "fileUploadExercises": "Datei Upload Aufgabe",
             "students": "Studenten",
             "tutors": "Tutoren",
             "instructors": "Instructoren",

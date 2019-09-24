@@ -1,15 +1,40 @@
-import { Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../../core';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
-import { ModelingExercisePopupComponent } from './modeling-exercise-dialog.component';
-import { ModelingExerciseDeletePopupComponent } from './modeling-exercise-delete-dialog.component';
+import { ModelingExerciseUpdateComponent } from 'app/entities/modeling-exercise/modeling-exercise-update.component';
+import { Injectable } from '@angular/core';
+import { Course, CourseService } from 'app/entities/course';
+import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { HttpResponse } from '@angular/common/http';
+import { filter, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
+    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseService) {}
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+        if (route.params['exerciseId']) {
+            return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
+                filter(res => !!res.body),
+                map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
+            );
+        } else if (route.params['courseId']) {
+            return this.courseService.find(route.params['courseId']).pipe(
+                filter(res => !!res.body),
+                map((course: HttpResponse<Course>) => new ModelingExercise('ClassDiagram', course.body!)),
+            );
+        }
+        return Observable.of(new ModelingExercise('ClassDiagram'));
+    }
+}
 
 export const modelingExerciseRoute: Routes = [
     {
-        path: 'modeling-exercise',
-        component: ModelingExerciseComponent,
+        path: 'modeling-exercise/:id',
+        component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -17,8 +42,23 @@ export const modelingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'modeling-exercise/:id',
-        component: ModelingExerciseDetailComponent,
+        path: 'course/:courseId/modeling-exercise/new',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'modeling-exercise/:exerciseId/edit',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -42,38 +82,5 @@ export const modelingExerciseRoute: Routes = [
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const modelingExercisePopupRoute: Routes = [
-    {
-        path: 'course/:courseId/modeling-exercise-new',
-        component: ModelingExercisePopupComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'modeling-exercise/:id/edit',
-        component: ModelingExercisePopupComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'modeling-exercise/:id/delete',
-        component: ModelingExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

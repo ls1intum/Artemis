@@ -54,7 +54,7 @@ public abstract class Participation implements Serializable {
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
     @ManyToOne
-    @JsonIgnoreProperties("participations")
+    @JsonIgnoreProperties("studentParticipations")
     @JsonView(QuizView.Before.class)
     protected Exercise exercise;
 
@@ -118,14 +118,12 @@ public abstract class Participation implements Serializable {
     }
 
     /**
-     * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
      *
-     * @return exrcise object
+     * @return exercise object
      */
     public abstract Exercise getExercise();
 
     /**
-     * This is a compatibility method that reduces the amount of casting. It should only be invoked if it is clear that the participation has an exercise
      *
      * @param exercise that will be set
      */

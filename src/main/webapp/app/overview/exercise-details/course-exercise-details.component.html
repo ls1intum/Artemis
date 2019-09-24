@@ -6,7 +6,10 @@
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult"> </jhi-exercise-details-student-actions>
+        <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
+        <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult">
+        </jhi-exercise-details-student-actions>
+        <jhi-updating-result class="mr-2" [participation]="currentResult?.participation" [exercise]="exercise" [showGradedBadge]="true"> </jhi-updating-result>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -27,12 +30,12 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.participations && exercise.participations[0]">
+                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
                 </jhi-programming-exercise-instructions>
             </div>
             <ng-template #exerciseTemplate>
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
-                    <div class="col-12 col-md-12 markdown-preview">
+                    <div class="col-12 col-md-12 markdown-preview problem-statement">
                         <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
                         <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
                     </div>
@@ -56,14 +59,10 @@
                             </h4>
                         </div>
                         <div class="col text-left">
-                            <jhi-updating-result
-                                [participation]="currentResult?.participation"
-                                [result]="currentResult"
-                                [exerciseType]="exercise.type"
-                                short="true"
-                            ></jhi-updating-result>
+                            <jhi-updating-result [participation]="currentResult?.participation" [exercise]="exercise" short="true"></jhi-updating-result>
                             <jhi-programming-exercise-student-trigger-build-button
                                 *ngIf="exercise.type === PROGRAMMING"
+                                [exercise]="exercise"
                                 [participation]="currentResult?.participation"
                             ></jhi-programming-exercise-student-trigger-build-button>
                         </div>
@@ -124,14 +123,14 @@
                                 </h4>
                             </div>
                             <div class="col text-left">
-                                <jhi-result [result]="result" [participation]="exercise.participations[0]" showUngradedResults="true" short="true"></jhi-result>
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
                                 <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>
                             </div>
                         </div>
                     </div>
-                    <div *ngIf="!combinedParticipation || !combinedParticipation.results">
+                    <div class="no-results" *ngIf="!combinedParticipation || !combinedParticipation.results">
                         {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}
                     </div>
                 </div>
@@ -145,14 +144,14 @@
                     }}</a>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!showResults">
+            <div class="row mb-2 mt-2 align-items-baseline no-results" *ngIf="!showResults">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
                 </div>
             </div>
         </div>
         <!-- RESULTS END -->
-        <div class="col-sm-12 col-md-4 col-lg-4">
+        <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>

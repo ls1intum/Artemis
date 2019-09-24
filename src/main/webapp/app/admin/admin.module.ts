@@ -1,10 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { adminState } from './admin.route';
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    adminState,
     AuditsComponent,
     JhiConfigurationComponent,
     JhiHealthCheckComponent,
@@ -25,10 +23,12 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
+const ENTITY_STATES = [...adminState];
+
 @NgModule({
     imports: [
+        RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
-        RouterModule.forChild(adminState),
         FormDateTimePickerModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
@@ -49,15 +49,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
     ],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     entryComponents: [UserManagementDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
 })
-export class ArtemisAdminModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisAdminModule {}

@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -23,12 +21,14 @@ import {
     OVERVIEW_ROUTES,
     OverviewComponent,
     OverviewCourseCardComponent,
+    ProgrammingExerciseStudentIdeActionsComponent,
 } from './';
 import { ArtemisResultModule } from 'app/entities/result';
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -45,6 +45,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisCourseRegistrationSelector,
+        IntellijModule,
     ],
     declarations: [
         OverviewComponent,
@@ -59,18 +60,9 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         CourseLectureDetailsComponent,
         ExerciseActionButtonComponent,
         ExerciseDetailsStudentActionsComponent,
+        ProgrammingExerciseStudentIdeActionsComponent,
     ],
     entryComponents: [],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-
-    exports: [],
+    exports: [ExerciseActionButtonComponent],
 })
-export class ArtemisOverviewModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisOverviewModule {}

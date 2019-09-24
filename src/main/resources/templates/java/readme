@@ -24,10 +24,10 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 1. [task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])
 Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
 
-2. [task][Context Class](testClass[Context],testAttributes[Context],testMethods[Context])
+2. [task][Context Class](testAttributes[Context],testMethods[Context])
 Create and implement a `Context` class following the below class diagram
 
-3. [task][Context Policy](testClass[Policy],testConstructors[Policy],testAttributes[Policy],testMethods[Policy])
+3. [task][Context Policy](testConstructors[Policy],testAttributes[Policy],testMethods[Policy])
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
     1. [task][Select MergeSort](testClass[MergeSort],testUseMergeSortForBigList)

@@ -351,7 +351,7 @@ public class ParticipationResource {
             // remove unnecessary elements
             Exercise exercise = participation.getExercise();
             exercise.setCourse(null);
-            exercise.setParticipations(null);
+            exercise.setStudentParticipations(null);
             exercise.setTutorParticipations(null);
             exercise.setExampleSubmissions(null);
             exercise.setAttachments(null);
@@ -635,7 +635,9 @@ public class ParticipationResource {
 
     private void checkAccessPermissionAtInstructor(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
@@ -663,4 +665,14 @@ public class ParticipationResource {
 
         return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
+
+    @GetMapping(value = "/participations/{participationId}/submissions")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        checkAccessPermissionAtInstructor(participation);
+        List<Submission> submissions = participationService.getSubmissionsWithParticipationId(participationId);
+        return ResponseEntity.ok(submissions);
+    }
+
 }

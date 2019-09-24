@@ -1,11 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/components/table/table.module';
 import { TableEditableFieldComponent } from 'app/components/table';
+import { triggerChanges } from '../../utils/general.utils';
 
 const expect = chai.expect;
 
@@ -54,10 +55,7 @@ describe('TableEditableFieldComponent', () => {
         comp.onValueUpdate = fakeUpdateValue;
         comp.isEditing = true;
 
-        const changes: SimpleChanges = {
-            isEditing: new SimpleChange(false, true, false),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'isEditing', currentValue: true, previousValue: false, firstChange: false });
         fixture.detectChanges();
         tick();
         fixture.detectChanges();

@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
-import { JhiAlertService } from 'ng-jhipster';
 import { ListOfComplaintsComponent } from './list-of-complaints.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -16,17 +13,9 @@ import { SortByModule } from 'app/components/pipes';
 const ENTITY_STATES = [...listOfComplaintsRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
-    providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [JhiAlertService, ComplaintService],
 })
-export class ArtemisListOfComplaintsModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisListOfComplaintsModule {}

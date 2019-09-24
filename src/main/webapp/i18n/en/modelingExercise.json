@@ -3,15 +3,12 @@
         "modelingExercise": {
             "home": {
                 "title": "Modeling Exercises",
-                "createLabel": "Create a new Modeling Exercise",
-                "createOrEditLabel": "Create or edit a Modeling Exercise"
+                "createLabel": "Create new Modeling Exercise",
+                "editLabel": "Edit Modeling Exercise"
             },
             "created": "A new Modeling Exercise is created with identifier {{ param }}",
             "updated": "A Modeling Exercise is updated with identifier {{ param }}",
             "deleted": "A Modeling Exercise is deleted with identifier {{ param }}",
-            "delete": {
-                "question": "Are you sure you want to delete Modeling Exercise {{ title }}?"
-            },
             "detail": {
                 "title": "Modeling Exercise"
             },

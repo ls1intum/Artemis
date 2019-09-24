@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
-import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
@@ -13,12 +12,13 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
 import { InitializationState, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionStateObj, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +27,7 @@ describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
-    let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
+    let submissionService: ProgrammingSubmissionService;
 
     let getLatestPendingSubmissionStub: SinonStub;
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
@@ -47,8 +47,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
-            declarations: [ProgrammingExerciseStudentTriggerBuildButtonComponent],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingExerciseActionsModule],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
@@ -65,12 +64,12 @@ describe('TriggerBuildButtonSpec', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                submissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(getLatestPendingSubmissionSubject);
+                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
 
-                triggerBuildStub = stub(submissionWebsocketService, 'triggerBuild').returns(of());
+                triggerBuildStub = stub(submissionService, 'triggerBuild').returns(of());
             });
     });
 
@@ -86,11 +85,9 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
+        comp.exercise = { id: 4 };
 
+        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
 
         // Button should not show if there is no failed submission.
@@ -98,7 +95,7 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerButton).not.to.exist;
 
         // After a failed submission is sent, the button should be displayed.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
 
         fixture.detectChanges();
         triggerButton = getTriggerButton();
@@ -107,13 +104,10 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
+        comp.exercise = { id: 5 };
 
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
-
+        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
         fixture.detectChanges();
 
         let triggerButton = getTriggerButton();
@@ -124,13 +118,13 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerBuildStub).to.have.been.calledOnce;
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: comp.participation.id });
         expect(comp.isBuilding).to.be.true;
         fixture.detectChanges();
         expect(triggerButton.disabled).to.be.true;
 
         // Now the server signals that the build is done, the button should now be removed.
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: comp.participation.id });
         expect(comp.isBuilding).to.be.false;
         fixture.detectChanges();
         triggerButton = getTriggerButton();

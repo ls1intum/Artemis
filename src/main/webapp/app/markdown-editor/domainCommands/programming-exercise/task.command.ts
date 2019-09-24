@@ -1,5 +1,4 @@
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
@@ -7,6 +6,7 @@ export class TaskCommand extends DomainTagCommand {
     public static readonly identifier = '[task]';
     public static readonly taskPlaceholder = 'Task Short Description';
     public static readonly testCasePlaceholder = 'testCaseName';
+    public static readonly hintsPlaceholder = 'hintId1, hintId2';
 
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
@@ -18,11 +18,11 @@ export class TaskCommand extends DomainTagCommand {
                 callback(null, { caption: 'task', value: this.getTask(), meta: 'insert task' });
             },
         };
-        this.addToCompleters(taskCommandCompleter);
+        this.addCompleter(taskCommandCompleter);
     }
 
     private getTask() {
-        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder}){${TaskCommand.hintsPlaceholder}}`;
     }
 
     public getTagRegex(flags = ''): RegExp {

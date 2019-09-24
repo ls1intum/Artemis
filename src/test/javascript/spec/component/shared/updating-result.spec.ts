@@ -4,7 +4,7 @@ import { MomentModule } from 'ngx-moment';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
-import { ChangeDetectorRef, DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
@@ -17,8 +17,9 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { MockSubmissionWebsocketService } from '../../mocks/mock-submission-websocket.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
+import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
+import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,7 +29,7 @@ describe('UpdatingResultComponent', () => {
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let submissionWebsocketService: ProgrammingSubmissionWebsocketService;
+    let programmingSubmissionService: ProgrammingSubmissionService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
@@ -61,7 +62,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ProgrammingSubmissionWebsocketService, useClass: MockSubmissionWebsocketService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
             .compileComponents()
@@ -71,14 +72,14 @@ describe('UpdatingResultComponent', () => {
                 debugElement = fixture.debugElement;
 
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                submissionWebsocketService = debugElement.injector.get(ProgrammingSubmissionWebsocketService);
+                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
                     subscribeForLatestResultOfParticipationSubject,
                 );
 
-                getLatestPendingSubmissionStub = stub(submissionWebsocketService, 'getLatestPendingSubmission').returns(
+                getLatestPendingSubmissionStub = stub(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').returns(
                     of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]),
                 );
             });
@@ -92,28 +93,19 @@ describe('UpdatingResultComponent', () => {
 
     const cleanInitializeGraded = (participation = initialParticipation) => {
         comp.participation = participation;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
 
     const cleanInitializeUngraded = (participation = initialParticipation) => {
         comp.participation = participation;
         comp.showUngradedResults = true;
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, participation, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
 
     it('should not try to subscribe for new results if no participation is provided', () => {
-        const changes: SimpleChanges = {
-            participation: new SimpleChange(undefined, undefined, true),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(comp, { property: 'participation', currentValue: undefined, firstChange: true });
         fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).to.not.have.been.called;
@@ -165,26 +157,26 @@ describe('UpdatingResultComponent', () => {
     });
 
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.be.false;
     });
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.be.true;
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id);
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id);
         expect(comp.isBuilding).to.equal(false);
     });
 

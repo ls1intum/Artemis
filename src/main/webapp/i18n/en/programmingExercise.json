@@ -7,6 +7,7 @@
                 "editLabel": "Edit Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "editLinkLabel": "Edit linked Programming Exercise",
+                "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },
             "created": "A new Programming Exercise was created with title {{ param }}",
@@ -32,6 +33,11 @@
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
+            "buildAndTestStudentSubmissionsAfterDueDate": {
+                "title": "Build & Test Student Submissions After Due Date",
+                "description": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
+                "invalid": "Please insert a valid date after the due date."
+            },
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
@@ -53,17 +59,25 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "[task] Task",
-                "testCaseCommand": "Insert Test Case"
+                "testCaseCommand": "Insert Test Case",
+                "exerciseHintCommand": "Add task specific hint"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
                 "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."
             },
             "testCaseAnalysis": {
-                "invalidTestCases": "There are {{number}} test cases that are part of the problem statement but can't be found in your test repository:",
-                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
+                "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
+                "missingTestCases": "There are {{number}} test cases that are valid test cases in your test repository but were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
-                "ok": "Test cases ok."
+                "ok": "Test cases ok.",
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but can't be found in the database or are not assigned to this programming exercise:",
+                "issues": "Hints issues.",
+                "ok": "Hints ok.",
+                "invalidHint": "The hint with id '{{id}}' could not be found in the database for this programming exercise."
             },
             "manageTestCases": {
                 "title": "Manage Test Cases",
@@ -80,7 +94,16 @@
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
-            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit."
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
+            "resubmitAll": "Trigger all",
+            "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
+            "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
+            "resubmitFailed": "Trigger failed",
+            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. Failed submissions don't have a result for their latest submission. This can e.g. happen due to communication errors between the CI system and Artemis. The created results will be rated.",
+            "buildingSubmissions": "Building submissions: {{number}}",
+            "failedSubmissions": "Failed submissions: {{number}}",
+            "resultETA": "Result ETA: {{eta}}",
+            "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system."
         }
     }
 }

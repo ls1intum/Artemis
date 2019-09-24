@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -56,8 +57,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
 
-    @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
-    Optional<Result> findByIdWithEagerSubmissionAndFeedbacksAndAssessor(@Param("resultId") Long id);
+    /**
+     * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
+     */
+    @EntityGraph(attributePaths = { "submission", "feedbacks", "assessor" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation. This prevents multiple (concurrent) inserts with the same
@@ -90,6 +97,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
+
+    @EntityGraph(attributePaths = { "feedbacks" })
+    List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
+
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(long exerciseId, boolean rated,
+            List<AssessmentType> assessmentType);
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 

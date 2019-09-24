@@ -1,0 +1,23 @@
+{
+    "tour": {
+        "navigation": {
+            "back": "Back",
+            "next": "Next",
+            "done": "Done",
+            "close": "Close"
+        },
+        "resize": {
+            "headline": "Browser window too small",
+            "content": "Please resize the browser to a larger size to continue the tour or close the tour."
+        },
+        "clickHint": {
+            "text": "Click on the highlighted element to proceed with the tour."
+        },
+        "typeHint": {
+            "text": "Enter any new line to proceed with the next step."
+        },
+        "waitHint": {
+            "text": "Please wait until the next step is loaded."
+        }
+    }
+}

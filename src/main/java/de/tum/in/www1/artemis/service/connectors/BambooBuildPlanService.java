@@ -60,8 +60,8 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL SERVER_URL;
 
-    @Value("${artemis.bamboo.bitbucket-application-link-id}")
-    private String BITBUCKET_APPLICATION_LINK_ID;
+    @Value("${artemis.bamboo.vcs-application-link-name}")
+    private String VCS_APPLICATION_LINK_NAME;
 
     /**
      * Creates a Build Plan for a Programming Exercise
@@ -101,12 +101,12 @@ public class BambooBuildPlanService {
 
         if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
             return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
-                    new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                    new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
             return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
-                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else if ((programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) && !sequentialBuildRuns) {
             return defaultStage
@@ -117,9 +117,8 @@ public class BambooBuildPlanService {
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
             return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
-                    new ScriptTask().description("Builds and tests the structural tests")
-                            .inlineBody("pytest tests/structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
-                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest tests/behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the structural tests").inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
         }
 
@@ -152,10 +151,10 @@ public class BambooBuildPlanService {
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
-        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().id(BITBUCKET_APPLICATION_LINK_ID))
-                .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase())   // make sure to use lower case to avoid problems in change detection between Bamboo and
-                                                                                          // Bitbucket
-                .shallowClonesEnabled(true).remoteAgentCacheEnabled(false).changeDetection(new VcsChangeDetection());
+        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(VCS_APPLICATION_LINK_NAME))
+                // make sure to use lower case to avoid problems in change detection between Bamboo and Bitbucket
+                .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
+                .changeDetection(new VcsChangeDetection());
     }
 
     private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, String teachingAssistantGroupName, String instructorGroupName,

@@ -22,6 +22,12 @@
                 <dd>
                     <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
                 </dd>
+                <ng-container *ngIf="programmingExercise.dueDate">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
@@ -75,9 +81,10 @@
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                             [showUngradedResults]="true"
+                            [showTestNames]="true"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -89,6 +96,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.templateParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
@@ -98,9 +106,10 @@
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingSolutionParticipationResults"
-                            [exerciseType]="PROGRAMMING"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                             [showUngradedResults]="true"
+                            [showTestNames]="true"
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -112,6 +121,7 @@
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.solutionParticipation.results"
+                            [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>

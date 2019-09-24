@@ -1,11 +1,10 @@
-import { SimpleChange, SimpleChanges } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { Subject } from 'rxjs';
-import { ParticipationType, ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise';
+import { ParticipationType } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -14,6 +13,8 @@ import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result';
 import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise/status';
+import { triggerChanges } from '../../utils/general.utils';
 
 const expect = chai.expect;
 
@@ -90,12 +91,10 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participationType = ParticipationType.TEMPLATE;
         comp.participation = { id: 1, results: [latestResult, { id: 2, successful: false, score: 99 }] };
         comp.exercise = { id: 99 };
-        const changes: SimpleChanges = {
-            participationType: new SimpleChange(undefined, comp.participationType, true),
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(comp, { property: 'participationType', currentValue: comp.participationType }, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
+
         expect(comp.latestResult).to.deep.equal(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
         expect(templateStatus).to.not.exist;
@@ -108,11 +107,11 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participationType = ParticipationType.SOLUTION;
         comp.participation = { id: 1, results: [{ id: 2, successful: false, score: 99 }, latestResult] };
         comp.exercise = { id: 99 };
-        const changes: SimpleChanges = {
-            participationType: new SimpleChange(undefined, comp.participationType, false),
-            participation: new SimpleChange(undefined, comp.participation, false),
-        };
-        comp.ngOnChanges(changes);
+        triggerChanges(
+            comp,
+            { property: 'participationType', currentValue: comp.participationType, firstChange: false },
+            { property: 'participation', currentValue: comp.participationType, firstChange: false },
+        );
         fixture.detectChanges();
         expect(comp.latestResult).to.deep.equal(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
@@ -126,12 +125,14 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participationType = ParticipationType.TEMPLATE;
         comp.participation = { id: 1, results: [latestResult, { id: 2, successful: false, score: 99 }] };
         comp.exercise = { id: 99 };
-        const changes: SimpleChanges = {
-            participationType: new SimpleChange(undefined, comp.participationType, false),
-            participation: new SimpleChange(undefined, comp.participation, false),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(
+            comp,
+            { property: 'participationType', currentValue: comp.participationType, firstChange: false },
+            { property: 'participation', currentValue: comp.participationType, firstChange: false },
+        );
         fixture.detectChanges();
+
         expect(comp.latestResult).to.deep.equal(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
         expect(templateStatus).to.exist;
@@ -144,12 +145,14 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participationType = ParticipationType.SOLUTION;
         comp.participation = { id: 1, results: [{ id: 2, successful: false, score: 99 }, latestResult] };
         comp.exercise = { id: 99 };
-        const changes: SimpleChanges = {
-            participationType: new SimpleChange(undefined, comp.participationType, true),
-            participation: new SimpleChange(undefined, comp.participation, true),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(
+            comp,
+            { property: 'participationType', currentValue: comp.participationType, firstChange: false },
+            { property: 'participation', currentValue: comp.participationType, firstChange: false },
+        );
         fixture.detectChanges();
+
         expect(comp.latestResult).to.deep.equal(latestResult);
         const templateStatus = fixture.debugElement.query(By.css('#instructor-status-template'));
         expect(templateStatus).to.not.exist;
@@ -163,11 +166,12 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         comp.participationType = ParticipationType.TEMPLATE;
         comp.participation = { id: 1, results: [latestResult, { id: 2, successful: false, score: 99 }] };
         comp.exercise = { id: 99 };
-        const changes: SimpleChanges = {
-            participationType: new SimpleChange(undefined, comp.participationType, false),
-            participation: new SimpleChange(undefined, comp.participation, false),
-        };
-        comp.ngOnChanges(changes);
+
+        triggerChanges(
+            comp,
+            { property: 'participationType', currentValue: comp.participationType, firstChange: false },
+            { property: 'participation', currentValue: comp.participationType, firstChange: false },
+        );
         latestResultSubject.next(newResult);
 
         expect(comp.latestResult).to.deep.equal(newResult);

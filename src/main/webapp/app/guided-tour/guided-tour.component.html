@@ -1,0 +1,111 @@
+<div *ngIf="currentTourStep">
+    <div *ngIf="!this.selectedElementRect; else selectedElementOverlay">
+        <div class="guided-tour-overlay" (click)="backdropClick($event)"></div>
+    </div>
+</div>
+<div *ngIf="currentTourStep">
+    <div
+        #tourStep
+        *ngIf="currentTourStep"
+        class="tour-step tour-{{ currentTourStep.orientation }}"
+        [class.page-tour-step]="!currentTourStep.highlightSelector"
+        [class.startFade]="startFade"
+        [style.top.px]="topPosition"
+        [style.left.px]="leftPosition"
+        [style.width.px]="calculatedTourStepWidth"
+        [style.transform]="transform"
+    >
+        <div *ngIf="currentTourStep.highlightSelector" class="tour-arrow"></div>
+        <div class="tour-block">
+            <div class="tour-block__header">
+                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
+                <div class="close" (click)="guidedTourService.skipTour()"></div>
+            </div>
+            <div class="tour-block__content">
+                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
+                <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
+                <div *ngIf="currentTourStep.imageUrl">
+                    <img src="{{ currentTourStep.imageUrl }}" />
+                </div>
+                <div *ngIf="currentTourStep.videoUrl">
+                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
+                    <a
+                        [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
+                        jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}"
+                        [href]="currentTourStep.externalUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    ></a>
+                </div>
+                <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="info-circle"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <span jhiTranslate="{{ currentTourStep.hintTranslateKey }}"></span>
+                    </div>
+                </div>
+                <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction">
+                    <div class="step-hint__icon">
+                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" icon="hand-point-up"></fa-icon>
+                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" icon="i-cursor"></fa-icon>
+                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" icon="circle-notch"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="tour-block__buttons">
+                <button
+                    [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage || this.currentTourStep.userInteractionEvent"
+                    class="back-button"
+                    (click)="guidedTourService.backStep()"
+                >
+                    <fa-icon icon="chevron-left"></fa-icon>
+                    <span jhiTranslate="tour.navigation.back"></span>
+                </button>
+                <div class="dotstyle dotstyle--scaleup">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps">
+                        <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
+                            <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <button
+                    *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage"
+                    class="next-button"
+                    [disabled]="this.currentTourStep.userInteractionEvent"
+                    (click)="guidedTourService.nextStep()"
+                >
+                    <span jhiTranslate="tour.navigation.next"></span>
+                    <fa-icon icon="chevron-right"></fa-icon>
+                </button>
+                <button
+                    *ngIf="guidedTourService.isOnLastStep"
+                    class="next-button"
+                    jhiTranslate="tour.navigation.done"
+                    [disabled]="this.currentTourStep.userInteractionEvent"
+                    (click)="guidedTourService.nextStep()"
+                ></button>
+                <button *ngIf="guidedTourService.isOnResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<ng-template #selectedElementOverlay>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.TOP)" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.LEFT)" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.RIGHT)" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.BOTTOM)" (click)="backdropClick($event)"></div>
+    <div
+        class="guided-tour-element-overlay"
+        [class.click-through]="this.currentTourStep.userInteractionEvent"
+        [ngStyle]="getOverlayStyle(OverlayPosition.ELEMENT)"
+        (click)="backdropClick($event)"
+    ></div>
+</ng-template>

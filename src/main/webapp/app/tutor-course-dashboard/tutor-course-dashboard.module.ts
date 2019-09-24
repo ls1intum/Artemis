@@ -1,13 +1,10 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
 import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
 import { RepositoryService } from 'app/entities/repository';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -23,36 +20,10 @@ import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/t
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
 @NgModule({
-    imports: [
-        BrowserModule,
-        ArtemisSharedModule,
-        ArtemisResultModule,
-        MomentModule,
-        ClipboardModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArtemisTutorLeaderboardModule,
-    ],
+    imports: [ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisTutorLeaderboardModule],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
-    providers: [
-        CourseService,
-        JhiAlertService,
-        RepositoryService,
-        ResultService,
-        CourseExerciseService,
-        ParticipationService,
-        CourseScoreCalculationService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService },
-    ],
+    providers: [CourseService, JhiAlertService, RepositoryService, ResultService, CourseExerciseService, ParticipationService, CourseScoreCalculationService],
 })
-export class ArtemisTutorCourseDashboardModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisTutorCourseDashboardModule {}

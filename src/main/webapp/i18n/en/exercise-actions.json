@@ -12,6 +12,7 @@
             "resumeExercise": "Resume exercise",
             "openCodeEditor": "Open code editor",
             "openModelingEditor": "Open modeling editor",
+            "importIntoIntelliJ": "Open in IntelliJ",
             "cloneRepository": "Clone Repository",
             "clonePersonalRepository": "Clone your personal repository for this exercise:",
             "repositoryPassword": "Your Password is:",
@@ -21,7 +22,8 @@
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
-            "copiedUrl": "Copied URL"
+            "copiedUrl": "Copied URL",
+            "uploadFile": "Upload a file"
         }
     }
 }

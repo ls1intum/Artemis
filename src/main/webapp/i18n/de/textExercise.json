@@ -3,15 +3,12 @@
         "textExercise": {
             "home": {
                 "title": "Textaufgaben",
-                "createLabel": "Textaufgabe erstellen",
-                "createOrEditLabel": "Textaufgabe erstellen oder bearbeiten"
+                "createLabel": "Neue Textaufgabe erstellen",
+                "editLabel": "Textaufgabe bearbeiten"
             },
             "created": "Textaufgabe mit ID {{ param }} erstellt",
             "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
             "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
-            "delete": {
-                "question": "Soll die Textaufgabe \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
-            },
             "detail": {
                 "title": "Textaufgabe"
             },

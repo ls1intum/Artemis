@@ -97,7 +97,7 @@ export class ExerciseService {
         exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
         exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
         exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
-        exercise.participations = this.participationService.convertParticipationsDateFromServer(exercise.participations);
+        exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
         return exercise;
     }
 
@@ -124,7 +124,7 @@ export class ExerciseService {
             res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
             res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
-            res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
+            res.body.studentParticipations = this.participationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;
     }
@@ -164,7 +164,7 @@ export class ExerciseService {
             delete copy.course.exercises;
             delete copy.course.lectures;
         }
-        delete copy.participations;
+        delete copy.studentParticipations;
         return copy;
     }
 

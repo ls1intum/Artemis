@@ -1,15 +1,11 @@
 import { NgModule } from '@angular/core';
+import { JhiAlertService } from 'ng-jhipster';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { MomentModule } from 'ngx-moment';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
-
-import { JhiLanguageHelper } from 'app/core';
-import { ArtemisSharedModule } from 'app/shared';
 import { codeEditorRoute } from './code-editor.route';
-import { ArtemisResultModule, ResultService } from 'app/entities/result';
-import { ParticipationService } from 'app/entities/participation';
+import { ArtemisResultModule } from 'app/entities/result';
 
 import {
     CodeEditorAceComponent,
@@ -36,24 +32,26 @@ import {
     CodeEditorSubmissionService,
     DomainService,
 } from './';
-
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisExerciseHintModule } from 'app/entities/exercise-hint/exercise-hint.module';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
+import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
+import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
 @NgModule({
     imports: [
-        ArtemisSharedModule,
-        AceEditorModule,
-        ArtemisResultModule,
-        ArtemisMarkdownEditorModule,
-        MomentModule,
-        ArtemisProgrammingExerciseModule,
-        TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
+        AceEditorModule,
+        MomentModule,
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        ArtemisProgrammingExerciseInstructionsEditorModule,
+        ArtemisProgrammingExerciseStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
+        TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
     ],
     declarations: [
@@ -82,8 +80,6 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     providers: [
         JhiAlertService,
-        ResultService,
-        ParticipationService,
         DomainService,
         CodeEditorRepositoryService,
         CodeEditorRepositoryFileService,
@@ -93,15 +89,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorGridService,
         CodeEditorConflictStateService,
         CodeEditorSubmissionService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
 })
-export class ArtemisCodeEditorModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisCodeEditorModule {}

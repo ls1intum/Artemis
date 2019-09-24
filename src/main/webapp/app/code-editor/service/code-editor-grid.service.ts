@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { of, Observable, Subject } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 export enum ResizeType {
     SIDEBAR_LEFT = 'SIDEBAR_LEFT',

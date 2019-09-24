@@ -9,6 +9,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
+@DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -82,8 +84,10 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> categories = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
+    @Column(name = "categories")
+    private Set<String> categories = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
@@ -96,7 +100,7 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<StudentParticipation> participations = new HashSet<>();
+    private Set<StudentParticipation> studentParticipations = new HashSet<>();
 
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -286,37 +290,37 @@ public abstract class Exercise implements Serializable {
         this.difficulty = difficulty;
     }
 
-    public List<String> getCategories() {
+    public Set<String> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<String> categories) {
+    public void setCategories(Set<String> categories) {
         this.categories = categories;
     }
 
-    public Set<StudentParticipation> getParticipations() {
-        return participations;
+    public Set<StudentParticipation> getStudentParticipations() {
+        return studentParticipations;
     }
 
     public Exercise participations(Set<StudentParticipation> participations) {
-        this.participations = participations;
+        this.studentParticipations = participations;
         return this;
     }
 
     public Exercise addParticipation(StudentParticipation participation) {
-        this.participations.add(participation);
+        this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
     }
 
     public Exercise removeParticipation(StudentParticipation participation) {
-        this.participations.remove(participation);
+        this.studentParticipations.remove(participation);
         participation.setExercise(null);
         return this;
     }
 
-    public void setParticipations(Set<StudentParticipation> participations) {
-        this.participations = participations;
+    public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
     }
 
     public Course getCourse() {
@@ -586,7 +590,7 @@ public abstract class Exercise implements Serializable {
             participation.setExercise(null);
 
             // add participation into an array
-            setParticipations(Sets.newHashSet(participation));
+            setStudentParticipations(Sets.newHashSet(participation));
         }
     }
 

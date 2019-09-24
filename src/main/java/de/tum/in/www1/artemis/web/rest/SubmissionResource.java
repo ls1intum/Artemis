@@ -9,10 +9,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -33,8 +43,24 @@ public class SubmissionResource {
 
     private SubmissionRepository submissionRepository;
 
-    public SubmissionResource(SubmissionRepository submissionRepository) {
+    private ResultRepository resultRepository;
+
+    private CourseService courseService;
+
+    private ParticipationService participationService;
+
+    private AuthorizationCheckService authCheckService;
+
+    private UserService userService;
+
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, CourseService courseService, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, UserService userService) {
         this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
+        this.courseService = courseService;
+        this.participationService = participationService;
+        this.authCheckService = authCheckService;
+        this.userService = userService;
     }
 
     /**
@@ -104,9 +130,42 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/submissions/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
+
+        Optional<Submission> submission = submissionRepository.findById(id);
+
+        if (!submission.isPresent()) {
+            log.error("Submission with id: " + id + " cannot be deleted");
+            return ResponseEntity.notFound().build();
+        }
+
+        checkAccessPermissionAtInstructor(submission.get());
+
+        if (submission.get().getResult() != null) {
+            resultRepository.delete(submission.get().getResult());
+        }
         submissionRepository.deleteById(id);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    private void checkAccessPermissionAtInstructor(Submission submission) {
+        Course course = findCourseFromSubmission(submission);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
+    private Course findCourseFromSubmission(Submission submission) {
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourse() != null) {
+            return studentParticipation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourse();
     }
 }

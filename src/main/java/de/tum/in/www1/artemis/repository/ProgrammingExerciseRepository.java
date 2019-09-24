@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
 
@@ -48,14 +48,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
+    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
-    @EntityGraph(attributePaths = "participations")
+    @EntityGraph(attributePaths = "studentParticipations")
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations pep left join fetch pep.submissions")
+    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
     List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
 
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
@@ -65,4 +65,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(attributePaths = "course")
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
     Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
+
+    /**
+     * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
+     * This can't be done as a standard query as the property contains the word 'And'.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 }

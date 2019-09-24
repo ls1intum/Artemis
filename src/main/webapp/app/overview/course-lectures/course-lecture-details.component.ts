@@ -3,10 +3,11 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { AuthServerProvider, JhiWebsocketService } from 'app/core';
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
-import { Attachment } from 'app/entities/attachment';
+import { Attachment, AttachmentService } from 'app/entities/attachment';
+import { FileService } from 'app/shared';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -22,10 +23,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private $location: Location,
         private jhiWebsocketService: JhiWebsocketService,
         private lectureService: LectureService,
-        private httpClient: HttpClient,
+        private attachmentService: AttachmentService,
         private authServerProvider: AuthServerProvider,
         private route: ActivatedRoute,
         private router: Router,
+        private fileService: FileService,
     ) {
         const navigation = this.router.getCurrentNavigation();
         if (navigation && navigation.extras.state) {
@@ -74,22 +76,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     downloadAttachment(downloadUrl: string): void {
-        this.isDownloadingLink = downloadUrl;
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
-            response => {
-                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename')!);
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-                this.isDownloadingLink = null;
-            },
-            error => {
-                this.isDownloadingLink = null;
-            },
-        );
+        if (!this.isDownloadingLink) {
+            this.isDownloadingLink = downloadUrl;
+            this.fileService.downloadAttachment(downloadUrl);
+            this.isDownloadingLink = null;
+        }
     }
 }

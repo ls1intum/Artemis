@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,11 +91,55 @@ public class BitbucketService implements VersionControlService {
         }
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
-        protectMasterBranch(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+        protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
 
-    private void protectMasterBranch(String projectKeyFromUrl, String repositorySlugFromUrl, String username) {
-        // TODO: Simon Leiß implement, prevent deletion and prevent force push
+    /**
+     * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
+     * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
+     * @param projectKey The project key of the repository that should be protected
+     * @param repositorySlug The slug of the repository that should be protected
+     */
+    private void protectBranches(String projectKey, String repositorySlug) {
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
+        log.debug("Setting up branch protection for repository " + repositorySlug);
+
+        // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
+        HashMap<String, Object> matcher = new HashMap<>();
+
+        // A wildcard (*) ist used to protect all branches
+        matcher.put("displayId", "*");
+        matcher.put("id", "*");
+        HashMap<String, Object> type = new HashMap<>();
+        type.put("id", "PATTERN");
+        type.put("name", "Pattern");
+        matcher.put("type", type);
+        matcher.put("active", true);
+
+        HashMap<String, Object> fastForwardOnlyType = new HashMap<>();
+        fastForwardOnlyType.put("type", "fast-forward-only"); // Prevent force-pushes
+        fastForwardOnlyType.put("matcher", matcher);
+
+        HashMap<String, Object> noDeletesType = new HashMap<>();
+        noDeletesType.put("type", "no-deletes"); // Prevent deletion of branches
+        noDeletesType.put("matcher", matcher);
+
+        List<Object> body = new ArrayList<>();
+        body.add(fastForwardOnlyType);
+        body.add(noDeletesType);
+
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
+        }
+        catch (Exception emAll) {
+            log.error("Exception occurred while protecting repository " + repositorySlug, emAll);
+        }
+
+        log.debug("Branch protection for repository " + repositorySlug + " set up");
     }
 
     @Override
@@ -305,7 +346,7 @@ public class BitbucketService implements VersionControlService {
      * @param groups   Names of Bitbucket groups
      * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
-    public void addUserToGroups(String username, List<String> groups) throws BitbucketException {
+    public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();

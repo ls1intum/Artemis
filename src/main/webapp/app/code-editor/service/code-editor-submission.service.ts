@@ -1,11 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { of, Subject, Subscription } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Subject, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmissionState, ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { SolutionProgrammingExerciseParticipation, StudentParticipation } from 'app/entities/participation';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
@@ -13,10 +13,11 @@ import { DomainType } from 'app/code-editor/service/code-editor-repository.servi
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSubmissionService extends DomainDependent implements OnDestroy {
     private participationId: number | null;
+    private exerciseId: number | null;
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionWebsocketService, private alertService: JhiAlertService) {
+    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: JhiAlertService) {
         super(domainService);
         this.initDomainSubscription();
     }
@@ -34,15 +35,19 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
         // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
         if (domainType === DomainType.PARTICIPATION && domainValue.id !== this.participationId) {
             this.participationId = domainValue.id;
+            // There is no differentiation between the participation types atm. This could be implemented in the domain service, but this would make the implementation more complicated, too.
+            this.exerciseId = (domainValue as StudentParticipation).exercise
+                ? (domainValue as StudentParticipation).exercise.id
+                : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
             this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmission(this.participationId)
+                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId)
                 .pipe(
-                    tap(([submissionState]) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
-                    map(([, submission]) => !!submission),
+                    tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
+                    map(({ submission }) => !!submission),
                     tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                 )
                 .subscribe();
-        } else {
+        } else if (domainType === DomainType.TEST_REPOSITORY) {
             // There are no submissions for the test repository, so it is never building.
             this.isBuildingSubject.next(false);
         }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';

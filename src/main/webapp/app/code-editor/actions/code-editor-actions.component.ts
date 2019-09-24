@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { Observable, of, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
 import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor-submission.service';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
 
 @Component({
@@ -92,11 +92,17 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
     }
 
+    onSave() {
+        this.saveChangedFiles()
+            .pipe(catchError(() => of()))
+            .subscribe();
+    }
+
     /**
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles() {
+    saveChangedFiles(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));

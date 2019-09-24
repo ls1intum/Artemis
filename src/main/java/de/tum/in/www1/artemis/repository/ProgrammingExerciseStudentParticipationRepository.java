@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+
+    /**
+     * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
+     *
+     * @param exerciseId is used as a filter for the found participations.
+     * @param participationIds the participations to retrieve.
+     * @return filtered list of participations.
+     */
+    @Query("select participation from ProgrammingExerciseStudentParticipation participation where participation.exercise.id = :#{#exerciseId} and participation.id in :#{#participationIds}")
+    List<ProgrammingExerciseStudentParticipation> findByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
+            @Param("participationIds") Collection<Long> participationIds);
 
     @EntityGraph(attributePaths = "student")
     @Query("select distinct participation from Participation participation where participation.id = :#{#participationId}")

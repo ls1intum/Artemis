@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
@@ -18,7 +16,6 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
 
 @NgModule({
     imports: [
-        BrowserModule,
         ArtemisSharedModule,
         MomentModule,
         ClipboardModule,

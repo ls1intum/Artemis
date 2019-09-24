@@ -16,6 +16,7 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -54,6 +55,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -77,7 +79,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                this.exercise.participations = this.filterParticipations(cachedParticipations)!;
+                this.exercise.studentParticipations = this.filterParticipations(cachedParticipations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -86,7 +88,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                this.exercise.participations = this.filterParticipations(this.exercise.participations)!;
+                this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -144,19 +146,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     mergeResultsAndSubmissionsForParticipations() {
-        if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
+        if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                this.combinedParticipation = this.participationService.mergeProgrammingParticipations(this.exercise.participations as ProgrammingExerciseStudentParticipation[]);
+                this.combinedParticipation = this.participationService.mergeProgrammingParticipations(this.exercise
+                    .studentParticipations as ProgrammingExerciseStudentParticipation[]);
             } else {
-                this.combinedParticipation = this.participationService.mergeStudentParticipations(this.exercise.participations);
+                this.combinedParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             }
             this.sortResults();
         }
     }
 
     subscribeForNewResults() {
-        if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
-            this.exercise.participations.forEach(participation => {
+        if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+            this.exercise.studentParticipations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
         } else {
@@ -164,9 +167,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
-                this.exercise.participations =
-                    this.exercise.participations && this.exercise.participations.length > 0
-                        ? this.exercise.participations.map(el => {
+                this.exercise.studentParticipations =
+                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
+                        ? this.exercise.studentParticipations.map(el => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
@@ -209,10 +212,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.exercise || !this.exercise.participations || this.exercise.participations.length === 0) {
+        if (!this.exercise || !this.exercise.studentParticipations || this.exercise.studentParticipations.length === 0) {
             return false;
         }
-        return this.exercise.participations.some((participation: Participation) => participation.results && participation.results.length > 0);
+        return this.exercise.studentParticipations.some((participation: Participation) => participation.results && participation.results.length > 0);
     }
 
     /**

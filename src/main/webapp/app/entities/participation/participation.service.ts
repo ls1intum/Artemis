@@ -4,8 +4,6 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
-
-import { Participation } from './participation.model';
 import { createRequestOption } from 'app/shared';
 import { Result } from 'app/entities/result';
 import { Submission } from 'app/entities/submission';

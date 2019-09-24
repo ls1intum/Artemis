@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,10 +36,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             interact('.resizable')
                 .resizable({
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
-                    restrictSize: {
-                        min: { width: 15 },
-                        max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500 },
-                    },
+                    modifiers: [
+                        interact.modifiers!.restrictSize({
+                            min: { width: 15, height: 0 },
+                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 2000 },
+                        }),
+                    ],
                     inertia: true,
                 })
                 .on('resizestart', function(event: any) {

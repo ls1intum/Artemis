@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
@@ -10,7 +10,6 @@ import {
     ParticipationService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
-    StudentParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
@@ -25,9 +24,9 @@ import {
     CodeEditorInstructionsComponent,
     CodeEditorSessionService,
 } from 'app/code-editor';
-import { ResultService, UpdatingResultComponent } from 'app/entities/result';
+import { UpdatingResultComponent } from 'app/entities/result';
 import { ExerciseType } from 'app/entities/exercise';
-import { ButtonSize } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-build-button.component';
+import { ButtonSize } from 'app/shared/components';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -163,7 +162,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         const availableParticipations = [
             this.exercise.templateParticipation,
             this.exercise.solutionParticipation,
-            this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
+            this.exercise.studentParticipations && this.exercise.studentParticipations.length ? this.exercise.studentParticipations[0] : undefined,
         ].filter(Boolean);
         const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
         return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: ProgrammingExerciseStudentParticipation) => !!repositoryUrl);
@@ -205,10 +204,10 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         } else if (participationId === this.exercise.solutionParticipation.id) {
             this.selectedRepository = REPOSITORY.SOLUTION;
             this.selectedParticipation = { ...this.exercise.solutionParticipation, exercise };
-        } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
+        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.participations[0] as ProgrammingExerciseStudentParticipation;
-            this.selectedParticipation = { ...(this.exercise.participations[0] as ProgrammingExerciseStudentParticipation), exercise };
+            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = { ...(this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation), exercise };
         } else {
             this.onError('participationNotFound');
         }
@@ -235,30 +234,30 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      **/
     selectParticipationDomainById(participationId: number) {
         if (participationId === this.exercise.templateParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
+            this.domainService.setDomain([DomainType.PARTICIPATION, { programmingExercise: this.exercise, ...this.exercise.templateParticipation }]);
         } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
-        } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.participations[0]]);
+            this.domainService.setDomain([DomainType.PARTICIPATION, { programmingExercise: this.exercise, ...this.exercise.solutionParticipation }]);
+        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+            this.domainService.setDomain([DomainType.PARTICIPATION, { exercise: this.exercise, ...this.exercise.studentParticipations[0] }]);
         } else {
             this.onError('participationNotFound');
         }
     }
 
     selectSolutionParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.solutionParticipation.id}`);
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.solutionParticipation.id}`);
     }
 
     selectTemplateParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.templateParticipation.id}`);
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.templateParticipation.id}`);
     }
 
     selectAssignmentParticipation() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${this.exercise.participations[0].id}`);
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.studentParticipations[0].id}`);
     }
 
     selectTestRepository() {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/test`);
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/test`);
     }
 
     /**
@@ -271,7 +270,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {
-                    this.exercise.participations = [participation];
+                    this.exercise.studentParticipations = [participation];
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
@@ -287,8 +286,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
-        const assignmentParticipationId = this.exercise.participations[0].id;
-        this.exercise.participations = [];
+        const assignmentParticipationId = this.exercise.studentParticipations[0].id;
+        this.exercise.studentParticipations = [];
         this.participationService
             .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(

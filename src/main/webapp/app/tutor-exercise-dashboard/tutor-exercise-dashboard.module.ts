@@ -1,13 +1,10 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorExerciseDashboardRoute } from './tutor-exercise-dashboard.route';
 import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { TutorExerciseDashboardComponent } from './tutor-exercise-dashboard.component';
 import { RepositoryService } from 'app/entities/repository';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -27,7 +24,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
 @NgModule({
     imports: [
-        BrowserModule,
         ArtemisSharedModule,
         ArtemisResultModule,
         MomentModule,
@@ -43,23 +39,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
-    providers: [
-        CourseService,
-        JhiAlertService,
-        RepositoryService,
-        ResultService,
-        CourseExerciseService,
-        ParticipationService,
-        CourseScoreCalculationService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService },
-    ],
+    providers: [CourseService, JhiAlertService, RepositoryService, ResultService, CourseExerciseService, ParticipationService, CourseScoreCalculationService],
 })
-export class ArtemisTutorExerciseDashboardModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisTutorExerciseDashboardModule {}

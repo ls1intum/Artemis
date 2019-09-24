@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { orderBy as _orderBy } from 'lodash';
-import { Subscription, of } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { Course } from 'app/entities/course';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
@@ -10,34 +10,35 @@ import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
-import { ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionWebsocketService } from 'app/submission/programming-submission-websocket.service';
-
-@Component({
-    selector: 'jhi-updating-result',
-    templateUrl: './updating-result.component.html',
-    providers: [ResultService, RepositoryService],
-})
+import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
  * If the participation changes, the newest result from its result array will be used.
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
+@Component({
+    selector: 'jhi-updating-result',
+    templateUrl: './updating-result.component.html',
+    providers: [ResultService, RepositoryService],
+})
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exerciseType: ExerciseType;
     @Input() course: Course;
+    @Input() exercise: Exercise;
     @Input() participation: Participation;
     @Input() short = false;
-    @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
+    @Input() showTestNames = false;
 
+    result: Result | null;
     isBuilding: boolean;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionWebsocketService: ProgrammingSubmissionWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
@@ -52,7 +53,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exerciseType === ExerciseType.PROGRAMMING) {
+            if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
         }
@@ -92,9 +93,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
-        this.submissionSubscription = this.submissionWebsocketService
-            .getLatestPendingSubmission(this.participation.id)
-            .pipe(tap(([, pendingSubmission]) => (this.isBuilding = !!pendingSubmission)))
+        this.submissionSubscription = this.submissionService
+            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
+            .pipe(tap(({ submission: pendingSubmission }) => (this.isBuilding = !!pendingSubmission)))
             .subscribe();
     }
 }
