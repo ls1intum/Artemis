@@ -576,7 +576,7 @@ public class ProgrammingExerciseService {
             return programmingExercise.get();
         }
         else {
-            throw new EntityNotFoundException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
         }
     }
 
@@ -779,12 +779,8 @@ public class ProgrammingExerciseService {
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
         }
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        boolean hasPermissions = authCheckService.isAtLeastInstructorForExercise(programmingExercise);
-        if (!hasPermissions) {
-            throw new AccessForbiddenException("User is not allowed to access programming exercise with id " + programmingExerciseId);
-        }
 
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         programmingExercise.setTestCasesChanged(testCasesChanged);
         return programmingExercise;
     }
