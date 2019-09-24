@@ -120,23 +120,23 @@ class AutomaticAssessmentControllerTest {
         verify(assessmentIndex, never()).addAssessment(eq(1), any(Assessment.class));
     }
 
-    // @Test
-    // void addFeedbacksToAssessment_ActivityDiagram() {
-    // when(classDiagram.getElementByJSONID("element1Id")).thenReturn(umlControlFlow);
-    // when(classDiagram.getElementByJSONID("element2Id")).thenReturn(umlActivityElement);
-    // when(umlControlFlow.getContext()).thenReturn(context1);
-    // when(umlActivityElement.getContext()).thenReturn(context2);
-    // when(umlControlFlow.getSimilarityID()).thenReturn(1);
-    // when(umlActivityElement.getSimilarityID()).thenReturn(2);
-    //
-    // automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, activityDiagram);
-    //
-    // verify(assessment).addFeedback(feedback1, context1);
-    // verify(assessment, never()).addFeedback(eq(feedback2), any(Context.class));
-    // verify(assessment, never()).addFeedback(any(Feedback.class), eq(context2));
-    // verify(assessmentIndex).addAssessment(eq(2), any(Assessment.class));
-    // verify(assessmentIndex, never()).addAssessment(eq(1), any(Assessment.class));
-    // }
+    @Test
+    void addFeedbacksToAssessment_ActivityDiagram() {
+        when(activityDiagram.getElementByJSONID("element1Id")).thenReturn(umlControlFlow);
+        when(activityDiagram.getElementByJSONID("element2Id")).thenReturn(umlActivityElement);
+        when(umlControlFlow.getContext()).thenReturn(context1);
+        when(umlActivityElement.getContext()).thenReturn(context2);
+        when(umlControlFlow.getSimilarityID()).thenReturn(1);
+        when(umlActivityElement.getSimilarityID()).thenReturn(2);
+
+        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, activityDiagram);
+
+        verify(assessment).addFeedback(feedback1, context1);
+        verify(assessment, never()).addFeedback(eq(feedback2), any(Context.class));
+        verify(assessment, never()).addFeedback(any(Feedback.class), eq(context2));
+        verify(assessmentIndex).addAssessment(eq(2), any(Assessment.class));
+        verify(assessmentIndex, never()).addAssessment(eq(1), any(Assessment.class));
+    }
 
     @Test
     void addFeedbacksToAssessment_nullElements() {
@@ -154,14 +154,14 @@ class AutomaticAssessmentControllerTest {
         automaticAssessmentController = mock(AutomaticAssessmentController.class);
         doCallRealMethod().when(automaticAssessmentController).assessModelsAutomatically(modelIndex, assessmentIndex);
         when(automaticAssessmentController.assessModelAutomatically(classDiagram, assessmentIndex)).thenReturn(mock(CompassResult.class));
-        // when(automaticAssessmentController.assessModelAutomatically(activityDiagram, assessmentIndex)).thenReturn(mock(CompassResult.class));
+        when(automaticAssessmentController.assessModelAutomatically(activityDiagram, assessmentIndex)).thenReturn(mock(CompassResult.class));
         when(modelIndex.getModelCollection()).thenReturn(List.of(classDiagram));
-        // when(modelIndex.getModelCollection()).thenReturn(List.of(classDiagram, activityDiagram));
+        when(modelIndex.getModelCollection()).thenReturn(List.of(classDiagram, activityDiagram));
 
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
 
         verify(automaticAssessmentController).assessModelAutomatically(classDiagram, assessmentIndex);
-        // verify(automaticAssessmentController).assessModelAutomatically(activityDiagram, assessmentIndex);
+        verify(automaticAssessmentController).assessModelAutomatically(activityDiagram, assessmentIndex);
     }
 
     @Test
@@ -179,15 +179,15 @@ class AutomaticAssessmentControllerTest {
 
     @Test
     void assessModelAutomatically_ActivityDiagram() {
-        // prepareActivityDiagramForAutomaticAssessment();
-        // prepareAssessmentIndexForAutomaticAssessment();
-        //
-        // CompassResult compassResult = automaticAssessmentController.assessModelAutomatically(activityDiagram, assessmentIndex);
-        //
-        // assertThat(compassResult.entitiesCovered()).isEqualTo(6);
-        // assertThat(compassResult.getPoints()).isEqualTo(-0.5 - 0.5 + 0 + 1.5 + 1.0 + 0.5);
-        // assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6);
-        // verify(activityDiagram).setLastAssessmentCompassResult(compassResult);
+        prepareActivityDiagramForAutomaticAssessment();
+        prepareAssessmentIndexForAutomaticAssessment();
+
+        CompassResult compassResult = automaticAssessmentController.assessModelAutomatically(activityDiagram, assessmentIndex);
+
+        assertThat(compassResult.entitiesCovered()).isEqualTo(6);
+        assertThat(compassResult.getPoints()).isEqualTo(-0.5 - 0.5 + 0 + 1.5 + 1.0 + 0.5);
+        assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6);
+        verify(activityDiagram).setLastAssessmentCompassResult(compassResult);
     }
 
     @Test
@@ -224,9 +224,7 @@ class AutomaticAssessmentControllerTest {
         when(class2.getMethods()).thenReturn(List.of(method1, method2));
         when(class2.getElementCount()).thenReturn(5);
 
-        when(classDiagram.getClassList()).thenReturn(List.of(class1, class2));
-        when(classDiagram.getRelationshipList()).thenReturn(List.of(relationship1, relationship2));
-        when(classDiagram.getPackageList()).thenReturn(List.of(package1, package2));
+        when(classDiagram.getAllModelElements()).thenReturn(List.of(class1, class2, relationship1, relationship2, package1, package2, attribute1, attribute2, method1, method2));
 
         when(class1.getSimilarityID()).thenReturn(1);
         when(class2.getSimilarityID()).thenReturn(2);
@@ -262,9 +260,8 @@ class AutomaticAssessmentControllerTest {
         UMLControlFlow controlFlow2 = mock(UMLControlFlow.class);
         UMLControlFlow controlFlow3 = mock(UMLControlFlow.class);
 
-        when(activityDiagram.getActivityNodeList()).thenReturn(List.of(activityNode1, activityNode2, activityNode3));
-        when(activityDiagram.getActivityList()).thenReturn(List.of(activity1, activity2, activity3));
-        when(activityDiagram.getControlFlowList()).thenReturn(List.of(controlFlow1, controlFlow2, controlFlow3));
+        when(activityDiagram.getAllModelElements())
+                .thenReturn(List.of(activityNode1, activityNode2, activityNode3, activity1, activity2, activity3, controlFlow1, controlFlow2, controlFlow3));
 
         when(activityNode1.getSimilarityID()).thenReturn(1);
         when(activityNode2.getSimilarityID()).thenReturn(2);
