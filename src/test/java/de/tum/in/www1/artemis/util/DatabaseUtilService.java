@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.respository.ProgrammingExerciseTestRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 
