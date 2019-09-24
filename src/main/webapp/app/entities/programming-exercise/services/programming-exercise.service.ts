@@ -37,9 +37,18 @@ export class ProgrammingExerciseService {
         return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
     }
 
-    importExercise(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+    /**
+     * Imports a programming exercise by cloning the entity itself plus all bas build plans and repositories
+     * (template, solution, test).
+     *
+     * @param adaptedSourceProgrammingExercise The exercise that should be imported, including adapted values for the
+     *                                         new exercise. E.g. with another title than the original exercise. Old
+     *                                         values that should get discarded (like the old ID) will be handled by the
+     *                                         server.
+     */
+    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${programmingExercise.id}`, programmingExercise, { observe: 'response' })
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
