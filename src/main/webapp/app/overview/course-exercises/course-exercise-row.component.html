@@ -32,16 +32,16 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.studentParticipations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.studentParticipations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.studentParticipations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'exercise-submitted'">
-                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.participations[0]" [course]="course" short="true"></jhi-updating-result>
+                    <jhi-updating-result [exerciseType]="exercise.type" [participation]="exercise.studentParticipations[0]" [course]="course" short="true"></jhi-updating-result>
                 </span>
                 <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
                     <jhi-programming-exercise-student-trigger-build-button

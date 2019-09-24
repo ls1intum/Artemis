@@ -61,7 +61,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
-                this.participationStatus(this.exercise);
+                this.exercise.participationStatus = this.participationStatus(this.exercise);
             }
         });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
@@ -135,7 +135,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                 return ParticipationStatus.QUIZ_FINISHED;
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
-            const participation = exercise.participations[0];
+            const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
                 if (this.isExerciseInDuedate(exercise)) {
                     return ParticipationStatus.EXERCISE_ACTIVE;

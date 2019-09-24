@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService, StudentParticipation, InitializationState } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation, InitializationState } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService, JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core';
 import * as moment from 'moment';
 
 const enum ResultTemplateStatus {

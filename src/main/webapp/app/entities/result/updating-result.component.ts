@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { hasParticipationChanged, Participation } from 'app/entities/participation';
+import { hasParticipationChanged, StudentParticipation } from 'app/entities/participation';
 import { Course } from 'app/entities/course';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
@@ -27,7 +26,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exerciseType: ExerciseType;
     @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() participation: Participation;
+    @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
