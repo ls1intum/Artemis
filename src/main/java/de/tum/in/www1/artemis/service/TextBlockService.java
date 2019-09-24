@@ -18,6 +18,12 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 public class TextBlockService {
 
     /**
+     * As line breaks are stored and handled in UNIX style (also on Windows), we always use '\n' instead of the platform-dependent separator.
+     */
+    private static final String LINE_SEPARATOR = "\\n";
+    private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
+
+    /**
      * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission
      * @param result the result, which correspond to the TextSubmission, that gets split
      * @throws ClassCastException if Result doesn't correspond to a TextSubmission
@@ -54,8 +60,6 @@ public class TextBlockService {
         breakIterator.setText(submissionText);
         List<TextBlock> blocks = new ArrayList<>();
 
-        final String LINE_SEPARATOR = System.lineSeparator();
-        final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
         int start = breakIterator.first();
 
         // Iterate over Sentences
