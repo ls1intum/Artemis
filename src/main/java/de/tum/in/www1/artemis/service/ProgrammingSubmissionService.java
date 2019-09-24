@@ -195,6 +195,8 @@ public class ProgrammingSubmissionService {
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
+        // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
+        programmingExerciseService.setTestCasesChanged(programmingExercise.getId(), false);
     }
 
     /**
