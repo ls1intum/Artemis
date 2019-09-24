@@ -168,19 +168,20 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.exercise = studentParticipation.exercise as FileUploadExercise;
         this.result = this.submission.result;
-        if (this.result) {
-            if (this.result.hasComplaint) {
-                this.getComplaint();
-            }
-            if (!this.result.feedbacks) {
-                this.result.feedbacks = [];
-            }
-            this.submission.participation.results = [this.result];
-            this.result.participation = this.submission.participation;
-            if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.info('artemisApp.assessment.messages.lock');
-            }
+        if (this.result.hasComplaint) {
+            this.getComplaint();
+        }
+        if (!this.result.feedbacks) {
+            this.result.feedbacks = [];
+        }
+        this.submission.participation.results = [this.result];
+        this.result.participation = this.submission.participation;
+        if (!this.result.feedbacks) {
+            this.result.feedbacks = [];
+        }
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+            this.jhiAlertService.clear();
+            this.jhiAlertService.info('artemisApp.assessment.messages.lock');
         }
         this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
         this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
@@ -402,8 +403,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             credits = credits.filter(credit => credit !== null && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every(f => (f.credits !== 0 || (f.detailText != null && f.detailText.length > 0)) && f.reference)) {
-            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScoreOrFeedbackAndTitle';
+        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0)) {
+            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
 

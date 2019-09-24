@@ -74,11 +74,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         }
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
             (submission: FileUploadSubmission) => {
-                this.participation = <StudentParticipation>submission.participation;
                 // reconnect participation <--> result
                 if (submission.result) {
                     submission.participation.results = [submission.result];
                 }
+                this.participation = <StudentParticipation>submission.participation;
+                this.submission = submission;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
@@ -91,7 +92,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.numberOfAllowedComplaints = allowedComplaints;
                     });
                 }
-                this.submission = submission;
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }

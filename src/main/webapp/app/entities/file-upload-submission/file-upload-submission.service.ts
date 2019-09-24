@@ -70,7 +70,7 @@ export class FileUploadSubmissionService {
      * @param participationId the id of the participation
      */
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
-        return this.http.get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`);
+        return this.http.get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

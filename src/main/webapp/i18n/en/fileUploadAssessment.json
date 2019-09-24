@@ -10,7 +10,7 @@
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
                 "invalidScoreMustBeNumber": "The score field must be a number and can not be empty!",
-                "invalidNeedScoreOrFeedbackAndTitle": "Each Feedback item must have at least a feedback title and a score or feedback text."
+                "invalidNeedScore": "Each Feedback item must have a score."
             }
         }
     }

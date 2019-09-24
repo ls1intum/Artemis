@@ -16,7 +16,7 @@ export class FileUploadResultComponent {
         if (!result) {
             return;
         }
-        const groupedFeedback = partition(result.feedbacks, feedback => feedback.reference);
+        const groupedFeedback = partition(result.feedbacks, feedback => feedback.credits > 0);
         this.feedbacks = groupedFeedback[0];
         this.generalFeedback = groupedFeedback[1][0];
     }
