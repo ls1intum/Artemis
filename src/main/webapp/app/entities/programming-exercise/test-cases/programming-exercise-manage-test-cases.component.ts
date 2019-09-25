@@ -9,6 +9,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
+import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -25,6 +26,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     exerciseId: number;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
+    testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
 
     testCasesValue: ProgrammingExerciseTestCase[] = [];
@@ -60,6 +62,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     constructor(
         private testCaseService: ProgrammingExerciseTestCaseService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
         private alertService: JhiAlertService,
         private translateService: TranslateService,
@@ -79,9 +82,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
-            this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
-                this.testCases = testCases;
-            });
+            if (this.testCaseChangedSubscription) {
+                this.testCaseChangedSubscription.unsubscribe();
+            }
 
             this.getExerciseReleaseState()
                 .pipe(
@@ -91,13 +94,30 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     }),
                     catchError(() => of(null)),
                 )
-                .subscribe(() => (this.isLoading = false));
+                .subscribe(() => {
+                    this.testCaseSubscription = this.testCaseService
+                        .subscribeForTestCases(this.exerciseId)
+                        .pipe(
+                            tap((testCases: ProgrammingExerciseTestCase[]) => {
+                                this.testCases = testCases;
+                            }),
+                        )
+                        .subscribe();
+                    this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
+                        .getTestCaseState(this.exerciseId)
+                        .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
+                        .subscribe();
+                    this.isLoading = false;
+                });
         });
     }
 
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
+        }
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
         }
         if (this.paramSub) {
             this.paramSub.unsubscribe();
