@@ -12,6 +12,8 @@ import { Result, ResultDetailComponent, ResultService } from 'app/entities/resul
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -34,6 +36,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     allResults: Result[];
     eventSubscriber: Subscription;
 
+    isLoading: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
@@ -42,6 +46,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private participationService: ParticipationService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
@@ -55,12 +60,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
+            this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
                 this.getResults();
+                if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                    // Preload the latest submissions of all participations, otherwise the updating result components will execute a single call each.
+                    this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.isLoading = false));
+                } else {
+                    this.isLoading = false;
+                }
             });
         });
         this.registerChangeInCourses();
