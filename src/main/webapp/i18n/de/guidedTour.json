@@ -18,6 +18,11 @@
         },
         "waitHint": {
             "text": "Bitte warte bis der nächste Schritt fertig geladen ist."
+        },
+        "stepAlreadyExecuted": {
+            "headline": "Schritt bereits abgeschlossen",
+            "content": "Dieser Tutorialschritt wurde übersprungen, da er bereits durchgeführt wurde. Navigiere einfach zum nächsten Schritt um mit dem Tutorial fortzufahren.",
+            "hint": "Wenn du das gesamte Tutorial nochmal mit allen Schritten anschauen möchtest, dann setze das Tutorial zurück und starte es von Neuem."
         }
     }
 }

@@ -74,7 +74,7 @@ export class GuidedTourService {
                         );
                     } else {
                         this.onResizeMessage = false;
-                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
+                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, false));
                     }
                 }
             });
@@ -133,16 +133,7 @@ export class GuidedTourService {
                 previousStep.action();
             }
             setTimeout(() => {
-                if (this.checkSelectorValidity()) {
-                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                } else {
-                    this.guidedTourCurrentStepSubject.next(
-                        new TextTourStep({
-                            headlineTranslateKey: 'tour.resize.headline',
-                            contentTranslateKey: 'tour.resize.content',
-                        }),
-                    );
-                }
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
             });
         } else {
             this.resetTour();
@@ -168,17 +159,7 @@ export class GuidedTourService {
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
-                if (this.checkSelectorValidity()) {
-                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                } else {
-                    console.log('next');
-                    this.guidedTourCurrentStepSubject.next(
-                        new TextTourStep({
-                            headlineTranslateKey: 'tour.resize.headline',
-                            contentTranslateKey: 'tour.resize.content',
-                        }),
-                    );
-                }
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
             });
         } else {
             this.finishGuidedTour();
@@ -368,16 +349,7 @@ export class GuidedTourService {
             if (currentStep.action) {
                 currentStep.action();
             }
-            if (this.checkSelectorValidity()) {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-            } else {
-                this.guidedTourCurrentStepSubject.next(
-                    new TextTourStep({
-                        headlineTranslateKey: 'tour.resize.headline',
-                        contentTranslateKey: 'tour.resize.content',
-                    }),
-                );
-            }
+            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
         }
     }
 
@@ -396,14 +368,12 @@ export class GuidedTourService {
      *  @return true if highlighted element is available, otherwise false
      */
     public checkSelectorValidity(): boolean {
-        console.log('check selector validity');
         if (!this.currentTour) {
             return false;
         }
         const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
-            console.log('selected: ', selectedElement);
             if (!selectedElement) {
                 console.warn(
                     `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
@@ -469,16 +439,14 @@ export class GuidedTourService {
     /**
      * Get the tour step with defined orientation
      * @param index current tour step index
+     * @param selectorAvailable true if the current tour step selector is valid, otherwise false
      * @return prepared current tour step or null
      */
-    private getPreparedTourStep(index: number): TourStep | null {
-        if (this.currentTour) {
-            let preparedTourStep = this.setTourOrientation(this.currentTour.steps[index]);
-            preparedTourStep;
-            return preparedTourStep;
-        } else {
+    private getPreparedTourStep(index: number, selectorAvailable: boolean): TourStep | null {
+        if (!this.currentTour) {
             return null;
         }
+        return selectorAvailable ? this.setTourOrientation(this.currentTour.steps[index]) : this.setStepAlreadyFinishedHint();
     }
 
     /**
@@ -511,9 +479,12 @@ export class GuidedTourService {
         return convertedStep;
     }
 
-    private setStepNotAvailableHint(step: TourStep): TourStep {
-        const title = step.headlineTranslateKey;
-        return step;
+    private setStepAlreadyFinishedHint(): TourStep {
+        return new TextTourStep({
+            headlineTranslateKey: 'tour.stepAlreadyExecuted.headline',
+            contentTranslateKey: 'tour.stepAlreadyExecuted.content',
+            hintTranslateKey: 'tour.stepAlreadyExecuted.hint',
+        });
     }
 
     /**

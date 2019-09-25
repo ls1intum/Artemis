@@ -18,6 +18,11 @@
         },
         "waitHint": {
             "text": "Please wait until the next step is loaded."
+        },
+        "stepAlreadyExecuted": {
+            "headline": "Step skipped",
+            "content": "This step has already been executed, therefore you do not need to do anything here. Just click on back or next to proceed with the tutorial",
+            "hint": "In order to view the complete tutorial with all steps, reset and restart the tour again."
         }
     }
 }
