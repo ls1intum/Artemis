@@ -151,14 +151,14 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(ratedResultTmp);
 
         exercise.filterForCourseDashboard(studentParticipations, "student", true);
-        Result result = exercise.getParticipations().iterator().next().getSubmissions().iterator().next().getResult();
+        Result result = exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().getResult();
         assertThat(result.getAssessor()).isNull();
     }
 
     @Test
     public void filterForCourseDashboard_nullParticipations() {
         exercise.filterForCourseDashboard(null, "student", true);
-        assertThat(exercise.getParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isNull();
     }
 
     @Test
@@ -169,13 +169,13 @@ public class ExerciseTest {
         when(studentParticipationInitialized.getSubmissions()).thenReturn(null);
 
         exercise.filterForCourseDashboard(studentParticipations, "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(null);
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(null);
     }
 
     @Test
     public void filterForCourseDashboard_emptyParticipations() {
         exercise.filterForCourseDashboard(new ArrayList<>(), "student", true);
-        assertThat(exercise.getParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isNull();
     }
 
     @Test
@@ -186,13 +186,13 @@ public class ExerciseTest {
         when(studentParticipationInitialized.getSubmissions()).thenReturn(new HashSet<>());
 
         exercise.filterForCourseDashboard(studentParticipations, "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(new HashSet<>());
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(new HashSet<>());
     }
 
     @Test
     public void filterForCourseDashboard_submissionsWithRatedResultsOrder() {
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
     }
 
     @Test
@@ -202,7 +202,7 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(unratedResult);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
     }
 
     @Test
@@ -212,7 +212,7 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(null);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
     }
 
     @Test
@@ -222,7 +222,7 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(unratedResult);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission1));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission1));
     }
 
     private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
