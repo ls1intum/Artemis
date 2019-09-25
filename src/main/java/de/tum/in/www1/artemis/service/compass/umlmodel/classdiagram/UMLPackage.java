@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLPackage extends UMLElement {
@@ -14,30 +15,42 @@ public class UMLPackage extends UMLElement {
     private List<UMLClass> classes;
 
     public UMLPackage(String name, List<UMLClass> classes, String jsonElementID) {
+        super(jsonElementID);
+
         this.classes = classes;
         this.name = name;
-        this.setJsonElementID(jsonElementID);
+
+        setPackageOfClasses();
+    }
+
+    /**
+     * Sets the package attribute of all classes contained in this package.
+     */
+    private void setPackageOfClasses() {
+        for (UMLClass umlClass : classes) {
+            umlClass.setUmlPackage(this);
+        }
     }
 
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (element.getClass() == UMLPackage.class) {
-            UMLPackage otherPackage = (UMLPackage) element;
-            similarity += NameSimilarity.levenshteinSimilarity(name, otherPackage.name);
+        if (reference instanceof UMLPackage) {
+            UMLPackage referencePackage = (UMLPackage) reference;
+            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
         }
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Package " + name;
     }
 
     @Override
-    public String getValue() {
+    public String getName() {
         return name;
     }
 
@@ -46,10 +59,20 @@ public class UMLPackage extends UMLElement {
         return UML_PACKAGE_TYPE;
     }
 
+    /**
+     * Add a UML class to the list of classes contained in this package.
+     *
+     * @param umlClass the new UML class that should be added to this package
+     */
     public void addClass(UMLClass umlClass) {
         this.classes.add(umlClass);
     }
 
+    /**
+     * Add a UML class from the list of classes contained in this package.
+     *
+     * @param umlClass the UML class that should be removed from this package
+     */
     public void removeClass(UMLClass umlClass) {
         this.classes.remove(umlClass);
     }

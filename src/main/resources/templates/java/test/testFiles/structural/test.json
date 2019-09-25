@@ -2,7 +2,7 @@
   "class" : {
     "name" : "MergeSort",
     "package" : "${packageName}",
-    "interfaces" : [ "SortStrategy" ],
+    "interfaces" : [ "SortStrategy" ]
   }
 }, {
   "class" : {

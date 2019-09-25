@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLControlFlow extends UMLElement {
 
@@ -9,47 +9,41 @@ public class UMLControlFlow extends UMLElement {
 
     private final String CONTROL_FLOW_SYMBOL = " --> ";
 
-    private UMLActivity source;
+    private UMLActivityElement source;
 
-    private UMLActivity target;
+    private UMLActivityElement target;
 
-    public UMLControlFlow(UMLActivity source, UMLActivity target, String jsonElementID) {
+    public UMLControlFlow(UMLActivityElement source, UMLActivityElement target, String jsonElementID) {
+        super(jsonElementID);
+
         this.source = source;
         this.target = target;
-
-        this.setJsonElementID(jsonElementID);
     }
 
-    /**
-     * Compare this with another element to calculate the similarity
-     *
-     * @param element the element to compare with
-     * @return the similarity as number [0-1]
-     */
     @Override
-    public double similarity(UMLElement element) {
-        if (element.getClass() != UMLControlFlow.class) {
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLControlFlow)) {
             return 0;
         }
 
-        UMLControlFlow reference = (UMLControlFlow) element;
+        UMLControlFlow referenceControlFlow = (UMLControlFlow) reference;
 
         double similarity = 0;
-        double weight = 1;
+        double weight = 0.5;
 
-        similarity += reference.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += reference.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceControlFlow.getSource().similarity(source) * weight;
+        similarity += referenceControlFlow.getTarget().similarity(target) * weight;
 
-        return similarity / weight;
+        return ensureSimilarityRange(similarity);
+    }
+
+    @Override
+    public String toString() {
+        return "Control Flow " + getSource().getName() + CONTROL_FLOW_SYMBOL + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override
     public String getName() {
-        return "Control Flow " + getSource().getValue() + CONTROL_FLOW_SYMBOL + getTarget().getValue() + " (" + getType() + ")";
-    }
-
-    @Override
-    public String getValue() {
         return getType();
     }
 
@@ -58,11 +52,21 @@ public class UMLControlFlow extends UMLElement {
         return UML_CONTROL_FLOW_TYPE;
     }
 
-    public UMLActivity getSource() {
+    /**
+     * Get the source of this UML control flow element, i.e. the UML activity element where the control flow starts.
+     *
+     * @return the source UML activity element of this control flow element
+     */
+    public UMLActivityElement getSource() {
         return source;
     }
 
-    public UMLActivity getTarget() {
+    /**
+     * Get the target of this UML control flow element, i.e. the UML activity element where the control flow ends.
+     *
+     * @return the target UML activity element of this control flow element
+     */
+    public UMLActivityElement getTarget() {
         return target;
     }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -282,8 +283,9 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class);
 
-        // set date to UTC for comparison as dates coming from the database are in UTC
-        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        // set dates to UTC and round to milliseconds for comparison
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
@@ -300,8 +302,9 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
                 ModelingSubmission.class);
 
-        // set date to UTC for comparison as dates coming from the database are in UTC
-        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        // set dates to UTC and round to milliseconds for comparison
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
@@ -390,8 +393,9 @@ public class ModelingSubmissionIntegrationTest {
 
         ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
 
-        // set date to UTC for comparison as dates coming from the database are in UTC
-        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().toInstant(), ZoneId.of("UTC")));
+        // set dates to UTC and round to milliseconds for comparison
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        receivedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(receivedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();

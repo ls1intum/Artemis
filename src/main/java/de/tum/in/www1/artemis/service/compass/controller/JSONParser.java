@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +21,10 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
 public class JSONParser {
@@ -45,7 +47,7 @@ public class JSONParser {
         JsonArray relationships = root.getAsJsonArray(JSONMapping.relationships);
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
-        List<UMLClassRelationship> umlAssociationList = new ArrayList<>();
+        List<UMLRelationship> umlRelationshipList = new ArrayList<>();
         Map<String, UMLPackage> umlPackageMap = new HashMap<>();
 
         // <editor-fold desc="iterate over every package">
@@ -69,7 +71,11 @@ public class JSONParser {
             JsonObject element = elem.getAsJsonObject();
 
             String elementType = element.get(JSONMapping.elementType).getAsString();
-            if (UMLClassType.getTypesAsList().contains(elementType)) {
+            elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
+
+            if (EnumUtils.isValidEnum(UMLClassType.class, elementType)) {
+                UMLClassType classType = UMLClassType.valueOf(elementType);
+
                 String className = element.get(JSONMapping.elementName).getAsString();
 
                 List<UMLAttribute> umlAttributesList = new ArrayList<>();
@@ -110,8 +116,7 @@ public class JSONParser {
                     umlMethodList.add(newMethod);
                 }
 
-                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, element.get(JSONMapping.elementID).getAsString(),
-                        CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType));
+                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, element.get(JSONMapping.elementID).getAsString(), classType);
 
                 if (element.has(JSONMapping.elementOwner) && !element.get(JSONMapping.elementOwner).isJsonNull()) {
                     String packageId = element.get(JSONMapping.elementOwner).getAsString();
@@ -160,17 +165,21 @@ public class JSONParser {
             String relationshipType = relationship.get(JSONMapping.relationshipType).getAsString();
             relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
+            if (!EnumUtils.isValidEnum(UMLRelationshipType.class, relationshipType)) {
+                continue;
+            }
+
             if (source != null && target != null) {
-                UMLClassRelationship newRelation = new UMLClassRelationship(source, target, relationshipType, relationship.get(JSONMapping.elementID).getAsString(),
-                        relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
+                UMLRelationship newRelation = new UMLRelationship(source, target, UMLRelationshipType.valueOf(relationshipType),
+                        relationship.get(JSONMapping.elementID).getAsString(), relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                         relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                         relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
                         relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
-                umlAssociationList.add(newRelation);
+                umlRelationshipList.add(newRelation);
             }
             else {
                 if (source == null && umlPackageMap.containsKey(sourceJSONID) || target == null && umlPackageMap.containsKey(targetJSONID)) {
-                    // workaround: prevent exception when a package is source or target of an association
+                    // workaround: prevent exception when a package is source or target of a relationship
                     continue;
                 }
 
@@ -179,7 +188,7 @@ public class JSONParser {
         }
         // </editor-fold>
 
-        return new UMLClassDiagram(modelSubmissionId, new ArrayList<>(umlClassMap.values()), umlAssociationList, new ArrayList<>(umlPackageMap.values()));
+        return new UMLClassDiagram(modelSubmissionId, new ArrayList<>(umlClassMap.values()), umlRelationshipList, new ArrayList<>(umlPackageMap.values()));
     }
 
     private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
