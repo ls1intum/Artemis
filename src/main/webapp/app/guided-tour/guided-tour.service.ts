@@ -223,7 +223,7 @@ export class GuidedTourService {
             return;
         }
         // If the tour was already finished, then keep the state
-        const updatedTourState = this.checkTourStateFinished(this.currentTour) ? GuidedTourState.FINISHED : guidedTourState;
+        const updatedTourState = this.checkTourState(this.currentTour, GuidedTourState.FINISHED) ? GuidedTourState.FINISHED : guidedTourState;
         this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, updatedTourState)
             .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
             .subscribe(guidedTourSettings => {
@@ -239,7 +239,28 @@ export class GuidedTourService {
      */
     public checkTourStateFinished(guidedTour: GuidedTour): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
-        return !!(tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]);
+        return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]);
+    }
+
+    /**
+     * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
+     * @param guidedTour that should be checked for the finished state
+     */
+    public checkTourState(guidedTour: GuidedTour, state: GuidedTourState): boolean {
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
+        return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state]);
+    }
+
+    /**
+     * Get the last step that the user visited during the given tour
+     * @param guidedTour for which the last step should be returned
+     */
+    public getLastSeenTourStepIndex(): number {
+        if (!this.currentTour) {
+            return 0;
+        }
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.currentTour!.settingsKey);
+        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
     }
 
     /**
@@ -361,8 +382,8 @@ export class GuidedTourService {
         this.currentTour = this.availableTourForComponent;
 
         // Filter tour steps according to permissions
-        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
-        this.currentTourStepIndex = 0;
+        this.currentTour.steps = this.getFilteredTourSteps();
+        this.currentTourStepIndex = this.getLastSeenTourStepIndex();
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
@@ -372,6 +393,13 @@ export class GuidedTourService {
             }
             this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
         }
+    }
+
+    private getFilteredTourSteps(): TourStep[] {
+        if (!this.currentTour) {
+            return [];
+        }
+        return this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**
@@ -545,7 +573,8 @@ export class GuidedTourService {
             this.currentTour = cloneDeep(guidedTour);
             this.availableTourForComponent = this.currentTour;
             this.guidedTourAvailability.next(true);
-            if (!this.checkTourStateFinished(guidedTour)) {
+            const hasStartedOrFinishedTour = this.checkTourState(guidedTour, GuidedTourState.STARTED) || this.checkTourState(guidedTour, GuidedTourState.FINISHED);
+            if (!hasStartedOrFinishedTour) {
                 this.startTour();
             }
         }, 500);

@@ -11,7 +11,7 @@
             "content": "Please resize the browser to a larger size to continue the tour or close the tour."
         },
         "cancel": {
-            "headline": "Cancel tutorial",
+            "headline": "Tutorial cancelled",
             "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on \"Start tutorial\" from the account menu."
         },
         "clickHint": {

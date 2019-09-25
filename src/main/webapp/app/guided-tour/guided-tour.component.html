@@ -19,7 +19,7 @@
         <div class="tour-block">
             <div class="tour-block__header">
                 <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
-                <div class="close" (click)="guidedTourService.skipTour()"></div>
+                <div *ngIf="guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
@@ -71,7 +71,7 @@
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
                         <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
