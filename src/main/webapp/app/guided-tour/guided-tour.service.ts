@@ -530,10 +530,12 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour) {
-        if (course && course.exercises) {
-            if (guidedTour.exerciseTitle === '' || course.exercises.find(exercise => exercise.title === guidedTour.exerciseTitle)) {
-                this.enableTour(guidedTour);
-            }
+        if (!guidedTour.exerciseTitle || !course || !course.exercises) {
+            return;
+        }
+        const hasExerciseForGuidedTour = course.exercises.find(exercise => exercise.title === guidedTour.exerciseTitle);
+        if (hasExerciseForGuidedTour) {
+            this.enableTour(guidedTour);
         }
     }
 
@@ -543,7 +545,7 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour) {
-        if (guidedTour.courseTitle === '' || courses.find(course => course.title === guidedTour.courseTitle)) {
+        if (courses.find(course => course.title === guidedTour.courseTitle)) {
             this.enableTour(guidedTour);
         }
     }
@@ -554,7 +556,7 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (guidedTour.exerciseTitle === '' || exercise.title === guidedTour.exerciseTitle) {
+        if (exercise.title === guidedTour.exerciseTitle) {
             this.enableTour(guidedTour);
         }
     }

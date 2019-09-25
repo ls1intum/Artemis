@@ -397,15 +397,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param title course or exercise title
      */
     private getSelectorForCourseOrExercise(targetSelector: string, title: string): HTMLElement | null {
-        let parentNode: HTMLElement;
-        const targetNodes = document.querySelectorAll(targetSelector);
-        for (let i = 0; i < targetNodes.length; i++) {
-            if (targetNodes[i].textContent && targetNodes[i].textContent!.includes(title)) {
-                parentNode = targetNodes[i] as HTMLElement;
-                return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
-            }
-        }
-        return null;
+        const targetNodes = [].slice.call(document.querySelectorAll(targetSelector));
+        const parentNode = targetNodes.find((targetNode: HTMLElement) => targetNode.textContent && targetNode.textContent.includes(title));
+        return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
     }
 
     /**
@@ -496,6 +490,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Update tour step location and return selected element as DOMRect
      * @param selectedElement: selected element in DOM
+     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener: this method should not listen to user interactions when it is called through resizing or scrolling events
      * @return selected element as DOMRect or null
      */
     public updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
