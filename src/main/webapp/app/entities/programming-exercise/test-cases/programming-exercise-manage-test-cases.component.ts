@@ -200,9 +200,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     } else {
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
-
-                    // If at least one test case was updated, a submission run should be triggered.
-                    this.hasUpdatedTestCases = updatedTestCases.length > 0;
                 }),
                 catchError((err: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
@@ -253,10 +250,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     updateTestCaseFilter = () => {
         this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
-    };
-
-    onBuildTriggered = () => {
-        this.hasUpdatedTestCases = false;
     };
 
     /**

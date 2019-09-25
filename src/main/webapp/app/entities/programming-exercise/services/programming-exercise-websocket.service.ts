@@ -39,7 +39,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy {
     }
 
     private initTestCaseStateSubscription(programmingExerciseId: number) {
-        const testCaseTopic = `/topic/programming-exercise/${programmingExerciseId}/test-cases-changed`;
+        const testCaseTopic = `/topic/programming-exercises/${programmingExerciseId}/test-cases-changed`;
         this.websocketService.subscribe(testCaseTopic);
         this.connections[programmingExerciseId] = testCaseTopic;
         this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);

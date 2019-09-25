@@ -829,6 +829,7 @@ public class ProgrammingExerciseService {
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Send a websocket message about the new state to the client.
         messagingTemplate.convertAndSend("/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed", testCasesChanged);
         if (testCasesChanged) {
             // Send a notification to the client to inform the instructor about the test case update.
