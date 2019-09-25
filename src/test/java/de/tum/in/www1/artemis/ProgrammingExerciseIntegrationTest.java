@@ -60,7 +60,7 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/is-released-and-has-results", HttpStatus.OK, Boolean.class);
+        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
         assertThat(result).isTrue();
     }
 
@@ -72,7 +72,7 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/is-released-and-has-results", HttpStatus.OK, Boolean.class);
+        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
         assertThat(result).isFalse();
     }
 
@@ -82,13 +82,13 @@ class ProgrammingExerciseIntegrationTest {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/is-released-and-has-results", HttpStatus.OK, Boolean.class);
+        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
         assertThat(result).isFalse();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void checkIfProgrammingExerciseIsReleased_forbidden() throws Exception {
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/is-released-and-has-results", HttpStatus.FORBIDDEN, Boolean.class);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 }

@@ -824,7 +824,7 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
-        if (testCasesChanged == programmingExercise.isTestCasesChanged() || !isReleasedAndHasResult(programmingExercise)) {
+        if (testCasesChanged == programmingExercise.isTestCasesChanged() || !hasAtLeastOneStudentResult(programmingExercise)) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
@@ -837,18 +837,7 @@ public class ProgrammingExerciseService {
         return updatedProgrammingExercise;
     }
 
-    /**
-     * Check if the given exercise is released and has at least one student result.
-     *
-     * @param programmingExercise ProgrammingExercise
-     * @return true if the programming exercise is released and has at least one student result, false otherwise.
-     */
-    public boolean isReleasedAndHasResult(ProgrammingExercise programmingExercise) {
-        ZonedDateTime releaseDate = programmingExercise.getReleaseDate();
-        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
-            // Exercise is not released yet.
-            return false;
-        }
+    public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // TODO: We can't use the resultService here due to a circular dependency issue.
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());

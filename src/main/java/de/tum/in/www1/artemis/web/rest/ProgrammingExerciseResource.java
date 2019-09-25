@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseReleaseStateDTO;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ProgrammingExercise. */
@@ -579,14 +580,14 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/is-released-and-has-results : Check if the given exercise is released and has at least one student result.
+     * GET /programming-exercises/:exerciseId/release-state : Check if the given exercise is released and has at least one student result.
      *
      * @param exerciseId the id of a ProgrammingExercise
-     * @return the ResponseEntity with status 200 (OK) and true if the exercise is released and there is at least one result, false if not. Returns 404 (notFound) if the exercise does not exist.
+     * @return the ResponseEntity with status 200 (OK) and a DTO that indicates if the programming exercise is released and has at least one student result. Returns 404 (notFound) if the exercise does not exist.
      */
-    @GetMapping(value = "/programming-exercises/{exerciseId}/is-released-and-has-results")
+    @GetMapping(value = "/programming-exercises/{exerciseId}/release-state")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> isExerciseReleasedAndHasResult(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseReleaseStateDTO> hasAtLeastOneStudentResult(@PathVariable Long exerciseId) {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
@@ -594,6 +595,10 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
         }
-        return ResponseEntity.ok(programmingExercise.get().isTestCasesChanged());
+        boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise.get());
+        boolean isReleased = programmingExercise.get().isReleased();
+        ProgrammingExerciseReleaseStateDTO releaseStateDTO = new ProgrammingExerciseReleaseStateDTO().released(isReleased).hasStudentResults(hasAtLeastOneStudentResult)
+                .testCasesChanged(programmingExercise.get().isTestCasesChanged());
+        return ResponseEntity.ok(releaseStateDTO);
     }
 }

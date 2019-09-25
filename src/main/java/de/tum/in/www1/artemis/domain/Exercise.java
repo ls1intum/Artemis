@@ -664,4 +664,9 @@ public abstract class Exercise implements Serializable {
     public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
         this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
     }
+
+    public boolean isReleased() {
+        ZonedDateTime releaseDate = getReleaseDate();
+        return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+    }
 }

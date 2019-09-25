@@ -83,11 +83,12 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 this.testCases = testCases;
             });
 
-            this.checkIfExerciseIsReleasedAndHasResults()
+            this.getExerciseReleaseState()
                 .pipe(
-                    switchMap(() => this.programmingExerciseService.find(this.exerciseId)),
-                    map(({ body }) => body),
-                    tap(programmingExercise => (this.hasUpdatedTestCases = programmingExercise!.testCasesChanged)),
+                    tap(releaseState => {
+                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                    }),
                     catchError(() => of(null)),
                 )
                 .subscribe(() => (this.isLoading = false));
@@ -106,11 +107,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     /**
      * Checks if the exercise is released and has at least one student result.
      */
-    checkIfExerciseIsReleasedAndHasResults() {
-        return this.programmingExerciseService.isReleasedAndHasResults(this.exerciseId).pipe(
-            map(({ body }) => body || false),
-            tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
-        );
+    getExerciseReleaseState() {
+        return this.programmingExerciseService.getReleaseState(this.exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
