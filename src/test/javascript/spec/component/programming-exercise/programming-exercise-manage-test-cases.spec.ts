@@ -1,7 +1,6 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import * as moment from 'moment';
 import { DebugElement } from '@angular/core';
-import { MockComponent } from 'ng-mocks';
-import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import * as sinonChai from 'sinon-chai';
 import { sortBy as _sortBy } from 'lodash';
@@ -11,20 +10,16 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import * as chai from 'chai';
-import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
+import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
-import { ArtemisTableModule } from 'app/components/table/table.module';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArtemisCoreModule } from 'app/core';
+import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
-import { elementIsDisabled, expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
+import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,9 +33,11 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     let route: ActivatedRoute;
     let testCaseService: ProgrammingExerciseTestCaseService;
+    let programmingExerciseService: ProgrammingExerciseService;
 
     let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
+    let findProgrammingExerciseByIdStub: SinonStub;
 
     let routeSubject: Subject<Params>;
 
@@ -50,6 +47,8 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const saveTestCasesButton = '#save-test-cases-button';
     const resetWeightsButton = '#reset-weights-button';
     const triggerSubmissionRunButton = '#trigger-all-button > button';
+
+    const programmingExercise = { id: 44, buildAndTestStudentSubmissionsAfterDueDate: moment() };
 
     const exerciseId = 1;
     const testCases1 = [
@@ -80,6 +79,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
                 JhiAlertService,
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -95,9 +95,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+                // @ts-ignore
+                findProgrammingExerciseByIdStub = stub(programmingExerciseService, 'find').returns(of({ body: programmingExercise }));
 
                 routeSubject = new Subject();
                 // @ts-ignore
@@ -107,6 +110,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     afterEach(() => {
         notifyTestCasesSpy.restore();
+        findProgrammingExerciseByIdStub.restore();
     });
 
     it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
