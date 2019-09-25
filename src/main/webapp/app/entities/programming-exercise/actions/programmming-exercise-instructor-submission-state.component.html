@@ -25,17 +25,7 @@
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
         </span>
     </div>
-    <jhi-button
-        id="trigger-all-button"
-        class="ml-3"
-        [btnType]="ButtonType.ERROR"
-        [isLoading]="isTriggeringBuildAll"
-        [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
-        [icon]="'redo'"
-        [title]="'artemisApp.programmingExercise.resubmitAll'"
-        (onClick)="openTriggerAllModal()"
-    >
-    </jhi-button>
+    <jhi-programming-exercise-trigger-all-button [exerciseId]="exerciseId"></jhi-programming-exercise-trigger-all-button>
     <jhi-button
         id="trigger-failed-button"
         class="ml-3"
