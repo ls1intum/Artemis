@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
@@ -13,7 +12,6 @@ import {
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
     programmingExercisePopupRoute,
@@ -29,7 +27,7 @@ import { ArtemisCategorySelectorModule } from 'app/components/category-selector/
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTableModule } from 'app/components/table/table.module';
+import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
@@ -42,16 +40,15 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         // Shared modules.
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        NgxDatatableModule,
         SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
-        ArtemisTableModule,
         // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
         ArtemisProgrammingExerciseActionsModule,
+        ArtemisProgrammingExerciseTestCaseModule,
         // Other entity modules.
         ArtemisResultModule,
     ],
@@ -67,7 +64,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
-        ProgrammingExerciseManageTestCasesComponent,
         // Form components
         ProgrammingExerciseDueDateSelectComponent,
     ],
