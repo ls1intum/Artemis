@@ -9,6 +9,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +70,8 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ResultService resultService;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
@@ -83,8 +86,9 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            StudentParticipationRepository studentParticipationRepository, GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ResultService resultService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository,
+            GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -92,6 +96,7 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.resultService = resultService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -572,5 +577,30 @@ public class ProgrammingExerciseResource {
                             "errorStructureOracleGeneration"))
                     .body(null);
         }
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/is-released-and-has-results : Check if the given exercise is released and has at least one student result.
+     *
+     * @param exerciseId the id of a ProgrammingExercise
+     * @return the ResponseEntity with status 200 (OK) and true if the exercise is released and there is at least one result, false if not. Returns 404 (notFound) if the exercise does not exist.
+     */
+    @GetMapping(value = "/programming-exercises/{exerciseId}/is-released-and-has-results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> isExerciseReleasedAndHasResult(@PathVariable Long exerciseId) {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExercise.isEmpty()) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        ZonedDateTime releaseDate = programmingExercise.get().getReleaseDate();
+        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
+            // Exercise is not released yet.
+            return ResponseEntity.ok(false);
+        }
+        // Is true if the exercise is released and has at least one result.
+        return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
     }
 }

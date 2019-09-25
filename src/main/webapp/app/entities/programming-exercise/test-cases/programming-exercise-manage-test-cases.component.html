@@ -1,21 +1,29 @@
 <jhi-alert></jhi-alert>
 <div>
-    <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
-        Manage Test Cases.
-    </h3>
+    <div class="d-flex align-content-center mb-2">
+        <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
+            Manage Test Cases.
+        </h3>
+    </div>
     <div class="d-flex">
         <label class="d-flex align-items-center mb-0">
             <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
             <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
         </label>
-        <button
-            id="save-weights-button"
-            class="btn btn-primary ml-2"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
-            (click)="saveWeights()"
-            [disabled]="isSaving || !changedTestCaseIds.length"
-        ></button>
-        <button class="btn btn-danger ml-auto" (click)="resetWeights()" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"></button>
+        <div class="d-flex align-items-center ml-auto">
+            <jhi-programming-exercise-manage-test-cases-status
+                [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                [hasUpdatedTestCases]="hasUpdatedTestCases"
+            ></jhi-programming-exercise-manage-test-cases-status>
+            <jhi-programming-exercise-manage-test-cases-actions
+                [exerciseId]="exerciseId"
+                [hasUpdatedTestCases]="hasUpdatedTestCases"
+                [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                (onBuildTriggered)="onBuildTriggered()"
+                (onResetWeights)="resetWeights()"
+                (onSaveWeights)="saveWeights()"
+            ></jhi-programming-exercise-manage-test-cases-actions>
+        </div>
     </div>
     <ngx-datatable
         id="testCaseTable"

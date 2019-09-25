@@ -689,7 +689,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             // Splitting string at the first linebreak to only get the first line of the Exception
             return message.split("\\n", 2)[0]
-                .replace("java.lang.AssertionError: ", "");
+                //junit 4
+                .replace("java.lang.AssertionError: ", "")
+                //junit 5
+                .replace("org.opentest4j.AssertionFailedError: ", "");
         }
 
         return message;
