@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -185,8 +186,11 @@ public class ProgrammingSubmissionService {
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
+    @Async
     @Transactional
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
+        // Async can't access the authentication object. We need to do any security checks before this point.
+        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
