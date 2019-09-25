@@ -2,6 +2,8 @@ import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
 import { Submission } from '../submission';
 import { Moment } from 'moment';
+import { User } from 'app/core';
+import { Exercise } from 'app/entities/exercise';
 
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
