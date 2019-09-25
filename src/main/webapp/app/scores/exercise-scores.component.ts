@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { tap } from 'rxjs/operators';
+import { zip, of } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -66,13 +67,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
-                this.getResults();
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    // Preload the latest submissions of all participations, otherwise the updating result components will execute a single call each.
-                    this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.isLoading = false));
-                } else {
-                    this.isLoading = false;
-                }
+                // We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
+                const additionalLoadingOperation =
+                    this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
+                // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
+                zip(this.getResults(), additionalLoadingOperation).subscribe(() => (this.isLoading = false));
             });
         });
         this.registerChangeInCourses();
@@ -83,26 +82,28 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     getResults() {
-        this.resultService
+        return this.resultService
             .getResultsForExercise(this.exercise.course!.id, this.exercise.id, {
                 showAllResults: this.showAllResults,
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
-            .subscribe((res: HttpResponse<Result[]>) => {
-                const tempResults: Result[] = res.body!;
-                tempResults.forEach(result => {
-                    result.participation!.results = [result];
-                    (result.participation! as StudentParticipation).exercise = this.exercise;
-                    result.durationInMinutes = this.durationInMinutes(
-                        result.completionDate!,
-                        result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
-                    );
-                });
-                this.allResults = tempResults;
-                this.filterResults();
-            });
+            .pipe(
+                tap((res: HttpResponse<Result[]>) => {
+                    const tempResults: Result[] = res.body!;
+                    tempResults.forEach(result => {
+                        result.participation!.results = [result];
+                        (result.participation! as StudentParticipation).exercise = this.exercise;
+                        result.durationInMinutes = this.durationInMinutes(
+                            result.completionDate!,
+                            result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
+                        );
+                    });
+                    this.allResults = tempResults;
+                    this.filterResults();
+                }),
+            );
     }
 
     filterResults() {
@@ -197,7 +198,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     refresh() {
-        this.getResults();
+        this.getResults().subscribe();
     }
 
     ngOnDestroy() {
