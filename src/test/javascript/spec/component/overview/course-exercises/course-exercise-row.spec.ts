@@ -66,67 +66,67 @@ describe('CourseExerciseRowComponent', () => {
         getAllParticipationsStub.restore();
     });
 
-    it('participationStatus_quiz_quizNotStarted1', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(false, moment(), moment().subtract(3, 'days'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
-    it('participationStatus_quiz_quizNotStarted2', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment().add(3, 'days'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
-    it('participationStatus_quiz_quizUninitialized', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_UNINITIALIZED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_UNINITIALIZED);
     });
 
-    it('participationStatus_quiz_quizNotParticipatedA', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no participations', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment(), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
-    it('participationStatus_quiz_quizActive', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_ACTIVE', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, true, InitializationState.INITIALIZED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_ACTIVE);
     });
 
-    it('participationStatus_quiz_quizSubmitted', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_SUBMITTED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, true, InitializationState.FINISHED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_SUBMITTED);
     });
 
-    it('participationStatus_quiz_quizNotParticipatedB', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), false, true, InitializationState.UNINITIALIZED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
-    it('participationStatus_quiz_quizFinished', () => {
+    it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
         setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), false, true, InitializationState.UNINITIALIZED, true);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_FINISHED);
     });
 
-    it('participationStatus_text_exerciseActive', () => {
+    it('Participation status of text exercise should evaluate to EXERCISE_ACTIVE', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.INITIALIZED, true);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_ACTIVE);
     });
 
-    it('participationStatus_text_exerciseMissed', () => {
+    it('Participation status of text exercise should evaluate to EXERCISE_MISSED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.INITIALIZED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
     });
 
-    it('participationStatus_text_exerciseSubmitted', () => {
+    it('Participation status of text exercise should evaluate to EXERCISE_SUBMITTED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.FINISHED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
     });
 
-    it('participationStatus_text_uninitialized', () => {
+    it('Participation status of text exercise should evaluate to UNINITIALIZED', () => {
         setupForTestingParticipationStatusExerciseTypeText(ExerciseType.TEXT, InitializationState.UNINITIALIZED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
     });
 
-    it('participationStatus_programming_uninitialized', () => {
+    it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
         comp.ngOnInit();
@@ -134,7 +134,7 @@ describe('CourseExerciseRowComponent', () => {
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
     });
 
-    it('participationStatus_programming_initialized', () => {
+    it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
         let studentParticipations = [
@@ -151,7 +151,7 @@ describe('CourseExerciseRowComponent', () => {
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INITIALIZED);
     });
 
-    it('participationStatus_programming_inactive', () => {
+    it('Participation status of programming exercise should evaluate to INACTIVE', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
         let studentParticipations = [
