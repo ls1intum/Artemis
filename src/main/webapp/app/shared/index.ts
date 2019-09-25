@@ -23,3 +23,4 @@ export * from './shared-common.module';
 export * from './shared.module';
 export * from './util/request-util';
 export * from './util/security-util';
+export { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
