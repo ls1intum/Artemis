@@ -89,7 +89,7 @@ public class ProgrammingExerciseService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated.";
+    private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
