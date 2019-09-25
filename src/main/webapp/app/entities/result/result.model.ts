@@ -1,4 +1,4 @@
-import { User } from './../../core';
+import { User } from 'app/core';
 import { BaseEntity } from 'app/shared';
 import { Feedback } from '../feedback';
 import { Submission } from '../submission';
@@ -17,7 +17,6 @@ export class Result implements BaseEntity {
     public assessmentType: AssessmentType;
     public rated: boolean;
     public hasComplaint: boolean;
-    public exampleResult: boolean;
 
     public submission: Submission | null;
     public assessor: User;
