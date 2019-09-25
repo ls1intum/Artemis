@@ -594,7 +594,6 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
         }
-        boolean isReleasedAndHasResult = programmingExerciseService.isReleasedAndHasResult(programmingExercise.get());
-        return ResponseEntity.ok(isReleasedAndHasResult);
+        return ResponseEntity.ok(programmingExercise.get().isTestCasesChanged());
     }
 }

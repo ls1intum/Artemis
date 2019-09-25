@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, tap, switchMap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
@@ -34,6 +34,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     isReleasedAndHasResults: boolean;
     showInactiveValue = false;
     isSaving = false;
+    isLoading = false;
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
 
@@ -72,6 +73,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
+            this.isLoading = true;
             this.exerciseId = Number(params['exerciseId']);
             this.editing = null;
             if (this.testCaseSubscription) {
@@ -81,7 +83,14 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 this.testCases = testCases;
             });
 
-            this.checkIfExerciseIsReleasedAndHasResults();
+            this.checkIfExerciseIsReleasedAndHasResults()
+                .pipe(
+                    switchMap(() => this.programmingExerciseService.find(this.exerciseId)),
+                    map(({ body }) => body),
+                    tap(programmingExercise => (this.hasUpdatedTestCases = programmingExercise!.testCasesChanged)),
+                    catchError(() => of(null)),
+                )
+                .subscribe(() => (this.isLoading = false));
         });
     }
 
@@ -98,13 +107,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Checks if the exercise is released and has at least one student result.
      */
     checkIfExerciseIsReleasedAndHasResults() {
-        return this.programmingExerciseService
-            .isReleasedAndHasResults(this.exerciseId)
-            .pipe(
-                map(({ body }) => body || false),
-                tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
-            )
-            .subscribe();
+        return this.programmingExerciseService.isReleasedAndHasResults(this.exerciseId).pipe(
+            map(({ body }) => body || false),
+            tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
+        );
     }
 
     /**

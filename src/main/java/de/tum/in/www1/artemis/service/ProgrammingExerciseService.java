@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -89,6 +90,8 @@ public class ProgrammingExerciseService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
     @Value("${server.url}")
@@ -100,7 +103,7 @@ public class ProgrammingExerciseService {
             ParticipationService participationService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService) {
+            AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService, SimpMessageSendingOperations messagingTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -117,6 +120,7 @@ public class ProgrammingExerciseService {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -825,6 +829,7 @@ public class ProgrammingExerciseService {
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        messagingTemplate.convertAndSend("/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed", testCasesChanged);
         if (testCasesChanged) {
             // Send a notification to the client to inform the instructor about the test case update.
             groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
