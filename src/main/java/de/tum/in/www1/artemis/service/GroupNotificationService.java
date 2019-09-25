@@ -49,9 +49,8 @@ public class GroupNotificationService {
     }
 
     private GroupNotification createExerciseUpdatedGroupNotificationForInstructors(Exercise exercise, String title, String notificationText) {
-        User user = userService.getUser();
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         return groupNotification;
     }
@@ -139,9 +138,6 @@ public class GroupNotificationService {
     }
 
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            return;
-        }
         String title = "Exercise \"" + exercise.getTitle() + "\" updated";
         notifyInstructorGroupAboutExerciseChange(exercise, title, notificationText);
     }
