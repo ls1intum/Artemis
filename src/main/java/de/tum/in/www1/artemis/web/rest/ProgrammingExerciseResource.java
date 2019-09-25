@@ -612,6 +612,9 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.isEmpty()) {
             return notFound();
         }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
         ZonedDateTime releaseDate = programmingExercise.get().getReleaseDate();
         if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
             // Exercise is not released yet.
