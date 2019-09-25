@@ -3,14 +3,15 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <ng-container [ngSwitch]="templateStatus">
-    <ng-container *ngSwitchCase="'is-building'">
+    <ng-container *ngSwitchCase="IS_BUILDING">
         <span class="text-primary">
             <fa-icon icon="circle-notch" size="lg" [spin]="true" class="mr-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
-    <ng-container *ngSwitchCase="'has-result'">
-        <ng-container>
+    <ng-container *ngSwitchCase="HAS_RESULT">
+        <ng-container *ngIf="result"
+            ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
@@ -34,8 +35,9 @@
             </span>
         </ng-container>
     </ng-container>
-    <ng-container *ngSwitchCase="'late'">
-        <ng-container>
+    <ng-container *ngSwitchCase="LATE">
+        <ng-container *ngIf="result"
+            ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
@@ -43,16 +45,16 @@
             </span>
         </ng-container>
     </ng-container>
-    <ng-container *ngSwitchCase="'no-result'">
+    <ng-container *ngSwitchCase="NO_RESULT">
         <span class="text-muted">
             <fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;
             <span jhiTranslate="artemisApp.result.noResult">No results</span>
         </span>
     </ng-container>
-    <ng-container *ngSwitchCase="'submitted'">
+    <ng-container *ngSwitchCase="SUBMITTED">
         <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | translate }}</span>
     </ng-container>
-    <ng-container *ngSwitchCase="'late-no-feedback'">
+    <ng-container *ngSwitchCase="LATE_NO_FEEDBACK">
         <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | translate }}</span>
     </ng-container>
 </ng-container>

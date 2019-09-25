@@ -36,6 +36,13 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
+    readonly IS_BUILDING = ResultTemplateStatus.IS_BUILDING;
+    readonly HAS_RESULT = ResultTemplateStatus.HAS_RESULT;
+    readonly LATE = ResultTemplateStatus.LATE;
+    readonly NO_RESULT = ResultTemplateStatus.NO_RESULT;
+    readonly SUBMITTED = ResultTemplateStatus.SUBMITTED;
+    readonly LATE_NO_FEEDBACK = ResultTemplateStatus.LATE_NO_FEEDBACK;
+
     @Input() course: Course;
     @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
