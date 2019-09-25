@@ -104,7 +104,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                             this.result = assessmentResult;
                         });
                         this.complaintService
-                            .findByResultId(this.submission.result.id)
+                            .findByResultId(submission.result.id)
                             .pipe(filter(res => !!res.body))
                             .subscribe(res => {
                                 if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {

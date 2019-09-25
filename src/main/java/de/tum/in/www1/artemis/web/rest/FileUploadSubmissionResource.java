@@ -185,6 +185,7 @@ public class FileUploadSubmissionResource {
      * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
      *
      * @param exerciseId the id of the exercise
+     * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
