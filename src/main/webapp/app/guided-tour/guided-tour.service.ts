@@ -16,6 +16,8 @@ import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise } from 'app/entities/exercise';
+import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -189,8 +191,27 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
-            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
+        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
+        this.showCancelHint();
+    }
+
+    /**
+     * Show the cancel hint every time a user skips a tour
+     */
+    private showCancelHint(): void {
+        clickOnElement('#account-menu');
+        setTimeout(() => {
+            this.currentTour = cloneDeep(cancelTour);
+            // Proceed with tour if it has tour steps and the tour display is allowed for current window size
+            if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+                const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+                if (currentStep.action) {
+                    currentStep.action();
+                }
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
+            }
+        });
     }
 
     /**

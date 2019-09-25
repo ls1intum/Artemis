@@ -10,6 +10,10 @@
             "headline": "Zu kleine Bildschirmgröße",
             "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
         },
+        "cancel": {
+            "headline": "Tutorial abbrechen",
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf \"Tutorial starten\" im Account-Menü."
+        },
         "clickHint": {
             "text": "Klicke auf das Element um die Tour fortzusetzen."
         },

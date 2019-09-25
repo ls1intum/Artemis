@@ -31,10 +31,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
     public startFade = false;
+    public userInteractionFinished = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
-    private userInteractionFinished: boolean;
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
