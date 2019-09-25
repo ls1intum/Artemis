@@ -19,24 +19,27 @@ import { Component, Input } from '@angular/core';
                     <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUnsavedChanges"></span>
                 </div>
             </ng-template>
-            <div class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else noUpdatedTestCases">
-                <fa-icon
-                    class="ml-2 text-white"
-                    icon="exclamation-triangle"
-                    [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate"
-                ></fa-icon>
-                <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.updatedTestCasesShort"></span>
-            </div>
-            <ng-template #noUpdatedTestCases>
-                <div class="d-flex align-items-center badge badge-success">
-                    <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
-                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUpdatedTestCases"></span>
+            <ng-container *ngIf="exerciseIsReleasedAndHasResults">
+                <div class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else noUpdatedTestCases">
+                    <fa-icon
+                        class="ml-2 text-white"
+                        icon="exclamation-triangle"
+                        [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate"
+                    ></fa-icon>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.updatedTestCasesShort"></span>
                 </div>
-            </ng-template>
+                <ng-template #noUpdatedTestCases>
+                    <div class="d-flex align-items-center badge badge-success">
+                        <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
+                        <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUpdatedTestCases"></span>
+                    </div>
+                </ng-template>
+            </ng-container>
         </div>
     `,
 })
 export class ProgrammingExerciseManageTestCasesStatusComponent {
+    @Input() exerciseIsReleasedAndHasResults: boolean;
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
 }

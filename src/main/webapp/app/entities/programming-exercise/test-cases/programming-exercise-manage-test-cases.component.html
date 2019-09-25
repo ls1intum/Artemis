@@ -13,6 +13,7 @@
             </label>
             <div class="d-flex align-items-center ml-auto">
                 <jhi-programming-exercise-manage-test-cases-status
+                    [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                 ></jhi-programming-exercise-manage-test-cases-status>
