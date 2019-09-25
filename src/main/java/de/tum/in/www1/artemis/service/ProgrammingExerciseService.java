@@ -800,6 +800,17 @@ public class ProgrammingExerciseService {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
     }
 
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param testCasesChanged set to true to mark the programming exercise as dirty.
+     * @return the updated ProgrammingExercise.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     * @throws AccessForbiddenException if the user has no permissions to access the programming exercise.
+     */
     public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException, AccessForbiddenException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
@@ -814,8 +825,10 @@ public class ProgrammingExerciseService {
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Send a notification to the client to inform the instructor about the test case update.
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
+        if (testCasesChanged) {
+            // Send a notification to the client to inform the instructor about the test case update.
+            groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
+        }
         return updatedProgrammingExercise;
     }
 
