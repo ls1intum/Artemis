@@ -79,6 +79,8 @@ public class ProgrammingExerciseService {
 
     private final ParticipationService participationService;
 
+    private final ResultRepository resultRepository;
+
     private final UserService userService;
 
     private final AuthorizationCheckService authCheckService;
@@ -95,7 +97,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
+            ParticipationService participationService, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
             AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService) {
@@ -108,6 +110,7 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
+        this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -809,5 +812,22 @@ public class ProgrammingExerciseService {
         // Send a notification to the client to inform the instructor about the test case update.
         groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
         return updatedProgrammingExercise;
+    }
+
+    /**
+     * Check if the given exercise is released and has at least one student result.
+     *
+     * @param programmingExercise ProgrammingExercise
+     * @return true if the programming exercise is released and has at least one student result, false otherwise.
+     */
+    public boolean isReleasedAndHasResult(ProgrammingExercise programmingExercise) {
+        ZonedDateTime releaseDate = programmingExercise.getReleaseDate();
+        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
+            // Exercise is not released yet.
+            return false;
+        }
+        // Is true if the exercise is released and has at least one result.
+        // TODO: We can't use the resultService here due to a circular dependency issue.
+        return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
     }
 }

@@ -9,7 +9,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -595,12 +594,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
         }
-        ZonedDateTime releaseDate = programmingExercise.get().getReleaseDate();
-        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
-            // Exercise is not released yet.
-            return ResponseEntity.ok(false);
-        }
-        // Is true if the exercise is released and has at least one result.
-        return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
+        boolean isReleasedAndHasResult = programmingExerciseService.isReleasedAndHasResult(programmingExercise.get());
+        return ResponseEntity.ok(isReleasedAndHasResult);
     }
 }
