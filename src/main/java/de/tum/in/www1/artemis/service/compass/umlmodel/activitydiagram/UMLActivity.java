@@ -1,47 +1,41 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
-import com.google.common.base.CaseFormat;
+import java.util.List;
 
-import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+public class UMLActivity extends UMLActivityElement {
 
-public class UMLActivity extends UMLElement {
+    public final static String UML_ACTIVITY_TYPE = "Activity";
 
-    public enum UMLActivityType {
-        ACTIVITY_CONTROL_INITIAL_NODE, ACTIVITY_CONTROL_FINAL_NODE, ACTIVITY_ACTION_NODE, ACTIVITY_OBJECT, ACTIVITY_MERGE_NODE, ACTIVITY_FORK_NODE, ACTIVITY_FORK_NODE_HORIZONTAL
+    private List<UMLActivityElement> activityElements;
+
+    public UMLActivity(String name, List<UMLActivityElement> activityElements, String jsonElementID) {
+        super(name, jsonElementID);
+
+        this.activityElements = activityElements;
+
+        setActivityOfContainedElements();
     }
 
-    private String name;
-
-    private UMLActivityType type;
-
-    public UMLActivity(String name, String jsonElementID, String type) {
-        this.name = name;
-        this.setJsonElementID(jsonElementID);
-        this.type = UMLActivityType.valueOf(type);
-    }
-
-    @Override
-    public double similarity(UMLElement element) {
-        double similarity = 0;
-        if (element.getClass() == UMLActivity.class) {
-            similarity += NameSimilarity.levenshteinSimilarity(name, element.getName());
+    /**
+     * Sets the parent activity of all activity elements contained in this UML activity.
+     */
+    private void setActivityOfContainedElements() {
+        for (UMLActivityElement activityElement : activityElements) {
+            activityElement.setParentActivity(this);
         }
-        return similarity;
-    }
-
-    @Override
-    public String getName() {
-        return "Package " + name;
-    }
-
-    @Override
-    public String getValue() {
-        return name;
     }
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+        return UML_ACTIVITY_TYPE;
+    }
+
+    /**
+     * Add an activity element to the list of activity elements contained in this UML activity.
+     *
+     * @param activityElement the activity element that should be added
+     */
+    public void addActivityElement(UMLActivityElement activityElement) {
+        activityElements.add(activityElement);
     }
 }
