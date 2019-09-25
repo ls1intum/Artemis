@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -126,6 +128,7 @@ public class ProgrammingSubmissionIntegrationTest {
     }
 
     @Test
+    @Timeout(5)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExercise_Instructor() throws Exception {
         String login1 = "student1";
@@ -136,8 +139,9 @@ public class ProgrammingSubmissionIntegrationTest {
         database.addStudentParticipationForProgrammingExercise(exercise, login3);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
+        await().until(() -> submissionRepository.count() == 3);
+
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(3);
 
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {

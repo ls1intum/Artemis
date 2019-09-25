@@ -183,6 +183,8 @@ public class ProgrammingSubmissionService {
      * Trigger the CI of all student participations of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      *
+     * The method is async because it would timeout a calling resource method.
+     *
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
