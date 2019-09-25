@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,6 +19,7 @@ export enum EditableField {
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;

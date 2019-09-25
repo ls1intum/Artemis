@@ -65,15 +65,18 @@
                 ><fa-icon
                     *ngIf="!buildAfterDueDateActive"
                     icon="question-circle"
-                    color="text-secondary"
+                    class="text-secondary ml-2"
                     [ngbPopover]="popoverContent"
                     placement="bottom"
                     container="body"
                 ></fa-icon>
                 <ng-template #popoverContent>
-                    <a [routerLink]="['/course/', programmingExercise.course!.id, 'programming-exercise', programmingExercise.id, 'edit']">
-                        <jhi-button [title]="'edit'"></jhi-button>
-                    </a>
+                    <div class="d-flex flex-column run-after-due-date-disabled">
+                        <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
+                        <a [routerLink]="['/course/', programmingExercise.course!.id, 'programming-exercise', programmingExercise.id, 'edit']" class="ml-auto">
+                            <jhi-button icon="arrow-right" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
+                        </a>
+                    </div>
                 </ng-template>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
