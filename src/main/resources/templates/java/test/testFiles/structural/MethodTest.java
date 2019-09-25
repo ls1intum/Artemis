@@ -1,6 +1,6 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -14,7 +14,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (01.09.2019)
+ * @version 3.0 (25.09.2019)
  * <br><br>
  * This test evaluates if the specified methods in the structure oracle are correctly implemented with the expected name, return type, parameter types, visibility modifiers
  * and annotations, based on its definition in the structure oracle (test.json)
@@ -36,7 +36,7 @@ public class MethodTest extends StructuralTest {
         List<Object[]> testData = new ArrayList<Object[]>();
 
         if (structureOracleJSON == null) {
-            return testData;
+            fail("The MethodTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete MethodTest.java!");
         }
 
         for (int i = 0; i < structureOracleJSON.length(); i++) {
@@ -49,6 +49,9 @@ public class MethodTest extends StructuralTest {
                 String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
+        }
+        if (testData.size() == 0) {
+            fail("No tests for methods available in the structural oracle (test.json). Either provide attributes information or delete MethodTest.java!");
         }
         return testData;
     }
@@ -63,7 +66,6 @@ public class MethodTest extends StructuralTest {
 
         if (expectedClassJSON.has(JSON_PROPERTY_METHODS)) {
             JSONArray methodsJSON = expectedClassJSON.getJSONArray(JSON_PROPERTY_METHODS);
-
             checkMethods(observedClass, methodsJSON);
         }
     }
@@ -119,12 +121,24 @@ public class MethodTest extends StructuralTest {
             String expectedMethodInformation = "the expected method '" + expectedName + "' of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.", nameIsRight);
-            assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.", parametersAreRight);
-            assertTrue("Problem: the modifiers (access type, abstract, etc.) of " + expectedMethodInformation + " are not implemented as expected.", modifiersAreRight);
-            assertTrue("Problem: the annotation(s) of " + expectedMethodInformation + " are not implemented as expected.", annotationsAreRight);
-            assertTrue("Problem: the return type of " + expectedMethodInformation + " is not implemented as expected.", returnTypeIsRight);
-            assertTrue("Problem: the method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.", nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight);
+            if (!nameIsRight) {
+                fail(expectedMethodInformation + " was not found or is named wrongly.");
+            }
+            if (!parametersAreRight) {
+                fail("The parameters of " + expectedMethodInformation + " are not implemented as expected.");
+            }
+            if (!modifiersAreRight) {
+                fail("The modifiers (access type, abstract, etc.) of " + expectedMethodInformation + " are not implemented as expected.");
+            }
+            if (!annotationsAreRight) {
+                fail("The annotation(s) of " + expectedMethodInformation + " are not implemented as expected.");
+            }
+            if (!returnTypeIsRight) {
+                fail("The return type of " + expectedMethodInformation + " is not implemented as expected.");
+            }
+            if (!(nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight)) {
+                fail("The method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.");
+            }
         }
     }
 }

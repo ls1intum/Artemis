@@ -1,6 +1,6 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.lang.reflect.InvocationTargetException;
@@ -11,7 +11,7 @@ import org.junit.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
+ * @version 3.0 (25.09.2019)
  */
 public class SortingExampleBehaviorTest extends BehaviorTest {
 
@@ -34,14 +34,18 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
-        assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
+        if (!datesWithCorrectOrder.equals(dates)) {
+            fail("BubbleSort does not sort correctly");
+        }
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
-        assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
+        if (!datesWithCorrectOrder.equals(dates)) {
+            fail("MergeSort does not sort correctly");
+        }
     }
 
     @Test(timeout = 1000)
@@ -51,7 +55,9 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
             bigList.add(new Date());
         }
         Object chosenSortStrategy = configurePolicyAndContext(bigList);
-        assertTrue("Problem: The sort algorithm of Context was not MergeSort for a list with more than 10 dates.", chosenSortStrategy instanceof MergeSort);
+        if (!(chosenSortStrategy instanceof MergeSort)) {
+            fail("The sort algorithm of Context was not MergeSort for a list with more than 10 dates.");
+        }
     }
 
     @Test(timeout = 1000)
@@ -61,7 +67,9 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
             smallList.add(new Date());
         }
         Object chosenSortStrategy = configurePolicyAndContext(smallList);
-        assertTrue("Problem: The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates.", chosenSortStrategy instanceof BubbleSort);
+        if (!(chosenSortStrategy instanceof BubbleSort)) {
+            fail("The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates.");
+        }
     }
 
     private Object configurePolicyAndContext(List<Date> dates) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
@@ -73,7 +81,6 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         invokeMethod(policy, getMethod(policy, "configure"));
 
         Object chosenSortStrategy = invokeMethod(context, getMethod(context, "getSortAlgorithm"));
-
         return chosenSortStrategy;
     }
 }
