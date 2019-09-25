@@ -53,7 +53,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
@@ -86,6 +85,10 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final GroupNotificationService groupNotificationService;
+
+    private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated.";
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
@@ -95,7 +98,7 @@ public class ProgrammingExerciseService {
             ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -110,6 +113,7 @@ public class ProgrammingExerciseService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -121,6 +125,7 @@ public class ProgrammingExerciseService {
      * @return A list of created {@link ProgrammingSubmission programming submissions} for the changed exercise
      * @throws EntityNotFoundException If the exercise with the given ID does not exist
      */
+    @Transactional
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
         if (exerciseOpt.isEmpty()) {
@@ -167,6 +172,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The checked out exercise in the repository
      * @param participation The student participation for the student id, which should be added.
      */
+    @Transactional
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String studentId = participation.getStudent().getLogin();
 
@@ -263,6 +269,7 @@ public class ProgrammingExerciseService {
      * @param path The path for which all file names should be listed
      * @return A list of all file names under the given path
      */
+    @Transactional
     private List<String> listAllFilesInPath(Path path) {
         List<String> allRepoFiles = null;
         try (Stream<Path> walk = Files.walk(path)) {
@@ -289,6 +296,7 @@ public class ProgrammingExerciseService {
      * @return The newly setup exercise
      * @throws Exception If anything goes wrong
      */
+    @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
@@ -388,6 +396,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise
      */
+    @Transactional
     public void initParticipations(ProgrammingExercise programmingExercise) {
 
         Participation solutionParticipation = programmingExercise.getSolutionParticipation();
@@ -400,6 +409,7 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
+    @Transactional
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
@@ -418,6 +428,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The related programming exercise for which the template should get created
      * @throws Exception If anything goes wrong
      */
+    @Transactional
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
             throws Exception {
         if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
@@ -494,6 +505,7 @@ public class ProgrammingExerciseService {
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
+    @Transactional
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
@@ -527,6 +539,7 @@ public class ProgrammingExerciseService {
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
+    @Transactional
     public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
@@ -539,6 +552,7 @@ public class ProgrammingExerciseService {
      * @param participation The template participation
      * @return The ProgrammingExercise where the given Participation is the template Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
@@ -549,6 +563,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution participation
      * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
@@ -559,6 +574,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution or template participation
      * @return The ProgrammingExercise where the given Participation is the solution or template Participation
      */
+    @Transactional
     public Optional<ProgrammingExercise> getExerciseForSolutionOrTemplateParticipation(Participation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationIdOrSolutionParticipationId(participation.getId());
     }
@@ -570,6 +586,7 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
+    @Transactional
     public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
@@ -588,6 +605,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
      */
+    @Transactional
     public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
         if (programmingExercise.isPresent()) {
@@ -608,6 +626,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise for which the participations should get saved
      */
+    @Transactional
     public void saveParticipations(ProgrammingExercise programmingExercise) {
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
@@ -623,6 +642,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
@@ -637,6 +657,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
      */
+    @Transactional
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
@@ -664,6 +685,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
@@ -730,6 +752,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
+    @Transactional
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
@@ -782,6 +805,9 @@ public class ProgrammingExerciseService {
 
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         programmingExercise.setTestCasesChanged(testCasesChanged);
-        return programmingExercise;
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
+        return updatedProgrammingExercise;
     }
 }
