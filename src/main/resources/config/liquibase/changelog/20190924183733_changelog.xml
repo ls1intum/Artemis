@@ -11,13 +11,5 @@
             <column name="test_cases_changed" type="boolean">
             </column>
         </addColumn>
-        <!--
-            Set default value to false
-        -->
-        <addDefaultValue tableName="programming_exercise_details" columnName="test_cases_changed" defaultValueBoolean="false"/>
-        <!--
-            Set the value for all existing programming exercises to false
-        -->
-        <sql>update programming_exercise_details set test_cases_changed = false</sql>
     </changeSet>
 </databaseChangeLog>

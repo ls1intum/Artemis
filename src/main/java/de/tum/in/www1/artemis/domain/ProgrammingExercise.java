@@ -54,8 +54,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
+    @Nullable
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
-    private boolean testCasesChanged;
+    private Boolean testCasesChanged;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
@@ -341,6 +342,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean isTestCasesChanged() {
+        if (testCasesChanged == null) {
+            return false;
+        }
         return testCasesChanged;
     }
 
@@ -385,7 +389,6 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "testRepositoryUrl='" + testRepositoryUrl + '\'' + ", publishBuildPlanUrl=" + publishBuildPlanUrl + ", allowOnlineEditor="
                 + allowOnlineEditor + ", programmingLanguage=" + programmingLanguage + ", packageName='" + packageName + '\'' + ", sequentialTestRuns=" + sequentialTestRuns
-                + ", buildAndTestStudentSubmissionsAfterDueDate=" + buildAndTestStudentSubmissionsAfterDueDate + ", testCasesChanged=" + testCasesChanged
-                + ", templateParticipation=" + templateParticipation + ", solutionParticipation=" + solutionParticipation + ", testCases=" + testCases + '}';
+                + ", buildAndTestStudentSubmissionsAfterDueDate=" + buildAndTestStudentSubmissionsAfterDueDate + ", testCasesChanged=" + testCasesChanged + '}';
     }
 }
