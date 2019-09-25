@@ -71,7 +71,7 @@
                     container="body"
                 ></fa-icon>
                 <ng-template #popoverContent>
-                    <a [routerLink]="['/course/', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']">
+                    <a [routerLink]="['/course/', programmingExercise.course!.id, 'programming-exercise', programmingExercise.id, 'edit']">
                         <jhi-button [title]="'edit'"></jhi-button>
                     </a>
                 </ng-template>
