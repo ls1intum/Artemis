@@ -9,6 +9,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -22,6 +23,7 @@ export enum EditableField {
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
+    programmingExercise: ProgrammingExercise;
     exerciseId: number;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
@@ -31,6 +33,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
+    buildAfterDueDateActive: boolean;
     isReleasedAndHasResults: boolean;
     showInactiveValue = false;
     isSaving = false;
@@ -74,14 +77,26 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.exerciseId = Number(params['exerciseId']);
             this.editing = null;
-            if (this.testCaseSubscription) {
-                this.testCaseSubscription.unsubscribe();
-            }
-            this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
-                this.testCases = testCases;
-            });
+            this.programmingExerciseService
+                .find(this.exerciseId)
+                .pipe(
+                    map(({ body }) => body!),
+                    tap((programmingExercise: ProgrammingExercise) => {
+                        this.buildAfterDueDateActive = !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate;
+                        this.programmingExercise = programmingExercise;
+                    }),
+                    tap(() => {
+                        if (this.testCaseSubscription) {
+                            this.testCaseSubscription.unsubscribe();
+                        }
+                        this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
+                            this.testCases = testCases;
+                        });
 
-            this.checkIfExerciseIsReleasedAndHasResults();
+                        this.checkIfExerciseIsReleasedAndHasResults();
+                    }),
+                )
+                .subscribe();
         });
     }
 
