@@ -120,7 +120,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: FileUploadSubmission) => {
                 this.handleReceivedSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -162,8 +162,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private handleReceivedSubmission(submission: FileUploadSubmission): void {
         this.submission = submission;
-        const studentParticipation = this.submission.participation as StudentParticipation;
-        this.exercise = studentParticipation.exercise as FileUploadExercise;
+        this.participation = this.submission.participation as StudentParticipation;
+        this.exercise = this.participation.exercise as FileUploadExercise;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {
             this.getComplaint();
@@ -180,11 +180,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.jhiAlertService.clear();
             this.jhiAlertService.info('artemisApp.assessment.messages.lock');
         }
+
         this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
         this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.checkPermissions();
+        this.validateAssessment();
         this.busy = false;
         this.isLoading = false;
     }
@@ -300,11 +302,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('assessment.messages.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
             },
             () => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('assessment.messages.saveFailed');
+                this.jhiAlertService.error('artemisApp.assessment.messages.saveFailed');
             },
         );
     }

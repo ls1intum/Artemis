@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -15,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +24,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing FileUploadSubmission.
@@ -192,33 +189,43 @@ public class FileUploadSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
-        Exercise exercise = fileUploadExerciseService.findOne(exerciseId);
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             return forbidden();
+        }
+        if (!(fileUploadExercise instanceof FileUploadExercise)) {
+            return badRequest();
         }
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             return notFound();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        fileUploadSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
 
-        Optional<FileUploadSubmission> fileUploadSubmissionWithoutAssessment = this.fileUploadSubmissionService
-                .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) exercise);
-
-        // tutors should not see information about the student of a submission
-        if (fileUploadSubmissionWithoutAssessment.isPresent() && fileUploadSubmissionWithoutAssessment.get().getParticipation() != null
-                && fileUploadSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) fileUploadSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        FileUploadSubmission fileUploadSubmission;
+        if (lockSubmission) {
+            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
+        }
+        else {
+            Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
+                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
+            if (!optionalFileUploadSubmission.isPresent()) {
+                return notFound();
+            }
+            fileUploadSubmission = optionalFileUploadSubmission.get();
         }
 
-        return ResponseUtil.wrapOrNotFound(fileUploadSubmissionWithoutAssessment);
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        studentParticipation.setExercise(fileUploadExercise);
+        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        return ResponseEntity.ok(fileUploadSubmission);
     }
 
     /**

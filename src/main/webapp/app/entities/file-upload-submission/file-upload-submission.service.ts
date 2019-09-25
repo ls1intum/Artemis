@@ -61,8 +61,12 @@ export class FileUploadSubmissionService {
      * Returns next File Upload submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<FileUploadSubmission> {
-        return this.http.get<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submission-without-assessment`);
+    getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<FileUploadSubmission> {
+        let url = `api/exercises/${exerciseId}/file-upload-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<FileUploadSubmission>(url);
     }
 
     /**
