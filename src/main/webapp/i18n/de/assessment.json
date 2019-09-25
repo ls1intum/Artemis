@@ -16,8 +16,6 @@
                 "resolveConflict": "Konflikte behandeln"
             },
             "detail": {
-                "assessmentPartTitle": "Teile-Titel eingeben",
-                "assessmentPart": "Teil",
                 "feedback": "Feedback",
                 "scoreFor": "Bewertung für"
             },

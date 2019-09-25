@@ -168,12 +168,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         if (this.result.hasComplaint) {
             this.getComplaint();
         }
-        if (!this.result.feedbacks) {
-            this.result.feedbacks = [];
-        }
         this.submission.participation.results = [this.result];
         this.result.participation = this.submission.participation;
-        if (!this.result.feedbacks) {
+        if (this.result.feedbacks) {
+            this.loadFeedbacks(this.result.feedbacks);
+        } else {
             this.result.feedbacks = [];
         }
         if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
@@ -324,6 +323,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 result => {
                     this.result = result;
                     this.updateParticipationWithResult();
+                    this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
                 (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),

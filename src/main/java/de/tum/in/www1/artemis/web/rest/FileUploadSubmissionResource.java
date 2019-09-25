@@ -236,7 +236,7 @@ public class FileUploadSubmissionResource {
      * @param participationId the participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the participation as body
      */
-    @GetMapping("participations/{participationId}/file-upload-editor")
+    @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);

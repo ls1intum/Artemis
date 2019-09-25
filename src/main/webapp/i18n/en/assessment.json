@@ -16,8 +16,6 @@
                 "resolveConflict": "Resolve Conflicts"
             },
             "detail": {
-                "assessmentPartTitle": "Enter part title",
-                "assessmentPart": "part",
                 "feedback": "Feedback",
                 "scoreFor": "Assessment for"
             },
