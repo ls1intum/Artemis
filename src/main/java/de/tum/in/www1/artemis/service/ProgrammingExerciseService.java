@@ -809,7 +809,7 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
-        if (!isReleasedAndHasResult(programmingExercise)) {
+        if (testCasesChanged == programmingExercise.isTestCasesChanged() || !isReleasedAndHasResult(programmingExercise)) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
