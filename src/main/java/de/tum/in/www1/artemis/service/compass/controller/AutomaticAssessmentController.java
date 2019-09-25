@@ -104,7 +104,7 @@ public class AutomaticAssessmentController {
         Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         // TODO CZ: combine iterating over relations and packages
-        for (UMLClassRelationship relation : model.getAssociationList()) {
+        for (UMLRelationship relation : model.getRelationshipList()) {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getSimilarityID());
             totalCount++;
 
