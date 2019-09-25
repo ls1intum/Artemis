@@ -202,7 +202,9 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     hasParticipationResults(): boolean {
-        if (!this.participation) return false;
+        if (!this.participation) {
+            return false;
+        }
         return this.participation.results && this.participation.results.length > 0;
     }
 
