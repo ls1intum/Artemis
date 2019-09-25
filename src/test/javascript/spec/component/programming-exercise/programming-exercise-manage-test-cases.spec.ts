@@ -265,4 +265,26 @@ describe('ProgrammingExerciseManageTestCases', () => {
         await new Promise(resolve => setTimeout(resolve));
         fixture.destroy();
     });
+
+    it('should not be able to update the value of the afterDueDate boolean if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
+        findProgrammingExerciseByIdStub.returns(of({ body: { id: 455 } }));
+        comp.ngOnInit();
+        comp.showInactive = true;
+        routeSubject.next({ exerciseId });
+
+        const orderedTests = _sortBy(testCases1, 'testName');
+
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const table = debugElement.query(By.css(testCaseTableId));
+        const checkboxes = table.queryAll(By.css('.table-editable-field__checkbox'));
+        expect(checkboxes).to.have.lengthOf(testCases1.length);
+        expect(checkboxes.every(({ nativeElement: { disabled } }) => disabled)).to.be.true;
+
+        fixture.destroy();
+    });
 });
