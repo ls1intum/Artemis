@@ -2,14 +2,13 @@ package ${packageName};
 
 import static org.junit.Assert.fail;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Arrays;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (17.06.2019)
+ * @version 3.0 (25.09.2019)
+ * <br><br>
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
  * regularly in the functional tests. Facilitation mainly means automatically handling all the various
@@ -34,7 +33,7 @@ public abstract class BehaviorTest {
         } catch (ClassNotFoundException e) {
             // The simple class name is the last part of the qualified class name.
             String className = qualifiedClassName.split("\\.")[qualifiedClassName.split("\\.").length - 1];
-            fail("Problem: the class '" + className + "' was not found within the submission. Please implement it properly.");
+            fail("The class '" + className + "' was not found within the submission. Make sure to implement it properly.");
         }
 
         return null;
@@ -52,30 +51,30 @@ public abstract class BehaviorTest {
 
         String className = qualifiedClassName.split("\\.")[qualifiedClassName.split("\\.").length - 1];
 
-        String failMessage = "Problem: could not instantiate the class '" + className + "' because";
-        
+        String failMessage = "Could not instantiate the class '" + className + "' because";
+
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor(constructorArgTypes);
-            return constructor.newInstance(constructorArgs);            	
-        } catch (IllegalAccessException iae) {		
+            return constructor.newInstance(constructorArgs);
+        } catch (IllegalAccessException iae) {
             fail(failMessage += " access to its constructor with the parameters: " + getParameterTypesAsString(constructorArgTypes) + " was denied."
-                    + " Please check the modifiers of the constructor.");
-        } catch (IllegalArgumentException iae) {	
+                + " Make sure to check the modifiers of the constructor.");
+        } catch (IllegalArgumentException iae) {
             fail(failMessage += " the actual constructor or none of the actual constructors of this class match the expected one."
-                    + " We expect, amongst others, one with " + getParameterTypesAsString(constructorArgTypes) + " parameters, which is not exist."
-                    + " Please implement this constructor correctly.");
-        } catch (InstantiationException ie) {		
+                + " We expect, amongst others, one with " + getParameterTypesAsString(constructorArgTypes) + " parameters, which is not exist."
+                + " Make sure to implement this constructor correctly.");
+        } catch (InstantiationException ie) {
             fail(failMessage += " the class is abstract and should not have a constructor."
-                    + " Please remove the constructor of the class.");
-        } catch (InvocationTargetException ite) {	
+                + " Make sure to remove the constructor of the class.");
+        } catch (InvocationTargetException ite) {
             fail(failMessage += " the constructor with " + constructorArgs.length + " parameters threw an exception and could not be initialized."
-                    + " Please check the constructor implementation.");
+                + " Make sure to check the constructor implementation.");
         } catch (ExceptionInInitializerError eiie) {
             fail(failMessage += " the constructor with " + constructorArgs.length + " parameters could not be initialized.");
-        } catch (NoSuchMethodException nsme) { 		
+        } catch (NoSuchMethodException nsme) {
             fail(failMessage += " the class does not have a constructor with the arguments: "
-                    + getParameterTypesAsString(constructorArgTypes) + ". Please implement this constructor properly.");
-        } catch (SecurityException se) {			
+                + getParameterTypesAsString(constructorArgTypes) + ". Make sure to implement this constructor properly.");
+        } catch (SecurityException se) {
             fail(failMessage += " access to the package of the class was denied.");
         }
 
@@ -89,17 +88,17 @@ public abstract class BehaviorTest {
      * @return The instance of the attribute with the wanted value.
      */
     protected Object valueForAttribute(Object object, String attributeName) {
-        String failMessage = "Problem: could not retrieve the attribute '" + attributeName + "' from the class '"
+        String failMessage = "Could not retrieve the attribute '" + attributeName + "' from the class '"
             + object.getClass().getSimpleName() + "' because";
 
         try {
             return object.getClass().getDeclaredField(attributeName).get(object);
-        } catch (NoSuchFieldException nsfe) {	
-            fail(failMessage += " the attribute does not exist. Please implement the attribute correctly.");
-        } catch (SecurityException se) {		
+        } catch (NoSuchFieldException nsfe) {
+            fail(failMessage += " the attribute does not exist. Make sure to implement the attribute correctly.");
+        } catch (SecurityException se) {
             fail(failMessage += " access to the package of the class was denied.");
-        } catch (IllegalAccessException iae) {	
-            fail(failMessage += " access to the attribute was denied. Please check the modifiers of the attribute.");
+        } catch (IllegalAccessException iae) {
+            fail(failMessage += " access to the attribute was denied. Make sure to check the modifiers of the attribute.");
         }
 
         return null;
@@ -125,19 +124,19 @@ public abstract class BehaviorTest {
      * @return The wanted method.
      */
     protected Method getMethod(Class<?> declaringClass, String methodName, Class<?>... parameterTypes) {
-        String failMessage = "Problem: could not find the method '" + methodName + "' with the parameters: "
+        String failMessage = "Could not find the method '" + methodName + "' with the parameters: "
             + getParameterTypesAsString(parameterTypes) + " from the class " + declaringClass.getSimpleName() + " because";
 
         if (parameterTypes == null || parameterTypes.length == 0) {
-        	failMessage = "Problem: could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
+            failMessage = "Could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
         }
-        
+
         try {
             return declaringClass.getMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException nsme) {
-            fail(failMessage += " the method does not exist. Please implement this method properly.");
+            fail(failMessage += " the method does not exist. Make sure to implement this method properly.");
         } catch (NullPointerException npe) {
-            fail(failMessage += " the name of the method is null. Please check the name of the method.");
+            fail(failMessage += " the name of the method is null. Make sure to check the name of the method.");
         } catch (SecurityException se) {
             fail(failMessage += " access to the package class was denied.");
         }
@@ -153,20 +152,20 @@ public abstract class BehaviorTest {
      * @return The return value of the method.
      */
     protected Object invokeMethod(Object object, Method method, Object... params) {
-        String failMessage = "Problem: could not invoke the method '" + method.getName() + "' in the class '" + object.getClass().getSimpleName() + "' because";
+        String failMessage = "Could not invoke the method '" + method.getName() + "' in the class '" + object.getClass().getSimpleName() + "' because";
         try {
             return method.invoke(object, params);
         } catch (IllegalAccessException iae) {
-            fail(failMessage += " access to the method was denied. Please check the modifiers of the method.");
+            fail(failMessage += " access to the method was denied. Make sure to check the modifiers of the method.");
         } catch (IllegalArgumentException iae) {
-            fail(failMessage += " the parameters are not implemented right. Please check the parameters of the method");
+            fail(failMessage += " the parameters are not implemented right. Make sure to check the parameters of the method");
         } catch (InvocationTargetException e) {
             fail(failMessage += " of an exception within the method: " + e.getCause().toString());
         }
 
         return null;
     }
-    
+
     /**
      * Invoke a given method name of a given object with instances of the parameters.
      * @param object: The instance of the class that should invoke the method.
@@ -175,9 +174,9 @@ public abstract class BehaviorTest {
      * @return The return value of the method.
      */
     protected Object invokeMethod(Object object, String methodName, Object... params) {
-    	Class<?>[] parameterTypes = getParameterTypes(params);
-    	Method method = getMethod(object, methodName, parameterTypes);
-    	return invokeMethod(object, method, params);
+        Class<?>[] parameterTypes = getParameterTypes(params);
+        Method method = getMethod(object, methodName, parameterTypes);
+        return invokeMethod(object, method, params);
     }
 
     /**
@@ -195,7 +194,7 @@ public abstract class BehaviorTest {
                 Class<?> paramType = param.getClass();
                 parameterTypes[Arrays.asList(params).indexOf(param)] = paramType;
             }
-        } 
+        }
         else {
             parameterTypes = null;
         }
@@ -211,7 +210,7 @@ public abstract class BehaviorTest {
     private String getParameterTypesAsString(Class<?>... parameterTypes) {
         if(parameterTypes == null || parameterTypes.length == 0) {
             return "[ none ]";
-        } 
+        }
         else {
             String parameterTypesInformation = "[ ";
 
