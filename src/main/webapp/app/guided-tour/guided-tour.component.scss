@@ -184,13 +184,16 @@ jhi-guided-tour {
                 }
 
                 .step-hint {
-                    background: #f0f0f0;
                     border-radius: 3px;
                     display: flex;
                     margin-top: 15px;
                     padding: 8px;
 
-                    &.interaction {
+                    &:not(.interaction) {
+                        background: #f0f0f0;
+                    }
+
+                    &.interaction:not(.alert-success) {
                         background: rgb(23, 162, 184, 0.3);
                     }
 

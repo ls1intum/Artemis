@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, NavigationEnd, Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { from, fromEvent, Observable, Subject } from 'rxjs';
@@ -27,6 +27,7 @@ export class GuidedTourService {
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailability = new Subject<boolean>();
+    private isUserInteractionFinished = new Subject<boolean>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
     private availableTourForComponent: GuidedTour | null;
@@ -96,6 +97,13 @@ export class GuidedTourService {
     }
 
     /**
+     * @return Observable(true) if the required user interaction for the guided tour step has been executed, otherwise Observable(false)
+     */
+    public userInteractionFinishedState(): Observable<boolean> {
+        return this.isUserInteractionFinished.asObservable();
+    }
+
+    /**
      * Check if the provided tour step is the currently active one
      * @param tourStep: current tour step of the guided tour
      */
@@ -128,7 +136,12 @@ export class GuidedTourService {
                 if (this.checkSelectorValidity()) {
                     this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                 } else {
-                    this.backStep();
+                    this.guidedTourCurrentStepSubject.next(
+                        new TextTourStep({
+                            headlineTranslateKey: 'tour.resize.headline',
+                            contentTranslateKey: 'tour.resize.content',
+                        }),
+                    );
                 }
             });
         } else {
@@ -158,7 +171,13 @@ export class GuidedTourService {
                 if (this.checkSelectorValidity()) {
                     this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
                 } else {
-                    this.nextStep();
+                    console.log('next');
+                    this.guidedTourCurrentStepSubject.next(
+                        new TextTourStep({
+                            headlineTranslateKey: 'tour.resize.headline',
+                            contentTranslateKey: 'tour.resize.content',
+                        }),
+                    );
                 }
             });
         } else {
@@ -238,6 +257,7 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
+        this.isUserInteractionFinished.next(false);
         if (!this.currentTour) {
             return;
         }
@@ -248,7 +268,7 @@ export class GuidedTourService {
                 if (nextStep && nextStep.highlightSelector) {
                     this.waitForElement(nextStep.highlightSelector);
                 } else {
-                    GuidedTourService.enableNextStepClick();
+                    this.enableNextStepClick();
                 }
                 break;
             }
@@ -256,14 +276,14 @@ export class GuidedTourService {
                 from(this.observeDomMutations(targetNode, userInteraction))
                     .pipe(take(1))
                     .subscribe(() => {
-                        this.nextStep();
+                        this.enableNextStepClick();
                     });
                 break;
             }
             case UserInteractionEvent.ACE_EDITOR: {
                 from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
                     mutations.forEach(() => {
-                        GuidedTourService.enableNextStepClick();
+                        this.enableNextStepClick();
                     });
                 });
                 break;
@@ -312,7 +332,7 @@ export class GuidedTourService {
             const nextElement = document.querySelector(nextStepSelector);
             if (nextElement) {
                 clearInterval(interval);
-                this.nextStep();
+                this.enableNextStepClick();
             }
         }, 1000);
     }
@@ -320,7 +340,8 @@ export class GuidedTourService {
     /**
      * Remove the disabled attribute so that the next button is clickable again
      */
-    private static enableNextStepClick() {
+    private enableNextStepClick() {
+        this.isUserInteractionFinished.next(true);
         const nextButton = document.querySelector('.next-button');
         if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
             nextButton.attributes.removeNamedItem('disabled');
@@ -350,7 +371,12 @@ export class GuidedTourService {
             if (this.checkSelectorValidity()) {
                 this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
             } else {
-                this.nextStep();
+                this.guidedTourCurrentStepSubject.next(
+                    new TextTourStep({
+                        headlineTranslateKey: 'tour.resize.headline',
+                        contentTranslateKey: 'tour.resize.content',
+                    }),
+                );
             }
         }
     }
@@ -370,12 +396,14 @@ export class GuidedTourService {
      *  @return true if highlighted element is available, otherwise false
      */
     public checkSelectorValidity(): boolean {
+        console.log('check selector validity');
         if (!this.currentTour) {
             return false;
         }
         const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
+            console.log('selected: ', selectedElement);
             if (!selectedElement) {
                 console.warn(
                     `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
@@ -445,7 +473,9 @@ export class GuidedTourService {
      */
     private getPreparedTourStep(index: number): TourStep | null {
         if (this.currentTour) {
-            return this.setTourOrientation(this.currentTour.steps[index]);
+            let preparedTourStep = this.setTourOrientation(this.currentTour.steps[index]);
+            preparedTourStep;
+            return preparedTourStep;
         } else {
             return null;
         }
@@ -479,6 +509,11 @@ export class GuidedTourService {
             convertedStep.orientation = currentOrientation;
         }
         return convertedStep;
+    }
+
+    private setStepNotAvailableHint(step: TourStep): TourStep {
+        const title = step.headlineTranslateKey;
+        return step;
     }
 
     /**

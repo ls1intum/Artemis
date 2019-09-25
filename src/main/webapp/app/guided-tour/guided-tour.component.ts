@@ -34,6 +34,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
+    private userInteractionFinished: boolean;
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
@@ -81,6 +82,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public ngAfterViewInit(): void {
         this.guidedTourService.init();
         this.subscribeToGuidedTourCurrentStepStream();
+        this.subscribeToUserInteractionState();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
     }
@@ -112,6 +114,16 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 return;
             }
             this.selectedElementRect = null;
+        });
+    }
+
+    /**
+     * Subscribe to userInteractionFinished to determine if the user interaction has been done
+     */
+    public subscribeToUserInteractionState(): void {
+        // Check availability after first subscribe call since the router event been triggered already
+        this.guidedTourService.userInteractionFinishedState().subscribe(isFinished => {
+            this.userInteractionFinished = isFinished;
         });
     }
 
