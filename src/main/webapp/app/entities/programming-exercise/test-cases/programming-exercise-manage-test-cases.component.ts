@@ -227,6 +227,13 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     resetWeights() {
         this.editing = null;
         this.isSaving = true;
+        const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
+        // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
+        if (!existsUnchangedWithCustomWeight) {
+            this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
+            return;
+        }
+
         this.testCaseService
             .resetWeights(this.exerciseId)
             .pipe(
