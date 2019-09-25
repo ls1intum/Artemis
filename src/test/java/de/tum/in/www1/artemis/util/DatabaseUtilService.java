@@ -161,6 +161,11 @@ public class DatabaseUtilService {
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
+    public Result addParticipationWithResultForExercise(Exercise exercise, String login) {
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        return addResultToParticipation(participation);
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *

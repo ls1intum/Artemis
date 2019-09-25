@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -70,6 +71,9 @@ public class ProgrammingSubmissionIntegrationTest {
 
         when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        database.addParticipationWithResultForExercise(exercise, "student1");
+        exercise.setTestCasesChanged(true);
+        exerciseRepository.save(exercise);
     }
 
     @AfterEach
@@ -148,6 +152,10 @@ public class ProgrammingSubmissionIntegrationTest {
             // Check that the CI build was triggered for the given submission.
             verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         }
+
+        SecurityUtils.setAuthorizationObject();
+        ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
+        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isFalse();
     }
 
     @Test

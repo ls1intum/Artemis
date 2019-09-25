@@ -54,7 +54,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @BeforeEach
     public void reset() {
-        database.addUsers(0, 1, 0);
+        database.addUsers(1, 1, 0);
 
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -119,26 +119,40 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldResetTestWeights() {
         SecurityUtils.setAuthorizationObject();
+        database.addParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+
+        assertThat(programmingExercise.isTestCasesChanged()).isFalse();
+
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isTrue();
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws IllegalAccessException {
+        database.addParticipationWithResultForExercise(programmingExercise, "student1");
+
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
+
         Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
         programmingExerciseTestCaseDTO.setWeight(400);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
+        assertThat(programmingExercise.isTestCasesChanged()).isFalse();
+
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
+        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isTrue();
     }
 
     @Test

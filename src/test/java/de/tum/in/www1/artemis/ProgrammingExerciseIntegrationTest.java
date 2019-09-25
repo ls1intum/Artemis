@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseReleaseStateDTO;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -60,8 +61,11 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
-        assertThat(result).isTrue();
+        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
+                ProgrammingExerciseReleaseStateDTO.class);
+        assertThat(releaseStateDTO.isReleased()).isTrue();
+        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
     }
 
     @Test
@@ -72,18 +76,25 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
-        assertThat(result).isFalse();
+        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
+                ProgrammingExerciseReleaseStateDTO.class);
+        assertThat(releaseStateDTO.isReleased()).isFalse();
+        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
+        programmingExercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(programmingExercise);
 
-        Boolean result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK, Boolean.class);
-        assertThat(result).isFalse();
+        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
+                ProgrammingExerciseReleaseStateDTO.class);
+        assertThat(releaseStateDTO.isReleased()).isTrue();
+        assertThat(releaseStateDTO.isHasStudentResult()).isFalse();
+        assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
     }
 
     @Test
