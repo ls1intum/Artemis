@@ -9,7 +9,6 @@
         -->
         <addColumn tableName="programming_exercise_details">
             <column name="test_cases_changed" type="boolean">
-                <constraints nullable="false"/>
             </column>
         </addColumn>
         <!--
