@@ -33,7 +33,7 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     submissionStateSubscription: Subscription;
     resultEtaSubscription: Subscription;
 
-    constructor(private programmingSubmissionService: ProgrammingSubmissionService, private modalService: NgbModal) {}
+    constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 
     ngOnInit(): void {
         this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe(resultEta => (this.resultEtaInMs = resultEta));
@@ -63,25 +63,6 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
     }
 
     /**
-     * Opens a modal in that the user has to confirm that he wants to trigger all participations.
-     * This confirmation is needed as this is a performance intensive action and puts heavy load on our build system
-     * and will create new results for the students (which could be confusing to them).
-     */
-    openTriggerAllModal() {
-        const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseId = this.exerciseId;
-        modalRef.result.then(() => {
-            this.isTriggeringBuildAll = true;
-            this.programmingSubmissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
-                .pipe(catchError(() => of(null)))
-                .subscribe(() => {
-                    this.isTriggeringBuildAll = false;
-                });
-        });
-    }
-
-    /**
      * Retrieve the participation ids that have a failed submission and retry their build.
      */
     triggerBuildOfFailedSubmissions() {
@@ -96,43 +77,4 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
         Object.values(buildState).reduce((acc: { [state: string]: number }, { submissionState }) => {
             return { ...acc, [submissionState]: (acc[submissionState] || 0) + 1 };
         }, {});
-}
-
-@Component({
-    template: `
-        <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">
-            <div class="modal-header">
-                <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <jhi-alert-error></jhi-alert-error>
-                <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
-                    WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                </button>
-                <button type="submit" class="btn btn-danger">
-                    <fa-icon [icon]="'times'"></fa-icon>&nbsp;
-                    <span jhiTranslate="entity.action.confirm">Confirm</span>
-                </button>
-            </div>
-        </form>
-    `,
-})
-export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
-    @Input() exerciseId: number;
-
-    constructor(private activeModal: NgbActiveModal) {}
-
-    cancel() {
-        this.activeModal.dismiss('cancel');
-    }
-
-    confirmTrigger() {
-        this.activeModal.close();
-    }
 }
