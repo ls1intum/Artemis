@@ -53,6 +53,7 @@ export class SortByPipe implements PipeTransform {
         return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 
+    // TODO: How does this work? An exercise does not have a completion date.
     durationForExercise(exercise: any) {
         return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
     }

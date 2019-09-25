@@ -299,6 +299,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         // Remove router event subscription
-        this.routerSubscription.unsubscribe();
+        if (this.routerSubscription) {
+            this.routerSubscription.unsubscribe();
+        }
     }
 }
