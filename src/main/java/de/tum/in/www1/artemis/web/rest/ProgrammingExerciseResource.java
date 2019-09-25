@@ -597,8 +597,8 @@ public class ProgrammingExerciseResource {
         }
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise.get());
         boolean isReleased = programmingExercise.get().isReleased();
-        ProgrammingExerciseReleaseStateDTO releaseStateDTO = new ProgrammingExerciseReleaseStateDTO().released(isReleased).hasStudentResults(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.get().isTestCasesChanged());
+        ProgrammingExerciseReleaseStateDTO releaseStateDTO = new ProgrammingExerciseReleaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
+                .testCasesChanged(programmingExercise.get().haveTestCasesChanged());
         return ResponseEntity.ok(releaseStateDTO);
     }
 }

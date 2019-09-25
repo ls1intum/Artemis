@@ -122,14 +122,14 @@ public class ProgrammingExerciseTestCaseServiceTest {
         database.addParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
 
-        assertThat(programmingExercise.isTestCasesChanged()).isFalse();
+        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
 
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
-        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isTrue();
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
     }
 
     @Test
@@ -145,14 +145,14 @@ public class ProgrammingExerciseTestCaseServiceTest {
         programmingExerciseTestCaseDTO.setWeight(400);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
-        assertThat(programmingExercise.isTestCasesChanged()).isFalse();
+        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
-        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isTrue();
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
     }
 
     @Test

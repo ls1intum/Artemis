@@ -341,7 +341,7 @@ public class ProgrammingExercise extends Exercise {
         this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
-    public boolean isTestCasesChanged() {
+    public boolean haveTestCasesChanged() {
         if (testCasesChanged == null) {
             return false;
         }
@@ -387,8 +387,9 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "ProgrammingExercise{" + "testRepositoryUrl='" + testRepositoryUrl + '\'' + ", publishBuildPlanUrl=" + publishBuildPlanUrl + ", allowOnlineEditor="
-                + allowOnlineEditor + ", programmingLanguage=" + programmingLanguage + ", packageName='" + packageName + '\'' + ", sequentialTestRuns=" + sequentialTestRuns
-                + ", buildAndTestStudentSubmissionsAfterDueDate=" + buildAndTestStudentSubmissionsAfterDueDate + ", testCasesChanged=" + testCasesChanged + '}';
+        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
+                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 }

@@ -20,7 +20,7 @@ public class ProgrammingExerciseReleaseStateDTO {
         return hasStudentResult;
     }
 
-    public void setHasStudentResult(boolean hasStudentResult) {
+    public void hasStudentResult(boolean hasStudentResult) {
         this.hasStudentResult = hasStudentResult;
     }
 
@@ -37,8 +37,8 @@ public class ProgrammingExerciseReleaseStateDTO {
         return this;
     }
 
-    public ProgrammingExerciseReleaseStateDTO hasStudentResults(boolean hasStudentResultsValue) {
-        setHasStudentResult(hasStudentResultsValue);
+    public ProgrammingExerciseReleaseStateDTO studentResult(boolean hasStudentResultsValue) {
+        hasStudentResult(hasStudentResultsValue);
         return this;
     }
 

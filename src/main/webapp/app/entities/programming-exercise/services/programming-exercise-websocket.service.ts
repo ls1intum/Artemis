@@ -45,6 +45,12 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
         return this.subjects[programmingExerciseId];
     }
 
+    /**
+     * Subscribe to the testCaseChanged flag of the programming exercise.
+     * True => The test cases were changed and the student submissions should be built again.
+     * False => There are no outstanding test case changes, the student results are up-to-date.
+     * @param programmingExerciseId
+     */
     getTestCaseState(programmingExerciseId: number) {
         const existingSubject = this.subjects[programmingExerciseId];
         return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter(val => val !== undefined)) as Observable<boolean>;

@@ -155,7 +155,7 @@ public class ProgrammingSubmissionIntegrationTest {
 
         SecurityUtils.setAuthorizationObject();
         ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
-        assertThat(updatedProgrammingExercise.isTestCasesChanged()).isFalse();
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isFalse();
     }
 
     @Test

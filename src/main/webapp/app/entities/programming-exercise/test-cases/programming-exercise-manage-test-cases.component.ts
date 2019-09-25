@@ -95,18 +95,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     catchError(() => of(null)),
                 )
                 .subscribe(() => {
-                    this.testCaseSubscription = this.testCaseService
-                        .subscribeForTestCases(this.exerciseId)
-                        .pipe(
-                            tap((testCases: ProgrammingExerciseTestCase[]) => {
-                                this.testCases = testCases;
-                            }),
-                        )
-                        .subscribe();
-                    this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
-                        .getTestCaseState(this.exerciseId)
-                        .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
-                        .subscribe();
+                    this.subscribeForTestCaseUpdates();
+                    this.subscribeForExerciseTestCasesChangedUpdates();
                     this.isLoading = false;
                 });
         });
@@ -122,6 +112,30 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+    }
+
+    private subscribeForTestCaseUpdates() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+        this.testCaseSubscription = this.testCaseService
+            .subscribeForTestCases(this.exerciseId)
+            .pipe(
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    this.testCases = testCases;
+                }),
+            )
+            .subscribe();
+    }
+
+    private subscribeForExerciseTestCasesChangedUpdates() {
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
+        }
+        this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
+            .getTestCaseState(this.exerciseId)
+            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
+            .subscribe();
     }
 
     /**
