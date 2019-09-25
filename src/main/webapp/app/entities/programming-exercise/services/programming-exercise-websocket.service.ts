@@ -1,26 +1,21 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import * as moment from 'moment';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { omit as _omit } from 'lodash';
-import { SERVER_API_URL } from 'app/app.constants';
 
 import { ProgrammingExercise } from '../programming-exercise.model';
-import { createRequestOption } from 'app/shared';
-import { ExerciseService } from 'app/entities/exercise';
-import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
 import { JhiWebsocketService } from 'app/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { BehaviorSubject } from 'rxjs';
-import { tap, filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
-export type ReleaseStateDTO = { released: boolean; hasStudentResult: boolean; testCasesChanged: boolean };
+export interface IProgrammingExerciseWebsocketService {
+    getTestCaseState(programmingExerciseId: number): Observable<boolean>;
+}
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseWebsocketService implements OnDestroy {
+export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
     private connections: string[] = [];
     // Uses undefined for initial value.
     private subjects: { [programmingExerciseId: number]: BehaviorSubject<boolean | undefined> } = {};

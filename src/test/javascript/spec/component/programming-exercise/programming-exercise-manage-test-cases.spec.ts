@@ -13,10 +13,10 @@ import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import * as chai from 'chai';
-import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
+import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
@@ -25,6 +25,8 @@ import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArtemisCoreModule } from 'app/core';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
 import { elementIsDisabled, expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
+import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,11 +40,14 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     let route: ActivatedRoute;
     let testCaseService: ProgrammingExerciseTestCaseService;
+    let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
+    let testCasesChangedStub: SinonStub;
 
     let routeSubject: Subject<Params>;
+    let testCasesChangedSubject: Subject<boolean>;
 
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
@@ -80,6 +85,8 @@ describe('ProgrammingExerciseManageTestCases', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
                 JhiAlertService,
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -95,13 +102,18 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
+                programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+                testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
 
                 routeSubject = new Subject();
                 // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
+
+                testCasesChangedSubject = new Subject<boolean>();
+                testCasesChangedStub.returns(testCasesChangedSubject);
             });
     }));
 
@@ -207,8 +219,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
+        testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
         expect(comp.hasUpdatedTestCases).to.be.true;
+
+        fixture.detectChanges();
+
         triggerButton = getTriggerButton();
         expectElementToBeEnabled(triggerButton);
 
