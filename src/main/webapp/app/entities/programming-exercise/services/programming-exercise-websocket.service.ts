@@ -47,6 +47,6 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
 
     getTestCaseState(programmingExerciseId: number) {
         const existingSubject = this.subjects[programmingExerciseId];
-        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter(val => val !== undefined));
+        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter(val => val !== undefined)) as Observable<boolean>;
     }
 }
