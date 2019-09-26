@@ -16,7 +16,6 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
-import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 
@@ -46,6 +45,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     combinedParticipation: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
 
+    private showWelcomeAlert = false;
+
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
@@ -58,7 +59,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
@@ -77,16 +77,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.route.queryParams.subscribe(queryParams => {
             if (queryParams['welcome'] === '') {
-                this.showWelcomeAlert();
+                setTimeout(() => {
+                    this.showWelcomeAlert = true;
+                }, 500);
             }
         });
-    }
-
-    showWelcomeAlert() {
-        // show alert after timeout to fix translation not loaded
-        setTimeout(() => {
-            this.jhiAlertService.info('artemisApp.exercise.welcome');
-        }, 500);
     }
 
     loadExercise() {
