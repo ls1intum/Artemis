@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,10 +28,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.LinkedMultiValueMap;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
@@ -38,6 +44,8 @@ import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -78,6 +86,7 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @BeforeEach
     public void setUp() throws MalformedURLException {
         databse.addUsers(1, 1, 1);
+        databse.addInstructor("other-instructors", "instructorOther");
         baseCourse = databse.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = databse.addEmptyCourse();
         programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
@@ -176,6 +185,26 @@ public class ProgrammingExerciseServiceIntegrationTest {
         doCallRealMethod().when(bitbucketService).getCloneRepositoryUrl(anyString(), anyString());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(0);
+        search.setPageSize(10);
+        search.setSearchTerm("");
+        search.setSortedColumn(ProgrammingExercise.ProgrammingExerciseSearchColumn.ID.name());
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+        assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     private ProgrammingExercise importExerciseBase() throws MalformedURLException {
