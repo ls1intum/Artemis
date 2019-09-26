@@ -28,12 +28,12 @@ public class ModelIndex {
     }
 
     /**
-     * Get the internal "similarity" id for a model element. If the element is similar to an existing one, they share the same id.
+     * Get the internal similarity id for the given model element. If the element is similar to an existing one, they share the same similarity id. Otherwise, a new id is created.
      *
-     * @param element an element of a model
-     * @return its similarity id
+     * @param element a model element for which the corresponding similarity id should be retrieved
+     * @return the similarity id for the given model element
      */
-    int getSimilarityId(UMLElement element) {
+    int retrieveSimilarityId(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }

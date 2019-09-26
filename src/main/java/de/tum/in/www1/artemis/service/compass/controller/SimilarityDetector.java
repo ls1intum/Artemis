@@ -22,23 +22,23 @@ public class SimilarityDetector {
     public static void analyzeSimilarity(UMLClassDiagram model, ModelIndex index) {
 
         for (UMLClass umlClass : model.getClassList()) {
-            umlClass.setSimilarityID(index.getSimilarityId(umlClass));
+            umlClass.setSimilarityID(index.retrieveSimilarityId(umlClass));
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                attribute.setSimilarityID(index.getSimilarityId(attribute));
+                attribute.setSimilarityID(index.retrieveSimilarityId(attribute));
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                method.setSimilarityID(index.getSimilarityId(method));
+                method.setSimilarityID(index.retrieveSimilarityId(method));
             }
         }
 
         for (UMLRelationship relation : model.getRelationshipList()) {
-            relation.setSimilarityID(index.getSimilarityId(relation));
+            relation.setSimilarityID(index.retrieveSimilarityId(relation));
         }
 
         for (UMLPackage umlPackage : model.getPackageList()) {
-            umlPackage.setSimilarityID(index.getSimilarityId(umlPackage));
+            umlPackage.setSimilarityID(index.retrieveSimilarityId(umlPackage));
         }
 
         setContext(model);
@@ -67,14 +67,14 @@ public class SimilarityDetector {
     // TODO: we need a very good documentation here
     private static Context generateContextForElement(UMLClassDiagram model, UMLElement element) {
 
-        if (element.getClass() == UMLAttribute.class) {
+        if (element instanceof UMLAttribute) {
             for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getAttributes().contains(element)) {
                     return new Context(umlClass.getSimilarityID());
                 }
             }
         }
-        else if (element.getClass() == UMLMethod.class) {
+        else if (element instanceof UMLMethod) {
             for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getMethods().contains(element)) {
                     return new Context(umlClass.getSimilarityID());
