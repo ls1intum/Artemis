@@ -17,7 +17,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div id="build-and-test-date-container" class="form-check mt-1 d-flex" *ngIf="exercise.dueDate && exercise.dueDate.isValid()">
+        <div id="build-and-test-date-container" class="form-check mt-1 d-flex">
             <label class="form-check-label flex-grow-1" for="field_buildAndTestStudentSubmissionsAfterDueDate">
                 <div class="flex-grow-1 d-flex mt-1">
                     <input
@@ -25,7 +25,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
                         type="checkbox"
                         name="buildAndTestStudentSubmissionsAfterDueDate"
                         id="field_buildAndTestStudentSubmissionsAfterDueDate"
-                        [disabled]="!exercise.dueDate"
+                        [disabled]="!exercise.dueDate || !exercise.dueDate.isValid()"
                         [ngModel]="buildAndTestDateActive"
                         (ngModelChange)="toggleBuildAndTestStudentSubmissionsAfterDueDate()"
                         checked
@@ -48,7 +48,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
                         [min]="exercise.dueDate"
                         name="buildAndTestStudentSumissionsAfterDueDate"
                     ></jhi-date-time-picker>
-                    <div *ngIf="buildAndTestDateInvalid" class="alert alert-danger">
+                    <div *ngIf="exercise.dueDate && exercise.dueDate.isValid() && buildAndTestDateInvalid" class="alert alert-danger">
                         <span [jhiTranslate]="'artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.invalid'"></span>
                     </div>
                 </div>
@@ -90,10 +90,11 @@ export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
         const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
         const updatedProgrammingExercise = { ...this.exercise, dueDate: updatedDueDate && updatedDueDate.isValid() ? updatedDueDate : null };
         this.buildAndTestDateInvalid =
-            !updatedDueDate ||
-            !updatedDueDate.isValid() ||
             (this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate) ||
-            (!!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate));
+            (!!this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
+                updatedDueDate &&
+                updatedDueDate.isValid() &&
+                updatedDueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate));
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
