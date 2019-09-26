@@ -35,6 +35,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -55,6 +56,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisProgrammingExerciseActionsModule,
         // Other entity modules.
         ArtemisResultModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,

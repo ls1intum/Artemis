@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { switchMap, tap } from 'rxjs/operators';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services';
@@ -22,6 +22,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     readonly column = TableColumn;
 
     private search = new Subject<void>();
+    private sort = new Subject<void>();
 
     loading = false;
     content: SearchResult<ProgrammingExercise>;
@@ -39,8 +40,14 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     ngOnInit() {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
-        this.search
+        this.performSearch(this.sort, 0);
+        this.performSearch(this.search, 300);
+    }
+
+    private performSearch(searchSubject: Subject<void>, debounce: number) {
+        searchSubject
             .pipe(
+                debounceTime(debounce),
                 tap(() => (this.loading = true)),
                 switchMap(() => this.pagingService.searchForExercises(this.state)),
             )
@@ -61,7 +68,8 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     }
 
     set searchTerm(searchTerm: string) {
-        this.setSearchParam({ searchTerm });
+        this.state.searchTerm = searchTerm;
+        this.search.next();
     }
 
     get searchTerm(): string {
@@ -87,7 +95,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     private setSearchParam(patch: Partial<PageableSearch>) {
         Object.assign(this.state, patch);
-        this.search.next();
+        this.sort.next();
     }
 
     /**

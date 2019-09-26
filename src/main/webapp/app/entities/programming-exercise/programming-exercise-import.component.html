@@ -45,9 +45,7 @@
                         <ngb-highlight [result]="exercise.course.title" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <button class="btn btn-outline-primary" (click)="openImport(exercise)" jhiTranslate="artemisApp.programmingExercise.import.table.doImport">
-                            Import
-                        </button>
+                        <jhi-button (click)="openImport(exercise)" [title]="'artemisApp.programmingExercise.import.table.doImport'"> </jhi-button>
                     </td>
                 </tr>
             </tbody>

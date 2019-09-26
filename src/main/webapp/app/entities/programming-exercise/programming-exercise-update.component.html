@@ -225,15 +225,7 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary mr-1" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="dueDateInvalid || editForm.form.invalid || isSaving" class="btn btn-primary">
-                    <ng-container *ngIf="!isSaving">
-                        <fa-icon [icon]="'save'"></fa-icon>&nbsp;
-                        <span *ngIf="isImport" jhiTranslate="entity.action.import">Import</span>
-                        <span *ngIf="!isImport && !isSaving && programmingExercise.id" jhiTranslate="entity.action.save">Save</span>
-                        <span *ngIf="!isImport && !isSaving && programmingExercise.id === undefined" jhiTranslate="entity.action.generate">Generate</span>
-                    </ng-container>
-                    <fa-icon *ngIf="isSaving" icon="circle-notch" [spin]="true"></fa-icon>
-                </button>
+                <jhi-button id="save-entity" [disabled]="dueDateInvalid || editForm.form.invalid" [isLoading]="isSaving" [icon]="'save'" [title]="submitButtonTitle"> </jhi-button>
             </div>
         </form>
     </div>

@@ -24,6 +24,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
+    submitButtonTitle: string;
     isImport: boolean;
     hashUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
@@ -108,6 +109,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 );
                             });
                         }
+                    }
+
+                    // Set submit button text depending on component state
+                    if (this.isImport) {
+                        this.submitButtonTitle = 'entity.action.import';
+                    } else if (this.programmingExercise.id) {
+                        this.submitButtonTitle = 'entity.action.save';
+                    } else {
+                        this.submitButtonTitle = 'entity.action.generate';
                     }
                 }),
             )
