@@ -34,7 +34,7 @@ plugins {
     id "net.ltgt.apt"
 //    id "org.liquibase.gradle"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.24.2"
+    id "com.diffplug.gradle.spotless" version "3.24.3"
 }
 
 sourceCompatibility=12
