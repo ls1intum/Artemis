@@ -310,7 +310,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
         final var cleanPlanName = getCleanPlanName(targetPlanName);
-        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
