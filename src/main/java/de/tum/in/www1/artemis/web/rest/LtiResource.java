@@ -114,9 +114,11 @@ public class LtiResource {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
 
-        String redirectUrl = request.getScheme() + // "http"
+        // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
+
+        String redirectUrl = request.getScheme() + // "https"
                 "://" +                                // "://"
-                request.getServerName() +              // "myhost"
+                request.getServerName() +              // "artemis.ase.in.tum.de"
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/overview/" + exercise.getCourse().getId()
                 + "/exercises/" + exercise.getId() + (isNewUser ? "?welcome" : "") + (!SecurityUtils.isAuthenticated() ? "?login" : "")
                 + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
