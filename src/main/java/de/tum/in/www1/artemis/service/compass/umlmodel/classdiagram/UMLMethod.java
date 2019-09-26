@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLMethod extends UMLElement {
@@ -20,57 +22,74 @@ public class UMLMethod extends UMLElement {
     private List<String> parameters;
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
+        super(jsonElementID);
+
         this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameter;
-        this.setJsonElementID(jsonElementID);
     }
 
+    /**
+     * Set the parent class of this method, i.e. the UML class that contains it.
+     *
+     * @param parentClass the UML class that contains this method
+     */
     public void setParentClass(UMLClass parentClass) {
         this.parentClass = parentClass;
     }
 
     /**
-     * Compare this with another element to calculate the similarity
+     * Get the return type of this method.
      *
-     * @param element the element to compare with
-     * @return the similarity as number [0-1]
+     * @return the return type of this method as String
      */
+    String getReturnType() {
+        return returnType;
+    }
+
+    /**
+     * Get the parameter list of this method.
+     *
+     * @return the list of parameters (as Strings) of this method
+     */
+    List<String> getParameters() {
+        return parameters;
+    }
+
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (element.getClass() != UMLMethod.class) {
+        if (!(reference instanceof UMLMethod)) {
             return similarity;
         }
 
-        UMLMethod other = (UMLMethod) element;
+        UMLMethod referenceMethod = (UMLMethod) reference;
 
         int elementCount = parameters.size() + 2;
-
         double weight = 1.0 / elementCount;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(name, other.name) * weight;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceMethod.getName()) * weight;
+        similarity += NameSimilarity.nameEqualsSimilarity(returnType, referenceMethod.getReturnType()) * weight;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(returnType, other.returnType) * weight;
-
-        for (String oParameter : other.parameters) {
-            if (parameters.contains(oParameter)) {
+        List<String> referenceParameters = referenceMethod.getParameters() != null ? referenceMethod.getParameters() : Collections.emptyList();
+        for (String referenceParameter : referenceParameters) {
+            if (parameters.contains(referenceParameter)) {
                 similarity += weight;
             }
         }
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
+    }
+
+    @Override
+    public String toString() {
+        return "Method " + completeName + " in class " + parentClass.getName();
     }
 
     @Override
     public String getName() {
-        return "Method " + completeName + " in class " + parentClass.getValue();
-    }
-
-    @Override
-    public String getValue() {
         return name;
     }
 

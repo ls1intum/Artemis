@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,13 +25,13 @@ import { filter } from 'rxjs/operators';
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
-export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentEditorComponent implements OnInit {
     submission: ModelingSubmission | null;
     model: UMLModel | null;
     modelingExercise: ModelingExercise | null;
     result: Result | null;
-    generalFeedback: Feedback;
-    referencedFeedback: Feedback[];
+    generalFeedback = new Feedback();
+    referencedFeedback: Feedback[] = [];
     conflicts: Conflict[] | null;
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
@@ -45,7 +45,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     canOverride = false;
-    isLoading: boolean;
+    isLoading = true;
     hasAutomaticFeedback = false;
 
     private cancelConfirmationText: string;
@@ -65,12 +65,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
-        this.generalFeedback = new Feedback();
-        this.referencedFeedback = [];
-        this.isLoading = true;
     }
 
-    get feedback(): Feedback[] {
+    private get feedback(): Feedback[] {
         if (!this.referencedFeedback) {
             return [this.generalFeedback];
         }
@@ -84,21 +81,19 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        this.route.params.subscribe(params => {
-            const submissionId: String = params['submissionId'];
-            const exerciseId = Number(params['exerciseId']);
+        this.route.paramMap.subscribe(params => {
+            const submissionId: String | null = params.get('submissionId');
+            const exerciseId = Number(params.get('exerciseId'));
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.route.queryParams.subscribe(params => {
-            this.hideBackButton = params['hideBackButton'] === 'true';
+        this.route.queryParamMap.subscribe(queryParams => {
+            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
         });
     }
-
-    ngOnDestroy() {}
 
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
@@ -217,12 +212,17 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAtLeastInstructor =
+            this.modelingExercise && this.modelingExercise.course
+                ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
+                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.submission = null;
         this.modelingExercise = null;
         this.result = null;
