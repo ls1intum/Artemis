@@ -6,6 +6,7 @@
                 "createLabel": "Neue Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "generateLabel": "Neue Programmieraufgabe generieren",
+                "importLabel": "Neue Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
@@ -110,7 +111,18 @@
             "buildingSubmissions": "Laufende Abgaben: {{number}}",
             "failedSubmissions": "Gescheiterte Abgaben: {{number}}",
             "resultETA": "Ergebnis Wartezeit: {{eta}}",
-            "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems."
+            "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
+            "import": {
+                "attention": "Achtung! ",
+                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "language": "Programmiersprache",
+                    "course": "Kurs",
+                    "doImport": "Import"
+                }
+            }
         }
     }
 }

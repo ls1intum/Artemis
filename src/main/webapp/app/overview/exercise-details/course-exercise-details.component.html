@@ -1,4 +1,7 @@
 <div *ngIf="exercise">
+    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px;">
+        <div [innerHTML]="'artemisApp.exercise.welcome' | translate"></div>
+    </div>
     <!-- HEADER INFORMATION START -->
     <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)">
         <span pagetitle>{{ exercise.title }}</span>

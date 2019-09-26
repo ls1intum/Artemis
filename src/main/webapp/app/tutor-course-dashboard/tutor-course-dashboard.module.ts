@@ -4,7 +4,7 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
-import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
+import { CourseComponent, CourseExerciseService, CourseService } from '../entities/course';
 import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
 import { RepositoryService } from 'app/entities/repository';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -16,6 +16,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
+import { CourseScoreCalculationService } from 'app/overview';
 
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
