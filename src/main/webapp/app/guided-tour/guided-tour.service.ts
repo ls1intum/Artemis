@@ -10,12 +10,12 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { AccountService } from 'app/core';
-import { ImageTourStep, TextLinkTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
@@ -75,8 +75,10 @@ export class GuidedTourService {
                             }),
                         );
                     } else {
-                        this.onResizeMessage = false;
-                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, false));
+                        if (this.onResizeMessage) {
+                            this.onResizeMessage = false;
+                            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+                        }
                     }
                 }
             });
@@ -139,7 +141,7 @@ export class GuidedTourService {
                 previousStep.action();
             }
             setTimeout(() => {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
             });
         } else {
             this.resetTour();
@@ -165,7 +167,7 @@ export class GuidedTourService {
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
             });
         } else {
             this.finishGuidedTour();
@@ -213,7 +215,7 @@ export class GuidedTourService {
                 if (currentStep.action) {
                     currentStep.action();
                 }
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
+                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
             }
         });
     }
@@ -395,7 +397,7 @@ export class GuidedTourService {
             if (currentStep.action) {
                 currentStep.action();
             }
-            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex, this.checkSelectorValidity()));
+            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
         }
     }
 
@@ -491,15 +493,15 @@ export class GuidedTourService {
 
     /**
      * Get the tour step with defined orientation
-     * @param index current tour step index
-     * @param selectorAvailable true if the current tour step selector is valid, otherwise false
      * @return prepared current tour step or null
      */
-    private getPreparedTourStep(index: number, selectorAvailable: boolean): TourStep | null {
+    private getPreparedTourStep(): TourStep | null {
         if (!this.currentTour) {
             return null;
         }
-        return selectorAvailable ? this.setTourOrientation(this.currentTour.steps[index]) : this.setStepAlreadyFinishedHint(this.currentTour.steps[index]);
+        return this.checkSelectorValidity()
+            ? this.setTourOrientation(this.currentTour.steps[this.currentTourStepIndex])
+            : this.setStepAlreadyFinishedHint(this.currentTour.steps[this.currentTourStepIndex]);
     }
 
     /**
