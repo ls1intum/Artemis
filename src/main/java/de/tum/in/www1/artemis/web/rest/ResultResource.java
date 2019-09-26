@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -224,7 +224,7 @@ public class ResultResource {
 
     private Optional<ProgrammingExerciseParticipation> getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
-        if (planKey.contains(RepositoryType.TEMPLATE.getName())) {
+        if (planKey.contains(BuildPlanType.TEMPLATE.getName())) {
             Optional<TemplateProgrammingExerciseParticipation> templateParticipation = participationService.findTemplateParticipationByBuildPlanId(planKey);
             // we have to convert the optional type here to make Java happy
             if (templateParticipation.isPresent()) {
@@ -234,7 +234,7 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        else if (planKey.contains(RepositoryType.SOLUTION.getName())) {
+        else if (planKey.contains(BuildPlanType.SOLUTION.getName())) {
             Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = participationService.findSolutionParticipationByBuildPlanId(planKey);
             // we have to convert the optional type here to make Java happy
             if (solutionParticipation.isPresent()) {

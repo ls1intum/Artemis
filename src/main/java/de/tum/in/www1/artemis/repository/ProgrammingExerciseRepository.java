@@ -3,8 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -65,6 +68,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(attributePaths = "course")
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
     Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
+
+    @Query("select pe from ProgrammingExercise pe where pe.course.instructorGroupName in :groups and (pe.title like %:partialTitle% or pe.course.title like %:partialCourseTitle%)")
+    Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(String partialTitle, String partialCourseTitle, Set<String> groups, Pageable pageable);
+
+    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
+
+    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.

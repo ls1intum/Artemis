@@ -2,9 +2,10 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.*;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -108,6 +110,9 @@ public class DatabaseUtilService {
     ModelingAssessmentService modelingAssessmentService;
 
     @Autowired
+    ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -161,6 +166,12 @@ public class DatabaseUtilService {
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
+    public void addInstructor(final String instructorGroup, final String instructorName) {
+        var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, 1).get(0);
+        instructor = userRepo.save(instructor);
+        assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
@@ -204,6 +215,7 @@ public class DatabaseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
+        participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-exercise.git");
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/template.git");
         templateProgrammingExerciseParticipationRepo.save(participation);
@@ -216,6 +228,7 @@ public class DatabaseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
+        participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-solution.git");
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setRepositoryUrl("http://url/scm/TEST234454TEST234565/solution.git");
         solutionProgrammingExerciseParticipationRepo.save(participation);
@@ -323,9 +336,26 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course)
-                .title("programming exercise");
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExercise.setPublishBuildPlanUrl(true);
+        programmingExercise.setMaxScore(42.0);
+        programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setProblemStatement("Lorem Ipsum");
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setGradingInstructions("Lorem Ipsum");
+        programmingExercise.setTitle("Test Exercise");
+        programmingExercise.setShortName("TSTEXC");
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setPackageName("de.test");
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
+        programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
+
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
@@ -336,11 +366,20 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    public Course addEmptyCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        courseRepo.save(course);
+
+        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+
+        return course;
+    }
+
     @Transactional
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         course = courseRepo.findById(course.getId()).get();
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<Exercise>(course.getExercises()).get(0);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
@@ -660,7 +699,7 @@ public class DatabaseUtilService {
 
     }
 
-    public void addHintsToExercise(Exercise exercise) {
+    public Set<ExerciseHint> addHintsToExercise(Exercise exercise) {
         ExerciseHint exerciseHint1 = new ExerciseHint().exercise(exercise).title("title 1").content("content 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().exercise(exercise).title("title 2").content("content 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().exercise(exercise).title("title 3").content("content 3");
@@ -669,5 +708,24 @@ public class DatabaseUtilService {
         hints.add(exerciseHint2);
         hints.add(exerciseHint3);
         exerciseHintRepository.saveAll(hints);
+
+        return hints;
+    }
+
+    @Transactional
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
+        final var lazyExcercise = programmingExerciseRepository.findAll().get(0);
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExcercise);
+    }
+
+    @Transactional
+    public <T extends Exercise> T addHintsToProblemStatement(T exercise) {
+        final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
+        exercise = (T) exerciseRepo.findById(exercise.getId()).get();
+        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
+        exercise.setProblemStatement(statement + hintsInStatement);
+        exerciseRepo.save(exercise);
+
+        return exercise;
     }
 }
