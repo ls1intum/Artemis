@@ -9,6 +9,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArtemisStudentQuestionsModule } from 'app/student-questions/';
 
 import {
+    CourseScoreCalculationService,
     CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
@@ -64,5 +65,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     entryComponents: [],
     exports: [ExerciseActionButtonComponent],
+    providers: [CourseScoreCalculationService],
 })
 export class ArtemisOverviewModule {}

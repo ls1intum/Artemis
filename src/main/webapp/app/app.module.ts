@@ -32,7 +32,6 @@ import { ArtemisHomeModule } from './home';
 import { ArtemisLegalModule } from './legal';
 import { ArtemisOverviewModule } from './overview';
 import { ArtemisAccountModule } from './account/account.module';
-import { ArtemisCourseListModule } from './course-list';
 import { ArtemisEntityModule } from './entities/entity.module';
 import { ArtemisCourseScoresModule, ArtemisExerciseScoresModule } from './scores';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
@@ -60,7 +59,6 @@ import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exerc
 import { PendingChangesGuard } from 'app/shared';
 import { ArtemisInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
 import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
-import { ParticipationDataProvider } from 'app/course-list';
 import { ArtemisTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArtemisTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArtemisExampleTextSubmissionModule } from 'app/example-text-submission';
@@ -116,7 +114,6 @@ import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/fi
         ArtemisAccountModule,
         ArtemisEntityModule,
         ArtemisApollonDiagramsModule,
-        ArtemisCourseListModule,
         ArtemisQuizModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
@@ -179,7 +176,6 @@ import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/fi
         UserRouteAccessService,
         DifferencePipe,
         JhiWebsocketService,
-        ParticipationDataProvider,
         PendingChangesGuard,
         TranslateService,
         /**

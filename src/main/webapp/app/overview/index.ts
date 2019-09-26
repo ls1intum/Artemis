@@ -1,3 +1,4 @@
+export * from './course-score-calculation.service';
 export * from './overview.component';
 export * from './course-overview.component';
 export * from './course-statistics/course-statistics.component';
