@@ -389,29 +389,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
-        if (!this.currentTourStep.targetSelectorToCheckForCourse && !this.currentTourStep.targetSelectorToCheckForExercise) {
-            return document.querySelector(this.currentTourStep.highlightSelector);
-        }
-        if (this.currentTourStep.targetSelectorToCheckForCourse) {
-            return this.getSelectorForCourseOrExercise(this.currentTourStep.targetSelectorToCheckForCourse, this.guidedTourService.currentTour!.courseTitle);
-        }
-        if (this.currentTourStep.targetSelectorToCheckForExercise) {
-            return this.getSelectorForCourseOrExercise(this.currentTourStep.targetSelectorToCheckForExercise, this.guidedTourService.currentTour!.exerciseTitle);
-        }
-        return null;
-    }
-
-    /**
-     * This method checks the node of the targetSelector if the node itself or any child elements contain the given title
-     * This title could be the course title or the exercise title
-     *
-     * @param targetSelector string for the query selector to get the node that should be checked for the title string
-     * @param title course or exercise title
-     */
-    private getSelectorForCourseOrExercise(targetSelector: string, title: string): HTMLElement | null {
-        const targetNodes = [].slice.call(document.querySelectorAll(targetSelector));
-        const parentNode = targetNodes.find((targetNode: HTMLElement) => targetNode.textContent && targetNode.textContent.includes(title));
-        return parentNode.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
+        return document.querySelector(this.currentTourStep.highlightSelector);
     }
 
     /**

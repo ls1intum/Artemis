@@ -6,7 +6,7 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
+import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-overview',
@@ -16,7 +16,9 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    private guidedTour: GuidedTour;
+    public guidedTourCourse: Course | null;
+
+    readonly compareCourseShortName = compareCourseShortName;
 
     constructor(
         private courseService: CourseService,
@@ -32,7 +34,7 @@ export class OverviewComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
+                this.guidedTourCourse = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );

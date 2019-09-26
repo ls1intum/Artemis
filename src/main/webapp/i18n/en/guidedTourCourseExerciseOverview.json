@@ -41,9 +41,9 @@
                 "headline": "Start with your first programming exercise",
                 "content": "Click on the 'Start exercise' button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background."
             },
-            "sourceTreeTutorial": {
+            "cloneRepository": {
                 "headline": "SourceTree Tutorial",
-                "content": "While you are waiting for the repository setup, you can watch a video tutorial on cloning projects with SourceTree, if you are not familiar with SourceTree."
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree. While watching the video, follow the steps on your computer side-by-side"
             }
         }
     }

@@ -7,8 +7,8 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
-    courseTitle: 'Introduction to Software Engineering',
-    exerciseTitle: 'G01E01 Programming Git Tutorial',
+    courseShortName: 'artemistutorial',
+    exerciseShortName: 'tutorial',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
@@ -64,27 +64,24 @@ export const courseOverviewTour: GuidedTour = {
             highlightPadding: 10,
         }),
         new TextTourStep({
-            highlightSelector: '.card',
-            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
+            highlightSelector: '.card.guided-tour',
             headlineTranslateKey: 'tour.courseOverview.course.headline',
             contentTranslateKey: 'tour.courseOverview.course.content',
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.card-footer',
-            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
+            highlightSelector: '.guided-tour .card-footer',
             headlineTranslateKey: 'tour.courseOverview.courseFooter.headline',
             contentTranslateKey: 'tour.courseOverview.courseFooter.content',
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.card',
+            highlightSelector: '.card.guided-tour',
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.courseOverview.courseClick.headline',
             contentTranslateKey: 'tour.courseOverview.courseClick.content',
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            targetSelectorToCheckForCourse: 'jhi-overview-course-card',
         }),
         new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',

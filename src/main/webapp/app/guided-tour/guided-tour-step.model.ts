@@ -23,12 +23,6 @@ export abstract class TourStep {
     permission?: string[];
     /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
     userInteractionEvent?: UserInteractionEvent;
-    /** Selector for element and its child elements to check the course title
-     *  and to find the node with the highlightSelector within the child elements */
-    targetSelectorToCheckForCourse?: string;
-    /** Selector for element and its child elements to check the exercise title
-     *  and to find the node with the highlightSelector within the child elements */
-    targetSelectorToCheckForExercise?: string;
 }
 
 export class TextTourStep extends TourStep {

@@ -41,9 +41,9 @@
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
                 "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
-            "sourceTreeTutorial": {
+            "cloneRepository": {
                 "headline": "SourceTree Anleitung",
-                "content": "Während dein persönliches Repository aufgesetzt wird, kannst einen Blick in unser Anleitungsvideo für SourceTree werfen und lernen, wie man ein Repository klont, wenn du mit SourceTree noch nicht vertraut bist."
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
             }
         }
     }

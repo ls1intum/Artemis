@@ -32,8 +32,8 @@ const expect = chai.expect;
 
 describe('GuidedTourService', () => {
     const courseOverviewTour: GuidedTour = {
-        courseTitle: '',
-        exerciseTitle: '',
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -51,8 +51,8 @@ describe('GuidedTourService', () => {
     };
 
     const courseOverviewTourWithUserInteraction: GuidedTour = {
-        courseTitle: '',
-        exerciseTitle: '',
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -71,8 +71,8 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithCourseAndExercise: GuidedTour = {
-        courseTitle: 'Introduction to Software Engineering',
-        exerciseTitle: 'G01E01 Programming Git Tutorial',
+        courseShortName: 'tutorial',
+        exerciseShortName: 'git',
         settingsKey: 'tour_with_course_and_exericse',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -167,7 +167,8 @@ describe('GuidedTourService', () => {
             // Prepare GuidedTourService and GuidedTourComponent
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
-            spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
+            spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
             spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService['availableTourForComponent'] = tour;
@@ -248,23 +249,23 @@ describe('GuidedTourService', () => {
         describe('Tour for a certain course and exercise', () => {
             const exercise1 = {
                 id: 1,
-                title: 'G01E01 Programming Git Tutorial',
+                shortName: 'git',
             } as Exercise;
 
             const exercise2 = {
                 id: 1,
-                title: 'Test Exercise',
+                shortName: 'test',
             } as Exercise;
 
             const course1 = {
                 id: 1,
-                title: 'Introduction to Software Engineering',
+                shortName: 'tutorial',
                 exercises: [exercise2, exercise1],
             } as Course;
 
             const course2 = {
                 id: 1,
-                title: 'Test Course',
+                shortName: 'test',
             } as Course;
 
             beforeEach(async () => {
@@ -284,7 +285,7 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService.currentTour).to.be.null;
             });
 
-            it('should start the tour for the matching exercise title', () => {
+            it('should start the tour for the matching exercise short name', () => {
                 let courses = [course1];
                 // enable tour for matching course title
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
@@ -297,15 +298,14 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService.currentTour).to.be.null;
             });
 
-            it('should start the tour for the matching course / exercise title', () => {
-                // enable tour for matching course / exercise title
-                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
-                guidedTourService.currentTour = null;
+            it('should start the tour for the matching course / exercise short name', () => {
+                // enable tour for matching course / exercise short name
+                let currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise) as Exercise;
+                expect(currentExercise.shortName).to.equal(tourWithCourseAndExercise.exerciseShortName);
 
-                // tour not available for not matching course / exercise title
-                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
+                // tour not available for not matching course / exercise short name
+                currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;
+                expect(currentExercise).to.be.null;
             });
         });
     });

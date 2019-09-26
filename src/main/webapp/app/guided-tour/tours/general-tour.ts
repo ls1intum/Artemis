@@ -4,8 +4,8 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
-    courseTitle: '',
-    exerciseTitle: '',
+    courseShortName: '',
+    exerciseShortName: '',
     settingsKey: 'cancel_tour',
     steps: [
         new TextTourStep({
