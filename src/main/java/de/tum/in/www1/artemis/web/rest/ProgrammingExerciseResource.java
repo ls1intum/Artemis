@@ -9,6 +9,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -642,7 +643,8 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping("programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
-    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
-        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search));
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search, Principal principal) {
+        final var user = userService.getUserWithGroupsAndAuthorities(principal);
+        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 }

@@ -93,6 +93,8 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
@@ -102,7 +104,7 @@ public class ProgrammingExerciseService {
             ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationService participationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -119,6 +121,7 @@ public class ProgrammingExerciseService {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -793,13 +796,16 @@ public class ProgrammingExerciseService {
      * @param search The search query defining the search term and the size of the returned page
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search) {
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var searchTerm = search.getSearchTerm();
 
-        final var exercisePage = programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(search.getSearchTerm(), search.getSearchTerm(),
-                sorted);
+        final var exercisePage = authCheckService.isAdmin()
+                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
+                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
@@ -925,6 +931,7 @@ public class ProgrammingExerciseService {
             copy.setTestName(testCase.getTestName());
             copy.setWeight(testCase.getWeight());
             copy.setExercise(targetExercise);
+            programmingExerciseTestCaseRepository.save(copy);
             return copy;
         }).collect(Collectors.toSet()));
     }
