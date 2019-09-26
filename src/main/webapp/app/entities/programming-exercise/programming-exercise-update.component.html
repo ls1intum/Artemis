@@ -57,6 +57,34 @@
                         </div>
                     </ng-container>
                 </div>
+                <div *ngIf="programmingExercise.title || programmingExercise.shortName" class="row ml-2 mt-1 mb-1 pt-1 pb-1 align-items-center">
+                    <div class="col-auto rounded bg-info pt-1 pb-1">
+                        <div *ngIf="programmingExercise.title">
+                            <span class="font-weight-bold">Exercise project name:</span><span> {{ programmingExercise.course.shortName }} {{ programmingExercise.title }}</span>
+                        </div>
+                        <div *ngIf="programmingExercise.shortName">
+                            <div>
+                                <span class="font-weight-bold">Exercise project key:</span
+                                ><span> {{ programmingExercise.course.shortName.toUpperCase() }}{{ programmingExercise.shortName?.toUpperCase() }}</span>
+                            </div>
+                            <hr class="pt-0 pb-0 mt-1 mb-1" />
+                            <div>
+                                <span class="font-weight-bold">Example repository: </span
+                                ><span> {{ programmingExercise.course.shortName.toLowerCase() }}{{ programmingExercise.shortName?.toLowerCase() }}-tests</span>
+                            </div>
+                            <div>
+                                <span class="font-weight-bold">Example build plan: </span
+                                ><span> {{ programmingExercise.course.shortName.toUpperCase() }}{{ programmingExercise.shortName?.toUpperCase() }}-SOLUTION</span>
+                            </div>
+                        </div>
+                    </div>
+                    <fa-icon
+                        icon="question-circle"
+                        class="text-secondary ml-1"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
+                    ></fa-icon>
+                </div>
                 <div class="form-group-narrow position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                     <jhi-category-selector

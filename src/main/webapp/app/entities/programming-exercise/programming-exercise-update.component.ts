@@ -42,7 +42,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    courses: Course[];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -122,12 +121,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }),
             )
             .subscribe();
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
         if (this.programmingExercise.id !== undefined) {
