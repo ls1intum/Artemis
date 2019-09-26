@@ -45,7 +45,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     combinedParticipation: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
 
-    private showWelcomeAlert = false;
+    showWelcomeAlert = false;
 
     constructor(
         private $location: Location,
