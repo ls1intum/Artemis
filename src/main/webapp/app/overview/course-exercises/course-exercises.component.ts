@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
+import { CourseScoreCalculationService } from 'app/overview';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
+import { CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
@@ -18,6 +18,8 @@ import {
 } from 'app/entities/participation';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseDetailTour, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
+import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { CourseScoreCalculationService } from 'app/overview';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -45,6 +47,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     combinedParticipation: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
 
+    showWelcomeAlert = false;
+
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
@@ -54,6 +58,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
+        private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
@@ -70,6 +75,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
+            }
+        });
+
+        this.route.queryParams.subscribe(queryParams => {
+            if (queryParams['welcome'] === '') {
+                setTimeout(() => {
+                    this.showWelcomeAlert = true;
+                }, 500);
             }
         });
     }

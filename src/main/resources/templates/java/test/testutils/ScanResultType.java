@@ -2,7 +2,7 @@ package ${packageName}.testutils;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
+ * @version 3.0 (25.09.2019)
  */
 public enum ScanResultType {
     CORRECTNAME_CORRECTPLACE,

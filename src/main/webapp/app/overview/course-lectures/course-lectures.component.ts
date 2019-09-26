@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
@@ -7,6 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { ExerciseService } from 'app/entities/exercise';
 import { Lecture } from 'app/entities/lecture';
+import { CourseScoreCalculationService } from 'app/overview';
 
 @Component({
     selector: 'jhi-course-lectures',

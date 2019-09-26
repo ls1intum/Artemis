@@ -38,7 +38,8 @@ export class NotificationContainerComponent implements OnInit {
             this.notificationService.subscribeUserNotifications();
         }, 500);
         this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
-            if (notification) {
+            // TODO: How can it happen that the same id comes twice through the channel?
+            if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
                 notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
                 this.notifications.push(notification);
                 this.updateNotifications();
