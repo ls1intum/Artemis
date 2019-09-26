@@ -794,6 +794,7 @@ public class ProgrammingExerciseService {
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search The search query defining the search term and the size of the returned page
+     * @param user The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {

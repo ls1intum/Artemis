@@ -636,9 +636,10 @@ public class ProgrammingExerciseResource {
 
     /**
      * Search for all programming exercises by title and course title. The result is pageable since there might be hundreds
-     * of exercises in the DB
+     * of exercises in the DB.
      *
      * @param search The pageable search containing the page size, page number and query string
+     * @param principal The identification of the user calling this endpoint
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("programming-exercises")
