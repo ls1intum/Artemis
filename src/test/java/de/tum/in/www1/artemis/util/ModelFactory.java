@@ -132,4 +132,20 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         return course;
     }
+
+    public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setInitializationState(initializationState);
+        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setExercise(exercise);
+        studentParticipation.setStudent(user);
+        return studentParticipation;
+    }
+
+    public static Result generateResult(boolean rated, long score) {
+        Result result = new Result();
+        result.setRated(rated);
+        result.setScore(score);
+        return result;
+    }
 }
