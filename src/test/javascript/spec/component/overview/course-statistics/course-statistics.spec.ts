@@ -13,10 +13,11 @@ import { ActivatedRoute } from '@angular/router';
 import { Attachment } from 'app/entities/attachment';
 import { CourseStatisticsComponent } from 'app/overview';
 import { By } from '@angular/platform-browser';
-import { Course, CourseScoreCalculationService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { MockSyncStorage } from '../../../mocks';
 import { Result } from 'app/entities/result';
+import { CourseScoreCalculationService } from 'app/overview';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -135,18 +136,17 @@ describe('CourseStatisticsComponent', () => {
         },
     ] as ModelingExercise[];
 
-    const course = {
-        id: 64,
-        title: 'Checking statistics',
-        description: 'Testing the statistics view',
-        shortName: 'CHS',
-        studentGroupName: 'jira-users',
-        teachingAssistantGroupName: 'artemis-dev',
-        instructorGroupName: 'artemis-dev',
-        onlineCourse: false,
-        registrationEnabled: false,
-        exercises: [],
-    } as Course;
+    const course = new Course();
+    course.id = 64;
+    course.title = 'Checking statistics';
+    course.description = 'Testing the statistics view';
+    course.shortName = 'CHS';
+    course.studentGroupName = 'jira-users';
+    course.teachingAssistantGroupName = 'artemis-dev';
+    course.instructorGroupName = 'artemis-dev';
+    course.onlineCourse = false;
+    course.registrationEnabled = false;
+    course.exercises = [];
 
     const newAttachment = {
         id: 53,
@@ -198,11 +198,12 @@ describe('CourseStatisticsComponent', () => {
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#relative-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
-        expect(comp.groupedExercises[0].notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
-        expect(comp.groupedExercises[0].scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
-        expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
-        expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
-        expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
+        const exercise: any = comp.groupedExercises[0];
+        expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
+        expect(exercise.scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
+        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
+        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
+        expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
     });
 
     it('should transform results correctly', () => {
@@ -210,7 +211,7 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.absoluteResult(result1)).to.be.null;
         const result2 = { resultString: 'No tests found' } as Result;
         expect(comp.absoluteResult(result2)).to.be.null;
-        const result3 = { resultString: null } as Result;
+        const result3 = {} as Result;
         expect(comp.absoluteResult(result3)).to.equal(0);
         const result4 = { resultString: '15 passed' } as Result;
         expect(comp.absoluteResult(result4)).to.be.null;

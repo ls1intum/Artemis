@@ -20,6 +20,7 @@ import {
     ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
+    ProgrammingExerciseImportComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -32,6 +33,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -51,6 +53,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisProgrammingExerciseTestCaseModule,
         // Other entity modules.
         ArtemisResultModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -64,6 +67,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
+        ProgrammingExerciseImportComponent,
         // Form components
         ProgrammingExerciseDueDateSelectComponent,
     ],
@@ -78,6 +82,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
+        ProgrammingExerciseImportComponent,
         FaIconComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],

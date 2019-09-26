@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +19,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
  * A ProgrammingExercise.
@@ -72,8 +78,13 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
+    /**
+     * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
+     *
+     * @return The URL of the template repository as a String
+     */
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-    @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
+    @JsonIgnore
     public String getTemplateRepositoryUrl() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             return templateParticipation.getRepositoryUrl();
@@ -87,7 +98,17 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
+    @JsonIgnore
+    public String getTemplateRepositoryName() {
+        return getRepositoryNameFor(getTemplateRepositoryUrl(), RepositoryType.TEMPLATE);
+    }
+
+    /**
+     * Convenience getter. The actual URL is stored in the {@link SolutionProgrammingExerciseParticipation}
+     *
+     * @return The URL of the solution repository as a String
+     */
+    @JsonIgnore
     public String getSolutionRepositoryUrl() {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             return solutionParticipation.getRepositoryUrl();
@@ -99,6 +120,11 @@ public class ProgrammingExercise extends Exercise {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         }
+    }
+
+    @JsonIgnore
+    public String getSolutionRepositoryName() {
+        return getRepositoryNameFor(getSolutionRepositoryUrl(), RepositoryType.SOLUTION);
     }
 
     public void setTestRepositoryUrl(String testRepositoryUrl) {
@@ -115,11 +141,23 @@ public class ProgrammingExercise extends Exercise {
      * @return the test repository name if a valid test repository url is set. Otherwise returns null!
      */
     public String getTestRepositoryName() {
-        if (getTestRepositoryUrl() == null)
-            return null;
+        return getRepositoryNameFor(getTestRepositoryUrl(), RepositoryType.TESTS);
+    }
 
-        Pattern p = Pattern.compile(".*/(.*-tests)\\.git");
-        Matcher m = p.matcher(getTestRepositoryUrl());
+    /**
+     * Get the repository name for any stored repository, i.e. the slug of the repository.
+     *
+     * @param repoUrl The full URL of the repository
+     * @param repoType The repository type, meaning one of the base repositories (template, solution, test)
+     * @return The full repository slug for the given URL
+     */
+    private String getRepositoryNameFor(final String repoUrl, final RepositoryType repoType) {
+        if (repoUrl == null) {
+            return null;
+        }
+
+        Pattern p = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
+        Matcher m = p.matcher(repoUrl);
         if (!m.matches() || m.groupCount() != 1)
             return null;
 
@@ -391,5 +429,23 @@ public class ProgrammingExercise extends Exercise {
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+    }
+
+    /**
+     * Columns for which we allow a pageable search using the {@link ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO)}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum ProgrammingExerciseSearchColumn {
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+
+        private String mappedColumnName;
+
+        ProgrammingExerciseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }
