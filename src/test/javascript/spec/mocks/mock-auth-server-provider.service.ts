@@ -6,5 +6,6 @@ export class MockAuthServerProviderService implements IAuthServerProvider {
     login = (credentials: Credentials) => of('abc');
     loginWithToken = (jwt: string, rememberMe: string) => Promise.resolve('abc');
     removeAuthTokenFromCaches = () => of(null);
+    clearCaches = () => of(null);
     storeAuthenticationToken = (jwt: string, rememberMe: string) => {};
 }
