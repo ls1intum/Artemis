@@ -13,7 +13,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { tap } from 'rxjs/operators';
+import { tap, take } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
 
 @Component({
@@ -71,7 +71,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 const additionalLoadingOperation =
                     this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                zip(this.getResults(), additionalLoadingOperation).subscribe(() => (this.isLoading = false));
+                zip(this.getResults(), additionalLoadingOperation)
+                    .pipe(take(1))
+                    .subscribe(() => (this.isLoading = false));
             });
         });
         this.registerChangeInCourses();
