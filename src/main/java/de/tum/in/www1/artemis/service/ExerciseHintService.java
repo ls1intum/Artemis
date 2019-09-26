@@ -1,14 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 
@@ -80,5 +80,35 @@ public class ExerciseHintService {
     public void delete(Long id) {
         log.debug("Request to delete ExerciseHint : {}", id);
         exerciseHintRepository.deleteById(id);
+    }
+
+    /**
+     * Copies the hints of an exercise to a new target exercise by cloning the hint objects and saving them
+     * resulting in new IDs for the copied hints. The contents stay the same. On top of that, all hints in the
+     * problem statement of the target exercise get replaced by the new IDs.
+     *
+     * @param template The template exercise containing the hints that should be copied
+     * @param target The new target exercise, to which all hints should get copied to.
+     */
+    public void copyExerciseHints(final Exercise template, final Exercise target) {
+        final Map<Long, Long> hintIdMapping = new HashMap<>();
+        target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
+            final var copiedHint = new ExerciseHint();
+            copiedHint.setExercise(target);
+            copiedHint.setContent(hint.getContent());
+            copiedHint.setTitle(hint.getTitle());
+            exerciseHintRepository.save(copiedHint);
+            hintIdMapping.put(hint.getId(), copiedHint.getId());
+            return copiedHint;
+        }).collect(Collectors.toSet()));
+
+        String patchedStatement = target.getProblemStatement();
+        for (final var idMapping : hintIdMapping.entrySet()) {
+            // Replace any old hint ID in the imported statement with the new hint ID
+            // $1 --> everything before the old hint ID; $3 --> Everything after the old hint ID --> $1 newHintID $3
+            final var replacement = "$1" + idMapping.getValue() + "$3";
+            patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*\\})", replacement);
+        }
+        target.setProblemStatement(patchedStatement);
     }
 }

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { sum } from 'lodash';
+import { CourseScoreCalculationService } from 'app/overview';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

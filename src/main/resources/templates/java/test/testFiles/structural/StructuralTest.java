@@ -1,7 +1,9 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
 import ${packageName}.testutils.*;
+
+import static org.junit.Assert.fail;
+
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.net.URL;
@@ -10,7 +12,7 @@ import org.json.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (01.09.2019)
+ * @version 3.0 (25.09.2019)
  * <br><br>
  * This test and its subclasses evaluate if the following specified elements of a given class in the structure oracle are
  * correctly implemented (in case they are specified):
@@ -25,9 +27,9 @@ import org.json.*;
  * However, the file test.json needs to be manually adapted afterwards because not all cases can be identified properly in an automatic manner.
  * <br><br>
  * To deactivate a check, simply remove the specified elements in the test.json file.
- * If no constructors should be tested for correctness, please remove {@link ConstructorTest}, otherwise and empty test will be executed (limitation of Junit).
- * If no methods should be tested for correctness, please remove {@link MethodTest}, otherwise and empty test will be executed (limitation of Junit)
- * If no attributes and no enums should be tested for correctness, please remove {@link AttributeTest}, otherwise and empty test will be executed (limitation of Junit)
+ * If no constructors should be tested for correctness, remove {@link ConstructorTest}, otherwise one test will fail (limitation of JUnit).
+ * If no methods should be tested for correctness, remove {@link MethodTest}, otherwise one test will fail (limitation of JUnit)
+ * If no attributes and no enums should be tested for correctness, remove {@link AttributeTest}, otherwise one test will fail (limitation of JUnit)
  */
 public class StructuralTest {
 
@@ -67,7 +69,9 @@ public class StructuralTest {
         ScanResultType scanResultEnum = classNameScanner.getScanResult().getResult();
         String classNameScanMessage = classNameScanner.getScanResult().getMessage();
 
-        assertTrue(classNameScanMessage, scanResultEnum.equals(ScanResultType.CORRECTNAME_CORRECTPLACE));
+        if (!scanResultEnum.equals(ScanResultType.CORRECTNAME_CORRECTPLACE)) {
+            fail(classNameScanMessage);
+        }
 
         try {
             return Class.forName(expectedPackageName + "." + expectedClassName);
@@ -88,7 +92,7 @@ public class StructuralTest {
 
         // If both the observed and expected elements have no modifiers, then they match.
         // A note: for technical reasons, we get in case of no observed modifiers, a string array with an empty string.
-        if(observedModifiers.equals(new String[]{""}) && expectedModifiers.length() == 0) {
+        if(Arrays.equals(observedModifiers, new String[]{""}) && expectedModifiers.length() == 0) {
             return true;
         }
 

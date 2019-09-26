@@ -1,12 +1,12 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 
@@ -31,9 +31,11 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
+    isReleasedAndHasResults: boolean;
     showInactiveValue = false;
-
     isSaving = false;
+    // This flag means that the test cases were edited, but no submission run was triggered yet.
+    hasUpdatedTestCases = false;
 
     get testCases() {
         return this.testCasesValue;
@@ -56,6 +58,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
     constructor(
         private testCaseService: ProgrammingExerciseTestCaseService,
+        private programmingExerciseService: ProgrammingExerciseService,
         private route: ActivatedRoute,
         private alertService: JhiAlertService,
         private translateService: TranslateService,
@@ -64,6 +67,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     /**
      * Subscribes to the route params to get the current exerciseId.
      * Uses the exerciseId to subscribe to the newest value of the exercise's test cases.
+     *
+     * Also checks if a change guard needs to be activated when the test cases where saved.
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
@@ -75,6 +80,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
                 this.testCases = testCases;
             });
+
+            this.checkIfExerciseIsReleasedAndHasResults();
         });
     }
 
@@ -85,6 +92,19 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+    }
+
+    /**
+     * Checks if the exercise is released and has at least one student result.
+     */
+    checkIfExerciseIsReleasedAndHasResults() {
+        return this.programmingExerciseService
+            .isReleasedAndHasResults(this.exerciseId)
+            .pipe(
+                map(({ body }) => body || false),
+                tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
+            )
+            .subscribe();
     }
 
     /**
@@ -156,6 +176,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     } else {
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
+
+                    // If at least one test case was updated, a submission run should be triggered.
+                    this.hasUpdatedTestCases = updatedTestCases.length > 0;
                 }),
                 catchError((err: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
@@ -208,6 +231,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
     };
 
+    onBuildTriggered = () => {
+        this.hasUpdatedTestCases = false;
+    };
+
     /**
      * Makes inactive test cases grey.
      *
@@ -217,15 +244,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         return !row.active ? 'test-case--inactive' : '';
     }
 
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
-        if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
+    /**
+     * Checks if there are unsaved test cases or there was no submission run after the test cases were changed.
+     * Provides a fitting text for the confirm.
+     */
     canDeactivate() {
-        return !this.changedTestCaseIds.length;
+        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedTestCases)) {
+            return true;
+        }
+        const warning = this.changedTestCaseIds.length
+            ? this.translateService.instant('pendingChanges')
+            : this.translateService.instant('artemisApp.programmingExercise.manageTestCases.updatedTestCases');
+        return confirm(warning);
     }
 }

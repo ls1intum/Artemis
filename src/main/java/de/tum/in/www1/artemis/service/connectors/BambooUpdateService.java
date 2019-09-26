@@ -58,7 +58,7 @@ public class BambooUpdateService {
         }
 
         @Override
-        public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
+        public String updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
             try {
                 // get the repositoryId to find the correct value for field2 below
                 final BitbucketClient bitbucketClient = getBitbucketClient();
@@ -71,17 +71,16 @@ public class BambooUpdateService {
                 // workaround to pass additional fields
                 bambooClient.doWork(args);
 
-                log.debug("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName,
-                        bambooProject + "-" + bambooPlan, false);
+                log.debug("Update plan repository for build plan " + planKey);
+                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey, false);
                 // Workaround for old exercises which used a different repositoryName
                 if (bambooRemoteRepository == null) {
                     bambooRepositoryName = "Assignment";
                 }
 
-                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, bambooProject + "-" + bambooPlan,
-                        "BITBUCKET_SERVER", null, false, true, true);
-                log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful: " + message);
+                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, planKey, "BITBUCKET_SERVER", null,
+                        false, true, true);
+                log.info("Update plan repository for build plan " + planKey + " was successful: " + message);
                 return message;
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {

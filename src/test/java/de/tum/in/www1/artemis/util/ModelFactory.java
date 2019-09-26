@@ -6,7 +6,9 @@ import java.util.*;
 import com.google.common.collect.Sets;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 
@@ -145,5 +147,45 @@ public class ModelFactory {
         negativeFeedback.setReference("practice");
         feedbacks.add(negativeFeedback);
         return feedbacks;
+    }
+
+    public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
+        ProgrammingExercise toBeImported = new ProgrammingExercise();
+        toBeImported.setCourse(targetCourse);
+        toBeImported.setTitle(title);
+        toBeImported.setShortName(shortName);
+        toBeImported.setId(template.getId());
+        toBeImported.setTestCases(null);
+        toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
+        toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
+        toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
+        toBeImported.setExerciseHints(null);
+        toBeImported.setSolutionParticipation(null);
+        toBeImported.setTemplateParticipation(null);
+        toBeImported.setPublishBuildPlanUrl(template.isPublishBuildPlanUrl());
+        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        toBeImported.setProblemStatement(template.getProblemStatement());
+        toBeImported.setMaxScore(template.getMaxScore());
+        toBeImported.setGradingInstructions(template.getGradingInstructions());
+        toBeImported.setDifficulty(template.getDifficulty());
+        toBeImported.setAssessmentType(template.getAssessmentType());
+        toBeImported.setCategories(template.getCategories());
+        toBeImported.setPackageName(template.getPackageName());
+        toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setTutorParticipations(null);
+        toBeImported.setStudentQuestions(null);
+        toBeImported.setStudentParticipations(null);
+        toBeImported.setNumberOfParticipations(template.getNumberOfParticipations());
+        toBeImported.setExampleSubmissions(null);
+        toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
+        toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
+        toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
+        toBeImported.setAttachments(null);
+        toBeImported.setDueDate(template.getDueDate());
+        toBeImported.setReleaseDate(template.getReleaseDate());
+        toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
+        toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
+
+        return toBeImported;
     }
 }
