@@ -235,6 +235,7 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
+        // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingExerciseService.setTestCasesChanged(exerciseId, true);
 
         List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
