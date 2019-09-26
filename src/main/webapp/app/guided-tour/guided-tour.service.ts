@@ -10,7 +10,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { AccountService } from 'app/core';
-import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -65,8 +65,8 @@ export class GuidedTourService {
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour && this.currentTourStepIndex > 0) {
-                    if (this.tourMinimumScreenSize >= window.innerWidth) {
+                if (this.currentTour) {
+                    if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(
                             new TextTourStep({
@@ -198,8 +198,12 @@ export class GuidedTourService {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
         }
-        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
-        this.showCancelHint();
+        if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
+            this.finishGuidedTour();
+        } else {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
+            this.showCancelHint();
+        }
     }
 
     /**

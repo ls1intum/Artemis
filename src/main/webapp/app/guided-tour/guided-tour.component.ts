@@ -48,6 +48,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
+        if (this.guidedTourService.isOnResizeMessage) {
+            return;
+        }
         switch (event.code) {
             case 'ArrowRight': {
                 /**
@@ -221,6 +224,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         } else {
             return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight;
         }
+    }
+
+    public isVideoTourStep(): boolean {
+        return this.currentTourStep instanceof VideoTourStep;
     }
 
     /**

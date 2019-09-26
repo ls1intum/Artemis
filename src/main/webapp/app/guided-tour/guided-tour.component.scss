@@ -114,11 +114,25 @@ jhi-guided-tour {
         }
 
         &.page-tour-step {
-            max-width: 800px;
             width: 50%;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
+
+            &.video-tour {
+                @media (max-width: 992px) {
+                    width: initial;
+                    left: initial;
+                    top: 0;
+                    transform: none;
+                }
+                @media (min-width: 993px) and (max-width: 1200px) {
+                    width: 80%;
+                    left: 10%;
+                    top: 10%;
+                    transform: translate(0%, 0%);
+                }
+            }
         }
 
         .tour-block {
@@ -219,8 +233,8 @@ jhi-guided-tour {
                 }
 
                 iframe {
-                    width: 560px;
-                    height: 315px;
+                    width: 100%;
+                    min-height: 400px;
                 }
             }
 
