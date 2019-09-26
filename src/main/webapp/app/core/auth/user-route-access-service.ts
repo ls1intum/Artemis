@@ -9,8 +9,9 @@ export class UserRouteAccessService implements CanActivate {
     constructor(private router: Router, private accountService: AccountService, private stateStorageService: StateStorageService, private localStorage: LocalStorageService) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
-        // save the jwt token from get parameter for lti launch requests
-        if (route.routeConfig!.path === 'courses/:courseId/exercise/:exerciseId' && route.queryParams['jwt']) {
+        // save the jwt token from get parameter for lti launch requests for online course users
+        // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
+        if (route.routeConfig!.path === 'overview/:courseId/exercises/:exerciseId' && route.queryParams['jwt']) {
             const jwt = route.queryParams['jwt'];
             this.localStorage.store('authenticationToken', jwt);
         }
