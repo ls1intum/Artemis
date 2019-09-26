@@ -666,7 +666,7 @@ public class BitbucketService implements VersionControlService {
         @Override
         public VcsRepositoryUrl withUser(String username) {
             this.username = username;
-            return new BitbucketRepositoryUrl(url.toString().replaceAll("(http://)(.*)", "$1" + username + "@$2"));
+            return new BitbucketRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
 
         private String buildRepositoryPath(String projectKey, String repositorySlug) {

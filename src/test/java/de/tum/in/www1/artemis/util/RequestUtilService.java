@@ -135,14 +135,15 @@ public class RequestUtilService {
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        final var contentAsString = res.getResponse().getContentAsString();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
-                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+                assertThat(contentAsString).isNullOrEmpty();
             }
             return null;
         }
 
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return responseType == String.class ? (T) contentAsString : mapper.readValue(contentAsString, responseType);
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
