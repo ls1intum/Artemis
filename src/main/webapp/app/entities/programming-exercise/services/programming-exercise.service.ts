@@ -79,6 +79,15 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    /**
+     * Returns a entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
+     *
+     * @param exerciseId ProgrammingExercise id
+     */
+    isReleasedAndHasResults(exerciseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/is-released-and-has-results`, { observe: 'response' });
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

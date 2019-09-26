@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
+import { CourseScoreCalculationService } from 'app/overview';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 

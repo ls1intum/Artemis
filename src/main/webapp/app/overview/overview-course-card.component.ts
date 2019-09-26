@@ -1,8 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { CourseScoreCalculationService } from 'app/overview';
 
 @Component({
     selector: 'jhi-overview-course-card',
