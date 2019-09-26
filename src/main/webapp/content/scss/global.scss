@@ -517,17 +517,17 @@ pre {
 }
 
 code.password {
-    color: transparent;
+    color: transparent !important;
     background: black;
 }
 
 code.password::selection {
     background: #3297fd;
-    color: white;
+    color: white !important;
 }
 
 code.password:hover {
-    color: white;
+    color: white !important;
 }
 
 .apollon-editor label {

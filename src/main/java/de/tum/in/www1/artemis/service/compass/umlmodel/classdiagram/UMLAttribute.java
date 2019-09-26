@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
@@ -12,48 +13,57 @@ public class UMLAttribute extends UMLElement {
 
     private String name;
 
-    private String type;
+    private String attributeType;
 
-    public UMLAttribute(String name, String type, String jsonElementID) {
+    public UMLAttribute(String name, String attributeType, String jsonElementID) {
+        super(jsonElementID);
+
         this.name = name;
-        this.type = type;
-        this.setJsonElementID(jsonElementID);
+        this.attributeType = attributeType;
     }
 
+    /**
+     * Set the parent class of this attribute, i.e. the UML class that contains it.
+     *
+     * @param parentClass the UML class that contains this attribute
+     */
     public void setParentClass(UMLClass parentClass) {
         this.parentClass = parentClass;
     }
 
     /**
-     * Compare this with another element to calculate the similarity
+     * Get the type of this attribute.
      *
-     * @param element the element to compare with
-     * @return the similarity as number [0-1]
+     * @return the attribute type as String
      */
+    String getAttributeType() {
+        return attributeType;
+    }
+
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (element.getClass() != UMLAttribute.class) {
+        if (!(reference instanceof UMLAttribute)) {
             return similarity;
         }
 
-        UMLAttribute other = (UMLAttribute) element;
+        UMLAttribute referenceAttribute = (UMLAttribute) reference;
 
-        similarity += NameSimilarity.namePartiallyEqualsSimilarity(name, other.name) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceAttribute.getName()) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
-        similarity += NameSimilarity.nameEqualsSimilarity(type, other.type) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
+        similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.getAttributeType()) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
-        return similarity;
+        return ensureSimilarityRange(similarity);
+    }
+
+    @Override
+    public String toString() {
+        return "Attribute " + name + (attributeType != null && !attributeType.equals("") ? ": " + attributeType : "") + " in class " + parentClass.getName();
     }
 
     @Override
     public String getName() {
-        return "Attribute " + name + (type != null && !type.equals("") ? ": " + type : "") + " in class " + parentClass.getValue();
-    }
-
-    @Override
-    public String getValue() {
         return name;
     }
 

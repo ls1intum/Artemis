@@ -11,7 +11,7 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
+ * @version 3.0 (25.09.2019)
  *
  * This class scans the submission project if the current expected class is actually
  * present in it or not. The result is returned as an instance of ScanResult.
@@ -122,47 +122,47 @@ public class ClassNameScanner {
             case CORRECTNAME_MISPLACED :
                 scanResultMessage = "The class " + foundObservedClassName + " has the correct name,"
                     + " but the package it's in, " + foundObservedPackageName + ", deviates from the expectation."
-                    + "  Please make sure it is placed in the correct package.";
+                    + "  Make sure it is placed in the correct package.";
                 break;
             case CORRECTNAME_MULTIPLETIMESPRESENT:
                 scanResultMessage = "The class " + foundObservedClassName + " has the correct name,"
                     + " but it is located multiple times in the project and in the packages: "
                     + foundObservedPackageName +", which deviates from the expectation."
-                    + " Please make sure to place the class in the correct package and remove any superfluous ones.";
+                    + " Make sure to place the class in the correct package and remove any superfluous ones.";
                 break;
             case WRONGCASE_CORRECTPLACE:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName
                     + ". We found that you implemented a class " + foundObservedClassName + ", which deviates from the expectation."
-                    + " Please check for wrong upper case / lower case lettering.";
+                    + " Check for wrong upper case / lower case lettering.";
                 break;
             case WRONGCASE_MISPLACED:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the package " + foundObservedPackageName
                     + ", which deviates from the expectation."
-                    + " Please check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
+                    + " Check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
                 break;
             case WRONGCASE_MULTIPLETIMESPRESENT:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the packages " + foundObservedPackageName
                     + ", which deviates from the expectation."
-                    + " Please check for wrong upper case / lower case lettering and make sure you place one class in the correct package and remove any superfluous classes.";
+                    + " Check for wrong upper case / lower case lettering and make sure you place one class in the correct package and remove any superfluous classes.";
                 break;
             case TYPOS_CORRECTPLACE:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName
                     + ". We found that you implemented a class " + foundObservedClassName + ", which deviates from the expectation."
-                    + " Please check for typos in the class name.";
+                    + " Check for typos in the class name.";
                 break;
             case TYPOS_MISPLACED:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the package " + foundObservedPackageName
                     + ", which deviates from the expectation."
-                    + " Please check for typos in the class name and make sure you place it in the correct package.";
+                    + " Check for typos in the class name and make sure you place it in the correct package.";
                 break;
             case TYPOS_MULTIPLETIMESPRESENT:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the packages " + observedClasses.get(foundObservedClassName).toString()
                     + ", which deviates from the expectation."
-                    + " Please check for typos in the class name and make sure you place one class it in the correct package and remove any superfluous classes.";
+                    + " Check for typos in the class name and make sure you place one class it in the correct package and remove any superfluous classes.";
                 break;
             case NOTFOUND:
                 scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
@@ -201,7 +201,7 @@ public class ClassNameScanner {
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.err.println("Could not retrieve the source directory from the pom.xml file. Please contact your instructor immediately.");
+            System.err.println("Could not retrieve the source directory from the pom.xml file. Contact your instructor.");
             e.printStackTrace();
         }
 

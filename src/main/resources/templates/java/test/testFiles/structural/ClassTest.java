@@ -1,6 +1,6 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -14,7 +14,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (01.09.2019)
+ * @version 3.0 (25.09.2019)
  * <br><br>
  * This test evaluates the hierarchy of the class, i.e. if the class is abstract or an interface or an enum and also if the class extends another superclass and if
  * it implements the interfaces and annotations, based on its definition in the structure oracle (test.json).
@@ -36,7 +36,7 @@ public class ClassTest extends StructuralTest {
         List<Object[]> testData = new ArrayList<Object[]>();
 
         if (structureOracleJSON == null) {
-            return testData;
+            fail("The ClassTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete ClassTest.java!");
         }
 
         for (int i = 0; i < structureOracleJSON.length(); i++) {
@@ -49,6 +49,9 @@ public class ClassTest extends StructuralTest {
                 String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
+        }
+        if (testData.size() == 0) {
+            fail("No tests for classes available in the structural oracle (test.json). Either provide attributes information or delete ClassTest.java!");
         }
         return testData;
     }
@@ -70,24 +73,20 @@ public class ClassTest extends StructuralTest {
 
         JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
 
-        if (expectedClassPropertiesJSON.has("isAbstract")) {
-            assertTrue("Problem: the class '" + expectedClassName + "' is not abstract as it is expected.",
-                Modifier.isAbstract(observedClass.getModifiers()));
+        if (expectedClassPropertiesJSON.has("isAbstract") && !Modifier.isAbstract(observedClass.getModifiers())) {
+            fail("The class '" + expectedClassName + "' is not abstract as it is expected.");
         }
 
-        if (expectedClassPropertiesJSON.has("isEnum")) {
-            assertTrue("Problem: the type '" + expectedClassName + "' is not an enum as it is expected.",
-                (observedClass.isEnum()));
+        if (expectedClassPropertiesJSON.has("isEnum") && !observedClass.isEnum()) {
+            fail("The type '" + expectedClassName + "' is not an enum as it is expected.");
         }
 
-        if (expectedClassPropertiesJSON.has("isInterface")) {
-            assertTrue("Problem: the type '" + expectedClassName + "' is not an interface as it is expected.",
-                Modifier.isInterface(observedClass.getModifiers()));
+        if (expectedClassPropertiesJSON.has("isInterface") && !Modifier.isInterface(observedClass.getModifiers())) {
+            fail("The type '" + expectedClassName + "' is not an interface as it is expected.");
         }
 
-        if(expectedClassPropertiesJSON.has("isEnum")) {
-            assertTrue("Problem: the type '" + expectedClassName + "' is not an enum as it is expected.",
-                observedClass.isEnum());
+        if(expectedClassPropertiesJSON.has("isEnum") && !observedClass.isEnum()) {
+            fail("The type '" + expectedClassName + "' is not an enum as it is expected.");
         }
 
         if(expectedClassPropertiesJSON.has(JSON_PROPERTY_SUPERCLASS)) {
@@ -96,9 +95,11 @@ public class ClassTest extends StructuralTest {
                 String expectedSuperClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_SUPERCLASS);
                 String actualSuperClassName = observedClass.getSuperclass().getSimpleName();
 
-                String failMessage = "Problem: the class '" + expectedClassName + "' is not a subclass of the class '"
-                    + expectedSuperClassName + "' as expected. Please implement the class inheritance properly.";
-                assertTrue(failMessage, expectedSuperClassName.equals(actualSuperClassName));
+                String failMessage = "The class '" + expectedClassName + "' is not a subclass of the class '"
+                    + expectedSuperClassName + "' as expected. Implement the class inheritance properly.";
+                if (!expectedSuperClassName.equals(actualSuperClassName)) {
+                    fail(failMessage);
+                }
             }
         }
 
@@ -118,8 +119,8 @@ public class ClassTest extends StructuralTest {
                 }
 
                 if (!implementsInterface) {
-                    fail("Problem: the class '" + expectedClassName + "' does not implement the interface '" + expectedInterface + "' as expected."
-                        + " Please implement the interface and its methods.");
+                    fail("The class '" + expectedClassName + "' does not implement the interface '" + expectedInterface + "' as expected."
+                        + " Implement the interface and its methods.");
                 }
             }
         }
@@ -129,7 +130,9 @@ public class ClassTest extends StructuralTest {
             Annotation[] observedAnnotations = observedClass.getAnnotations();
 
             boolean annotationsAreRight = checkAnnotations(observedAnnotations, expectedAnnotations);
-            assertTrue("Problem: the annotation(s) of the class '" + expectedClassName + "' are not implemented as expected.", annotationsAreRight);
+            if (!annotationsAreRight) {
+                fail("The annotation(s) of the class '" + expectedClassName + "' are not implemented as expected.");
+            }
         }
     }
 }
