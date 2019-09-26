@@ -62,7 +62,7 @@ class ProgrammingExerciseScheduleServiceTest {
 
     @Test
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws InterruptedException {
-        long delayMS = 100;
+        long delayMS = 200;
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
@@ -124,7 +124,7 @@ class ProgrammingExerciseScheduleServiceTest {
 
     @Test
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws InterruptedException {
-        long delayMS = 100;
+        long delayMS = 200;
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
         programmingExerciseRepository.save(programmingExercise);
 

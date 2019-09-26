@@ -6,37 +6,43 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseParticipationService {
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
-    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+    private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
-    private SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
-    private TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
 
-    private AuthorizationCheckService authCheckService;
+    private final Optional<VersionControlService> versionControlService;
 
-    private UserService userService;
+    private final AuthorizationCheckService authCheckService;
+
+    private final UserService userService;
 
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            UserService userService, AuthorizationCheckService authCheckService) {
+            Optional<VersionControlService> versionControlService, UserService userService, AuthorizationCheckService authCheckService) {
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
+        this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.userService = userService;
     }
@@ -160,5 +166,43 @@ public class ProgrammingExerciseParticipationService {
     public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+    }
+
+    /**
+     * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     * @param projectKey The key of the project of the new exercise
+     * @param solutionPlanName The name for the build plan of the participation
+     */
+    @NotNull
+    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
+        final String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        newExercise.setSolutionParticipation(solutionParticipation);
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        solutionParticipation.setProgrammingExercise(newExercise);
+        solutionParticipationRepository.save(solutionParticipation);
+    }
+
+    /**
+     * Setup the initial template participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URL. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     * @param projectKey The key of the project of the new exercise
+     * @param templatePlanName The name for the build plan of the participation
+     */
+    @NotNull
+    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
+        final String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setProgrammingExercise(newExercise);
+        newExercise.setTemplateParticipation(templateParticipation);
+        templateParticipationRepository.save(templateParticipation);
     }
 }

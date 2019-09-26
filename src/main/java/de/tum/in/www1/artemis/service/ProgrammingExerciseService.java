@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +20,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -39,16 +44,15 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -63,19 +67,23 @@ public class ProgrammingExerciseService {
 
     private final GitService gitService;
 
+    private final ExerciseHintService exerciseHintService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
-    private final SubmissionRepository submissionRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final CourseRepository courseRepository;
 
     private final ParticipationService participationService;
 
@@ -85,30 +93,35 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
+            ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationService participationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
+        this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resourceLoader = resourceLoader;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -290,9 +303,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
-        String testRepoName = projectKey.toLowerCase() + "-tests";
-        String solutionRepoName = projectKey.toLowerCase() + "-solution";
+        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -313,11 +326,13 @@ public class ProgrammingExerciseService {
 
         initParticipations(programmingExercise);
 
-        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        String templatePlanName = BuildPlanType.TEMPLATE.getName();
+        String solutionPlanName = BuildPlanType.SOLUTION.getName();
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
 
         // Save participations to get the ids required for the webhooks
         templateParticipation.setProgrammingExercise(programmingExercise);
@@ -325,9 +340,9 @@ public class ProgrammingExerciseService {
         templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
-        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
-        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
+        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
+        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
+        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
@@ -370,9 +385,9 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoName, testRepoName);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -771,5 +786,193 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    /**
+     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var searchTerm = search.getSearchTerm();
+
+        final var exercisePage = authCheckService.isAdmin()
+                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
+                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
+     * All basic include everything except for repositories, or build plans on a remote version control server, or
+     * continuous integration server. <br>
+     * There are however, a couple of things that will never get copied:
+     * <ul>
+     *     <li>The ID</li>
+     *     <li>The template and solution participation</li>
+     *     <li>The number of complaints, assessments and more feedback requests</li>
+     *     <li>The tutor/student participations</li>
+     *     <li>The questions asked by students</li>
+     *     <li>The example submissions</li>
+     * </ul>
+     *
+     * @param templateExercise The template exercise which should get imported
+     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @return The newly created exercise
+     */
+    @Transactional
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Set values we don't want to copy to null
+        setupExerciseForImport(newExercise);
+        final var projectKey = newExercise.getProjectKey();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
+        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
+        setupTestRepository(newExercise, projectKey);
+        initParticipations(newExercise);
+
+        // Hints and test cases
+        exerciseHintService.copyExerciseHints(templateExercise, newExercise);
+        programmingExerciseRepository.save(newExercise);
+        importTestCases(templateExercise, newExercise);
+
+        return newExercise;
+    }
+
+    /**
+     * Import all base repositories from one exercise. These include the template, the solution and the test
+     * repository. Participation repositories from students or tutors will not get copied!
+     *
+     * @param templateExercise The template exercise having a reference to all base repositories
+     * @param newExercise The new exercise without any repositories
+     */
+    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        final var targetProjectKey = newExercise.getProjectKey();
+        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+        // The project key is always the first half of a repo slug
+        final var targetSlugPrefix = targetProjectKey.toLowerCase();
+
+        // First, create a new project for our imported exercise
+        versionControlService.get().createProjectForExercise(newExercise);
+        // Copy all repositories
+        Arrays.stream(RepositoryType.values()).forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getName(), targetProjectKey, repo.getName()));
+        // Add the necessary hooks notifying Artemis about changes after commits have been pushed
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(newExercise.getTemplateRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+                "Artemis Tests WebHook");
+    }
+
+    /**
+     * Imports all base build plans for an exercise. These include the template and the solution build plan, <b>not</b>
+     * any participation plans!
+     *
+     * @param templateExercise The template exercise which plans should get copied
+     * @param newExercise The new exercise to which all plans should get copied
+     * @throws HttpException If the copied build plans could not get triggered
+     */
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+        final var templateKey = templateExercise.getProjectKey();
+        final var targetKey = newExercise.getProjectKey();
+        final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetExerciseProjectKey = newExercise.getProjectKey();
+
+        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
+        // running the plan for the first time
+        continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
+        continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
+        continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTemplateRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getSolutionRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryName());
+        try {
+            continuousIntegrationService.get().triggerBuild(templateParticipation);
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException e) {
+            log.error("Unable to trigger imported build plans", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
+     * The remaining contents stay the same, especially the weights.
+     *
+     * @param templateExercise The template exercise which test cases should get copied
+     * @param targetExercise The new exercise to which all test cases should get copied to
+     */
+    private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
+            final var copy = new ProgrammingExerciseTestCase();
+
+            // Copy everything except for the referenced exercise
+            copy.setActive(testCase.isActive());
+            copy.setAfterDueDate(testCase.isAfterDueDate());
+            copy.setTestName(testCase.getTestName());
+            copy.setWeight(testCase.getWeight());
+            copy.setExercise(targetExercise);
+            programmingExerciseTestCaseRepository.save(copy);
+            return copy;
+        }).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
+     * repository on the version control server!
+     *
+     * @param newExercise
+     * @param projectKey
+     */
+    private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
+
+    /**
+     * Sets up a new exercise for importing it by setting all values, that should either never get imported, or
+     * for which we should create new entities (e.g. test cases) to null. This ensures that we do not copy
+     * anything by accident.
+     *
+     * @param newExercise
+     */
+    private void setupExerciseForImport(ProgrammingExercise newExercise) {
+        newExercise.setId(null);
+        newExercise.setTemplateParticipation(null);
+        newExercise.setSolutionParticipation(null);
+        newExercise.setExerciseHints(null);
+        newExercise.setTestCases(null);
+        newExercise.setAttachments(null);
+        newExercise.setNumberOfMoreFeedbackRequests(null);
+        newExercise.setNumberOfComplaints(null);
+        newExercise.setNumberOfAssessments(null);
+        newExercise.setTutorParticipations(null);
+        newExercise.setExampleSubmissions(null);
+        newExercise.setStudentQuestions(null);
+        newExercise.setStudentParticipations(null);
     }
 }

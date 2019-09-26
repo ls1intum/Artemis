@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.exception;
 /**
  * Created by muenchdo on 22/06/16.
  */
-public class BitbucketException extends RuntimeException {
+public class BitbucketException extends VersionControlException {
 
     public BitbucketException() {
     }

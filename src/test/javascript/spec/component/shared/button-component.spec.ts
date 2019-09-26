@@ -1,21 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
-import { SinonStub, stub, SinonSpy, spy } from 'sinon';
-import { of, Subject } from 'rxjs';
+import { DebugElement } from '@angular/core';
+import { SinonSpy, spy } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { ParticipationWebsocketService } from 'app/entities/participation';
-import { Exercise } from 'app/entities/exercise';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
-import { triggerChanges } from '../../utils/general.utils';
 import { ButtonComponent } from 'app/shared/components';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
