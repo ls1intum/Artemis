@@ -16,14 +16,15 @@ export interface IAuthServerProvider {
     loginWithToken: (jwt: string, rememberMe: string) => Promise<string>;
     storeAuthenticationToken: (jwt: string, rememberMe: string) => void;
     removeAuthTokenFromCaches: () => Observable<null>;
+    clearCaches: () => Observable<null>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider implements IAuthServerProvider {
-    constructor(private http: HttpClient, private $localStorage: LocalStorageService, private $sessionStorage: SessionStorageService) {}
+    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     getToken() {
-        return this.$localStorage.retrieve('authenticationToken') || this.$sessionStorage.retrieve('authenticationToken');
+        return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
     }
 
     login(credentials: Credentials): Observable<string> {
@@ -66,9 +67,9 @@ export class AuthServerProvider implements IAuthServerProvider {
 
     storeAuthenticationToken(jwt: string, rememberMe: string) {
         if (rememberMe) {
-            this.$localStorage.store('authenticationToken', jwt);
+            this.localStorage.store('authenticationToken', jwt);
         } else {
-            this.$sessionStorage.store('authenticationToken', jwt);
+            this.sessionStorage.store('authenticationToken', jwt);
         }
     }
 
@@ -77,8 +78,18 @@ export class AuthServerProvider implements IAuthServerProvider {
      * This will lead to all endpoint requests failing with a 401.
      */
     removeAuthTokenFromCaches(): Observable<null> {
-        this.$localStorage.clear('authenticationToken');
-        this.$sessionStorage.clear('authenticationToken');
+        this.localStorage.clear('authenticationToken');
+        this.sessionStorage.clear('authenticationToken');
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        return of(null);
+    }
+
+    /**
+     * Clears all the caches, should be invoked during logout
+     */
+    clearCaches(): Observable<null> {
+        this.localStorage.clear();
+        this.sessionStorage.clear();
         // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
         return of(null);
     }

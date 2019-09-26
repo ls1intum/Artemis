@@ -1,6 +1,6 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -13,7 +13,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (01.09.2019)
+ * @version 3.0 (25.09.2019)
  * <br><br>
  * This test evaluates if the specified constructors in the structure oracle are correctly implemented with the expected parameter types and annotations,
  * based on its definition in the structure oracle (test.json).
@@ -35,7 +35,7 @@ public class ConstructorTest extends StructuralTest {
         List<Object[]> testData = new ArrayList<Object[]>();
 
         if (structureOracleJSON == null) {
-            return testData;
+            fail("The ConstructorTest can only run if the structural oracle (test.json) is present. If you do not provide it, delete ConstructorTest.java!");
         }
 
         for (int i = 0; i < structureOracleJSON.length(); i++) {
@@ -48,6 +48,9 @@ public class ConstructorTest extends StructuralTest {
                 String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
+        }
+        if (testData.size() == 0) {
+            fail("No tests for constructors available in the structural oracle (test.json). Either provide constructor information or delete ConstructorTest.java!");
         }
         return testData;
     }
@@ -62,7 +65,6 @@ public class ConstructorTest extends StructuralTest {
 
         if (expectedClassJSON.has(JSON_PROPERTY_CONSTRUCTORS)) {
             JSONArray expectedConstructors = expectedClassJSON.getJSONArray(JSON_PROPERTY_CONSTRUCTORS);
-
             checkConstructors(actualClass, expectedConstructors);
         }
     }
@@ -102,9 +104,15 @@ public class ConstructorTest extends StructuralTest {
             String expectedConstructorInformation = "the expected constructor of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.", parametersAreRight);
-            assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.", modifiersAreRight);
-            assertTrue("Problem: the annotation(s) of " + expectedConstructorInformation + " are not implemented as expected.", annotationsAreRight);
+            if (!parametersAreRight) {
+                fail("The parameters of " + expectedConstructorInformation + " are not implemented as expected.");
+            }
+            if (!modifiersAreRight) {
+                fail("The access modifiers of " + expectedConstructorInformation + " are not implemented as expected.");
+            }
+            if (!annotationsAreRight) {
+                fail("The annotation(s) of " + expectedConstructorInformation + " are not implemented as expected.");
+            }
         }
     }
 }

@@ -8,10 +8,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
-import org.springframework.test.web.servlet.*;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -118,27 +121,29 @@ public class RequestUtilService {
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
-        MvcResult res = get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
-        return res != null ? mapper.readValue(res.getResponse().getContentAsString(), responseType) : null;
+        return get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
     }
 
     public <T> T getNullable(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
-        MvcResult res = get(path, expectedStatus, responseType, new LinkedMultiValueMap<>());
-        if (res.getResponse().getContentAsString().equals("")) {
+        final var res = get(path, expectedStatus, String.class, new LinkedMultiValueMap<>());
+        if (res != null && res.equals("")) {
             return null;
         }
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+
+        return mapper.readValue(res, responseType);
     }
 
-    public <T> MvcResult get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        final var contentAsString = res.getResponse().getContentAsString();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
-                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+                assertThat(contentAsString).isNullOrEmpty();
             }
             return null;
         }
-        return res;
+
+        return responseType == String.class ? (T) contentAsString : mapper.readValue(contentAsString, responseType);
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {

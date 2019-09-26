@@ -17,6 +17,7 @@ import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
 import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
+import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -78,6 +79,18 @@ export const programmingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'course/:courseId/programming-exercise/import/:id',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
         component: ProgrammingExerciseManageTestCasesComponent,
         data: {
@@ -85,7 +98,7 @@ export const programmingExerciseRoute: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [CanDeactivateGuard],
     },
     {
         path: 'exercise/:id/archive',
