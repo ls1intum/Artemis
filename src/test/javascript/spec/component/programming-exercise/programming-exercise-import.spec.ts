@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 import { ArtemisSharedCommonModule } from 'app/shared';
 import { SortByModule } from 'app/components/pipes';
 import { DifferencePipe } from 'ngx-moment';
+import { ButtonComponent } from 'app/shared/components';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,7 +34,7 @@ describe('ProgrammingExerciseImportComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, SortByModule],
-            declarations: [ProgrammingExerciseImportComponent],
+            declarations: [ProgrammingExerciseImportComponent, ButtonComponent],
             providers: [DifferencePipe, { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService }],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
