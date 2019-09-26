@@ -31,6 +31,15 @@ public class UMLMethod extends UMLElement {
     }
 
     /**
+     * Get the parent class of this method, i.e. the UML class that contains it.
+     *
+     * @return  the UML class that contains this method
+     */
+    public UMLClass getParentClass() {
+        return parentClass;
+    }
+
+    /**
      * Set the parent class of this method, i.e. the UML class that contains it.
      *
      * @param parentClass the UML class that contains this method
