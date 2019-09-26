@@ -56,7 +56,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Nullable
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
-    private Boolean testCasesChanged;
+    private Boolean testCasesChanged = false;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
