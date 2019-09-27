@@ -69,6 +69,15 @@
     height: 7px;
 }
 
+.resizable-instructions {
+    width: 400px;
+    min-width: 400px;
+}
+
+.instructions-area {
+    min-height: 500px;
+}
+
 .card.collapsed .card-body,
 .card.collapsed .card-second-header,
 .card.collapsed .card-header .float-right,

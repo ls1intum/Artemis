@@ -14,7 +14,7 @@
     (nextSubmission)="assessNextOptimal()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-    <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
+    <div class="row mt-4 resizable-horizontal instructions-area" *ngIf="!busy && exercise">
         <div class="row flex-nowrap col-12">
             <div class="card flex-grow-1 mr-4 file-upload-assessment">
                 <div class="card-header bg-primary text-white">
@@ -35,9 +35,8 @@
             </div>
 
             <jhi-resizable-instructions
-                class="resizable-submission card"
+                class="resizable-submission card resizable-instructions"
                 id="instructions"
-                [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
                 [formattedProblemStatement]="formattedProblemStatement"
                 [formattedGradingInstructions]="formattedGradingInstructions"
                 [formattedSampleSolution]="formattedSampleSolution"
