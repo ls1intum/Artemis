@@ -151,7 +151,7 @@ public class CourseIntegrationTest {
         courseRepo.save(course2);
 
         exerciseRepo.save(modelingExercise);
-        exerciseRepo.save(textExercise);
+        textExercise = exerciseRepo.save(textExercise);
 
         User user = (userRepo.findOneByLogin("student1")).get();
         Participation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
@@ -166,17 +166,17 @@ public class CourseIntegrationTest {
         Result result2 = ModelFactory.generateResult(true, 12);
         Result result3 = ModelFactory.generateResult(false, 0);
 
-        resultRepo.save(result1);
-        resultRepo.save(result2);
-        resultRepo.save(result3);
+        result1 = resultRepo.save(result1);
+        result2 = resultRepo.save(result2);
+        result3 = resultRepo.save(result3);
 
         modelingSubmission1.setResult(result1);
         modelingSubmission2.setResult(result2);
         textSubmission.setResult(result3);
 
-        participationRepo.save(participation1);
-        participationRepo.save(participation2);
-        participationRepo.save(participation3);
+        participation1 = participationRepo.save(participation1);
+        participation2 = participationRepo.save(participation2);
+        participation3 = participationRepo.save(participation3);
 
         modelingSubmission1.setParticipation(participation1);
         textSubmission.setParticipation(participation1);
