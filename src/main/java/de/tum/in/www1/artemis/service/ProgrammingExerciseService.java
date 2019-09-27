@@ -36,7 +36,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -97,13 +96,9 @@ public class ProgrammingExerciseService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
-
-    private final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
@@ -114,7 +109,7 @@ public class ProgrammingExerciseService {
             SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
             ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
-            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, SimpMessageSendingOperations messagingTemplate,
+            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -134,7 +129,7 @@ public class ProgrammingExerciseService {
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
         this.groupNotificationService = groupNotificationService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
@@ -843,11 +838,15 @@ public class ProgrammingExerciseService {
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
-        messagingTemplate.convertAndSend("/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed", testCasesChanged);
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
         groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         return updatedProgrammingExercise;
+    }
+
+    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
