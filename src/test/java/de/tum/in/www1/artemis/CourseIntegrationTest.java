@@ -140,12 +140,10 @@ public class CourseIntegrationTest {
         Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
-        modelingExercise.setId((long) 1);
         modelingExercise.setGradingInstructions("some grading instructions");
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
-        textExercise.setId((long) 2);
         textExercise.setGradingInstructions("some grading instructions");
         course1.addExercises(textExercise);
 
