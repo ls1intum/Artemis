@@ -31,8 +31,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
     readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
     readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly MODELING_EXERCISE = ParticipationStatus.MODELING_EXERCISE;
-    readonly TEXT_EXERCISE = ParticipationStatus.TEXT_EXERCISE;
     readonly FILE_UPLOAD_EXERCISE = ParticipationStatus.FILE_UPLOAD_EXERCISE;
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
@@ -99,13 +97,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         ) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                switch (this.exercise.type) {
-                    case ExerciseType.MODELING:
-                        return ParticipationStatus.MODELING_EXERCISE;
-                    case ExerciseType.TEXT:
-                        return ParticipationStatus.TEXT_EXERCISE;
-                    case ExerciseType.FILE_UPLOAD:
-                        return ParticipationStatus.FILE_UPLOAD_EXERCISE;
+                if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+                    return ParticipationStatus.FILE_UPLOAD_EXERCISE;
                 }
             }
         }
