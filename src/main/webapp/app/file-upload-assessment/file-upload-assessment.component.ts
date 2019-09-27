@@ -19,8 +19,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
-import { ExerciseType } from 'app/entities/exercise';
-import { filter } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { FileService } from 'app/shared';
 
 @Component({
@@ -285,17 +284,21 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     onSaveAssessment() {
-        this.fileUploadAssessmentsService.saveAssessment(this.assessments, this.submission!.id).subscribe(
-            (result: Result) => {
-                this.result = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
-            },
-            () => {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.assessment.messages.saveFailed');
-            },
-        );
+        this.isLoading = true;
+        this.fileUploadAssessmentsService
+            .saveAssessment(this.assessments, this.submission!.id)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe(
+                (result: Result) => {
+                    this.result = result;
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
+                },
+                () => {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('artemisApp.assessment.messages.saveFailed');
+                },
+            );
     }
     onSubmitAssessment() {
         const confirmationMessage = this.translateService.instant('artemisApp.assessment.messages.confirmSubmission');
@@ -306,16 +309,19 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
                 return;
             }
-
-            this.fileUploadAssessmentsService.saveAssessment(this.assessments, this.submission.id, true).subscribe(
-                result => {
-                    this.result = result;
-                    this.updateParticipationWithResult();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
-                },
-                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-            );
+            this.isLoading = true;
+            this.fileUploadAssessmentsService
+                .saveAssessment(this.assessments, this.submission.id, true)
+                .pipe(finalize(() => (this.isLoading = false)))
+                .subscribe(
+                    result => {
+                        this.result = result;
+                        this.updateParticipationWithResult();
+                        this.jhiAlertService.clear();
+                        this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
+                    },
+                    (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+                );
         }
     }
 
@@ -325,9 +331,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.fileUploadAssessmentsService.cancelAssessment(this.submission.id).subscribe(() => {
-                this.goToExerciseDashboard();
-            });
+            this.isLoading = true;
+            this.fileUploadAssessmentsService
+                .cancelAssessment(this.submission.id)
+                .pipe(finalize(() => (this.isLoading = false)))
+                .subscribe(() => {
+                    this.goToExerciseDashboard();
+                });
         }
     }
 
@@ -437,19 +447,22 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
             return;
         }
-
-        this.fileUploadAssessmentsService.updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id).subscribe(
-            result => {
-                this.result = result;
-                this.updateParticipationWithResult();
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.updateAfterComplaintSuccessful');
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.assessment.updateAfterComplaintFailed');
-            },
-        );
+        this.isLoading = true;
+        this.fileUploadAssessmentsService
+            .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe(
+                result => {
+                    this.result = result;
+                    this.updateParticipationWithResult();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.updateAfterComplaintSuccessful');
+                },
+                (error: HttpErrorResponse) => {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('artemisApp.assessment.updateAfterComplaintFailed');
+                },
+            );
     }
 
     private loadFeedbacks(feedbacks: Feedback[]): void {

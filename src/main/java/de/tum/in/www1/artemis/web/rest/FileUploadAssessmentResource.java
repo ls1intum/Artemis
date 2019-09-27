@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -141,9 +140,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
         // remove circular dependencies if the results of the participation are there
-        //  if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-         //   result.getParticipation().setResults(null);
-       // }
+        // if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
+        // result.getParticipation().setResults(null);
+        // }
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
