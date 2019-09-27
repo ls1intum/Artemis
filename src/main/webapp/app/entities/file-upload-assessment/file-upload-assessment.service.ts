@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
+import { buildUrlWithParams } from 'app/utils/global.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -19,7 +20,7 @@ export class FileUploadAssessmentsService {
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         let url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
         if (submit) {
-            url += '?submit=true';
+            url = buildUrlWithParams(url, ['submit=true']);
         }
         return this.http.put<Result>(url, feedbacks);
     }
