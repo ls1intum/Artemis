@@ -12,8 +12,8 @@ export abstract class TourStep {
     action?: () => void;
     /** Action that is performed when the step is closed */
     closeAction?: () => void;
-    /** Skips this step, so you do not have create multiple tour configurations based on user settings/configuration */
-    skipStep?: boolean;
+    /** Disables this step for the tour so that it won't be shown */
+    disableStep?: boolean;
     /** Adds some padding for things like sticky headers when scrolling to an element */
     scrollAdjustment?: number;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
@@ -23,6 +23,8 @@ export abstract class TourStep {
     permission?: string[];
     /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
     userInteractionEvent?: UserInteractionEvent;
+    /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
+    skipStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {

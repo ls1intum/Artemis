@@ -85,7 +85,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testSuccess.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            skipStep: true,
+            disableStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
@@ -94,7 +94,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            skipStep: true,
+            disableStep: true,
         }),
     ],
 };

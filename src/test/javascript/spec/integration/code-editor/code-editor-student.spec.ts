@@ -566,7 +566,7 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        spyOn(guidedTourService, 'checkTourStateFinished').and.returnValue(true);
+        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
         const result = { id: 3, successful: false };

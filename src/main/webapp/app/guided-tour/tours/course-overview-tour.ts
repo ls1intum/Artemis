@@ -54,7 +54,7 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.LEFT,
             highlightPadding: 10,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            skipStep: true,
+            disableStep: true,
         }),
         new TextTourStep({
             highlightSelector: '#account-menu',
@@ -89,7 +89,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.register.content',
             orientation: Orientation.LEFT,
             highlightPadding: 10,
-            skipStep: true,
+            disableStep: true,
         }),
         new TextLinkTourStep({
             highlightSelector: '.footer .col-sm-6',
@@ -99,7 +99,7 @@ export const courseOverviewTour: GuidedTour = {
             externalUrl: 'https://github.com/ls1intum/ArTEMiS',
             linkType: LinkType.BUTTON,
             orientation: Orientation.TOPLEFT,
-            skipStep: true,
+            disableStep: true,
         }),
     ],
 };

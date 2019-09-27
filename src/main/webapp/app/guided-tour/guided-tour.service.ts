@@ -77,7 +77,7 @@ export class GuidedTourService {
                     } else {
                         if (this.onResizeMessage) {
                             this.onResizeMessage = false;
-                            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+                            this.setPreparedTourStep();
                         }
                     }
                 }
@@ -141,7 +141,7 @@ export class GuidedTourService {
                 previousStep.action();
             }
             setTimeout(() => {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+                this.setPreparedTourStep();
             });
         } else {
             this.resetTour();
@@ -167,7 +167,7 @@ export class GuidedTourService {
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+                this.setPreparedTourStep();
             });
         } else {
             this.finishGuidedTour();
@@ -219,7 +219,7 @@ export class GuidedTourService {
                 if (currentStep.action) {
                     currentStep.action();
                 }
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+                this.setPreparedTourStep();
             }
         });
     }
@@ -245,16 +245,8 @@ export class GuidedTourService {
 
     /**
      * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
-     * @param guidedTour that should be checked for the finished state
-     */
-    public checkTourStateFinished(guidedTour: GuidedTour): boolean {
-        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
-        return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]);
-    }
-
-    /**
-     * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
-     * @param guidedTour that should be checked for the finished state
+     * @param guidedTour that should be checked for the  state
+     * @param state that should be checked
      */
     public checkTourState(guidedTour: GuidedTour, state: GuidedTourState): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
@@ -263,7 +255,6 @@ export class GuidedTourService {
 
     /**
      * Get the last step that the user visited during the given tour
-     * @param guidedTour for which the last step should be returned
      */
     public getLastSeenTourStepIndex(): number {
         if (!this.currentTour) {
@@ -401,7 +392,7 @@ export class GuidedTourService {
             if (currentStep.action) {
                 currentStep.action();
             }
-            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+            this.setPreparedTourStep();
         }
     }
 
@@ -409,7 +400,7 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return [];
         }
-        return this.currentTour.steps.filter(step => !step.skipStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
+        return this.currentTour.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**
@@ -430,7 +421,8 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return false;
         }
-        const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
+        const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
+        const selector = currentTourStep.highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
@@ -509,6 +501,18 @@ export class GuidedTourService {
     }
 
     /**
+     * Set the next prepared tour step
+     */
+    private setPreparedTourStep(): void {
+        const preparedTourStep = this.getPreparedTourStep();
+        if (preparedTourStep) {
+            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+        } else {
+            this.nextStep();
+        }
+    }
+
+    /**
      * Set orientation of the passed on tour step
      * @param step passed on tour step of a guided tour
      * @return guided tour step with defined orientation
@@ -538,7 +542,10 @@ export class GuidedTourService {
         return convertedStep;
     }
 
-    private setStepAlreadyFinishedHint(step: any): TourStep {
+    private setStepAlreadyFinishedHint(step: any): TourStep | null {
+        if (step.skipStep) {
+            return null;
+        }
         return new TextTourStep({
             headlineTranslateKey: step.headlineTranslateKey,
             contentTranslateKey: step.contentTranslateKey,

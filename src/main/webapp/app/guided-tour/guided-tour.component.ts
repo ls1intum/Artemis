@@ -18,7 +18,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     // Used to adjust values to determine scroll. This is a blanket value to adjust for elements like nav bars.
     public topOfPageAdjustment = 0;
     // Sets the width of all tour step elements.
-    public tourStepWidth = 500;
+    // TODO automatically determine optimal width of tourstep
+    public tourStepWidth = 600;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .

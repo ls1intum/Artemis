@@ -14,6 +14,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testSuccess.content',
             highlightPadding: 20,
             orientation: Orientation.RIGHT,
+            skipStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
@@ -21,6 +22,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.RIGHT,
+            skipStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
@@ -30,6 +32,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             highlightPadding: 5,
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            skipStep: true,
         }),
         new TextTourStep({
             highlightSelector: '.modal-content',
@@ -40,6 +43,7 @@ export const programmingExerciseDetailTour: GuidedTour = {
             closeAction: () => {
                 clickOnElement('.modal-header .close');
             },
+            skipStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions [id^=plantUml]',
@@ -56,8 +60,8 @@ export const programmingExerciseDetailTour: GuidedTour = {
 };
 
 export const programmingExerciseSuccess: GuidedTour = {
-    courseShortName: 'Introduction to Software Engineering',
-    exerciseShortName: 'G01E01 Programming Git Tutorial',
+    courseShortName: 'artemistutorial',
+    exerciseShortName: 'tutorial',
     settingsKey: 'programming_exercise_success_tour',
     steps: [
         new TextTourStep({
