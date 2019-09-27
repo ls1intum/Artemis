@@ -24,7 +24,7 @@ export abstract class TourStep {
     /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
     userInteractionEvent?: UserInteractionEvent;
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
-    skipStep?: boolean;
+    skipStepIfNoSelector?: boolean;
 }
 
 export class TextTourStep extends TourStep {

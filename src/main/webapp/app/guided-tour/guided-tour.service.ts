@@ -543,7 +543,7 @@ export class GuidedTourService {
     }
 
     private setStepAlreadyFinishedHint(step: any): TourStep | null {
-        if (step.skipStep) {
+        if (step.skipStepIfNoSelector) {
             return null;
         }
         return new TextTourStep({
