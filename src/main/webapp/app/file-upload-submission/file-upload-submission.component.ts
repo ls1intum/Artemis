@@ -81,6 +81,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.participation = <StudentParticipation>submission.participation;
                 this.submission = submission;
+                this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
@@ -96,26 +97,21 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }
-
-                if (submission.result) {
-                    if (this.submission.submitted && submission.result.completionDate) {
-                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(submission.result, this.fileUploadExercise);
-                        this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                            this.result = assessmentResult;
+                if (this.submission.submitted && this.result.completionDate) {
+                    this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
+                    this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                        this.result = assessmentResult;
+                    });
+                    this.complaintService
+                        .findByResultId(this.result.id)
+                        .pipe(filter(res => !!res.body))
+                        .subscribe(res => {
+                            if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
+                                this.hasRequestMoreFeedback = true;
+                            } else {
+                                this.hasComplaint = true;
+                            }
                         });
-                        this.complaintService
-                            .findByResultId(submission.result.id)
-                            .pipe(filter(res => !!res.body))
-                            .subscribe(res => {
-                                if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                    this.hasRequestMoreFeedback = true;
-                                } else {
-                                    this.hasComplaint = true;
-                                }
-                            });
-                    } else {
-                        this.result = submission.result;
-                    }
                 }
                 this.isActive =
                     this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
