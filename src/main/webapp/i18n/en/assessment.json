@@ -23,10 +23,8 @@
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
                 "loadSubmissionFailed": "Retrieving requested submission failed.",
                 "submitSuccessful": "Your assessment was submitted successfully!",
-                "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "saveFailed": "Saving your assessment failed!",
-                "confirmSubmission": "You have not assessed all model elements. Are you sure you want to submit this assessment? You will not be able to change it afterwards.",
                 "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
                 "updateAfterComplaintFailed": "Updating the Assessment failed."
             }

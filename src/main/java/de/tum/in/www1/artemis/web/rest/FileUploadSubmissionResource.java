@@ -288,6 +288,7 @@ public class FileUploadSubmissionResource {
             fileUploadSubmission.setResult(null);
         }
 
+        // do not send the assessor information to students
         if (fileUploadSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
             fileUploadSubmission.getResult().setAssessor(null);
         }

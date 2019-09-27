@@ -11,6 +11,10 @@
                 "invalidAssessments": "Your assessments are not valid!",
                 "invalidScoreMustBeNumber": "The score field must be a number and can not be empty!",
                 "invalidNeedScore": "Each Feedback item must have a score."
+            },
+            "messages": {
+                "lock": "You do now have the lock on this submission. Only you can assess this file. Please assess this file before opening other submissions.",
+                "confirmSubmission": "Are you sure you want to submit this assessment? You will not be able to change it afterwards."
             }
         }
     }
