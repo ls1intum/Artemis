@@ -1,5 +1,4 @@
 import { Component, OnInit, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -51,10 +50,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     userId: number;
     canOverride = false;
     isLoading = true;
-
-    formattedProblemStatement: SafeHtml | null;
-    formattedSampleSolution: SafeHtml | null;
-    formattedGradingInstructions: SafeHtml | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -179,10 +174,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.jhiAlertService.clear();
             this.jhiAlertService.info('artemisApp.assessment.messages.lock');
         }
-
-        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.checkPermissions();
         this.validateAssessment();
