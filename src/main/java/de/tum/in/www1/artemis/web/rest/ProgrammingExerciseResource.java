@@ -9,6 +9,8 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +42,8 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -69,6 +74,8 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ResultService resultService;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
@@ -83,8 +90,9 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            StudentParticipationRepository studentParticipationRepository, GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ResultService resultService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository,
+            GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -92,6 +100,7 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.resultService = resultService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -291,6 +300,62 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
+    }
+
+    /**
+     * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
+     *
+     * This will import the whole exercise, including all base build plans (template, solution) and repositories
+     * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
+     * a new id. For a concrete list of what gets copied and what not have a look at {@link ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
+     *
+     * @see ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseService#importRepositories(ProgrammingExercise, ProgrammingExercise)
+     * @param sourceExerciseId The ID of the template exercise which should get imported
+     * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     */
+    @PostMapping("/programming-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
+
+        if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
+            return notFound();
+        }
+
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
+            log.debug("User {} is not allowed to import exercises for course {}", user.getId(), newExercise.getCourse().getId());
+            return forbidden();
+        }
+
+        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        if (optionalTemplate.isEmpty()) {
+            return notFound();
+        }
+
+        final var template = optionalTemplate.get();
+        final var imported = programmingExerciseService.importProgrammingExerciseBasis(template, newExercise);
+        HttpHeaders responseHeaders;
+        programmingExerciseService.importRepositories(template, imported);
+        try {
+            programmingExerciseService.importBuildPlans(template, imported);
+            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
+        }
+        catch (HttpException e) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
+        }
+
+        // Remove unnecessary fields
+        imported.setTestCases(null);
+        imported.setTemplateParticipation(null);
+        imported.setSolutionParticipation(null);
+        imported.setExerciseHints(null);
+
+        return ResponseEntity.ok().headers(responseHeaders).body(imported);
     }
 
     /**
@@ -572,5 +637,45 @@ public class ProgrammingExerciseResource {
                             "errorStructureOracleGeneration"))
                     .body(null);
         }
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/is-released-and-has-results : Check if the given exercise is released and has at least one student result.
+     *
+     * @param exerciseId the id of a ProgrammingExercise
+     * @return the ResponseEntity with status 200 (OK) and true if the exercise is released and there is at least one result, false if not. Returns 404 (notFound) if the exercise does not exist.
+     */
+    @GetMapping(value = "/programming-exercises/{exerciseId}/is-released-and-has-results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> isExerciseReleasedAndHasResult(@PathVariable Long exerciseId) {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExercise.isEmpty()) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        ZonedDateTime releaseDate = programmingExercise.get().getReleaseDate();
+        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
+            // Exercise is not released yet.
+            return ResponseEntity.ok(false);
+        }
+        // Is true if the exercise is released and has at least one result.
+        return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
+    }
+
+    /**
+     * Search for all programming exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @param principal The identification of the user calling this endpoint
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("programming-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search, Principal principal) {
+        final var user = userService.getUserWithGroupsAndAuthorities(principal);
+        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 }

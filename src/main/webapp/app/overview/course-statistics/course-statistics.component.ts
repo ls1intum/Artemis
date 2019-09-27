@@ -5,12 +5,13 @@ import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 
-import { ABSOLUTE_SCORE, Course, CourseScoreCalculationService, CourseService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { InitializationState } from 'app/entities/participation';
+import { ABSOLUTE_SCORE, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, CourseScoreCalculationService } from 'app/overview';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -51,7 +52,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     totalPresentationScore = 0;
     presentationScores = {};
 
-    groupedExercises: Exercise[][] = [];
+    // this is not an actual exercise, it contains more entries
+    groupedExercises: any[][] = [];
     doughnutChartColors = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
 
     public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
@@ -169,7 +171,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     constructor(
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
     ) {}

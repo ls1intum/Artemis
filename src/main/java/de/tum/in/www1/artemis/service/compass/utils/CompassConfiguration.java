@@ -47,9 +47,6 @@ public class CompassConfiguration {
     /* CURRENTLY DISABLED */
     public final static double POORLY_ASSESSED_MODEL_THRESHOLD = 0.8;
 
-    // Weight of the partial name similarity of two UML elements. The partial name similarity compares the first three characters of the names.
-    public final static double PARTIALLY_NAME_WEIGHT = 0.8;
-
     /*
      * Confidence and coverage parameters
      */
