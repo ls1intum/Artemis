@@ -92,7 +92,7 @@ public class StructuralTest {
 
         // If both the observed and expected elements have no modifiers, then they match.
         // A note: for technical reasons, we get in case of no observed modifiers, a string array with an empty string.
-        if(observedModifiers.equals(new String[]{""}) && expectedModifiers.length() == 0) {
+        if(Arrays.equals(observedModifiers, new String[]{""}) && expectedModifiers.length() == 0) {
             return true;
         }
 
