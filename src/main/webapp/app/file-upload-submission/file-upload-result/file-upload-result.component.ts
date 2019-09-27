@@ -9,16 +9,16 @@ import { partition } from 'lodash';
 })
 export class FileUploadResultComponent {
     public feedbacks: Feedback[];
-    public generalFeedback: Feedback;
+    public generalFeedback: Feedback | null;
 
     @Input()
     public set result(result: Result) {
         if (!result) {
             return;
         }
-        const groupedFeedback = partition(result.feedbacks, feedback => feedback.credits > 0);
-        this.feedbacks = groupedFeedback[0];
-        this.generalFeedback = groupedFeedback[1][0];
+        const [feedbackWithCredits, feedbackWithoutCredits] = partition(result.feedbacks, feedback => feedback.credits > 0);
+        this.feedbacks = feedbackWithCredits;
+        this.generalFeedback = feedbackWithoutCredits[0] ? feedbackWithoutCredits[0] : null;
     }
     constructor() {}
 }
