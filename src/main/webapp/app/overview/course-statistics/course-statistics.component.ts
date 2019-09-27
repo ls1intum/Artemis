@@ -30,6 +30,8 @@ export interface CourseStatisticsDataSet {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
+    readonly QUIZ = ExerciseType.QUIZ;
+
     private courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
