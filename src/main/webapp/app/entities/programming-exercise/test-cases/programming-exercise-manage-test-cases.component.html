@@ -63,7 +63,7 @@
             <ng-template ngx-datatable-header-template>
                 <span>After Due Date</span
                 ><fa-icon
-                    *ngIf="!buildAfterDueDateActive"
+                    *ngIf="buildAfterDueDateActive === false"
                     icon="question-circle"
                     class="text-secondary ml-2"
                     [ngbPopover]="popoverContent"
