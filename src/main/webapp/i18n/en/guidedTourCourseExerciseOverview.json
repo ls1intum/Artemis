@@ -1,6 +1,24 @@
 {
     "tour": {
         "courseExerciseOverview": {
+            "installPrerequisites": {
+                "headline": "Install required tools",
+                "content": "Before we start with the exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
+                "java": {
+                    "content": "Please install Java JDK (1.8.212 or 11.0.3 or 12.0.1). Make sure to choose JDK and NOT JRE.",
+                    "hint": "Please note: if you use a Linux system, you must use the JDK 11.0.3 or 12.0.1 because the JDK 1.8.x does not support specific features on Linux that we need in later exercises.",
+                    "linkText": "Download Java JDK"
+                },
+                "eclipse": {
+                    "content": "Please install Eclipse IDE for Java Developers (2019‐03 or later)",
+                    "linkText": "Download Eclipse IDE"
+                },
+                "sourceTree": {
+                    "content": "Please install SourceTree with git (3.1.2 or later for macOS or Windows)",
+                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree",
+                    "linkText": "Download SourceTree"
+                }
+            },
             "exercises": {
                 "headline": "Exercises",
                 "content": "This tab lists all exercises of the selected course."
@@ -42,8 +60,28 @@
                 "content": "Click on the 'Start exercise' button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background."
             },
             "cloneRepository": {
-                "headline": "SourceTree Tutorial",
+                "headline": "Clone repository in SourceTree",
                 "content": "Watch the following video to understand how to clone a git repository in SourceTree. While watching the video, follow the steps on your computer side-by-side"
+            },
+            "inspectSourceTree": {
+                "headline": "Inspect SourceTree",
+                "content": "Watch the following video to understand the basic functions in SourceTree."
+            },
+            "importEclipse": {
+                "headline": "Import project in Eclipse",
+                "content": "Watch the following video to understand how to import the project in Eclipse."
+            },
+            "inspectProject": {
+                "headline": "Inspect Project",
+                "content": "In this video step we will inspect the project and solve the given task."
+            },
+            "commitAndPush": {
+                "headline": "Submit your changes",
+                "content": "Watch the following video to understand how to commit and push your changes."
+            },
+            "reviewResult": {
+                "headline": "Review your result",
+                "content": "After you have committed and pushed your changes as described in the previous video, the result will be automatically refreshed and displayed here. Artemis uses test cases to automatically assess your solution. If you now click on the exercise panel, you will get to the exercise detail page, review the test case results."
             }
         }
     }

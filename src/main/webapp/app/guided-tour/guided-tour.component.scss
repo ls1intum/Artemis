@@ -200,7 +200,7 @@ jhi-guided-tour {
                 .step-hint {
                     border-radius: 3px;
                     display: flex;
-                    margin-top: 15px;
+                    margin: 15px 0 0 0;
                     padding: 8px;
 
                     &:not(.interaction) {
@@ -251,6 +251,7 @@ jhi-guided-tour {
                     border: none;
                     outline: none;
                     padding: 8px 15px;
+                    white-space: nowrap;
 
                     &:disabled {
                         color: $tour-button-text-disabled !important;

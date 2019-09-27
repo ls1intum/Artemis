@@ -1,6 +1,21 @@
 {
     "tour": {
         "courseExerciseOverview": {
+            "installPrerequisites": {
+                "headline": "Installiere die notwendigen Tools",
+                "content": "Bevor wir mit der Aufgabe anfangen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
+                "java": {
+                    "content": "Installiere Java JDK (1.8.212 oder 11.0.3 oder 12.0.1). Stelle dabei sicher, dass du JDK und JRE auswählst.",
+                    "hint": "Hinweis: Wenn du ein Linux System verwendest, dann musst du JDK 11.0.3 oder 12.0.1 nutzen, da JDK 1.8.x einige Funktionen nicht unterstützt, die wir später in unseren Aufgaben benötigen."
+                },
+                "eclipse": {
+                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐03 oder später)"
+                },
+                "sourceTree": {
+                    "content": "Installiere SourceTree mit git (3.1.2 oder später für macOS oder Windows)",
+                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt."
+                }
+            },
             "exercises": {
                 "headline": "Aufgaben",
                 "content": "In diesem Reiter werden alle freigegebenen Aufgaben dieses Kurses angezeigt."
@@ -42,8 +57,28 @@
                 "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
             "cloneRepository": {
-                "headline": "SourceTree Anleitung",
+                "headline": "Klone das Repository in SourceTree",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
+            },
+            "inspectSourceTree": {
+                "headline": "Lerne SourceTree kennen",
+                "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen."
+            },
+            "importEclipse": {
+                "headline": "Importiere das Projekt in Eclipse",
+                "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert."
+            },
+            "inspectProject": {
+                "headline": "Untersuche das Projekt",
+                "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe."
+            },
+            "commitAndPush": {
+                "headline": "Reiche deine Änderungen ein",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed."
+            },
+            "reviewResult": {
+                "headline": "Überprüfe deine Ergebnisse",
+                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, committed und gepushed hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle um deine Lösung automatisch zu bewerten. Wenn du nun auf die Aufgabenkachel klickst, dann gelangst du auf die Detailseite der Aufgabe, in der du deine Testfälle überprüfen kannst."
             }
         }
     }
