@@ -55,15 +55,20 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
-                    this.programmingExerciseWebsocketService
-                        .getTestCaseState(this.exerciseId)
-                        .pipe(
-                            filter(testCasesChanged => !testCasesChanged),
-                            take(1),
-                        )
-                        .subscribe(() => (this.isTriggeringBuildAll = false));
+                    // The info that the builds were triggered comes from a websocket channel.
+                    this.waitForBuildResult();
                 });
         });
+    }
+
+    private waitForBuildResult() {
+        this.programmingExerciseWebsocketService
+            .getTestCaseState(this.exerciseId)
+            .pipe(
+                filter(testCasesChanged => !testCasesChanged),
+                take(1),
+            )
+            .subscribe(() => (this.isTriggeringBuildAll = false));
     }
 }
 

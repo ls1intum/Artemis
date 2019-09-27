@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseReleaseStateDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -61,8 +61,8 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
-                ProgrammingExerciseReleaseStateDTO.class);
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
+                ProgrammingExerciseTestCaseStateDTO.class);
         assertThat(releaseStateDTO.isReleased()).isTrue();
         assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
         assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
@@ -76,8 +76,8 @@ class ProgrammingExerciseIntegrationTest {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(participation);
 
-        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
-                ProgrammingExerciseReleaseStateDTO.class);
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
+                ProgrammingExerciseTestCaseStateDTO.class);
         assertThat(releaseStateDTO.isReleased()).isFalse();
         assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
         assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
@@ -90,8 +90,8 @@ class ProgrammingExerciseIntegrationTest {
         programmingExercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(programmingExercise);
 
-        ProgrammingExerciseReleaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.OK,
-                ProgrammingExerciseReleaseStateDTO.class);
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
+                ProgrammingExerciseTestCaseStateDTO.class);
         assertThat(releaseStateDTO.isReleased()).isTrue();
         assertThat(releaseStateDTO.isHasStudentResult()).isFalse();
         assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
@@ -100,6 +100,6 @@ class ProgrammingExerciseIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void checkIfProgrammingExerciseIsReleased_forbidden() throws Exception {
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/release-state", HttpStatus.FORBIDDEN, Boolean.class);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 }

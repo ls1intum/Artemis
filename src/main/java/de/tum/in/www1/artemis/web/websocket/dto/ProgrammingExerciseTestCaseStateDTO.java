@@ -1,19 +1,25 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
-public class ProgrammingExerciseReleaseStateDTO {
+/**
+ * This DTO contains information that is valuable to determine the test case state of the programming exercise:
+ * - isReleased: has the programming exercise's release date passed?
+ * - hasStudentResult: is there at least one student submission with a result?
+ * - testCasesChanged: have the test cases been changed after the exercise was released and a student result existed?
+ */
+public class ProgrammingExerciseTestCaseStateDTO {
 
-    private boolean isReleased;
+    private boolean released;
 
     private boolean hasStudentResult;
 
     private boolean testCasesChanged;
 
     public boolean isReleased() {
-        return isReleased;
+        return released;
     }
 
     public void setReleased(boolean released) {
-        isReleased = released;
+        this.released = released;
     }
 
     public boolean isHasStudentResult() {
@@ -32,17 +38,17 @@ public class ProgrammingExerciseReleaseStateDTO {
         this.testCasesChanged = testCasesChanged;
     }
 
-    public ProgrammingExerciseReleaseStateDTO released(boolean releasedValue) {
+    public ProgrammingExerciseTestCaseStateDTO released(boolean releasedValue) {
         setReleased(releasedValue);
         return this;
     }
 
-    public ProgrammingExerciseReleaseStateDTO studentResult(boolean hasStudentResultsValue) {
+    public ProgrammingExerciseTestCaseStateDTO studentResult(boolean hasStudentResultsValue) {
         hasStudentResult(hasStudentResultsValue);
         return this;
     }
 
-    public ProgrammingExerciseReleaseStateDTO testCasesChanged(boolean testCasesChangedValue) {
+    public ProgrammingExerciseTestCaseStateDTO testCasesChanged(boolean testCasesChangedValue) {
         setTestCasesChanged(testCasesChangedValue);
         return this;
     }

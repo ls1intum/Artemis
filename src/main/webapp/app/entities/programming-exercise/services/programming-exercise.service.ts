@@ -13,7 +13,7 @@ import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExercisePa
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
-export type ReleaseStateDTO = { released: boolean; hasStudentResult: boolean; testCasesChanged: boolean };
+export type ProgrammingExerciseTestCaseStateDTO = { released: boolean; hasStudentResult: boolean; testCasesChanged: boolean };
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
@@ -86,8 +86,8 @@ export class ProgrammingExerciseService {
      *
      * @param exerciseId ProgrammingExercise id
      */
-    getReleaseState(exerciseId: number): Observable<HttpResponse<ReleaseStateDTO>> {
-        return this.http.get<ReleaseStateDTO>(`${this.resourceUrl}/${exerciseId}/release-state`, { observe: 'response' });
+    getProgrammingExerciseTestCaseState(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseTestCaseStateDTO>> {
+        return this.http.get<ProgrammingExerciseTestCaseStateDTO>(`${this.resourceUrl}/${exerciseId}/test-case-state`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

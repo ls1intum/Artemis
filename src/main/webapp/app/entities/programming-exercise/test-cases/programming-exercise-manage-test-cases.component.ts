@@ -86,7 +86,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 this.testCaseChangedSubscription.unsubscribe();
             }
 
-            this.getExerciseReleaseState()
+            this.getExerciseTestCaseState()
                 .pipe(
                     tap(releaseState => {
                         this.hasUpdatedTestCases = releaseState.testCasesChanged;
@@ -95,7 +95,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     catchError(() => of(null)),
                 )
                 .subscribe(() => {
+                    // This subscription e.g. adds new new tests to the table that were just created.
                     this.subscribeForTestCaseUpdates();
+                    // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                     this.subscribeForExerciseTestCasesChangedUpdates();
                     this.isLoading = false;
                 });
@@ -141,8 +143,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     /**
      * Checks if the exercise is released and has at least one student result.
      */
-    getExerciseReleaseState() {
-        return this.programmingExerciseService.getReleaseState(this.exerciseId).pipe(map(({ body }) => body!));
+    getExerciseTestCaseState() {
+        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(this.exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**

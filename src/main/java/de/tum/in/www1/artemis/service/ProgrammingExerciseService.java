@@ -54,7 +54,6 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -103,6 +102,8 @@ public class ProgrammingExerciseService {
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     private final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
+
+    private final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
@@ -826,9 +827,8 @@ public class ProgrammingExerciseService {
      * @param testCasesChanged set to true to mark the programming exercise as dirty.
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
-     * @throws AccessForbiddenException if the user has no permissions to access the programming exercise.
      */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException, AccessForbiddenException {
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
@@ -844,10 +844,9 @@ public class ProgrammingExerciseService {
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
         messagingTemplate.convertAndSend("/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed", testCasesChanged);
-        if (testCasesChanged) {
-            // Send a notification to the client to inform the instructor about the test case update.
-            groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_NOTIFICATION);
-        }
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         return updatedProgrammingExercise;
     }
 
