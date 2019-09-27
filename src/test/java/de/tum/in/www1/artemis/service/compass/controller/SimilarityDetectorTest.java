@@ -1,5 +1,16 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivity;
@@ -12,16 +23,6 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiag
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SimilarityDetectorTest {
@@ -65,31 +66,30 @@ class SimilarityDetectorTest {
         SimilarityDetector.analyzeSimilarity(classDiagram, modelIndex);
     }
 
-     @Test
-     void analyzeSimilarity_ActivityDiagram() {
-     UMLActivityNode activityNode1 = new UMLActivityNode("activityNode1", "activityNode1Id", UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE);
-     UMLActivityNode activityNode2 = new UMLActivityNode("activityNode2", "activityNode2Id", UMLActivityNode.UMLActivityNodeType.ACTIVITY_DECISION_NODE);
-     UMLControlFlow controlFlow1 = new UMLControlFlow(activityNode1, activityNode2,"controlFlow1Id");
-     UMLControlFlow controlFlow2 = new UMLControlFlow(activityNode2, activityNode1,"controlFlow2Id");
-     UMLActivity activity1 = new UMLActivity("activity1", List.of(activityNode1, activityNode2), "activity1Id");
-     UMLActivity activity2 = new UMLActivity("activity2", List.of(activity1), "activity2Id");
-     activityDiagram = new UMLActivityDiagram(123456789, List.of(activityNode1, activityNode2), List.of(activity1, activity2),
-     List.of(controlFlow1, controlFlow2));
-     List<UMLElement> elements = List.of(activityNode1, activityNode2, controlFlow1, controlFlow2, activity1, activity2);
-     prepareModelIndex(elements);
+    @Test
+    void analyzeSimilarity_ActivityDiagram() {
+        UMLActivityNode activityNode1 = new UMLActivityNode("activityNode1", "activityNode1Id", UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE);
+        UMLActivityNode activityNode2 = new UMLActivityNode("activityNode2", "activityNode2Id", UMLActivityNode.UMLActivityNodeType.ACTIVITY_DECISION_NODE);
+        UMLControlFlow controlFlow1 = new UMLControlFlow(activityNode1, activityNode2, "controlFlow1Id");
+        UMLControlFlow controlFlow2 = new UMLControlFlow(activityNode2, activityNode1, "controlFlow2Id");
+        UMLActivity activity1 = new UMLActivity("activity1", List.of(activityNode1, activityNode2), "activity1Id");
+        UMLActivity activity2 = new UMLActivity("activity2", List.of(activity1), "activity2Id");
+        activityDiagram = new UMLActivityDiagram(123456789, List.of(activityNode1, activityNode2), List.of(activity1, activity2), List.of(controlFlow1, controlFlow2));
+        List<UMLElement> elements = List.of(activityNode1, activityNode2, controlFlow1, controlFlow2, activity1, activity2);
+        prepareModelIndex(elements);
 
-     SimilarityDetector.analyzeSimilarity(activityDiagram, modelIndex);
+        SimilarityDetector.analyzeSimilarity(activityDiagram, modelIndex);
 
-     verifySimilarityIds(elements);
-     verifyContext(elements, -1);
-     }
+        verifySimilarityIds(elements);
+        verifyContext(elements, -1);
+    }
 
-     @Test
-     void analyzeSimilarity_ActivityDiagram_emptyDiagram() {
-     activityDiagram = new UMLActivityDiagram(123456789, emptyList(), emptyList(), emptyList());
+    @Test
+    void analyzeSimilarity_ActivityDiagram_emptyDiagram() {
+        activityDiagram = new UMLActivityDiagram(123456789, emptyList(), emptyList(), emptyList());
 
-     SimilarityDetector.analyzeSimilarity(activityDiagram, modelIndex);
-     }
+        SimilarityDetector.analyzeSimilarity(activityDiagram, modelIndex);
+    }
 
     private void prepareModelIndex(List<UMLElement> elements) {
         int similarityId = 1;

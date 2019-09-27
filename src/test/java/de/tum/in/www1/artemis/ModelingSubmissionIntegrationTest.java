@@ -82,7 +82,7 @@ public class ModelingSubmissionIntegrationTest {
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
-        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-model.json");
+        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
@@ -112,7 +112,7 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_activityDiagram() throws Exception {
         database.addParticipationForExercise(activityExercise, "student1");
-        String emptyActivityModel = database.loadFileFromResources("test-data/model-submission/empty-activity-model.json");
+        String emptyActivityModel = database.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
@@ -129,7 +129,7 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_objectDiagram() throws Exception {
         database.addParticipationForExercise(objectExercise, "student1");
-        String emptyObjectModel = database.loadFileFromResources("test-data/model-submission/empty-object-model.json");
+        String emptyObjectModel = database.loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
@@ -146,7 +146,7 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_useCaseDiagram() throws Exception {
         database.addParticipationForExercise(useCaseExercise, "student1");
-        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-model.json");
+        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
