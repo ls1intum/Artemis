@@ -117,7 +117,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: FileUploadSubmission) => {
-                this.handleReceivedSubmission(submission);
+                this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
@@ -142,8 +142,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .pipe(filter(res => !!res))
             .subscribe(
                 res => {
-                    this.handleReceivedSubmission(res.body!);
-                    this.loadFeedbacks(this.result.feedbacks);
+                    this.initializePropertiesFromSubmission(res.body!);
                 },
                 (error: HttpErrorResponse) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
@@ -155,7 +154,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             );
     }
 
-    private handleReceivedSubmission(submission: FileUploadSubmission): void {
+    private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
@@ -267,24 +266,22 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNextOptimal() {
-        if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
-                (response: FileUploadSubmission) => {
-                    this.unassessedSubmission = response;
-                    this.router.onSameUrlNavigation = 'reload';
-                    // navigate to the new assessment page to trigger re-initialization of the components
-                    this.router.navigateByUrl(`/file-upload-exercise/${this.exercise.id}/submission/${this.unassessedSubmission.id}/assessment`, {});
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                        this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
-                    } else {
-                        this.onError(error.message);
-                    }
-                },
-            );
-        }
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+            (response: FileUploadSubmission) => {
+                this.unassessedSubmission = response;
+                this.router.onSameUrlNavigation = 'reload';
+                // navigate to the new assessment page to trigger re-initialization of the components
+                this.router.navigateByUrl(`/file-upload-exercise/${this.exercise.id}/submission/${this.unassessedSubmission.id}/assessment`, {});
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                } else {
+                    this.onError(error.message);
+                }
+            },
+        );
     }
 
     onSaveAssessment() {
