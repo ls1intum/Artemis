@@ -106,9 +106,9 @@
             class="resizable-submission card"
             id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
-            [formattedProblemStatement]="formattedProblemStatement"
-            [formattedGradingInstructions]="formattedGradingInstructions"
-            [formattedSampleSolution]="formattedSampleSolution"
+            [problemStatement]="this.exercise.problemStatement"
+            [gradingInstructions]="this.exercise.gradingInstructions"
+            [sampleSolution]="this.exercise.sampleSolution"
             [toggleCollapse]="toggleCollapse.bind(this)"
         >
             <div resizingbar class="resizing-bar"><span></span></div>

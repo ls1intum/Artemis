@@ -54,7 +54,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     /**
      * Get the result of the file upload submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
+     * to retrieve the assessment if he/she is not a student of the corresponding course, the submission is not his/her submission, the result is not finished or the assessment due date of
      * the corresponding exercise is in the future (or not set).
      *
      * @param submissionId the id of the submission that should be sent to the client
@@ -141,9 +141,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
         // remove circular dependencies if the results of the participation are there
-        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().setResults(null);
-        }
+        //  if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
+         //   result.getParticipation().setResults(null);
+       // }
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {

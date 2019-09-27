@@ -37,9 +37,9 @@
             <jhi-resizable-instructions
                 class="resizable-submission card resizable-instructions"
                 id="instructions"
-                [formattedProblemStatement]="this.exercise.problemStatement | htmlForMarkdown"
-                [formattedGradingInstructions]="this.exercise.gradingInstructions | htmlForMarkdown"
-                [formattedSampleSolution]="this.exercise.sampleSolution | htmlForMarkdown"
+                [problemStatement]="this.exercise.problemStatement"
+                [gradingInstructions]="this.exercise.gradingInstructions"
+                [sampleSolution]="this.exercise.sampleSolution"
                 [toggleCollapse]="toggleCollapse.bind(this)"
             >
                 <div resizingbar class="resizing-bar"><span></span></div>
