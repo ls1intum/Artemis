@@ -10,7 +10,7 @@
             "error": {
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
                 "invalidScoreMustBeNumber": "Das Score-Feld muss eine Zahl sein und darf nicht leer sein!",
-                "invalidNeedScore": "Jedes Feedback-Element muss mindestens eine Punktzahl  enthalten."
+                "invalidNeedScore": "Jedes Feedback-Element muss mindestens eine Punktzahl enthalten."
             }
         }
     }
