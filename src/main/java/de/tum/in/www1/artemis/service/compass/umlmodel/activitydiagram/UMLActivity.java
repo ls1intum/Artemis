@@ -38,4 +38,16 @@ public class UMLActivity extends UMLActivityElement {
     public void addActivityElement(UMLActivityElement activityElement) {
         activityElements.add(activityElement);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLActivity otherActivity = (UMLActivity) obj;
+
+        return otherActivity.activityElements.size() == activityElements.size() && otherActivity.activityElements.containsAll(activityElements)
+                && activityElements.containsAll(otherActivity.activityElements);
+    }
 }

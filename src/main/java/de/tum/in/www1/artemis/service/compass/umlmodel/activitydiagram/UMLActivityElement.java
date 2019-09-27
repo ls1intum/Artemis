@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import java.util.Objects;
+
 import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
@@ -59,5 +61,16 @@ public abstract class UMLActivityElement extends UMLElement {
      */
     protected void setParentActivity(UMLActivity parentActivity) {
         this.parentActivity = parentActivity;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLActivityElement otherActivityElement = (UMLActivityElement) obj;
+
+        return Objects.equals(otherActivityElement.getParentActivity(), parentActivity);
     }
 }
