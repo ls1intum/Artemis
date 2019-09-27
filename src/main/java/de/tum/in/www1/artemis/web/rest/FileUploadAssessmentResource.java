@@ -139,11 +139,6 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
         Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
-        // remove circular dependencies if the results of the participation are there
-        // if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-        // result.getParticipation().setResults(null);
-        // }
-
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);

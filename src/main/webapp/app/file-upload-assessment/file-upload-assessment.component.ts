@@ -456,11 +456,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                     this.result = result;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.success('artemisApp.assessment.updateAfterComplaintSuccessful');
+                    this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
                 (error: HttpErrorResponse) => {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('artemisApp.assessment.updateAfterComplaintFailed');
+                    this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 },
             );
     }

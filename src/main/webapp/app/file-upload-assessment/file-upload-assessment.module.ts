@@ -8,6 +8,7 @@ import { FileUploadAssessmentComponent } from './file-upload-assessment.componen
 import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { FileUploadAssessmentDashboardComponent } from 'app/file-upload-assessment/file-upload-assessment-dashboard/file-upload-assessment-dashboard.component';
 
 const ENTITY_STATES = [...fileUploadAssessmentRoutes];
 @NgModule({
@@ -20,7 +21,7 @@ const ENTITY_STATES = [...fileUploadAssessmentRoutes];
         ArtemisAssessmentSharedModule,
         ModelingAssessmentModule,
     ],
-    declarations: [FileUploadAssessmentComponent],
+    declarations: [FileUploadAssessmentComponent, FileUploadAssessmentDashboardComponent],
     exports: [FileUploadAssessmentComponent],
     providers: [],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

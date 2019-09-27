@@ -7,6 +7,9 @@
             "addFeedback": "Neues Feedback hinzufügen",
             "assessInstruction": "Bitte klickst du auf \"Neues Feedback hinzufügen\".",
             "deleteAssessment": "Bewertung {{ index }} löschen ?",
+            "dashboard": {
+                "heading": "Tutor Dashboard zur Bewertung von Date Upload Aufgabe \"{{exerciseTitle}}\""
+            },
             "messages": {
                 "lock": "Diese Datei kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Datei bevor du ein neues öffnest.",
                 "confirmSubmission": "Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern."
