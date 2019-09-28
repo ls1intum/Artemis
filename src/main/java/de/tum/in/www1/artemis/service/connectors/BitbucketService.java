@@ -360,6 +360,22 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws BitbucketException {
+        String projectKey = getProjectName(repositoryUrl);
+        String repositorySlug = getRepositoryName(repositoryUrl);
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        try {
+            restTemplate.exchange(baseUrl + username + "&permission=REPO_READ", HttpMethod.PUT, entity, Map.class);
+        }
+        catch (Exception e) {
+            log.error("Could not give read only permissions", e);
+            throw new BitbucketException("Error while giving repository permissions");
+        }
+    }
+
+    @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);

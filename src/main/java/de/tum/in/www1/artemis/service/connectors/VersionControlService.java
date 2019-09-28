@@ -122,4 +122,12 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      */
     VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName);
+
+    /**
+     * Removes the user's write permissions for a repository.
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param username          String to identify the user with.
+     */
+    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws Exception;
 }
