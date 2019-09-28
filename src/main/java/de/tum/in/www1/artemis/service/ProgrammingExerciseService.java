@@ -750,6 +750,18 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
             String originalProjectKey = null;
+
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(templateBuildPlanId) : originalProjectKey;
+                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
+            }
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(solutionBuildPlanId) : originalProjectKey;
+                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
+            }
+
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
                 final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
                 originalProjectKey = versionControlService.get().getProjectKey(templateRepositoryUrlAsUrl);
@@ -767,17 +779,6 @@ public class ProgrammingExerciseService {
                 originalProjectKey = originalProjectKey == null ? versionControlService.get().getProjectKey(testRepositoryUrlAsUrl) : originalProjectKey;
                 versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
                 gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
-            }
-
-            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-            if (templateBuildPlanId != null) {
-                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(templateBuildPlanId) : originalProjectKey;
-                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
-            }
-            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-            if (solutionBuildPlanId != null) {
-                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(solutionBuildPlanId) : originalProjectKey;
-                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
             }
 
             if (originalProjectKey != null) {
