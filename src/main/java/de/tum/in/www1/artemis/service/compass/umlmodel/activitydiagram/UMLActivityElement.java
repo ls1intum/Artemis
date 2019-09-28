@@ -59,7 +59,7 @@ public abstract class UMLActivityElement extends UMLElement {
      *
      * @param parentActivity the parent activity that contains this activity element
      */
-    protected void setParentActivity(UMLActivity parentActivity) {
+    public void setParentActivity(UMLActivity parentActivity) {
         this.parentActivity = parentActivity;
     }
 
@@ -71,6 +71,13 @@ public abstract class UMLActivityElement extends UMLElement {
 
         UMLActivityElement otherActivityElement = (UMLActivityElement) obj;
 
-        return Objects.equals(otherActivityElement.getParentActivity(), parentActivity);
+        if (otherActivityElement.getParentActivity() == null && parentActivity == null) {
+            return true;
+        }
+        else if (otherActivityElement.getParentActivity() != null && parentActivity != null) {
+            return Objects.equals(otherActivityElement.getParentActivity().getName(), parentActivity.getName());
+        }
+
+        return false;
     }
 }

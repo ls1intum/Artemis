@@ -22,13 +22,13 @@ public class UMLMethod extends UMLElement {
 
     private List<String> parameters;
 
-    public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
+    public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
         super(jsonElementID);
 
         this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
-        this.parameters = parameter;
+        this.parameters = parameters;
     }
 
     /**
