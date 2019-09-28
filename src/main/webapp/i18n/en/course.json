@@ -32,6 +32,7 @@
             "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
             "registrationEnabled": "Registration Enabled",
+            "presentationScoreEnabled": "Presentation Score Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",

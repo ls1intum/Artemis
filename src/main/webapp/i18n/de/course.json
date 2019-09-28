@@ -32,6 +32,7 @@
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
             "registrationEnabled": "Registrierung aktiviert",
+            "presentationScoreEnabled": "Präsentationsergebnis aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",

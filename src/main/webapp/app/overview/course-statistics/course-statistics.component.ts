@@ -53,6 +53,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     // presentation score
     totalPresentationScore = 0;
     presentationScores = {};
+    presentationScoreEnabled = false;
 
     // this is not an actual exercise, it contains more entries
     groupedExercises: any[][] = [];
@@ -260,6 +261,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         totalMaxScore: 0,
                         absoluteScore: 0,
                         presentationScore: 0,
+                        presentationScoreEnabled: exercise.type !== this.QUIZ && exercise.course && exercise.course.presentationScoreEnabled,
                         names: [],
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },

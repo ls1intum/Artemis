@@ -91,6 +91,9 @@ public class Course implements Serializable {
     @Column(name = "registration_enabled")
     private Boolean registrationEnabled;
 
+    @Column(name = "presentation_score_enabled")
+    private Boolean presentationScoreEnabled;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -283,6 +286,19 @@ public class Course implements Serializable {
         this.registrationEnabled = registrationEnabled;
     }
 
+    public Boolean isPresentationScoreEnabled() {
+        return presentationScoreEnabled;
+    }
+
+    public Course presentationScoreEnabled(Boolean presentationScoreEnabled) {
+        this.presentationScoreEnabled = presentationScoreEnabled;
+        return this;
+    }
+
+    public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
+        this.presentationScoreEnabled = presentationScoreEnabled;
+    }
+
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -433,6 +449,7 @@ public class Course implements Serializable {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
                 + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
-                + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "}";
+                + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
+                + ", presentationScoreEnabled='" + isPresentationScoreEnabled() + "}";
     }
 }

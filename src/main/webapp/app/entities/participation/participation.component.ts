@@ -29,6 +29,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     reverse: boolean;
 
     hasLoadedPendingSubmissions = false;
+    presentationScoreEnabled = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -62,6 +63,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (this.exercise.type === this.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
+                this.presentationScoreEnabled = this.checkPresentationScoreConfig();
             });
         });
     }
@@ -72,6 +74,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
+    }
+
+    checkPresentationScoreConfig(): boolean {
+        if (!this.exercise.course) {
+            return false;
+        }
+        return this.exercise.isAtLeastTutor && this.exercise.type !== this.QUIZ && this.exercise.course.presentationScoreEnabled;
     }
 
     addPresentation(participation: StudentParticipation) {

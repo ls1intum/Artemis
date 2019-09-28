@@ -18,6 +18,7 @@ export class Course implements BaseEntity {
     public courseIcon: string;
     public onlineCourse = false; // default value
     public registrationEnabled = false; // default value
+    public presentationScoreEnabled = false; // default value
     public maxComplaints: number;
 
     public exercises: Exercise[];

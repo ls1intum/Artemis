@@ -117,7 +117,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
                             </button>
                             <button
-                                *ngIf="exercise?.type !== QUIZ && exercise.isAtLeastTutor && participation.presentationScore !== 1"
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore !== 1"
                                 (click)="addPresentation(participation)"
                                 class="btn btn-info btn-sm mr-1"
                             >
@@ -125,7 +125,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                             </button>
                             <button
-                                *ngIf="exercise?.type !== QUIZ && exercise.isAtLeastTutor && participation.presentationScore == 1"
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore == 1"
                                 (click)="removePresentation(participation)"
                                 class="btn btn-danger btn-sm mr-1"
                             >
