@@ -121,6 +121,13 @@
                     "course": "Course",
                     "doImport": "Import"
                 }
+            },
+            "preview": {
+                "tooltip": "Preview of the names of the build plans and repositories based on the exercise title and short name.\nThe title is the name of the project, which contains all build plans and repositories. The key is a unique identifier for the before mentioned project",
+                "projectName": "Exercise project title: ",
+                "projectKey": "Exercise project key: ",
+                "exampleRepository": "Example repository: ",
+                "exampleBuildPlan": "Example build plan: "
             }
         }
     }

@@ -121,6 +121,13 @@
                     "course": "Kurs",
                     "doImport": "Import"
                 }
+            },
+            "preview": {
+                "tooltip": "Vorschau, wie die einzelnen Build Pläne und Repositories abhängig vom Titel und Kurznamen benannt werden.\nDabei handelt es sich bei dem Titel um den Namen des Projekts unter welchem alle Repositories und Pläne gespeichert werden. Der Schlüssel ist eine eindeutige Zeichenfolge um das Projekt zu identifizieren.",
+                "projectName": "Titel des Projekts der Aufgabe: ",
+                "projectKey": "Schlüssel des Projekts der Aufgabe",
+                "exampleRepository": "Beispiel Repository",
+                "exampleBuildPlan": "Beispiel Build Plan"
             }
         }
     }
