@@ -15,7 +15,7 @@
 </nav>
 <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-code-editor-repository-is-locked class="mr-3"></jhi-code-editor-repository-is-locked>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
