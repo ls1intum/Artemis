@@ -905,7 +905,7 @@ public class ProgrammingExerciseService {
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var templateKey = continuousIntegrationService.get().getProjectKey(templateParticipation.getBuildPlanId());
+        final var templateKey = continuousIntegrationService.get().getProjectKey(templateExercise.getTemplateBuildPlanId());
         final var targetKey = newExercise.getProjectKey();
         final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
