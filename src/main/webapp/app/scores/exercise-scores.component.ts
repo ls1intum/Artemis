@@ -67,16 +67,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
-                // We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
-                const additionalLoadingOperation =
-                    this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                zip(this.getResults(), additionalLoadingOperation)
+                zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe(() => (this.isLoading = false));
             });
         });
         this.registerChangeInCourses();
+    }
+
+    /**
+     * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
+     * Will return immediately if the exercise is not of type PROGRAMMING.
+     */
+    private loadAndCacheProgrammingExerciseSubmissionState() {
+        return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
     }
 
     registerChangeInCourses() {
