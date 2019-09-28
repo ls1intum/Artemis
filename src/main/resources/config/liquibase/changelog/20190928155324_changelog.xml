@@ -13,7 +13,6 @@
                 where not exists(
                     select * from programming_exercise_details d
                     where e.id = d.id
-                    and e.discriminator = 'P'
                     )
                 and e.discriminator = 'P'
         </sql>
