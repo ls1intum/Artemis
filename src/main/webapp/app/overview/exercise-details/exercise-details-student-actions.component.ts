@@ -91,15 +91,23 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if (
-            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
-            this.hasParticipations(this.exercise)
-        ) {
+        } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
+            const participation = this.exercise.studentParticipations[0];
+            if (participation.initializationState === InitializationState.INITIALIZED) {
+                if (this.isExerciseInDuedate(this.exercise)) {
+                    return ParticipationStatus.EXERCISE_ACTIVE;
+                } else {
+                    return ParticipationStatus.EXERCISE_MISSED;
+                }
+            } else if (participation.initializationState === InitializationState.FINISHED) {
+                return ParticipationStatus.EXERCISE_SUBMITTED;
+            } else {
+                return ParticipationStatus.UNINITIALIZED;
+            }
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD && this.hasParticipations(this.exercise)) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
-                    return ParticipationStatus.FILE_UPLOAD_EXERCISE;
-                }
+                return ParticipationStatus.FILE_UPLOAD_EXERCISE;
             }
         }
 
@@ -117,6 +125,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
+    }
+
+    isExerciseInDuedate(exercise: Exercise): boolean {
+        if (exercise.dueDate) {
+            return exercise.dueDate.isAfter(moment());
+        }
+        return true;
     }
 
     repositoryUrl(participation: Participation) {
