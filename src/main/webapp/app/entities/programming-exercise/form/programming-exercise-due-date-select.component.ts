@@ -95,13 +95,17 @@ export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
         if (!dueDate) {
             this.buildAndTestDateActive = false;
         }
-        this.buildAndTestDateInvalid =
-            (this.exercise.buildAndTestStudentSubmissionsAfterDueDate && (!dueDate || !dueDate.isValid())) ||
-            (this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate) ||
-            (!!this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
-                !!dueDate &&
-                dueDate.isValid() &&
-                dueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate));
+        // The build and test date is set, but the due date empty or invalid.
+        const buildAndTestDateWithoutValidDueDate = this.exercise.buildAndTestStudentSubmissionsAfterDueDate && (!dueDate || !dueDate.isValid());
+        // The checkbox is active in the ui, but the date is not set.
+        const noBuildAndTestDateSetButOptionActive = this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        // The buildAndTestDate must always be after the due date.
+        const buildAndTestDateIsBeforeDueDate =
+            !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
+            !!dueDate &&
+            dueDate.isValid() &&
+            dueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate);
+        this.buildAndTestDateInvalid = buildAndTestDateWithoutValidDueDate || noBuildAndTestDateSetButOptionActive || buildAndTestDateIsBeforeDueDate;
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
