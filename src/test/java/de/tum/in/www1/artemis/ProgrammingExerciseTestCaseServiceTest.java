@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,15 +18,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
@@ -34,6 +41,12 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis, bamboo")
 public class ProgrammingExerciseTestCaseServiceTest {
+
+    @MockBean
+    GroupNotificationService groupNotificationService;
+
+    @MockBean
+    WebsocketMessagingService websocketMessagingService;
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -53,7 +66,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @BeforeEach
     public void reset() {
-        database.addUsers(0, 1, 0);
+        database.addUsers(1, 1, 0);
 
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -117,26 +130,45 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @Test
     public void shouldResetTestWeights() {
+        SecurityUtils.setAuthorizationObject();
+        database.addParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+
+        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
+
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
+        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
+        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws IllegalAccessException {
+        database.addParticipationWithResultForExercise(programmingExercise, "student1");
+
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
+
         Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
         programmingExerciseTestCaseDTO.setWeight(400);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
+        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
+
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
+        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
+        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }
 
     @Test

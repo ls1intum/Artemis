@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +45,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ProgrammingExercise. */
@@ -640,14 +640,14 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/is-released-and-has-results : Check if the given exercise is released and has at least one student result.
+     * GET /programming-exercises/:exerciseId/test-case-state : Returns a DTO that offers information on the test case state of the programming exercise.
      *
      * @param exerciseId the id of a ProgrammingExercise
-     * @return the ResponseEntity with status 200 (OK) and true if the exercise is released and there is at least one result, false if not. Returns 404 (notFound) if the exercise does not exist.
+     * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
      */
-    @GetMapping(value = "/programming-exercises/{exerciseId}/is-released-and-has-results")
+    @GetMapping(value = "/programming-exercises/{exerciseId}/test-case-state")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> isExerciseReleasedAndHasResult(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable Long exerciseId) {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
@@ -655,13 +655,11 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
         }
-        ZonedDateTime releaseDate = programmingExercise.get().getReleaseDate();
-        if (releaseDate != null && releaseDate.isAfter(ZonedDateTime.now())) {
-            // Exercise is not released yet.
-            return ResponseEntity.ok(false);
-        }
-        // Is true if the exercise is released and has at least one result.
-        return ResponseEntity.ok(resultService.existsByExerciseId(exerciseId));
+        boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise.get());
+        boolean isReleased = programmingExercise.get().isReleased();
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
+                .testCasesChanged(programmingExercise.get().haveTestCasesChanged());
+        return ResponseEntity.ok(testCaseDTO);
     }
 
     /**

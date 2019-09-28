@@ -20,7 +20,7 @@ import { Component, Input, EventEmitter, Output } from '@angular/core';
             id="reset-weights-button"
             class="btn btn-secondary ml-3"
             (click)="onResetWeights.emit()"
-            [disabled]="isSaving"
+            [disabled]="disableResetWeights || isSaving"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
         ></button>
         <jhi-programming-exercise-trigger-all-button
@@ -35,6 +35,7 @@ export class ProgrammingExerciseManageTestCasesActionsComponent {
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
     @Input() isSaving: boolean;
+    @Input() disableResetWeights: boolean;
 
     @Output() onSaveWeights = new EventEmitter();
     @Output() onResetWeights = new EventEmitter();

@@ -60,6 +60,10 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
+    @Nullable
+    @Column(name = "test_cases_changed", table = "programming_exercise_details")
+    private Boolean testCasesChanged = false;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -375,6 +379,17 @@ public class ProgrammingExercise extends Exercise {
         this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
+    public boolean haveTestCasesChanged() {
+        if (testCasesChanged == null) {
+            return false;
+        }
+        return testCasesChanged;
+    }
+
+    public void setTestCasesChanged(boolean testCasesChanged) {
+        this.testCasesChanged = testCasesChanged;
+    }
+
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -413,7 +428,7 @@ public class ProgrammingExercise extends Exercise {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + "}";
+                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     /**

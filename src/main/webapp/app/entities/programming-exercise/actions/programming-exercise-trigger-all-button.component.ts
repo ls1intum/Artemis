@@ -1,9 +1,11 @@
 import { Component, Input, EventEmitter, Output } from '@angular/core';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter, take } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -32,7 +34,11 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
 
-    constructor(private submissionService: ProgrammingSubmissionService, private modalService: NgbModal) {}
+    constructor(
+        private submissionService: ProgrammingSubmissionService,
+        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
+        private modalService: NgbModal,
+    ) {}
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -48,10 +54,21 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
-                    this.isTriggeringBuildAll = false;
                     this.onBuildTriggered.emit();
+                    // The info that the builds were triggered comes from a websocket channel.
+                    this.waitForBuildResult();
                 });
         });
+    }
+
+    private waitForBuildResult() {
+        this.programmingExerciseWebsocketService
+            .getTestCaseState(this.exerciseId)
+            .pipe(
+                filter(testCasesChanged => !testCasesChanged),
+                take(1),
+            )
+            .subscribe(() => (this.isTriggeringBuildAll = false));
     }
 }
 
