@@ -18,6 +18,7 @@ import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRe
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -105,50 +106,35 @@ class JSONParserTest {
     void buildModelFromJSON_objectDiagram_empty() throws Exception {
         JsonObject objectDiagramJson = loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(objectDiagramJson, 123456789);
-
-        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
-        assertThat(umlDiagram.getAllModelElements()).isEmpty();
+        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(objectDiagramJson, 123456789));
     }
 
     @Test
     void buildModelFromJSON_useCaseDiagram_empty() throws Exception {
         JsonObject useCaseDiagramJson = loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(useCaseDiagramJson, 123456789);
-
-        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
-        assertThat(umlDiagram.getAllModelElements()).isEmpty();
+        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(useCaseDiagramJson, 123456789));
     }
 
     @Test
     void buildModelFromJSON_communicationDiagram_empty() throws Exception {
         JsonObject communicationDiagramJson = loadFileFromResources("test-data/model-submission/empty-communication-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789);
-
-        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
-        assertThat(umlDiagram.getAllModelElements()).isEmpty();
+        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789));
     }
 
     @Test
     void buildModelFromJSON_deploymentDiagram_empty() throws Exception {
         JsonObject deploymentDiagramJson = loadFileFromResources("test-data/model-submission/empty-deployment-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(deploymentDiagramJson, 123456789);
-
-        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
-        assertThat(umlDiagram.getAllModelElements()).isEmpty();
+        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(deploymentDiagramJson, 123456789));
     }
 
     @Test
     void buildModelFromJSON_componentDiagram_empty() throws Exception {
         JsonObject componentDiagramJson = loadFileFromResources("test-data/model-submission/empty-component-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(componentDiagramJson, 123456789);
-
-        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
-        assertThat(umlDiagram.getAllModelElements()).isEmpty();
+        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(componentDiagramJson, 123456789));
     }
 
     private JsonObject loadFileFromResources(String path) throws Exception {
@@ -257,7 +243,7 @@ class JSONParserTest {
         elements.add(objectNode);
 
         UMLActivity activity2 = new UMLActivity("Activity2", List.of(initialNode, finalNode, decisionNode, mergeNode, forkNode, joinNode, actionNode1, actionNode2, objectNode),
-                "cfcb7b17-0500-4654-89bb-a7082d5c3b6d");
+                "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9");
         elements.add(activity2);
 
         UMLControlFlow controlFlow1 = new UMLControlFlow(activity1, activity2, "fa0285e3-a3e6-4281-8c0e-223e5758106e");
