@@ -130,11 +130,6 @@ public class BambooService implements ContinuousIntegrationService {
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
-    @Override
-    public String getProjectKey(String buildPlanId) {
-        return getProjectKeyFromBuildPlanId(buildPlanId);
-    }
-
     /**
      * Configure the build plan with the given participation on the Bamboo.
      * For Bamboo to be set up correctly an empty commit needs to be made.
