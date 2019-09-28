@@ -235,7 +235,6 @@ public class ProgrammingExercise extends Exercise {
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
      */
-    @PrePersist
     public void generateAndSetProjectKey() {
         this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
