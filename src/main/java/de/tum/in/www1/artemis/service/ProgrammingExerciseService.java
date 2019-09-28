@@ -875,11 +875,9 @@ public class ProgrammingExerciseService {
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var targetProjectKey = newExercise.getProjectKey();
-        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var sourceProjectKey = versionControlService.get().getProjectKey(templateExercise.getTemplateRepositoryUrlAsUrl());
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
-        // The project key is always the first half of a repo slug
-        final var targetSlugPrefix = targetProjectKey.toLowerCase();
 
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
