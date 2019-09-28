@@ -60,7 +60,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
-    @Nullable
     @Column(name = "project_key", table = "programming_exercise_details")
     private String projectKey;
 
