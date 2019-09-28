@@ -99,12 +99,10 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
-                // @ts-ignore
-                findProgrammingExerciseByIdStub = stub(programmingExerciseService, 'find').returns(of({ body: programmingExercise }));
+                findProgrammingExerciseByIdStub = stub(programmingExerciseService, 'find').returns(of({ body: programmingExercise } as any));
 
                 routeSubject = new Subject();
-                // @ts-ignore
-                (route as MockActivatedRoute).setSubject(routeSubject);
+                (route as any).setSubject(routeSubject);
             });
     }));
 
@@ -117,8 +115,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -141,8 +138,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -167,8 +163,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         let orderedTests = _sortBy(testCases1, 'testName');
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -232,8 +227,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -274,8 +268,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
