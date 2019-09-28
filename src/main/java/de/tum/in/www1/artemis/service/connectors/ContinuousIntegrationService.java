@@ -28,13 +28,16 @@ public interface ContinuousIntegrationService {
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
 
     /**
-     * Copy the base build plan for the given user on the CI system.
+     * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
-     * @param templateBuildPlanId unique identifier for build plan on CI system
-     * @param username            username of user for whom to copy build plan
-     * @return unique identifier of the copied build plan
+     * @param sourceProjectKey The key of the source project, normally the key of the exercise -> courseShortName + exerciseShortName.
+     * @param sourcePlanName The name of the source plan
+     * @param targetProjectKey The key of the project the plan should get copied to
+     * @param targetProjectName The wanted name of the new project
+     * @param targetPlanName The wanted name of the new plan after copying it
+     * @return The key of the new build plan
      */
-    String copyBuildPlan(String templateBuildPlanId, String username);
+    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
@@ -154,4 +157,32 @@ public interface ContinuousIntegrationService {
      * @return true if the project exists, false otherwise
      */
     String checkIfProjectExists(String projectKey, String projectName);
+
+    /**
+     * Checks if a given build plan is deactivated, or enabled
+     *
+     * @param planId The ID of the build plan
+     * @return True, if the plan is enabled, false otherwise
+     */
+    boolean isBuildPlanEnabled(final String planId);
+
+    /**
+     * Enables the given build plan.
+     *
+     * @param planKey to identify the plan in the CI service.
+     * @return the message indicating the result of the enabling operation.
+     */
+    String enablePlan(String planKey);
+
+    /**
+     * Updates the configured repository for a given plan to the given Bamboo Server repository.
+     *
+     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
+     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
+     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
+     * @param repoProjectName       The key of the project that contains the repository.
+     * @param repoName              The lower level identifier of the repository.
+     * @return                      a message that indicates the result of the plan repository update.
+     */
+    String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
 }
