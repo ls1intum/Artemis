@@ -90,6 +90,14 @@ public interface ContinuousIntegrationService {
     String getPlanKey(Object requestBody) throws Exception;
 
     /**
+     * Get the original project key based on a given build plan ID.
+     *
+     * @param buildPlanId The ID of any build plan. This will always contain the key of the project on creation
+     * @return The original key of the project when it was created.
+     */
+    String getProjectKey(String buildPlanId);
+
+    /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
      * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
      *

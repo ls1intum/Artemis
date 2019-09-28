@@ -632,7 +632,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public String getProjectName(URL repositoryUrl) {
+    public String getProjectKey(URL repositoryUrl) {
         return getProjectKeyFromUrl(repositoryUrl);
     }
 

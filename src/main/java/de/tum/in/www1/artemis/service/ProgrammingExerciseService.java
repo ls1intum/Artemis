@@ -749,27 +749,44 @@ public class ProgrammingExerciseService {
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
-            if (programmingExercise.getTemplateBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
-            }
-            if (programmingExercise.getSolutionBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
-            }
-            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
-
+            String originalProjectKey = null;
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+                originalProjectKey = versionControlService.get().getProjectKey(templateRepositoryUrlAsUrl);
+                versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+                originalProjectKey = originalProjectKey == null ? versionControlService.get().getProjectKey(solutionRepositoryUrlAsUrl) : originalProjectKey;
+                versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+                originalProjectKey = originalProjectKey == null ? versionControlService.get().getProjectKey(testRepositoryUrlAsUrl) : originalProjectKey;
+                versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
-            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(templateBuildPlanId) : originalProjectKey;
+                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
+            }
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                originalProjectKey = originalProjectKey == null ? continuousIntegrationService.get().getProjectKey(solutionBuildPlanId) : originalProjectKey;
+                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
+            }
+
+            if (originalProjectKey != null) {
+                versionControlService.get().deleteProject(originalProjectKey);
+                continuousIntegrationService.get().deleteProject(originalProjectKey);
+            }
+            else {
+                throw new IllegalStateException("The VCS and CI projects of the exercise can't be deleted, because the original porject key could not be determined!");
+            }
         }
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();

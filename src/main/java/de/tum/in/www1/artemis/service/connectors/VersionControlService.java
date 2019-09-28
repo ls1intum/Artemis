@@ -93,7 +93,7 @@ public interface VersionControlService {
      * @param repositoryUrl The repository url
      * @return The project name
      */
-    String getProjectName(URL repositoryUrl);
+    String getProjectKey(URL repositoryUrl);
 
     /**
      * Gets the repository name of a given repository url
