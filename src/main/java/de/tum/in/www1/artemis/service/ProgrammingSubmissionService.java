@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -182,11 +183,16 @@ public class ProgrammingSubmissionService {
      * Trigger the CI of all student participations of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      *
+     * The method is async because it would timeout a calling resource method.
+     *
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
+    @Async
     @Transactional
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
+        // Async can't access the authentication object. We need to do any security checks before this point.
+        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
@@ -195,6 +201,8 @@ public class ProgrammingSubmissionService {
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
+        // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
+        programmingExerciseService.setTestCasesChanged(programmingExercise.getId(), false);
     }
 
     /**

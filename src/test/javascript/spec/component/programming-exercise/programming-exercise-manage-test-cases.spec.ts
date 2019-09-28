@@ -1,7 +1,5 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { MockComponent } from 'ng-mocks';
-import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import * as sinonChai from 'sinon-chai';
 import { sortBy as _sortBy } from 'lodash';
@@ -11,20 +9,24 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import * as chai from 'chai';
-import { EditableField, ProgrammingExerciseManageTestCasesComponent, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
+import {
+    EditableField,
+    ProgrammingExerciseManageTestCasesComponent,
+    ProgrammingExerciseService,
+    ProgrammingExerciseTestCaseService,
+    ProgrammingExerciseTestCaseStateDTO,
+} from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockActivatedRoute, MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
-import { ArtemisTableModule } from 'app/components/table/table.module';
-import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ArtemisCoreModule } from 'app/core';
+import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
-import { elementIsDisabled, expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
+import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
+import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,11 +40,17 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     let route: ActivatedRoute;
     let testCaseService: ProgrammingExerciseTestCaseService;
+    let programmingExerciseService: ProgrammingExerciseService;
+    let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
+    let testCasesChangedStub: SinonStub;
+    let getExerciseTestCaseStateStub: SinonStub;
 
     let routeSubject: Subject<Params>;
+    let testCasesChangedSubject: Subject<boolean>;
+    let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
 
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
@@ -50,6 +58,10 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const saveTestCasesButton = '#save-test-cases-button';
     const resetWeightsButton = '#reset-weights-button';
     const triggerSubmissionRunButton = '#trigger-all-button > button';
+    const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
+    const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
+    const testCasesUpdated = '#test-case-status-updated';
+    const testCasesNoUpdated = '#test-case-status-no-updated';
 
     const exerciseId = 1;
     const testCases1 = [
@@ -63,6 +75,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
         { id: 6, testName: 'otherTest', active: true, weight: 2 },
     ] as ProgrammingExerciseTestCase[];
 
+    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean) => ({
+        released,
+        hasStudentResult,
+        testCasesChanged,
+    });
+
     const getSaveButton = () => {
         return getElement(debugElement, saveTestCasesButton);
     };
@@ -75,11 +93,29 @@ describe('ProgrammingExerciseManageTestCases', () => {
         return getElement(debugElement, triggerSubmissionRunButton);
     };
 
+    const getUnsavedChangesBadge = () => {
+        return getElement(debugElement, testCasesUnsavedChanges);
+    };
+
+    const getNoUnsavedChangesBadge = () => {
+        return getElement(debugElement, testCasesNoUnsavedChanges);
+    };
+
+    const getUpdatedTestCaseBadge = () => {
+        return getElement(debugElement, testCasesUpdated);
+    };
+
+    const getNoUpdatedTestCaseBadge = () => {
+        return getElement(debugElement, testCasesNoUpdated);
+    };
+
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
                 JhiAlertService,
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -95,13 +131,22 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
+                programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+                testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
+                getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
 
                 routeSubject = new Subject();
                 // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
+                getExerciseTestCaseStateSubject = new Subject();
+
+                testCasesChangedSubject = new Subject<boolean>();
+                testCasesChangedStub.returns(testCasesChangedSubject);
+                getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
             });
     }));
 
@@ -112,6 +157,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
 
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
@@ -136,6 +182,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
 
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
@@ -160,6 +207,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
 
         let orderedTests = _sortBy(testCases1, 'testName');
 
@@ -207,8 +255,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
+        testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
         expect(comp.hasUpdatedTestCases).to.be.true;
+
+        fixture.detectChanges();
+
         triggerButton = getTriggerButton();
         expectElementToBeEnabled(triggerButton);
 
@@ -225,6 +277,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
@@ -244,6 +297,10 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
 
+        // The UI should now show that there are unsaved changes.
+        expect(getUnsavedChangesBadge()).to.exist;
+        expect(getNoUnsavedChangesBadge()).not.to.exist;
+
         // Save weight.
         updateTestCasesStub.returns(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTestCasesButton));
@@ -261,4 +318,72 @@ describe('ProgrammingExerciseManageTestCases', () => {
         await new Promise(resolve => setTimeout(resolve));
         fixture.destroy();
     });
+
+    it('should show the updatedTests badge when the exercise is released and has student results', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId });
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+
+        fixture.detectChanges();
+
+        expect(getNoUnsavedChangesBadge()).to.exist;
+        expect(getNoUpdatedTestCaseBadge()).to.exist;
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should not show the updatedTests badge when the exercise is released and has no student results', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId });
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, false, false) });
+
+        fixture.detectChanges();
+
+        expect(getNoUnsavedChangesBadge()).to.exist;
+        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId });
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(false, true, false) });
+
+        fixture.detectChanges();
+
+        expect(getNoUnsavedChangesBadge()).to.exist;
+        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should show that there are updated test cases if the getExerciseTestCaseState call returns this info', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId });
+        // @ts-ignore
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, true) });
+
+        fixture.detectChanges();
+
+        expect(getUpdatedTestCaseBadge()).to.exist;
+        expect(getNoUpdatedTestCaseBadge()).not.to.exist;
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
 });
