@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -111,9 +112,31 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.pullChanges(participationId);
     }
 
+    /**
+     * Commit and push the changes to the remote VCS repo.
+     * Won't allow a commit if the repository is locked!
+     *
+     * @param participationId identifier for the repository.
+     * @return ok (200) if the push was successful, notFound (404) if the participation does not exist and forbidden (403) if the user does not have permissions to access the participation OR the buildAndTestAfterDueDate is set and the repository is now locked.
+     */
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
+        Participation participation = participationService.findParticipation(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            return notFound();
+        }
+        boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        if (!hasPermissions) {
+            return forbidden();
+        }
+        ProgrammingExercise programmingExercise = ((ProgrammingExerciseParticipation) participation).getProgrammingExercise();
+        // When the buildAndTestAfterDueDate is set, the student can't commit into the repository anymore.
+        // The student does not have permissions to push into the remote repo, but as we use the artemis credentials for pushing to the remote here, we have to check manually.
+        boolean repositoryIsLocked = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+        if (repositoryIsLocked) {
+            return forbidden();
+        }
         return super.commitChanges(participationId);
     }
 
