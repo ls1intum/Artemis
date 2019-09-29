@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
+import java.time.ZonedDateTime;
+
 /**
  * This DTO contains information that is valuable to determine the test case state of the programming exercise:
  * - isReleased: has the programming exercise's release date passed?
  * - hasStudentResult: is there at least one student submission with a result?
  * - testCasesChanged: have the test cases been changed after the exercise was released and a student result existed?
+ * - buildAndTestStudentSubmissionsAfterDueDate: Should the student submissions be triggered on this date after the due date to create rated results?
  */
 public class ProgrammingExerciseTestCaseStateDTO {
 
@@ -13,6 +16,8 @@ public class ProgrammingExerciseTestCaseStateDTO {
     private boolean hasStudentResult;
 
     private boolean testCasesChanged;
+
+    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     public boolean isReleased() {
         return released;
@@ -38,6 +43,18 @@ public class ProgrammingExerciseTestCaseStateDTO {
         this.testCasesChanged = testCasesChanged;
     }
 
+    public void setHasStudentResult(boolean hasStudentResult) {
+        this.hasStudentResult = hasStudentResult;
+    }
+
+    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
+        return buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    public void setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
     public ProgrammingExerciseTestCaseStateDTO released(boolean releasedValue) {
         setReleased(releasedValue);
         return this;
@@ -53,4 +70,8 @@ public class ProgrammingExerciseTestCaseStateDTO {
         return this;
     }
 
+    public ProgrammingExerciseTestCaseStateDTO buildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
+        return this;
+    }
 }
