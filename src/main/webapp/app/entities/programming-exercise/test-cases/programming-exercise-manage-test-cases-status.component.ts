@@ -19,7 +19,7 @@ import { Component, Input } from '@angular/core';
                     <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUnsavedChanges"></span>
                 </div>
             </ng-template>
-            <ng-container *ngIf="exerciseIsReleasedAndHasResults">
+            <ng-container *ngIf="exerciseIsReleasedAndHasResults; else notReleased">
                 <div id="test-case-status-updated" class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else noUpdatedTestCases">
                     <fa-icon
                         class="ml-2 text-white"
@@ -35,6 +35,16 @@ import { Component, Input } from '@angular/core';
                     </div>
                 </ng-template>
             </ng-container>
+            <ng-template #notReleased>
+                <div id="test-case-status-not-released" class="d-flex align-items-center badge badge-secondary">
+                    <fa-icon
+                        class="ml-2 text-white"
+                        icon="question-circle"
+                        [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.notReleasedTooltip' | translate"
+                    ></fa-icon>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.notReleased"></span>
+                </div>
+            </ng-template>
         </div>
     `,
 })
