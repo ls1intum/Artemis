@@ -25,7 +25,7 @@
                 "submitSuccessful": "Your assessment was submitted successfully!",
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "saveFailed": "Saving your assessment failed!",
-                "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
+                "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
                 "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
