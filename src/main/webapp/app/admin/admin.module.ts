@@ -11,7 +11,6 @@ import {
     JhiTrackerComponent,
     LogsComponent,
     NotificationMgmtComponent,
-    NotificationMgmtDeleteDialogComponent,
     NotificationMgmtDetailComponent,
     NotificationMgmtUpdateComponent,
     UserManagementComponent,
@@ -38,7 +37,6 @@ const ENTITY_STATES = [...adminState];
         UserManagementUpdateComponent,
         NotificationMgmtComponent,
         NotificationMgmtDetailComponent,
-        NotificationMgmtDeleteDialogComponent,
         NotificationMgmtUpdateComponent,
         LogsComponent,
         JhiConfigurationComponent,
@@ -47,6 +45,6 @@ const ENTITY_STATES = [...adminState];
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
     ],
-    entryComponents: [NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
+    entryComponents: [JhiHealthModalComponent],
 })
 export class ArtemisAdminModule {}

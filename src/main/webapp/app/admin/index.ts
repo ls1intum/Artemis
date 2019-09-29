@@ -25,7 +25,6 @@ export * from './user-management/user-management.component';
 export * from './user-management/user-management.route';
 export * from './notification-management/notification-management-update.component';
 export * from './notification-management/notification-management-detail.component';
-export * from './notification-management/notification-management-delete-dialog.component';
 export * from './notification-management/notification-management.component';
 export * from './notification-management/notification-management.route';
 export * from './admin.route';
