@@ -28,6 +28,7 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -508,13 +509,10 @@ public class BambooService implements ContinuousIntegrationService {
             // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
 
-
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
-                // In this case we know the submission time, so we use it for determining the rated state.
-                setResultRated(result, programmingExercise, programmingSubmission.getType(), programmingSubmission.getSubmissionDate());
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -527,42 +525,18 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setSubmitted(true);
                 programmingSubmission.setType(SubmissionType.OTHER);
                 programmingSubmission.setCommitHash(commitHash);
+                // In this case we don't know the submission time, so we use the result completion time as a fallback.
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
-                // In this case we don't know the submission time, so we use the result completion time for determining the rated state.
-                setResultRated(result, programmingExercise, SubmissionType.OTHER, result.getCompletionDate());
             }
+            setResultRated(result, participation, programmingSubmission);
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
-            resultRepository.save(result);
-            return result;
+            return resultRepository.save(result);
         } catch (Exception e) {
             log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
-        }
-    }
-
-    /**
-     * A result is rated if:
-     * - there is no buildAndTestAfterDueDate set and the due date has not passed OR
-     * - there is no buildAndTestAfterDueDate set and and the submission type is instructor / test
-     * - there is a buildAndTestAfterDueDate set and the buildAndTestAfterDueDate has passed and the submission type is instructor / test
-     *
-     * @param result the rest for which to set the rated attribute (mutates the original object!)
-     * @param programmingExercise to which the result belongs
-     * @param submissionType that determines if the result is rated or not (instructor / test have a special role here)
-     * @param resultReferenceDate that determines for programming exercises without a buildAndTestAfterDueDate if the submission was made after the due date.
-     */
-    private void setResultRated(Result result, ProgrammingExercise programmingExercise, SubmissionType submissionType, ZonedDateTime resultReferenceDate) {
-        // If the buildAndTestAfterDueDate is set, a result can only be rated if the result comes in after the date and was triggered by an instructor.
-        if(programmingExercise.getDueDate() != null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
-            boolean hasBuildAndTestDatePassed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now());
-            boolean isInstructorResult = submissionType == SubmissionType.INSTRUCTOR || submissionType == SubmissionType.TEST;
-            result.setRated(hasBuildAndTestDatePassed && isInstructorResult);
-        } else {
-            // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
-            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), resultReferenceDate);
         }
     }
 
