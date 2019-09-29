@@ -28,7 +28,6 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -544,6 +543,17 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    /**
+     * A result is rated if:
+     * - there is no buildAndTestAfterDueDate set and the due date has not passed OR
+     * - there is no buildAndTestAfterDueDate set and and the submission type is instructor / test
+     * - there is a buildAndTestAfterDueDate set and the buildAndTestAfterDueDate has passed and the submission type is instructor / test
+     *
+     * @param result the rest for which to set the rated attribute (mutates the original object!)
+     * @param programmingExercise to which the result belongs
+     * @param submissionType that determines if the result is rated or not (instructor / test have a special role here)
+     * @param resultReferenceDate that determines for programming exercises without a buildAndTestAfterDueDate if the submission was made after the due date.
+     */
     private void setResultRated(Result result, ProgrammingExercise programmingExercise, SubmissionType submissionType, ZonedDateTime resultReferenceDate) {
         // If the buildAndTestAfterDueDate is set, a result can only be rated if the result comes in after the date and was triggered by an instructor.
         if(programmingExercise.getDueDate() != null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
