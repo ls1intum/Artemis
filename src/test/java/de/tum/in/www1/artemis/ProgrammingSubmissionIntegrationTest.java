@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +12,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -24,13 +25,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -48,6 +50,12 @@ public class ProgrammingSubmissionIntegrationTest {
 
     @MockBean
     GitService gitServiceMock;
+
+    @MockBean
+    GroupNotificationService groupNotificationService;
+
+    @MockBean
+    WebsocketMessagingService websocketMessagingService;
 
     @Autowired
     DatabaseUtilService database;
@@ -70,6 +78,9 @@ public class ProgrammingSubmissionIntegrationTest {
 
         when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        database.addParticipationWithResultForExercise(exercise, "student1");
+        exercise.setTestCasesChanged(true);
+        exerciseRepository.save(exercise);
     }
 
     @AfterEach
@@ -122,6 +133,7 @@ public class ProgrammingSubmissionIntegrationTest {
     }
 
     @Test
+    @Timeout(5)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExercise_Instructor() throws Exception {
         String login1 = "student1";
@@ -130,10 +142,14 @@ public class ProgrammingSubmissionIntegrationTest {
         database.addStudentParticipationForProgrammingExercise(exercise, login1);
         database.addStudentParticipationForProgrammingExercise(exercise, login2);
         database.addStudentParticipationForProgrammingExercise(exercise, login3);
+        // Set test cases changed to true; after the build run it should be false);
+        exercise.setTestCasesChanged(true);
+        exerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
+        await().until(() -> submissionRepository.count() == 3);
+
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(3);
 
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
@@ -148,6 +164,12 @@ public class ProgrammingSubmissionIntegrationTest {
             // Check that the CI build was triggered for the given submission.
             verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         }
+
+        SecurityUtils.setAuthorizationObject();
+        ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
+        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isFalse();
+        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }
 
     @Test
