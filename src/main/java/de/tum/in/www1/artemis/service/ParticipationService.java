@@ -745,7 +745,8 @@ public class ParticipationService {
                             // in quizzes we take all rated results, because we only have one! (independent of later checks)
                         }
                         else if (participation.getExercise().getDueDate() != null) {
-                            if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                            if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise ||
+                                participation.getExercise() instanceof FileUploadExercise) {
                                 if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
                                         && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
                                     // Filter out late results using the submission date, because in this exercise types, the
