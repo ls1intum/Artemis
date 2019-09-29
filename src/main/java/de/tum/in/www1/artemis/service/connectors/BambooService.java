@@ -530,7 +530,6 @@ public class BambooService implements ContinuousIntegrationService {
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
             }
-            setResultRated(result, participation, programmingSubmission);
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
             return resultRepository.save(result);
