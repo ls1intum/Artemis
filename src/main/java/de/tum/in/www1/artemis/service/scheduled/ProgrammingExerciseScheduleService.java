@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -29,14 +27,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService, Optional<VersionControlService> versionControlService) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.versionControlService = versionControlService;
     }
 
     @PostConstruct

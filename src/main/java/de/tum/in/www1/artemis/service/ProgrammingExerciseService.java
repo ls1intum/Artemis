@@ -595,7 +595,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Find a programming exercise by its id.
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

@@ -346,6 +346,7 @@ public class BitbucketService implements VersionControlService {
      * @param repositorySlug The repository's slug.
      * @param username       The user whom to give write permissions.
      */
+    // TODO: Refactor to also use setStudentRepositoryPermission.
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -361,16 +362,21 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws BitbucketException {
+        setStudentRepositoryPermission(repositoryUrl, username, VersionControlRepositoryPermission.READ_ONLY);
+    }
+
+    private void setStudentRepositoryPermission(URL repositoryUrl, String username, VersionControlRepositoryPermission repositoryPermission) throws BitbucketException {
+        String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
         String projectKey = getProjectName(repositoryUrl);
         String repositorySlug = getRepositoryName(repositoryUrl);
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(baseUrl + username + "&permission=REPO_READ", HttpMethod.PUT, entity, Map.class);
+            restTemplate.exchange(baseUrl + username + "&permission=REPO_" + permissionString, HttpMethod.PUT, entity, Map.class);
         }
         catch (Exception e) {
-            log.error("Could not give read only permissions", e);
+            log.error("Could not give " + repositoryPermission + " permissions", e);
             throw new BitbucketException("Error while giving repository permissions");
         }
     }
