@@ -323,6 +323,7 @@ export class GuidedTourService {
             attributes: true,
             childList: true,
             characterData: true,
+            subtree: true,
         });
     }
 
