@@ -42,7 +42,7 @@ export class ExerciseScoresRepoExportComponent {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        const studentIdList = this.studentIdList !== undefined ? this.studentIdList.split(',').map(e => e.trim()) : ['ALL'];
+        const studentIdList = this.studentIdList !== undefined && this.studentIdList !== '' ? this.studentIdList.split(',').map(e => e.trim()) : ['ALL'];
         this.exerciseService
             .exportRepos(
                 exerciseId,
