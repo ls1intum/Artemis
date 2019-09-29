@@ -1,5 +1,6 @@
-::ng-deep {
-    .test-case--inactive {
-        color: grey;
-    }
+.test-case--inactive {
+    color: grey;
+}
+.run-after-due-date-disabled {
+    max-width: 200px;
 }
