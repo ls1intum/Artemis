@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -91,21 +89,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                // We need to reload the exercise here, because since the scheduling there might have been new participations.
-                ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipations(programmingExerciseId);
-                log.info("Invoking scheduled task programming exercise with id " + programmingExerciseId + ".");
-                versionControlService.ifPresent(v -> {
-                    for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
-                        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-                        try {
-                            v.setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                                    programmingExerciseStudentParticipation.getStudent().getLogin());
-                        }
-                        catch (Exception e) {
-                            log.error("...");
-                        }
-                    }
-                });
+                programmingExerciseService.removeWritePermissionsFromAllStudentRepositories(programmingExerciseId);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");

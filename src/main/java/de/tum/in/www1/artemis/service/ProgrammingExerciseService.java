@@ -937,6 +937,32 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Remove the write permissions for all students for their programming exercise repository.
+     * They will still be able to read the code, but won't be able to change it.
+     *
+     * @param programmingExerciseId     ProgrammingExercise id.
+     * @throws EntityNotFoundException  if the programming exercise can't be found.
+     */
+    public void removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
+        log.info("Invoking scheduled task programming exercise with id " + programmingExerciseId + ".");
+
+        ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
+        versionControlService.ifPresent(v -> {
+            for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
+                ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+                try {
+                    v.setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
+                            programmingExerciseStudentParticipation.getStudent().getLogin());
+                }
+                catch (Exception e) {
+                    log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
+                            + studentParticipation.getId());
+                }
+            }
+        });
+    }
+
+    /**
      * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
      * The remaining contents stay the same, especially the weights.
      *
