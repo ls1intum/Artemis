@@ -28,7 +28,6 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -509,13 +508,11 @@ public class BambooService implements ContinuousIntegrationService {
             // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
 
-
-            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
                 // In this case we know the submission time, so we use it for determining the rated state.
-                setResultRated(result, programmingExercise, programmingSubmission.getType(), programmingSubmission.getSubmissionDate());
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission);
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -532,7 +529,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
                 // In this case we don't know the submission time, so we use the result completion time for determining the rated state.
-                setResultRated(result, programmingExercise, SubmissionType.OTHER, result.getCompletionDate());
+                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), result.getCompletionDate());
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
@@ -541,18 +538,6 @@ public class BambooService implements ContinuousIntegrationService {
         } catch (Exception e) {
             log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
-        }
-    }
-
-    private void setResultRated(Result result, ProgrammingExercise programmingExercise, SubmissionType submissionType, ZonedDateTime resultReferenceDate) {
-        // If the buildAndTestAfterDueDate is set, a result can only be rated if the result comes in after the date and was triggered by an instructor.
-        if(programmingExercise.getDueDate() != null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
-            boolean hasBuildAndTestDatePassed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now());
-            boolean isInstructorResult = submissionType == SubmissionType.INSTRUCTOR || submissionType == SubmissionType.TEST;
-            result.setRated(hasBuildAndTestDatePassed && isInstructorResult);
-        } else {
-            // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
-            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), resultReferenceDate);
         }
     }
 
