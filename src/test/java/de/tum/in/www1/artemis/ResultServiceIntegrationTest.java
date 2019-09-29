@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -103,6 +105,12 @@ public class ResultServiceIntegrationTest {
         feedbacks.add(new Feedback().text("test2").positive(true));
         feedbacks.add(new Feedback().text("test4").positive(true));
         result.successful(false).feedbacks(feedbacks).score(20L);
+        // TODO: This should be refactoring into the ModelUtilService.
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()).setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+        result.setSubmission(programmingSubmission);
+        result.setParticipation(programmingExerciseStudentParticipation);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1).id(1L));
