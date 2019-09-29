@@ -97,7 +97,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }
-                if (this.submission.submitted && this.result.completionDate) {
+                if (this.submission.submitted && this.result && this.result.completionDate) {
                     this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
                     this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
