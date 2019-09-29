@@ -60,7 +60,15 @@
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
-                            <button type="button" (click)="deleteUser(user)" class="btn btn-danger btn-sm" [disabled]="currentAccount.login === user.login">
+                            <button
+                                type="button"
+                                jhiDeleteDialog
+                                [entityTitle]="user.login"
+                                deleteQuestion="userManagement.delete.question"
+                                (delete)="deleteUser(user.login)"
+                                class="btn btn-danger btn-sm"
+                                [disabled]="currentAccount.login === user.login"
+                            >
                                 <fa-icon [icon]="'times'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>

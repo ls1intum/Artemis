@@ -150,20 +150,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens a delete dialog to delete a user
-     * @param user that should be deleted
+     * Deletes a user
+     * @param login if the user that should be deleted
      */
-    deleteUser(user: User) {
-        const modalRef = this.modalService.open(UserManagementDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.user = user;
-        modalRef.result.then(
-            result => {
-                // Left blank intentionally, nothing to do here
-            },
-            reason => {
-                // Left blank intentionally, nothing to do here
-            },
-        );
+    deleteUser(login: string) {
+        this.userService.delete(login).subscribe(() => {
+            this.eventManager.broadcast({
+                name: 'userListModification',
+                content: 'Deleted a user',
+            });
+        });
     }
 
     private onSuccess(data: User[], headers: HttpHeaders) {
