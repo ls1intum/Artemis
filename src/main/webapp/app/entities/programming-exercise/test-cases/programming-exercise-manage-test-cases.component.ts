@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,6 +9,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
+import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -18,22 +19,27 @@ export enum EditableField {
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
     exerciseId: number;
+    courseId: number;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
+    testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
 
     testCasesValue: ProgrammingExerciseTestCase[] = [];
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
+    buildAfterDueDateActive: boolean;
     isReleasedAndHasResults: boolean;
     showInactiveValue = false;
     isSaving = false;
+    isLoading = false;
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
 
@@ -59,6 +65,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     constructor(
         private testCaseService: ProgrammingExerciseTestCaseService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
         private alertService: JhiAlertService,
         private translateService: TranslateService,
@@ -72,16 +79,33 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
+            this.isLoading = true;
             this.exerciseId = Number(params['exerciseId']);
+            this.courseId = Number(params['courseId']);
             this.editing = null;
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
-            this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
-                this.testCases = testCases;
-            });
+            if (this.testCaseChangedSubscription) {
+                this.testCaseChangedSubscription.unsubscribe();
+            }
 
-            this.checkIfExerciseIsReleasedAndHasResults();
+            this.getExerciseTestCaseState()
+                .pipe(
+                    tap(releaseState => {
+                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                        this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
+                    }),
+                    catchError(() => of(null)),
+                )
+                .subscribe(() => {
+                    // This subscription e.g. adds new new tests to the table that were just created.
+                    this.subscribeForTestCaseUpdates();
+                    // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
+                    this.subscribeForExerciseTestCasesChangedUpdates();
+                    this.isLoading = false;
+                });
         });
     }
 
@@ -89,22 +113,43 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
+        }
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
     }
 
+    private subscribeForTestCaseUpdates() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+        this.testCaseSubscription = this.testCaseService
+            .subscribeForTestCases(this.exerciseId)
+            .pipe(
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    this.testCases = testCases;
+                }),
+            )
+            .subscribe();
+    }
+
+    private subscribeForExerciseTestCasesChangedUpdates() {
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
+        }
+        this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
+            .getTestCaseState(this.exerciseId)
+            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
+            .subscribe();
+    }
+
     /**
      * Checks if the exercise is released and has at least one student result.
      */
-    checkIfExerciseIsReleasedAndHasResults() {
-        return this.programmingExerciseService
-            .isReleasedAndHasResults(this.exerciseId)
-            .pipe(
-                map(({ body }) => body || false),
-                tap(isReleasedAndHasResults => (this.isReleasedAndHasResults = isReleasedAndHasResults)),
-            )
-            .subscribe();
+    getExerciseTestCaseState() {
+        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(this.exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
@@ -176,9 +221,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     } else {
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
-
-                    // If at least one test case was updated, a submission run should be triggered.
-                    this.hasUpdatedTestCases = updatedTestCases.length > 0;
                 }),
                 catchError((err: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
@@ -206,6 +248,13 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     resetWeights() {
         this.editing = null;
         this.isSaving = true;
+        const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
+        // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
+        if (!existsUnchangedWithCustomWeight) {
+            this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
+            return;
+        }
+
         this.testCaseService
             .resetWeights(this.exerciseId)
             .pipe(
@@ -229,10 +278,6 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     updateTestCaseFilter = () => {
         this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
-    };
-
-    onBuildTriggered = () => {
-        this.hasUpdatedTestCases = false;
     };
 
     /**
