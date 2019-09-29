@@ -73,8 +73,11 @@
                             <button
                                 type="submit"
                                 (click)="openDeleteFileUploadExercisePopup(fileUploadExercise.id)"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                jhiDeleteDialog
+                                [entityTitle]="fileUploadExercise.title"
+                                deleteQuestion="artemisApp.exercise.delete.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
                                 class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon icon="times"></fa-icon>
