@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { fromEvent, Subscription } from 'rxjs';
+import { from, fromEvent, Subscription } from 'rxjs';
 
 import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
@@ -19,7 +19,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public topOfPageAdjustment = 0;
     // Sets the width of all tour step elements.
     // TODO automatically determine optimal width of tourstep
-    public tourStepWidth = 600;
+    public tourStepWidth = 550;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .
@@ -36,6 +36,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
+
+    private observer: MutationObserver;
 
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
@@ -100,6 +102,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
+        }
+        if (this.observer) {
+            this.observer.disconnect();
         }
     }
 

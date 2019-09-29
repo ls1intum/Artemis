@@ -121,8 +121,8 @@ jhi-guided-tour {
 
             &.video-tour {
                 @media (max-width: 992px) {
-                    width: initial;
-                    left: initial;
+                    width: 100%;
+                    left: 0;
                     top: 0;
                     transform: none;
                 }
@@ -190,7 +190,8 @@ jhi-guided-tour {
 
                 div > .btn,
                 iframe,
-                img {
+                img,
+                a {
                     display: block;
                     margin-top: 10px;
                     margin-left: auto;

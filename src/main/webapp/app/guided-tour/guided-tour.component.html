@@ -28,9 +28,6 @@
                 <div *ngIf="currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
-                <div *ngIf="currentTourStep.videoUrl">
-                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
-                </div>
                 <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a
                         [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
@@ -64,6 +61,17 @@
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
                     </div>
+                </div>
+                <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="video"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <span jhiTranslate="tour.videoHint.text"></span>
+                    </div>
+                </div>
+                <div *ngIf="currentTourStep.videoUrl">
+                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="tour-block__buttons">

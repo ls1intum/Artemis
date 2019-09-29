@@ -3,20 +3,25 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Install required tools",
-                "content": "Before we start with the exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
+                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
                 "java": {
-                    "content": "Please install Java JDK (1.8.212 or 11.0.3 or 12.0.1). Make sure to choose JDK and NOT JRE.",
+                    "content": "Please download and install Java JDK (1.8.212 or 11.0.3 or 12.0.1). Make sure to choose JDK and NOT JRE.",
                     "hint": "Please note: if you use a Linux system, you must use the JDK 11.0.3 or 12.0.1 because the JDK 1.8.x does not support specific features on Linux that we need in later exercises.",
                     "linkText": "Download Java JDK"
                 },
                 "eclipse": {
-                    "content": "Please install Eclipse IDE for Java Developers (2019‐03 or later)",
+                    "content": "Please download and install Eclipse IDE for Java Developers (2019‐03 or later)",
                     "linkText": "Download Eclipse IDE"
                 },
                 "sourceTree": {
-                    "content": "Please install SourceTree with git (3.1.2 or later for macOS or Windows)",
+                    "content": "Please download and install SourceTree with git (3.1.2 or later for macOS or Windows).",
                     "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree",
                     "linkText": "Download SourceTree"
+                },
+                "sourceTreeSetup": {
+                    "headline": "Setup SourceTree",
+                    "content": "Watch the following video and follow the steps to setup SourceTree. Afterwards we are done with the setup and can have a look at the course page and its content.",
+                    "hint": "Copy and insert https://repobruegge.in.tum.de as your base URL"
                 }
             },
             "exercises": {
@@ -29,11 +34,11 @@
             },
             "currentExercise": {
                 "headline": "Current Exercise",
-                "content": "In this tutorial we will have a look at this exercise."
+                "content": "In this tutorial we will have a look at the 'Hello World' exercise."
             },
             "exerciseType": {
                 "headline": "Exercise type",
-                "content": "The exercise type can be distinguished by the exercise icon."
+                "content": "The exercise type can be distinguished by the exercise icon. This example here is a programming exercise."
             },
             "exerciseTags": {
                 "headline": "Exercise tags",
@@ -61,7 +66,7 @@
             },
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
-                "content": "Watch the following video to understand how to clone a git repository in SourceTree. While watching the video, follow the steps on your computer side-by-side"
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree."
             },
             "inspectSourceTree": {
                 "headline": "Inspect SourceTree",

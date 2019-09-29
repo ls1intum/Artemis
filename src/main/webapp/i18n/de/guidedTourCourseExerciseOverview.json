@@ -3,17 +3,25 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
-                "content": "Bevor wir mit der Aufgabe anfangen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
                 "java": {
                     "content": "Installiere Java JDK (1.8.212 oder 11.0.3 oder 12.0.1). Stelle dabei sicher, dass du JDK und JRE auswählst.",
-                    "hint": "Hinweis: Wenn du ein Linux System verwendest, dann musst du JDK 11.0.3 oder 12.0.1 nutzen, da JDK 1.8.x einige Funktionen nicht unterstützt, die wir später in unseren Aufgaben benötigen."
+                    "hint": "Hinweis: Wenn du ein Linux System verwendest, dann musst du JDK 11.0.3 oder 12.0.1 nutzen, da JDK 1.8.x einige Funktionen nicht unterstützt, die wir später in unseren Aufgaben benötigen.",
+                    "linkText": "Lade Java JDK herunter"
                 },
                 "eclipse": {
-                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐03 oder später)"
+                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐03 oder später)",
+                    "linkText": "Lade Eclipse IDE herunter"
                 },
                 "sourceTree": {
                     "content": "Installiere SourceTree mit git (3.1.2 oder später für macOS oder Windows)",
-                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt."
+                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt.",
+                    "linkText": "Lade SourceTree herunter"
+                },
+                "sourceTreeSetup": {
+                    "headline": "Konfiguriere SourceTree",
+                    "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
+                    "hint": "Kopiere und füge https://repobruegge.in.tum.de als URL ein."
                 }
             },
             "exercises": {
@@ -26,11 +34,11 @@
             },
             "currentExercise": {
                 "headline": "Aktuelle Aufgabe",
-                "content": "In diesem Tutorial schauen wir uns diese Aufgabe an."
+                "content": "In diesem Tutorial schauen wir uns die Aufgabe 'Hello World' an."
             },
             "exerciseType": {
                 "headline": "Aufgabentyp",
-                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons."
+                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons. Hier handelt es sich um eine Programmieraufgabe."
             },
             "exerciseTags": {
                 "headline": "Aufgabenkategorien",
@@ -38,7 +46,7 @@
             },
             "courseInformation": {
                 "headline": "Kursinformation",
-                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf"
+                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf."
             },
             "upcomingDeadlines": {
                 "headline": "Bevorstehende Termine",
@@ -58,7 +66,7 @@
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont."
             },
             "inspectSourceTree": {
                 "headline": "Lerne SourceTree kennen",
@@ -77,8 +85,8 @@
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed."
             },
             "reviewResult": {
-                "headline": "Überprüfe deine Ergebnisse",
-                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, committed und gepushed hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle um deine Lösung automatisch zu bewerten. Wenn du nun auf die Aufgabenkachel klickst, dann gelangst du auf die Detailseite der Aufgabe, in der du deine Testfälle überprüfen kannst."
+                "headline": "Überprüfe dein Ergebnis",
+                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, eingereicht hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle um deine Lösung automatisch zu bewerten. Klicke nun auf Aufgabenkachel, um auf die Detailseite der Aufgabe gelangen, in der du deine Testfälle überprüfen kannst."
             }
         }
     }

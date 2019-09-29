@@ -23,6 +23,9 @@
         "waitHint": {
             "text": "Bitte warte bis der nächste Schritt fertig geladen ist."
         },
+        "videoHint": {
+            "text": "Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
+        },
         "stepAlreadyExecutedHint": {
             "text": "Dieser Tutorialschritt wurde übersprungen, da er bereits durchgeführt wurde. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
         }

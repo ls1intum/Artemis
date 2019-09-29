@@ -297,11 +297,11 @@ export class GuidedTourService {
                 break;
             }
             case UserInteractionEvent.CLICK: {
-                from(this.observeDomMutations(targetNode, userInteraction))
-                    .pipe(take(1))
-                    .subscribe(() => {
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
                         this.enableNextStepClick();
                     });
+                });
                 break;
             }
             case UserInteractionEvent.ACE_EDITOR: {
