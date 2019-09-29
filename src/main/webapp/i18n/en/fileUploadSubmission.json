@@ -16,7 +16,7 @@
                 "title": "File Upload Submission"
             },
             "filePath": "File Path",
-            "feedbackResult": "You received {{ credits }} credits",
+            "feedbackResult": "You received {{ credits }} credit(s)",
             "feedbackResultDetail": "with the following feedback: {{ detailText }}",
             "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
             "file": "File",
