@@ -1,4 +1,5 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import * as moment from 'moment';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as sinonChai from 'sinon-chai';
@@ -41,12 +42,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
     let route: ActivatedRoute;
     let testCaseService: ProgrammingExerciseTestCaseService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
+    let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
     let testCasesChangedSubject: Subject<boolean>;
@@ -69,16 +70,19 @@ describe('ProgrammingExerciseManageTestCases', () => {
         { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
         { id: 3, testName: 'otherTest', active: false, weight: 1, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
-    const testCases2 = [
-        { id: 4, testName: 'testBubbleSort', active: false, weight: 2 },
-        { id: 5, testName: 'testMergeSort', active: true, weight: 2 },
-        { id: 6, testName: 'otherTest', active: true, weight: 2 },
-    ] as ProgrammingExerciseTestCase[];
 
-    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean) => ({
-        released,
-        hasStudentResult,
-        testCasesChanged,
+    const getExerciseTestCasteStateDTO = (
+        released: boolean,
+        hasStudentResult: boolean,
+        testCasesChanged: boolean,
+        buildAndTestStudentSubmissionsAfterDueDate: moment.Moment | null,
+    ) => ({
+        body: {
+            released,
+            hasStudentResult,
+            testCasesChanged,
+            buildAndTestStudentSubmissionsAfterDueDate,
+        },
     });
 
     const getSaveButton = () => {
@@ -136,6 +140,10 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+
+                routeSubject = new Subject();
+                (route as any).setSubject(routeSubject);
+
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
 
@@ -152,15 +160,16 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     afterEach(() => {
         notifyTestCasesSpy.restore();
+        testCasesChangedStub.restore();
+        getExerciseTestCaseStateStub.restore();
     });
 
     it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -182,10 +191,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -207,12 +215,11 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
-        let orderedTests = _sortBy(testCases1, 'testName');
+        const orderedTests = _sortBy(testCases1, 'testName');
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -277,12 +284,11 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (testCaseService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -319,12 +325,33 @@ describe('ProgrammingExerciseManageTestCases', () => {
         fixture.destroy();
     });
 
+    it('should not be able to update the value of the afterDueDate boolean if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
+        comp.ngOnInit();
+        comp.showInactive = true;
+        routeSubject.next({ exerciseId });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, null));
+
+        const orderedTests = _sortBy(testCases1, 'testName');
+
+        (testCaseService as any).next(testCases1);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const table = debugElement.query(By.css(testCaseTableId));
+        const checkboxes = table.queryAll(By.css('.table-editable-field__checkbox'));
+        expect(checkboxes).to.have.lengthOf(testCases1.length);
+        expect(checkboxes.every(({ nativeElement: { disabled } }) => disabled)).to.be.true;
+
+        fixture.destroy();
+    });
+
     it('should show the updatedTests badge when the exercise is released and has student results', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
         fixture.detectChanges();
 
@@ -341,7 +368,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         routeSubject.next({ exerciseId });
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, false, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, false, false, moment()));
 
         fixture.detectChanges();
 
@@ -358,7 +385,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         routeSubject.next({ exerciseId });
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(false, true, false) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(false, true, false, moment()));
 
         fixture.detectChanges();
 
@@ -375,7 +402,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         routeSubject.next({ exerciseId });
         // @ts-ignore
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        getExerciseTestCaseStateSubject.next({ body: getExerciseTestCasteStateDTO(true, true, true) });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, true, moment()));
 
         fixture.detectChanges();
 

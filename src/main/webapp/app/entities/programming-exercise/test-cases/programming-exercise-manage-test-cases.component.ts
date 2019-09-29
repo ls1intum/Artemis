@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, map, tap, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
@@ -19,11 +19,13 @@ export enum EditableField {
     selector: 'jhi-programming-exercise-manage-test-cases',
     templateUrl: './programming-exercise-manage-test-cases.component.html',
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
     exerciseId: number;
+    courseId: number;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
@@ -33,6 +35,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
+    buildAfterDueDateActive: boolean;
     isReleasedAndHasResults: boolean;
     showInactiveValue = false;
     isSaving = false;
@@ -78,6 +81,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.isLoading = true;
             this.exerciseId = Number(params['exerciseId']);
+            this.courseId = Number(params['courseId']);
             this.editing = null;
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
@@ -91,6 +95,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     tap(releaseState => {
                         this.hasUpdatedTestCases = releaseState.testCasesChanged;
                         this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                        this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                     }),
                     catchError(() => of(null)),
                 )

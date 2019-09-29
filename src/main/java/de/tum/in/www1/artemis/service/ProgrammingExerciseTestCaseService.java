@@ -152,7 +152,8 @@ public class ProgrammingExerciseTestCaseService {
      */
     @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!

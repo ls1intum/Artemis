@@ -8,12 +8,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     styles: ['.table-editable-field {display: flex; align-items: center}'],
     template: `
         <div class="table-editable-field">
-            <input class="table-editable-field__checkbox" type="checkbox" [ngModel]="value" (ngModelChange)="sendValueUpdate()" />
+            <input class="table-editable-field__checkbox" type="checkbox" [disabled]="disabled" [ngModel]="value" (ngModelChange)="sendValueUpdate()" />
         </div>
     `,
 })
 export class TableEditableCheckboxComponent {
     @Input() value: boolean;
+    @Input() disabled: boolean;
     @Output() onValueUpdate = new EventEmitter();
 
     sendValueUpdate() {

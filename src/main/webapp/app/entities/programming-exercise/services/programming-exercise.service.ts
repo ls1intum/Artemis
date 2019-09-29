@@ -13,7 +13,12 @@ import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExercisePa
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
-export type ProgrammingExerciseTestCaseStateDTO = { released: boolean; hasStudentResult: boolean; testCasesChanged: boolean };
+export type ProgrammingExerciseTestCaseStateDTO = {
+    released: boolean;
+    hasStudentResult: boolean;
+    testCasesChanged: boolean;
+    buildAndTestStudentSubmissionsAfterDueDate: moment.Moment | null;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
