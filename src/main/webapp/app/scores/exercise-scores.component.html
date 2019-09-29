@@ -47,7 +47,7 @@
             {{ 'artemisApp.exercise.showAll' | translate }}
         </label>
     </div>
-    <div class="table-responsive" *ngIf="results">
+    <div *ngIf="results && !isLoading; else loadingContainer" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
@@ -113,4 +113,9 @@
             </tbody>
         </table>
     </div>
+    <ng-template #loadingContainer>
+        <div class="d-flex justify-content-center mt-3">
+            <fa-icon size="lg" icon="circle-notch" [spin]="true"></fa-icon>
+        </div>
+    </ng-template>
 </div>

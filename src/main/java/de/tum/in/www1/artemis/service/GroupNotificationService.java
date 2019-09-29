@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
+// TODO: There is a lot of code duplication in this class. This could be solved by e.g. using a builder or factory pattern.
 @Service
 @Transactional
 public class GroupNotificationService {
@@ -43,6 +44,13 @@ public class GroupNotificationService {
         User user = userService.getUser();
         GroupNotificationType type = GroupNotificationType.STUDENT;
         GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
+        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
+        return groupNotification;
+    }
+
+    private GroupNotification createExerciseUpdatedGroupNotificationForInstructors(Exercise exercise, String title, String notificationText) {
+        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         return groupNotification;
     }
@@ -127,6 +135,16 @@ public class GroupNotificationService {
         }
         String title = "Exercise \"" + exercise.getTitle() + "\" updated";
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
+    }
+
+    public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        String title = "Exercise \"" + exercise.getTitle() + "\" updated";
+        notifyInstructorGroupAboutExerciseChange(exercise, title, notificationText);
+    }
+
+    private void notifyInstructorGroupAboutExerciseChange(Exercise exercise, String title, String notificationText) {
+        GroupNotification groupNotification = createExerciseUpdatedGroupNotificationForInstructors(exercise, title, notificationText);
+        saveAndSendGroupNotification(groupNotification);
     }
 
     private void notifyStudentGroupAboutExerciseChange(Exercise exercise, String title, String notificationText) {
