@@ -77,7 +77,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
-                        const dueDateHasPassed = moment(this.exercise.dueDate!).isBefore(moment());
+                        const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
                         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
                     }),
                 )
