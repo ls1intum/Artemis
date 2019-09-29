@@ -94,7 +94,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (this.isExerciseInDuedate(this.exercise)) {
+                if (this.isExerciseInDueDate(this.exercise)) {
                     return ParticipationStatus.EXERCISE_ACTIVE;
                 } else {
                     return ParticipationStatus.EXERCISE_MISSED;
@@ -127,11 +127,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participation.results && participation.results.length > 0;
     }
 
-    isExerciseInDuedate(exercise: Exercise): boolean {
-        if (exercise.dueDate) {
-            return exercise.dueDate.isAfter(moment());
-        }
-        return true;
+    isExerciseInDueDate(exercise: Exercise): boolean {
+        return exercise.dueDate ? exercise.dueDate.isAfter(moment()) : true;
     }
 
     repositoryUrl(participation: Participation) {

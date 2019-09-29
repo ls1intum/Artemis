@@ -137,17 +137,10 @@ export class ResultComponent implements OnInit, OnChanges {
                 } else {
                     this.templateStatus = ResultTemplateStatus.SUBMITTED;
                 }
+            } else if (this.hasResultAndScore() && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+                this.templateStatus = ResultTemplateStatus.LATE;
             } else {
-                if (this.hasResultAndScore()) {
-                    // Prevent that result is shown before assessment due date
-                    if (!assessmentDueDate || assessmentDueDate.isBefore()) {
-                        this.templateStatus = ResultTemplateStatus.LATE;
-                    } else {
-                        this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
-                    }
-                } else {
-                    this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
-                }
+                this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
             }
         } else {
             if (this.isBuilding) {
@@ -209,13 +202,12 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     isSubmissionInDueTime(): boolean {
-        if (this.participation.submissions[0] && this.participation.submissions[0].submissionDate && this.participation.exercise.dueDate) {
-            this.participation.submissions[0].submissionDate = moment(this.participation.submissions[0].submissionDate);
-            return this.participation.submissions[0].submissionDate.isBefore(this.participation.exercise.dueDate);
-        } else if (!this.participation.exercise.dueDate) {
-            return true;
+        const submission = this.participation.submissions[0];
+        if (submission && submission.submissionDate && this.participation.exercise.dueDate) {
+            submission.submissionDate = moment(submission.submissionDate);
+            return submission.submissionDate.isBefore(this.participation.exercise.dueDate);
         } else {
-            return false;
+            return !this.participation.exercise.dueDate;
         }
     }
 

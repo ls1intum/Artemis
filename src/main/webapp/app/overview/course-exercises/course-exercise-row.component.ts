@@ -137,7 +137,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
             const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (this.isExerciseInDuedate(exercise)) {
+                if (this.isExerciseInDueDate(exercise)) {
                     return ParticipationStatus.EXERCISE_ACTIVE;
                 } else {
                     return ParticipationStatus.EXERCISE_MISSED;
@@ -165,11 +165,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         return participation.results && participation.results.length > 0;
     }
 
-    isExerciseInDuedate(exercise: Exercise): boolean {
-        if (exercise.dueDate) {
-            return exercise.dueDate.isAfter(moment());
-        }
-        return true;
+    isExerciseInDueDate(exercise: Exercise): boolean {
+        return exercise.dueDate ? exercise.dueDate.isAfter(moment()) : true;
     }
 
     showDetails(event: any) {
