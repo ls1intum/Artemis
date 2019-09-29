@@ -842,7 +842,8 @@ public class ParticipationService {
             conflictService.deleteAllConflictsForParticipation(participation);
         }
 
-        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise || participation.getExercise() instanceof FileUploadExercise) {
+        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
+                || participation.getExercise() instanceof FileUploadExercise) {
             // For modeling, text and file upload exercises students can send complaints about their assessments and we need to remove
             // the complaints and the according responses belonging to a participation before deleting the participation itself.
             complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);

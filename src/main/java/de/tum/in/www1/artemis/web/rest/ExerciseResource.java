@@ -183,8 +183,7 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-            + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
