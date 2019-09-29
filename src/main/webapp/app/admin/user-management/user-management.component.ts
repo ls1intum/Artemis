@@ -8,7 +8,6 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
-import { UserManagementDeleteDialogComponent } from 'app/admin';
 
 @Component({
     selector: 'jhi-user-management',
