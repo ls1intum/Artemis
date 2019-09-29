@@ -5,6 +5,8 @@
             <column name="project_key" type="varchar(255)">
             </column>
         </addColumn>
+        <!-- The first SQL inserts rows for all programming exercises which don't have an entry in the details table, yet -->
+        <!-- The second SQL updates all detail entries with null as the project_key, setting the project_key retroactively -->
         <sql>
             insert into programming_exercise_details (id, build_and_test_student_submissions_after_due_date, project_key)
                 select e.id, null, null
