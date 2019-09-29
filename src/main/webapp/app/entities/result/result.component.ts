@@ -77,9 +77,9 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.participation.results = results.body!;
                 this.init(); // imitate the behavior implemented in ngOnChanges() after updates the participation results
             });
+        } else {
+            this.init();
         }
-
-        this.init();
     }
 
     init() {
@@ -101,7 +101,7 @@ export class ResultComponent implements OnInit, OnChanges {
     evaluate() {
         this.evaluateTemplateStatus();
 
-        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
+        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -123,9 +123,8 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     evaluateTemplateStatus() {
-        const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
-
-        if (this.isModelingOrText()) {
+        if (this.isModelingOrText() && this.participation && this.participation.exercise) {
+            const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
             if (this.isSubmissionInDueTime()) {
                 if (this.hasResultAndScore()) {
                     // Prevent that result is shown before assessment due date
