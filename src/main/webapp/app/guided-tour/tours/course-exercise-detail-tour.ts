@@ -50,17 +50,10 @@ export const programmingExerciseSuccess: GuidedTour = {
     settingsKey: 'programming_exercise_success_tour',
     steps: [
         new TextTourStep({
-            highlightSelector: 'jhi-programming-exercise-instructions-step-wizard',
+            highlightSelector: '#programming-exercise-instructions-content',
             headlineTranslateKey: 'tour.programmingExercise.reviewResult.headline',
             contentTranslateKey: 'tour.programmingExercise.reviewResult.content',
             orientation: Orientation.TOP,
-        }),
-        new TextTourStep({
-            highlightSelector: 'jhi-programming-exercise-instructions [id^=plantUml]',
-            headlineTranslateKey: 'tour.programmingExercise.umlSuccess.headline',
-            contentTranslateKey: 'tour.programmingExercise.umlSuccess.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
             headlineTranslateKey: 'tour.programmingExercise.exerciseSuccess.headline',
