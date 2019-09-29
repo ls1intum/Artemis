@@ -26,7 +26,7 @@
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
-                "updateAfterComplaintFailed": "Updating the Assessment failed."
+                "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
                 "empty": "No Submissions for this exercise!",
