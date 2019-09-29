@@ -128,6 +128,7 @@ public interface VersionControlService {
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
      * @param username          String to identify the user with.
+     * @throws Exception        If the communication with the VCS fails.
      */
     void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws Exception;
 }
