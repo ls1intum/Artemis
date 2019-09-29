@@ -290,63 +290,39 @@ export class GuidedTourService {
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
-        switch (userInteraction) {
-            case UserInteractionEvent.WAIT_FOR_SELECTOR: {
-                if (nextStep && nextStep.highlightSelector) {
-                    this.waitForElement(nextStep.highlightSelector);
-                } else {
-                    this.enableNextStepClick();
-                }
-                break;
-            }
-            case UserInteractionEvent.CLICK: {
-                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
-                    mutations.forEach(() => {
-                        this.enableNextStepClick();
-                    });
-                });
-                break;
-            }
-            case UserInteractionEvent.ACE_EDITOR: {
-                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
-                    mutations.forEach(() => {
-                        this.enableNextStepClick();
-                    });
-                });
-                break;
+        if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
+            if (nextStep && nextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector);
+            } else {
+                this.enableNextStepClick();
             }
         }
-    }
 
-    public observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
-        return new Promise(resolve => {
-            const observer = new MutationObserver(mutations => {
-                switch (userInteraction) {
-                    case UserInteractionEvent.CLICK: {
-                        observer.disconnect();
-                        resolve(mutations);
-                        break;
-                    }
-                    case UserInteractionEvent.ACE_EDITOR: {
-                        mutations.forEach(mutation => {
-                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                observer.disconnect();
-                                resolve(mutations);
-                            }
-                        });
-                        break;
-                    }
-                    default: {
-                        observer.disconnect();
-                        resolve(mutations);
-                    }
+        const observer = new MutationObserver(mutations => {
+            switch (userInteraction) {
+                case UserInteractionEvent.CLICK: {
+                    observer.disconnect();
+                    this.enableNextStepClick();
+                    break;
                 }
-            });
-            observer.observe(targetNode, {
-                attributes: true,
-                childList: true,
-                characterData: true,
-            });
+                case UserInteractionEvent.ACE_EDITOR: {
+                    mutations.forEach(mutation => {
+                        if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                            observer.disconnect();
+                            this.enableNextStepClick();
+                        }
+                    });
+                    break;
+                }
+                default: {
+                    observer.disconnect();
+                }
+            }
+        });
+        observer.observe(targetNode, {
+            attributes: true,
+            childList: true,
+            characterData: true,
         });
     }
 
