@@ -12,6 +12,9 @@ import { Result, ResultDetailComponent, ResultService } from 'app/entities/resul
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { tap, take } from 'rxjs/operators';
+import { zip, of } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -34,6 +37,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     allResults: Result[];
     eventSubscriber: Subscription;
 
+    isLoading: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
@@ -42,6 +47,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private participationService: ParticipationService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
@@ -55,15 +61,27 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
+            this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
-                this.getResults();
+                // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
+                zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
+                    .pipe(take(1))
+                    .subscribe(() => (this.isLoading = false));
             });
         });
         this.registerChangeInCourses();
+    }
+
+    /**
+     * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
+     * Will return immediately if the exercise is not of type PROGRAMMING.
+     */
+    private loadAndCacheProgrammingExerciseSubmissionState() {
+        return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
     }
 
     registerChangeInCourses() {
@@ -71,26 +89,28 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     getResults() {
-        this.resultService
+        return this.resultService
             .getResultsForExercise(this.exercise.course!.id, this.exercise.id, {
                 showAllResults: this.showAllResults,
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
-            .subscribe((res: HttpResponse<Result[]>) => {
-                const tempResults: Result[] = res.body!;
-                tempResults.forEach(result => {
-                    result.participation!.results = [result];
-                    (result.participation! as StudentParticipation).exercise = this.exercise;
-                    result.durationInMinutes = this.durationInMinutes(
-                        result.completionDate!,
-                        result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
-                    );
-                });
-                this.allResults = tempResults;
-                this.filterResults();
-            });
+            .pipe(
+                tap((res: HttpResponse<Result[]>) => {
+                    const tempResults: Result[] = res.body!;
+                    tempResults.forEach(result => {
+                        result.participation!.results = [result];
+                        (result.participation! as StudentParticipation).exercise = this.exercise;
+                        result.durationInMinutes = this.durationInMinutes(
+                            result.completionDate!,
+                            result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
+                        );
+                    });
+                    this.allResults = tempResults;
+                    this.filterResults();
+                }),
+            );
     }
 
     filterResults() {
@@ -185,7 +205,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     refresh() {
-        this.getResults();
+        this.getResults().subscribe();
     }
 
     ngOnDestroy() {
