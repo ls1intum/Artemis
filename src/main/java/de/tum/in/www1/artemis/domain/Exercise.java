@@ -604,26 +604,48 @@ public abstract class Exercise implements Serializable {
      * @return filtered submission
      */
     private Submission findAppropriateSubmission(Set<Submission> submissions) {
+        if (submissions == null || submissions.isEmpty())
+            return null;
+
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
-        if (submissions != null) {
-            for (Submission submission : submissions) {
-                Result result = submission.getResult();
-                if (result != null) {
-                    if (result.isRated()) {
-                        submissionsWithRatedResult.add(submission);
-                    }
-                    else {
-                        submissionsWithUnratedResult.add(submission);
-                    }
+        for (Submission submission : submissions) {
+            Result result = submission.getResult();
+            if (result != null) {
+                if (result.isRated()) {
+                    submissionsWithRatedResult.add(submission);
                 }
                 else {
-                    submissionsWithoutResult.add(submission);
+                    submissionsWithUnratedResult.add(submission);
                 }
             }
+            else {
+                submissionsWithoutResult.add(submission);
+            }
         }
+
+        if (submissionsWithRatedResult.size() > 0) {
+            return getLatestSubmission(submissionsWithRatedResult);
+        }
+        else if (submissionsWithUnratedResult.size() > 0) {
+            return getLatestSubmission(submissionsWithUnratedResult);
+        }
+        else {
+            return getLatestSubmission(submissionsWithoutResult);
+        }
+    }
+
+    /**
+     * Sorts a list of submission by submissionDate and returns the latest one
+     *
+     * @param submissions list of submissions that should be sorted
+     * @return submission
+     */
+    private Submission getLatestSubmission(List<Submission> submissions) {
+        if (submissions == null || submissions.isEmpty())
+            return null;
 
         Comparator<Submission> comparator = ((Submission s1, Submission s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null)
@@ -631,20 +653,8 @@ public abstract class Exercise implements Serializable {
             return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
         });
 
-        if (submissionsWithRatedResult.size() > 0) {
-            submissionsWithRatedResult.sort(comparator);
-            return submissionsWithRatedResult.get(submissionsWithRatedResult.size() - 1);
-        }
-        else if (submissionsWithUnratedResult.size() > 0) {
-            submissionsWithUnratedResult.sort(comparator);
-            return submissionsWithUnratedResult.get(submissionsWithUnratedResult.size() - 1);
-        }
-        else if (submissionsWithoutResult.size() > 0) {
-            submissionsWithoutResult.sort(comparator);
-            return submissionsWithoutResult.get(submissionsWithoutResult.size() - 1);
-        }
-
-        return null;
+        submissions.sort(comparator);
+        return submissions.get(submissions.size() - 1);
     }
 
     @Override
