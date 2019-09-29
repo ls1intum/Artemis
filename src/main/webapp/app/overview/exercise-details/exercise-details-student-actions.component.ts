@@ -15,9 +15,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    styles: ['jhi-exercise-details-student-actions .alert-dismissible { margin: 16px 0 5px 0; }'],
     providers: [JhiAlertService, SourceTreeService],
-    encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;

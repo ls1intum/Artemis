@@ -158,13 +158,12 @@
                             language | findLanguageFromKey
                         }}</a>
                     </li>
-                    <!-- only display guided tour to ADMIN for now -->
                     <ng-template [ngIf]="isTourAvailable">
-                        <div *jhiHasAnyAuthority="['ROLE_ADMIN']" class="dropdown-divider"></div>
-                        <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                        <div class="dropdown-divider"></div>
+                        <li>
                             <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTour">Guided Tour</h6>
                         </li>
-                        <li *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                        <li>
                             <a
                                 *ngIf="this.guidedTourService.getLastSeenTourStepIndex() === 0"
                                 class="dropdown-item guided-tour"

@@ -245,12 +245,15 @@ export class GuidedTourService {
 
     /**
      * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
-     * @param guidedTour that should be checked for the  state
-     * @param state that should be checked
+     * @param guidedTour that should be checked for the state
+     * @param state that should be checked, if no state is given, then true is returned if the tour has been started or finished
      */
-    public checkTourState(guidedTour: GuidedTour, state: GuidedTourState): boolean {
+    public checkTourState(guidedTour: GuidedTour, state?: GuidedTourState): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
-        return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state]);
+        if (state) {
+            return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state]);
+        }
+        return tourSetting.length >= 1;
     }
 
     /**
@@ -590,7 +593,7 @@ export class GuidedTourService {
             this.currentTour = cloneDeep(guidedTour);
             this.availableTourForComponent = this.currentTour;
             this.guidedTourAvailability.next(true);
-            const hasStartedOrFinishedTour = this.checkTourState(guidedTour, GuidedTourState.STARTED) || this.checkTourState(guidedTour, GuidedTourState.FINISHED);
+            const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             if (!hasStartedOrFinishedTour) {
                 this.startTour();
             }
