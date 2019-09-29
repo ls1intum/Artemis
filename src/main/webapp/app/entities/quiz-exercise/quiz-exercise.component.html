@@ -184,9 +184,11 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/delete' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
+                                    jhiDeleteDialog
+                                    [entityTitle]="quizExercise.title"
+                                    deleteQuestion="artemisApp.quizExercise.delete.question"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    (delete)="deleteQuizExercise(quizExercise.id)"
                                     class="btn btn-danger btn-sm mr-1 mb-1"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                 >
