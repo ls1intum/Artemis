@@ -240,9 +240,12 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
+                                    jhiDeleteDialog
+                                    [entityTitle]="programmingExercise.title"
+                                    deleteQuestion="artemisApp.programmingExercise.delete.question"
+                                    (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
+                                    checkboxText="artemisApp.programmingExercise.delete.studentReposBuildPlans"
+                                    additionalCheckboxText="artemisApp.programmingExercise.delete.baseReposBuildPlans"
                                     class="btn btn-danger btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
