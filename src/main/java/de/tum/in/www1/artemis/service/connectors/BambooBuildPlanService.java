@@ -41,7 +41,6 @@ import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 @Service
@@ -132,10 +131,6 @@ public class BambooBuildPlanService {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
-        // Trigger the build when a commit is pushed to the TEST_REPO only for the solution repository!
-        if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
-            vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
-        }
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
                 .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),

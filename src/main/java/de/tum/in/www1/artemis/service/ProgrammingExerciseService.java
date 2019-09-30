@@ -134,42 +134,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * When commit was done to the test repository, we need to do 2 things:
-     * - Create a submission for the build result
-     * - Trigger the build result (if there is no automatic trigger, this might be needed)
-     *
-     * @param exerciseId of programming exercise the test cases got changed.
-     * @param requestBody The request body received from the VCS.
-     * @throws EntityNotFoundException If the exercise with the given ID does not exist.
-     */
-    public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
-        if (exerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
-        }
-        ProgrammingExercise programmingExercise = exerciseOpt.get();
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setType(SubmissionType.TEST);
-        submission.setSubmissionDate(ZonedDateTime.now());
-        submission.setSubmitted(true);
-        submission.setParticipation(solutionParticipation);
-        try {
-            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-            log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + solutionParticipation.getId());
-            submission.setCommitHash(lastCommitHash);
-        }
-        catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + solutionParticipation, ex);
-        }
-        submissionRepository.save(submission);
-        // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
-        // It could be that Artemis is not available and the results come in before the submission is ready.
-        continuousIntegrationUpdateService.get().triggerUpdate(solutionParticipation.getBuildPlanId(), false);
-    }
-
-    /**
      * Adds the student id of the given student participation to the project name in all .project (Eclipse)
      * and pom.xml (Maven) files found in the given repository.
      *
@@ -808,46 +772,14 @@ public class ProgrammingExerciseService {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
     }
 
-    /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
-     * This method also sends out a notification to the client if testCasesChanged = true.
-     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
-     *
-     * @param programmingExerciseId id of a ProgrammingExercise.
-     * @param testCasesChanged set to true to mark the programming exercise as dirty.
-     * @return the updated ProgrammingExercise.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
-     */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
-        if (programmingExerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
-        }
-
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
-        // should get an updated result.
-        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !hasAtLeastOneStudentResult(programmingExercise)) {
-            return programmingExercise;
-        }
-        programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Send a websocket message about the new state to the client.
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
-        // Send a notification to the client to inform the instructor about the test case update.
-        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        return updatedProgrammingExercise;
-    }
-
-    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // TODO: We can't use the resultService here due to a circular dependency issue.
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+    }
+
+    public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
+        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**

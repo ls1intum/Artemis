@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -212,7 +213,8 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds);
+        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
+                programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds));
         List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
                 SubmissionType.INSTRUCTOR);
 
@@ -236,8 +238,7 @@ public class ProgrammingSubmissionResource {
         SecurityUtils.setAuthorizationObject();
 
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseService.setTestCasesChanged(exerciseId, true);
-        programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
+        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
 
         return ResponseEntity.ok().build();
     }

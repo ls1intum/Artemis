@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_NOTIFICATION;
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -43,6 +46,10 @@ public class ProgrammingSubmissionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -52,12 +59,15 @@ public class ProgrammingSubmissionService {
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
+            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.groupNotificationService = groupNotificationService;
+        this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
@@ -168,7 +178,6 @@ public class ProgrammingSubmissionService {
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
-    @Transactional(readOnly = true)
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
         Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
@@ -197,12 +206,12 @@ public class ProgrammingSubmissionService {
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
+        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        programmingExerciseService.setTestCasesChanged(programmingExercise.getId(), false);
+        setTestCasesChanged(programmingExercise.getId(), false);
     }
 
     /**
@@ -250,7 +259,7 @@ public class ProgrammingSubmissionService {
      * @return list of created submissions (might be smaller as the list of provided participations!).
      */
     @Transactional
-    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
+    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
             SubmissionType submissionType) {
         return participations.stream().map(participation -> {
             try {
@@ -288,6 +297,47 @@ public class ProgrammingSubmissionService {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
+    }
+
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param testCasesChanged set to true to mark the programming exercise as dirty.
+     * @return the updated ProgrammingExercise.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     */
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
+
+        if (testCasesChanged) {
+            List<ProgrammingExerciseParticipation> participations = new LinkedList<>();
+            participations.add(programmingExercise.getSolutionParticipation());
+            participations.add(programmingExercise.getTemplateParticipation());
+            List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
+            notifyUserTriggerBuildForNewSubmissions(submissions);
+        }
+
+        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
+        // should get an updated result.
+        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+            return programmingExercise;
+        }
+        programmingExercise.setTestCasesChanged(testCasesChanged);
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseService.save(programmingExercise);
+        // Send a websocket message about the new state to the client.
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+
+        return updatedProgrammingExercise;
+    }
+
+    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
     }
 
     /**
