@@ -248,8 +248,7 @@ public class ProgrammingSubmissionService {
         return createSubmissionWithCommitHash(participation, lastCommitHash, submissionType);
     }
 
-    @Transactional
-    public ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
+    private ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
