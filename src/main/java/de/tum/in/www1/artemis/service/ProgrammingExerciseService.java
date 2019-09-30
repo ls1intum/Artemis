@@ -47,7 +47,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -72,17 +71,11 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    private final SubmissionRepository submissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final CourseRepository courseRepository;
 
     private final ParticipationService participationService;
 
@@ -94,10 +87,6 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
-    private final GroupNotificationService groupNotificationService;
-
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Value("${server.url}")
@@ -105,11 +94,10 @@ public class ProgrammingExerciseService {
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
-            ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
-            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -117,19 +105,14 @@ public class ProgrammingExerciseService {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.courseRepository = courseRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
-        this.groupNotificationService = groupNotificationService;
-        this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
