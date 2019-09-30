@@ -405,6 +405,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
@@ -549,7 +550,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
-        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(exerciseId).get();
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExerciseRepository.save(programmingExercise);
