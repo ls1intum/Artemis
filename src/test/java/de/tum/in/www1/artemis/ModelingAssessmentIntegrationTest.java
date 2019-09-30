@@ -281,7 +281,7 @@ public class ModelingAssessmentIntegrationTest {
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(storedSubmission.getId(), activityExercise.getId());
         assertThat(automaticResult).as("automatic result is created").isNotNull();
@@ -751,7 +751,7 @@ public class ModelingAssessmentIntegrationTest {
     private void saveModelingSubmissionAndAssessment_activityDiagram(boolean submitAssessment) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json", "tutor1",
-            submitAssessment);
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
+                "tutor1", submitAssessment);
     }
 }
