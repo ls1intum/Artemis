@@ -403,18 +403,16 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
         SecurityUtils.setAuthorizationObject();
-        participations.add(participationRepository.getOneWithEagerSubmissions(templateParticipationId));
         participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        // We only create submissions for the solution and template participation after a push to the test repository.
-        assertThat(submissions).hasSize(2);
+        // We only create submissions for the solution participation after a push to the test repository.
+        assertThat(submissions).hasSize(1);
         for (Participation participation : participations) {
             assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).collect(Collectors.toList())).hasSize(1);
         }
         assertThat(submissions.stream().allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST))).isTrue();
 
         // Phase 2: Now the CI informs Artemis about the participation build results.
-        postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK, false);
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
         // The number of total participations should not have changed.
         assertThat(participationRepository.count()).isEqualTo(4);
@@ -423,9 +421,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         submissions = submissionRepository.findAll();
         participations = new LinkedList<>();
         participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
-        participations.add(templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
         // After a push to the test repository, only the solution and template repository are built.
-        assertThat(results).hasSize(2);
+        assertThat(results).hasSize(1);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
             assertThat(hasMatchingSubmission);
