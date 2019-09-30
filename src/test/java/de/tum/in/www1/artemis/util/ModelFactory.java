@@ -185,6 +185,7 @@ public class ModelFactory {
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
+        toBeImported.generateAndSetProjectKey();
 
         return toBeImported;
     }
