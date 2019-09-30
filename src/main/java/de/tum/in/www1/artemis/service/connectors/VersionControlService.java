@@ -119,6 +119,7 @@ public interface VersionControlService {
      * Removes the user's write permissions for a repository.
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param projectKey        The projectKey that the repo is part of in the VCS.
      * @param username          String to identify the user with.
      * @throws Exception        If the communication with the VCS fails.
      */
