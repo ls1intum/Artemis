@@ -256,30 +256,29 @@ public class ProgrammingSubmissionService {
 
     /**
      * Create a submission with the given submissionType and commitHash for the solutionParticipation of the provided programming exercise.
+     * Will return empty if no commitHash can be retrieved; this is an edge case as it would mean that the git repository of the solution repository can't be accessed / is corrupted.
+     *
      * @param programmingExerciseId ProgrammingExercise id
      * @param submissionType        Will be used for setting the submissionType of the create submission.
      * @param commitHash            Will be used for the created submission. If null, the last commit hash of the solutionParticipation will be used.
-     * @return The created solutionSubmission.
+     * @return The created solutionSubmission or Optional.empty if no commitHash could be retrieved for the solutionRepository.
      * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
      */
-    public ProgrammingSubmission createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash)
+    public Optional<ProgrammingSubmission> createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash)
             throws EntityNotFoundException {
-        Optional<SolutionProgrammingExerciseParticipation> participationOpt = programmingExerciseParticipationService
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
-        if (participationOpt.isEmpty()) {
-            throw new EntityNotFoundException("No solution participation exists for programming exercise with id " + programmingExerciseId);
-        }
-        ProgrammingExerciseParticipation participation = participationOpt.get();
         if (commitHash == null) {
             try {
                 // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
-                commitHash = getLastCommitHashForParticipation(participation);
+                commitHash = getLastCommitHashForParticipation(solutionParticipation);
             }
             catch (IllegalStateException ex) {
-                log.debug("No last commit hash found for the provided participation with id " + participation.getId());
+                log.debug("No last commit hash found for the provided participation with id " + solutionParticipation.getId());
+                return Optional.empty();
             }
         }
-        return createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
+        return Optional.of(createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, submissionType));
     }
 
     private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, ObjectId commitHash,
@@ -343,11 +342,28 @@ public class ProgrammingSubmissionService {
      * This method should be used if the solution participation would otherwise not be built.
      *
      * @param programmingExerciseId ProgrammingExercise id
+     * @throws EntityNotFoundException if there is no programming exercise for the given id.
      */
-    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) {
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) throws EntityNotFoundException {
         setTestCasesChanged(programmingExerciseId, true);
-        ProgrammingSubmission submission = createSolutionParticipationSubmission(programmingExerciseId, SubmissionType.TEST, null);
-        triggerBuildAndNotifyUser(submission);
+        Optional<ProgrammingSubmission> submission = createSolutionParticipationSubmission(programmingExerciseId, SubmissionType.TEST, null);
+        // Normal case: A submission could be created, we trigger the build with it and notify the user.
+        if (submission.isPresent()) {
+            triggerBuildAndNotifyUser(submission.get());
+            return;
+        }
+
+        // Edge case: If no submission could be created, just trigger the solution build. On receiving the result, Artemis will try to create a new submission with the result
+        // completionDate.
+        log.debug("No submission could be created for the programming exercise with the id " + programmingExerciseId + ", trying to trigger the build without a submission.");
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
+                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        try {
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException ex) {
+            log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
+        }
     }
 
     /**

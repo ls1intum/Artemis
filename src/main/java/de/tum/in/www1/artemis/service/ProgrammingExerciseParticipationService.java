@@ -63,8 +63,19 @@ public class ProgrammingExerciseParticipationService {
         return solutionParticipationRepository.findById(participationId);
     }
 
-    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) {
-        return solutionParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+    /**
+     * Retrieve the solution participation of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @return the SolutionProgrammingExerciseParticipation of programming exercise.
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a SolutionParticipation).
+     */
+    public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = solutionParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+        if (solutionParticipation.isEmpty()) {
+            throw new EntityNotFoundException("Could not find solution participation for programming exercise with id " + programmingExerciseId);
+        }
+        return solutionParticipation.get();
     }
 
     /**
