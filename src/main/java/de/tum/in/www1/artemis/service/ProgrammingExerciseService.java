@@ -134,51 +134,39 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Notifies all participations of the given programmingExercise (including the template & solution participation!) about changes of the test cases.
-     * This method creates submissions for the participations so that the result when it comes in can be mapped to them.
+     * When commit was done to the test repository, we need to do 2 things:
+     * - Create a submission for the build result
+     * - Trigger the build result (if there is no automatic trigger, this might be needed)
      *
      * @param exerciseId of programming exercise the test cases got changed.
-     * @param requestBody The request body received from the VCS
-     * @return A list of created {@link ProgrammingSubmission programming submissions} for the changed exercise
-     * @throws EntityNotFoundException If the exercise with the given ID does not exist
+     * @param requestBody The request body received from the VCS.
+     * @throws EntityNotFoundException If the exercise with the given ID does not exist.
      */
-    @Transactional
-    public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
+    public void notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
         if (exerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         ProgrammingExercise programmingExercise = exerciseOpt.get();
-        // All student repository builds and the builds of the template & solution repository must be triggered now!
-        Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
-        participations.add(programmingExercise.getSolutionParticipation());
-        participations.add(programmingExercise.getTemplateParticipation());
-        participations.addAll(programmingExercise.getStudentParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
 
-        List<ProgrammingSubmission> submissions = new ArrayList<>();
-
-        for (ProgrammingExerciseParticipation participation : participations) {
-            ProgrammingSubmission submission = new ProgrammingSubmission();
-            submission.setType(SubmissionType.TEST);
-            submission.setSubmissionDate(ZonedDateTime.now());
-            submission.setSubmitted(true);
-            submission.setParticipation((Participation) participation);
-            try {
-                String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-                log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participation.getId());
-                submission.setCommitHash(lastCommitHash);
-            }
-            catch (Exception ex) {
-                log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
-            }
-
-            ProgrammingSubmission storedSubmission = submissionRepository.save(submission);
-            submissions.add(storedSubmission);
-            // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
-            // It could be that Artemis is not available and the results come in before the submission is ready.
-            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.TEST);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setSubmitted(true);
+        submission.setParticipation(solutionParticipation);
+        try {
+            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + solutionParticipation.getId());
+            submission.setCommitHash(lastCommitHash);
         }
-        return submissions;
+        catch (Exception ex) {
+            log.error("Commit hash could not be parsed for submission from participation " + solutionParticipation, ex);
+        }
+        submissionRepository.save(submission);
+        // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
+        // It could be that Artemis is not available and the results come in before the submission is ready.
+        continuousIntegrationUpdateService.get().triggerUpdate(solutionParticipation.getBuildPlanId(), false);
     }
 
     /**
