@@ -314,6 +314,7 @@ public class ProgrammingExerciseService {
      */
     @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+        programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
@@ -791,25 +792,31 @@ public class ProgrammingExerciseService {
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
-            if (programmingExercise.getTemplateBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
             }
-            if (programmingExercise.getSolutionBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
@@ -916,6 +923,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
+        newExercise.generateAndSetProjectKey();
         final var projectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
@@ -945,8 +953,6 @@ public class ProgrammingExerciseService {
         final var sourceProjectKey = templateExercise.getProjectKey();
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
-        // The project key is always the first half of a repo slug
-        final var targetSlugPrefix = targetProjectKey.toLowerCase();
 
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
