@@ -277,8 +277,9 @@ public class ProgrammingSubmissionService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    public List<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
+    private List<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
             @Nullable ObjectId commitHash, SubmissionType submissionType) {
+        // If the commitHash is null, we use the participation repository's last commitHash as a fallback.
         if (commitHash == null) {
             return createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, submissionType);
         }
@@ -326,7 +327,8 @@ public class ProgrammingSubmissionService {
      * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
      *
      * @param programmingExerciseId id of a ProgrammingExercise.
-     * @param testCasesChanged set to true to mark the programming exercise as dirty.
+     * @param testCasesChanged      set to true to mark the programming exercise as dirty.
+     * @param commitHash            will be used for creating the submission if not null, the fallback is the last commitHash of the participation's repository.
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
