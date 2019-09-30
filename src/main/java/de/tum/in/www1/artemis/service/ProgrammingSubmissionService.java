@@ -239,10 +239,10 @@ public class ProgrammingSubmissionService {
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
-        return createSubmissionWithCommitHash(participation, lastCommitHash, submissionType);
+        return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
     }
 
-    private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) {
+    private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         ObjectId lastCommitHash;
         try {
@@ -269,13 +269,19 @@ public class ProgrammingSubmissionService {
         }
         ProgrammingExerciseParticipation participation = participationOpt.get();
         if (commitHash == null) {
-            // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
-            commitHash = getLastCommitHashForParticipation(participation);
+            try {
+                // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
+                commitHash = getLastCommitHashForParticipation(participation);
+            }
+            catch (IllegalStateException ex) {
+                log.debug("No last commit hash found for the provided participation with id " + participation.getId());
+            }
         }
-        return createSubmissionWithCommitHash(participation, commitHash, submissionType);
+        return createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
     }
 
-    private ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
+    private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, ObjectId commitHash,
+            SubmissionType submissionType) {
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
@@ -301,24 +307,6 @@ public class ProgrammingSubmissionService {
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    private Optional<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(ProgrammingExerciseParticipation participation, @Nullable ObjectId commitHash,
-            SubmissionType submissionType) {
-        // If the commitHash is null, we use the participation repository's last commitHash as a fallback.
-        if (commitHash == null) {
-            ProgrammingSubmission submission = createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
-            return Optional.of(submission);
-        }
-
-        try {
-            ProgrammingSubmission submission = createSubmissionWithCommitHash(participation, commitHash, submissionType);
-            return Optional.of(submission);
-        }
-        catch (IllegalStateException ex) {
-            // The exception is already logged, we just return null here.
-            return Optional.empty();
-        }
     }
 
     /**
@@ -348,8 +336,14 @@ public class ProgrammingSubmissionService {
         }
     }
 
-    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId, boolean testCasesChanged) {
-        setTestCasesChanged(programmingExerciseId, testCasesChanged);
+    /**
+     * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
+     * This method should be used if the solution participation would otherwise not be built.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     */
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) {
+        setTestCasesChanged(programmingExerciseId, true);
         ProgrammingSubmission submission = createSolutionParticipationSubmission(programmingExerciseId, SubmissionType.TEST, null);
         triggerBuildAndNotifyUser(submission);
     }
