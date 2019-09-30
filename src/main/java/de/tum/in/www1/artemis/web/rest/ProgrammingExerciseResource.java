@@ -172,6 +172,7 @@ public class ProgrammingExerciseResource {
 
         // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
         // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
+        programmingExercise.generateAndSetProjectKey();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
