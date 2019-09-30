@@ -118,7 +118,7 @@ public class ModelingSubmissionIntegrationTest {
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        String validActivityModel = database.loadFileFromResources("test-data/model-submission/activity-model.json");
+        String validActivityModel = database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
         submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
         returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);

@@ -192,9 +192,9 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_activityDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/activity-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
 
-        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/activity-assessment.json");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
@@ -268,6 +268,22 @@ public class ModelingAssessmentIntegrationTest {
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(storedSubmission.getId(), classExercise.getId());
+        assertThat(automaticResult).as("automatic result is created").isNotNull();
+        checkAutomaticAssessment(automaticResult);
+        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void automaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
+        saveModelingSubmissionAndAssessment_activityDiagram(true);
+        database.addParticipationForExercise(activityExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
+            ModelingSubmission.class, HttpStatus.OK);
+
+        Result automaticResult = compassService.getAutomaticResultForSubmission(storedSubmission.getId(), activityExercise.getId());
         assertThat(automaticResult).as("automatic result is created").isNotNull();
         checkAutomaticAssessment(automaticResult);
         checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
@@ -712,7 +728,7 @@ public class ModelingAssessmentIntegrationTest {
         sentFeedbackResult.evaluateFeedback(20);
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> {
-            assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(feedbackType);
+            assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
         });
     }
 
@@ -730,5 +746,12 @@ public class ModelingAssessmentIntegrationTest {
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
                 submitAssessment);
+    }
+
+    private void saveModelingSubmissionAndAssessment_activityDiagram(boolean submitAssessment) throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json", "tutor1",
+            submitAssessment);
     }
 }
