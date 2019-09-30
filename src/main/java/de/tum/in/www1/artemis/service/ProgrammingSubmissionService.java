@@ -191,7 +191,7 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Trigger the CI of all student participations of the given exercise.
+     * Trigger the CI of all student participations and the template participation of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      *
      * The method is async because it would timeout a calling resource method.
@@ -209,11 +209,13 @@ public class ProgrammingSubmissionService {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
+        // Also trigger the template participation. We don't trigger the solution participation because it is triggered when the tests are changed.
+        participations.add(programmingExercise.getTemplateParticipation());
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        setTestCasesChanged(programmingExercise.getId(), false, null);
+        setTestCasesChanged(programmingExercise.getId(), false);
     }
 
     /**
@@ -258,26 +260,19 @@ public class ProgrammingSubmissionService {
      * @param submissionType        Will be used for setting the submissionType of the create submission.
      * @param commitHash            Will be used for the created submission. If null, the last commit hash of the solutionParticipation will be used.
      */
-    public void createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash) {
+    public ProgrammingSubmission createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash)
+            throws EntityNotFoundException {
         Optional<SolutionProgrammingExerciseParticipation> participationOpt = programmingExerciseParticipationService
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         if (participationOpt.isEmpty()) {
-            log.debug("No solution participation exists for programming exercise with id " + programmingExerciseId);
-            return;
+            throw new EntityNotFoundException("No solution participation exists for programming exercise with id " + programmingExerciseId);
         }
         ProgrammingExerciseParticipation participation = participationOpt.get();
         if (commitHash == null) {
-            try {
-                // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
-                commitHash = getLastCommitHashForParticipation(participation);
-            }
-            catch (IllegalStateException ex) {
-                log.debug("No commit hash found for the participation repository of participation id " + participation.getId());
-                return;
-            }
+            // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
+            commitHash = getLastCommitHashForParticipation(participation);
         }
-        ProgrammingSubmission submission = createSubmissionWithCommitHash(participation, commitHash, submissionType);
-        notifyUserAboutSubmission(submission);
+        return createSubmissionWithCommitHash(participation, commitHash, submissionType);
     }
 
     private ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
@@ -308,21 +303,22 @@ public class ProgrammingSubmissionService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private List<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
-            @Nullable ObjectId commitHash, SubmissionType submissionType) {
+    private Optional<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(ProgrammingExerciseParticipation participation, @Nullable ObjectId commitHash,
+            SubmissionType submissionType) {
         // If the commitHash is null, we use the participation repository's last commitHash as a fallback.
         if (commitHash == null) {
-            return createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, submissionType);
+            ProgrammingSubmission submission = createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
+            return Optional.of(submission);
         }
-        return participations.stream().map(participation -> {
-            try {
-                return createSubmissionWithCommitHash(participation, commitHash, submissionType);
-            }
-            catch (IllegalStateException ex) {
-                // The exception is already logged, we just return null here.
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+
+        try {
+            ProgrammingSubmission submission = createSubmissionWithCommitHash(participation, commitHash, submissionType);
+            return Optional.of(submission);
+        }
+        catch (IllegalStateException ex) {
+            // The exception is already logged, we just return null here.
+            return Optional.empty();
+        }
     }
 
     /**
@@ -352,6 +348,12 @@ public class ProgrammingSubmissionService {
         }
     }
 
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId, boolean testCasesChanged) {
+        setTestCasesChanged(programmingExerciseId, testCasesChanged);
+        ProgrammingSubmission submission = createSolutionParticipationSubmission(programmingExerciseId, SubmissionType.TEST, null);
+        triggerBuildAndNotifyUser(submission);
+    }
+
     /**
      * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
      * This method also sends out a notification to the client if testCasesChanged = true.
@@ -359,24 +361,11 @@ public class ProgrammingSubmissionService {
      *
      * @param programmingExerciseId id of a ProgrammingExercise.
      * @param testCasesChanged      set to true to mark the programming exercise as dirty.
-     * @param commitHash            will be used for creating the submission if not null, the fallback is the last commitHash of the participation's repository.
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged, @Nullable ObjectId commitHash) throws EntityNotFoundException {
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
-
-        if (testCasesChanged) {
-            try {
-                List<ProgrammingExerciseParticipation> participations = new LinkedList<>();
-                participations.add(programmingExercise.getTemplateParticipation());
-                List<ProgrammingSubmission> submissions = createSubmissionWithCommitHashForParticipationsOfExercise(participations, commitHash, SubmissionType.TEST);
-                notifyUserTriggerBuildForNewSubmissions(submissions);
-            }
-            catch (EntityNotFoundException ex) {
-                log.error("Last commit hash for test repository participation could not be retrieved for programming exercise with id " + programmingExerciseId);
-            }
-        }
 
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
