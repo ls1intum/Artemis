@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -173,7 +174,7 @@ class AutomaticAssessmentControllerTest {
 
         assertThat(compassResult.entitiesCovered()).isEqualTo(6);
         assertThat(compassResult.getPoints()).isEqualTo(-0.5 - 0.5 + 0 + 1.5 + 1.0 + 0.5);
-        assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6);
+        assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6, offset(0.000001));
         verify(classDiagram).setLastAssessmentCompassResult(compassResult);
     }
 
@@ -186,7 +187,7 @@ class AutomaticAssessmentControllerTest {
 
         assertThat(compassResult.entitiesCovered()).isEqualTo(6);
         assertThat(compassResult.getPoints()).isEqualTo(-0.5 - 0.5 + 0 + 1.5 + 1.0 + 0.5);
-        assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6);
+        assertThat(compassResult.getConfidence()).isEqualTo((0.5 + 0.6 + 0.7 + 0.8 + 0.9 + 1.0) / 6, offset(0.000001));
         verify(activityDiagram).setLastAssessmentCompassResult(compassResult);
     }
 
