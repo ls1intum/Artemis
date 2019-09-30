@@ -549,6 +549,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
+        SecurityUtils.setAuthorizationObject();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(exerciseId).get();
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExerciseRepository.save(programmingExercise);

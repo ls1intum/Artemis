@@ -246,6 +246,11 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addResultToParticipation(Participation participation, Submission submission) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L).submission(submission);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbacksToResult(Result result) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
         Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));

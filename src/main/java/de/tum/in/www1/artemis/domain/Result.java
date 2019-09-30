@@ -291,7 +291,7 @@ public class Result implements Serializable {
         this.rated = rated;
     }
 
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
+    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 

@@ -183,7 +183,7 @@ public class ResultService {
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            setResultRated(result);
+            setProgrammingExerciseResultRated(result);
             resultRepository.save(result);
         }
         return Optional.ofNullable(result);
@@ -197,8 +197,7 @@ public class ResultService {
      *
      * @param result the rest for which to set the rated attribute (mutates the original object!)
      */
-    // TODO: It would be better to move this logic to the ResultService, but with the current structure, this would create a circular dependency issue.
-    private void setResultRated(Result result) {
+    public void setProgrammingExerciseResultRated(Result result) {
         ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) result.getParticipation();
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) result.getSubmission();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
@@ -212,7 +211,7 @@ public class ResultService {
         }
         else {
             // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
-            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission.getSubmissionDate());
+            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
         }
     }
 
