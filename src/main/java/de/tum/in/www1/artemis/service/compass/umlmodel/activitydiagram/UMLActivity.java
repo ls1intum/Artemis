@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import java.util.List;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import java.util.List;
 
 public class UMLActivity extends UMLActivityElement {
 

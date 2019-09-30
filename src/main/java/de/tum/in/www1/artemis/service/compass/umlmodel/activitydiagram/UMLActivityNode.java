@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import java.util.Objects;
+
 import com.google.common.base.CaseFormat;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import java.util.Objects;
 
 public class UMLActivityNode extends UMLActivityElement {
 
