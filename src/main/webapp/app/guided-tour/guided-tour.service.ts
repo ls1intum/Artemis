@@ -289,52 +289,78 @@ export class GuidedTourService {
             return;
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             if (nextStep && nextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector);
+                if (afterNextStep && afterNextStep.highlightSelector) {
+                    this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
+                } else {
+                    this.waitForElement(nextStep.highlightSelector);
+                }
             } else {
                 this.enableNextStepClick();
             }
+        } else {
+            if (userInteraction === UserInteractionEvent.CLICK) {
+                console.log('click observer disconnect');
+                from(this.observeDomMutations(targetNode, userInteraction))
+                    .pipe(take(1))
+                    .subscribe((mutations: MutationRecord[]) => {
+                        mutations.forEach(() => {
+                            this.enableNextStepClick();
+                        });
+                    });
+            } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
+                        this.enableNextStepClick();
+                    });
+                });
+            }
         }
+    }
 
-        const observer = new MutationObserver(mutations => {
-            switch (userInteraction) {
-                case UserInteractionEvent.CLICK: {
+    /**
+     * Wraps the mutation observer in a promise
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     * @param userInteraction the user interaction to complete the tour step
+     */
+    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
+        return new Promise(resolve => {
+            const observer = new MutationObserver(mutations => {
+                if (userInteraction === UserInteractionEvent.CLICK) {
+                    console.log('click observer disconnect');
                     observer.disconnect();
                     this.enableNextStepClick();
-                    break;
-                }
-                case UserInteractionEvent.ACE_EDITOR: {
+                } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                     mutations.forEach(mutation => {
                         if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
                             observer.disconnect();
                             this.enableNextStepClick();
                         }
                     });
-                    break;
                 }
-                default: {
-                    observer.disconnect();
-                }
-            }
-        });
-        observer.observe(targetNode, {
-            attributes: true,
-            childList: true,
-            characterData: true,
-            subtree: true,
+            });
+            observer.observe(targetNode, {
+                attributes: true,
+                childList: true,
+                characterData: true,
+                subtree: false,
+            });
         });
     }
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
      * @param nextStepSelector the selector string of the next element that should appear in the DOM
+     * @param afterNextStepSelector if the nextSelector does not show up in the DOM then wait for the step afterwards as well
      */
-    private waitForElement(nextStepSelector: string) {
+    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string) {
         const interval = setInterval(() => {
             const nextElement = document.querySelector(nextStepSelector);
-            if (nextElement) {
+            const afterNextElement = afterNextStepSelector ? document.querySelector(afterNextStepSelector) : null;
+            if (nextElement || afterNextElement) {
                 clearInterval(interval);
                 this.enableNextStepClick();
             }

@@ -60,6 +60,16 @@ export const codeEditorTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.WAIT_FOR_SELECTOR,
         }),
         new TextTourStep({
+            highlightSelector: 'jhi-updating-result .text-success',
+            eventListenerSelector: 'body',
+            headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
+            contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
+            hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
+            highlightPadding: 10,
+            orientation: Orientation.BOTTOMRIGHT,
+            skipStepIfNoSelector: true,
+        }),
+        new TextTourStep({
             highlightSelector: 'jhi-updating-result .text-danger .result',
             eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
@@ -68,6 +78,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            skipStepIfNoSelector: true,
         }),
         new TextTourStep({
             highlightSelector: '.modal-body pre',
@@ -75,6 +86,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testCases.content',
             highlightPadding: 20,
             orientation: Orientation.BOTTOM,
+            skipStepIfNoSelector: true,
             closeAction: () => {
                 clickOnElement('.modal-header .close');
             },
@@ -85,7 +97,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testSuccess.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            disableStep: true,
+            skipStepIfNoSelector: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
@@ -94,7 +106,6 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
-            disableStep: true,
         }),
     ],
 };

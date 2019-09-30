@@ -38,11 +38,11 @@
             },
             "exerciseType": {
                 "headline": "Exercise type",
-                "content": "The exercise type can be distinguished by the exercise icon. This example here is a programming exercise."
+                "content": "The exercise type can be distinguished by the exercise icon. Here it is a programming exercise."
             },
             "exerciseTags": {
                 "headline": "Exercise tags",
-                "content": "The listed tags will give further information on the exercise classification, e.g. by difficulty"
+                "content": "The listed tags will give further information on the exercise classification, e.g. by difficulty."
             },
             "courseInformation": {
                 "headline": "Course information",
@@ -54,7 +54,7 @@
             },
             "lectures": {
                 "headline": "Lectures",
-                "content": "You can find and download the all lecture slides from this tab."
+                "content": "You can find and download all lecture slides from this tab."
             },
             "statistics": {
                 "headline": "Statistics",
@@ -86,7 +86,7 @@
             },
             "reviewResult": {
                 "headline": "Review your result",
-                "content": "After you have committed and pushed your changes as described in the previous video, the result will be automatically refreshed and displayed here. Artemis uses test cases to automatically assess your solution. If you now click on the exercise panel, you will get to the exercise detail page, review the test case results."
+                "content": "After you have committed and pushed your changes as described in the previous video, the result will be automatically refreshed and displayed here. Artemis uses test cases to automatically assess your solution. If you now click on the exercise panel, you will get to the exercise detail page to review the test case results."
             }
         }
     }

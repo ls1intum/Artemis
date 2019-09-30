@@ -37,8 +37,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    private observer: MutationObserver;
-
     readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
@@ -102,9 +100,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
-        }
-        if (this.observer) {
-            this.observer.disconnect();
         }
     }
 
@@ -405,7 +400,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const selectedElement = document.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
 
         // Workaround for instruction elements in the code-editor view, since the element can be in the viewport but hidden by the build output div
-        const instructions = selectedElement.closest('.instructions__content__markdown');
+        const instructions = selectedElement ? selectedElement.closest('.instructions__content__markdown') : null;
         if (instructions && instructions.scrollHeight > window.innerHeight && instructions.querySelector(this.currentTourStep.highlightSelector)) {
             selectedElement.scrollIntoView({ block: 'center' });
         }

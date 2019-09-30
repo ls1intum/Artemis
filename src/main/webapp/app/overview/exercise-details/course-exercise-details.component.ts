@@ -176,11 +176,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
-            if (this.currentResult && this.currentResult.hasFeedback && !this.currentResult.successful) {
-                this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
-            }
-            if (this.currentResult && this.currentResult.successful) {
-                this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+            if (this.currentResult) {
+                if (this.currentResult.successful) {
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+                } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
+                }
             }
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
