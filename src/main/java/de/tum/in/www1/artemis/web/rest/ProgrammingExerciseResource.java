@@ -172,6 +172,7 @@ public class ProgrammingExerciseResource {
 
         // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
         // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
+        programmingExercise.generateAndSetProjectKey();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
@@ -658,7 +659,8 @@ public class ProgrammingExerciseResource {
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise.get());
         boolean isReleased = programmingExercise.get().isReleased();
         ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.get().haveTestCasesChanged());
+                .testCasesChanged(programmingExercise.get().haveTestCasesChanged())
+                .buildAndTestStudentSubmissionsAfterDueDate(programmingExercise.get().getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }
 

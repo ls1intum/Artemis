@@ -64,6 +64,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
     private Boolean testCasesChanged = false;
 
+    @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
+    private String projectKey;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -223,6 +226,27 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
+    public String getProjectKey() {
+        return this.projectKey;
+    }
+
+    /**
+     * Generates a unique project key based on the course short name and the exercise short name. This should only be used
+     * for instantiating a new exercise
+     *
+     * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
+     * Course: <code>crs</code> <br>
+     * Exercise: <code>exc</code> <br>
+     * Project key: <code>CRSEXC</code>
+     */
+    public void generateAndSetProjectKey() {
+        // Don't set the project key, if it has already been set
+        if (this.projectKey != null) {
+            return;
+        }
+        this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+    }
+
     public ProgrammingLanguage getProgrammingLanguage() {
         return programmingLanguage;
     }
@@ -333,13 +357,6 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @JsonIgnore
-    public String getProjectKey() {
-        // this is the key used for Bitbucket and Bamboo
-        // remove all whitespace and make sure it is upper case
-        return (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
-    }
-
-    @JsonIgnore
     public String getProjectName() {
         // this is the name used for Bitbucket and Bamboo
         return this.getCourse().getShortName() + " " + this.getTitle();
@@ -432,7 +449,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Columns for which we allow a pageable search using the {@link ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO)}
+     * Columns for which we allow a pageable search using the {@link ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)} (PageableSearchDTO)}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum ProgrammingExerciseSearchColumn {
