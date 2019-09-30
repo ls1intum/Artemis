@@ -10,7 +10,8 @@
             "updated": "A lecture is updated with identifier {{ param }}",
             "deleted": "A lecture is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the lecture {{ title }}? This action can NOT be undone!"
+                "question": "Are you sure you want to permanently delete the lecture <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Lecture to confirm."
             },
             "title": "Title",
             "description": "Description",

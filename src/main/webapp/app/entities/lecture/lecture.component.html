@@ -57,9 +57,11 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    [routerLink]="['/', { outlets: { popup: 'lecture/' + lecture.id + '/delete' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
+                                    jhiDeleteDialog
+                                    [entityTitle]="lecture.title"
+                                    deleteQuestion="artemisApp.lecture.delete.question"
+                                    deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
+                                    (delete)="deleteLecture(lecture.id)"
                                     class="btn btn-danger btn-sm"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>

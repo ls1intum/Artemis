@@ -8,7 +8,6 @@ import { LectureService } from './lecture.service';
 import { LectureComponent } from './lecture.component';
 import { LectureDetailComponent } from './lecture-detail.component';
 import { LectureUpdateComponent } from './lecture-update.component';
-import { LectureDeletePopupComponent } from './lecture-delete-dialog.component';
 import { Lecture, LectureAttachmentsComponent } from 'app/entities/lecture';
 
 @Injectable({ providedIn: 'root' })
@@ -84,21 +83,5 @@ export const lectureRoute: Routes = [
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const lecturePopupRoute: Routes = [
-    {
-        path: 'lecture/:id/delete',
-        component: LectureDeletePopupComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];
