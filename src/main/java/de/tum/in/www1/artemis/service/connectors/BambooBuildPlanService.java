@@ -130,7 +130,9 @@ public class BambooBuildPlanService {
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
                 .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),
                         createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug))
-                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+                // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
+                .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME)))
+                .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
