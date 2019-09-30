@@ -8,10 +8,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -140,8 +137,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
 
-        templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
-        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
+        templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
+        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
         participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
@@ -408,10 +405,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         SecurityUtils.setAuthorizationObject();
         participations.add(participationRepository.getOneWithEagerSubmissions(templateParticipationId));
         participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
-        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(0)));
-        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(1)));
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(4); // There should be a 1-1 relationship from submissions to participations.
+        // We only create submissions for the solution and template participation after a push to the test repository.
+        assertThat(submissions).hasSize(2);
         for (Participation participation : participations) {
             assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).collect(Collectors.toList())).hasSize(1);
         }
@@ -420,12 +416,15 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         // Phase 2: Now the CI informs Artemis about the participation build results.
         postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK, false);
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
+        // The number of total participations should not have changed.
+        assertThat(participationRepository.count()).isEqualTo(4);
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
-        participations = participationRepository.getAllWithEagerSubmissionsAndResults();
+        participations = new LinkedList<>();
+        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
+        participations.add(templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
         // After a push to the test repository, only the solution and template repository are built.
-        assertThat(participations).hasSize(2);
         assertThat(results).hasSize(2);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));

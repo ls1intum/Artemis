@@ -21,5 +21,6 @@ public interface SolutionProgrammingExerciseParticipationRepository extends JpaR
     @Query("select p from SolutionProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
-    Optional<SolutionProgrammingExerciseParticipation> findByProgrammingExerciseId(Long exerciseId);
+    @EntityGraph(attributePaths = { "results", "submissions" })
+    Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(Long exerciseId);
 }
