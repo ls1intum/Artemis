@@ -99,9 +99,12 @@
                             <button
                                 type="submit"
                                 *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: 'participation/' + participation.id + '/delete' } }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                jhiDeleteDialog
+                                [entityTitle]="participation.student.firstName"
+                                deleteQuestion="artemisApp.participation.delete.question"
+                                (delete)="deleteParticipation(participation.id, $event)"
+                                [checkboxText]="exercise.type === PROGRAMMING ? 'artemisApp.participation.deleteBuildPlan' : null"
+                                [additionalCheckboxText]="exercise.type === PROGRAMMING ? 'artemisApp.participation.deleteRepository' : null"
                                 class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon icon="times"></fa-icon>

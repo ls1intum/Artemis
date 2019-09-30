@@ -6,7 +6,9 @@ export class DeleteDialogDirective {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
-    @Output() delete = new EventEmitter<void>();
+    @Input() checkboxText: string;
+    @Input() additionalCheckboxText: string;
+    @Output() delete = new EventEmitter<any>();
 
     constructor(private deleteDialogService: DeleteDialogService) {}
 
@@ -14,8 +16,17 @@ export class DeleteDialogDirective {
      * Opens delete dialog
      */
     openDeleteDialog() {
-        const deleteDialogData: DeleteDialogData = { entityTitle: this.entityTitle, deleteQuestion: this.deleteQuestion, deleteConfirmationText: this.deleteConfirmationText };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(() => this.delete.emit());
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: this.entityTitle,
+            deleteQuestion: this.deleteQuestion,
+            deleteConfirmationText: this.deleteConfirmationText,
+            checkboxText: this.checkboxText,
+            additionalCheckboxText: this.additionalCheckboxText,
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(result => {
+            console.log(result);
+            this.delete.emit(result);
+        });
     }
 
     @HostListener('click')
