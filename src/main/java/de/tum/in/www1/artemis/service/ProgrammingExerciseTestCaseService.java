@@ -82,7 +82,8 @@ public class ProgrammingExerciseTestCaseService {
             matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
             updatedTests.add(matchingTestCase);
         }
-
+        // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
+        programmingExerciseService.setTestCasesChanged(exerciseId, true);
         return updatedTests;
     }
 
@@ -98,6 +99,8 @@ public class ProgrammingExerciseTestCaseService {
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1);
         }
+        // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
+        programmingExerciseService.setTestCasesChanged(exerciseId, true);
         return testCases;
     }
 
@@ -149,7 +152,8 @@ public class ProgrammingExerciseTestCaseService {
      */
     @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate());
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!

@@ -56,7 +56,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
@@ -87,11 +86,17 @@ public class ProgrammingExerciseService {
 
     private final ParticipationService participationService;
 
+    private final ResultRepository resultRepository;
+
     private final UserService userService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ResourceLoader resourceLoader;
+
+    private final GroupNotificationService groupNotificationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
@@ -101,10 +106,11 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationService participationService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
+            ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
+            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -113,14 +119,17 @@ public class ProgrammingExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.resourceLoader = resourceLoader;
-        this.participationService = participationService;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.courseRepository = courseRepository;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
-        this.courseRepository = courseRepository;
+        this.resourceLoader = resourceLoader;
+        this.groupNotificationService = groupNotificationService;
+        this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
@@ -133,6 +142,7 @@ public class ProgrammingExerciseService {
      * @return A list of created {@link ProgrammingSubmission programming submissions} for the changed exercise
      * @throws EntityNotFoundException If the exercise with the given ID does not exist
      */
+    @Transactional
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
         if (exerciseOpt.isEmpty()) {
@@ -179,6 +189,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The checked out exercise in the repository
      * @param participation The student participation for the student id, which should be added.
      */
+    @Transactional
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String studentId = participation.getStudent().getLogin();
 
@@ -301,6 +312,7 @@ public class ProgrammingExerciseService {
      * @return The newly setup exercise
      * @throws Exception If anything goes wrong
      */
+    @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
@@ -402,6 +414,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise
      */
+    @Transactional
     public void initParticipations(ProgrammingExercise programmingExercise) {
 
         Participation solutionParticipation = programmingExercise.getSolutionParticipation();
@@ -508,6 +521,7 @@ public class ProgrammingExerciseService {
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
+    @Transactional
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
@@ -541,6 +555,7 @@ public class ProgrammingExerciseService {
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
+    @Transactional
     public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
@@ -553,6 +568,7 @@ public class ProgrammingExerciseService {
      * @param participation The template participation
      * @return The ProgrammingExercise where the given Participation is the template Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
@@ -563,6 +579,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution participation
      * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
@@ -573,6 +590,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution or template participation
      * @return The ProgrammingExercise where the given Participation is the solution or template Participation
      */
+    @Transactional
     public Optional<ProgrammingExercise> getExerciseForSolutionOrTemplateParticipation(Participation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationIdOrSolutionParticipationId(participation.getId());
     }
@@ -584,13 +602,14 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
+    @Transactional
     public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
         else {
-            throw new EntityNotFoundException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
         }
     }
 
@@ -602,6 +621,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
      */
+    @Transactional
     public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
         if (programmingExercise.isPresent()) {
@@ -622,6 +642,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise for which the participations should get saved
      */
+    @Transactional
     public void saveParticipations(ProgrammingExercise programmingExercise) {
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
@@ -637,6 +658,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
@@ -651,6 +673,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
      */
+    @Transactional
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
@@ -678,6 +701,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
@@ -744,6 +768,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
+    @Transactional
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
@@ -786,6 +811,48 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param testCasesChanged set to true to mark the programming exercise as dirty.
+     * @return the updated ProgrammingExercise.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     */
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        if (programmingExerciseOpt.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
+        }
+
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
+        // should get an updated result.
+        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !hasAtLeastOneStudentResult(programmingExercise)) {
+            return programmingExercise;
+        }
+        programmingExercise.setTestCasesChanged(testCasesChanged);
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Send a websocket message about the new state to the client.
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        return updatedProgrammingExercise;
+    }
+
+    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
+        // Is true if the exercise is released and has at least one result.
+        // TODO: We can't use the resultService here due to a circular dependency issue.
+        return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
     }
 
     /**

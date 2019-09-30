@@ -69,7 +69,10 @@ describe('ProgrammingExerciseDueDateSelectComponent', () => {
         await fixture.whenStable;
 
         const container = getAutomaticSubmissionContainer();
-        expect(container).not.to.exist;
+        expect(container).to.exist;
+        const checkbox = getCheckbox();
+        expect(checkbox.nativeElement).to.exist;
+        expect(checkbox.nativeElement.disabled).to.be.true;
     });
 
     it('automatic buildAndTest date checkbox should be checked when the container is provided with an exercise that has a buildAndTestDate', async () => {
