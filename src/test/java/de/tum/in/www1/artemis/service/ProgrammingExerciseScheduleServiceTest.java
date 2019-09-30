@@ -78,9 +78,9 @@ class ProgrammingExerciseScheduleServiceTest {
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             Mockito.verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
             Mockito.verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
         }
     }
 

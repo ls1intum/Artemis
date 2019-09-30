@@ -122,5 +122,5 @@ public interface VersionControlService {
      * @param username          String to identify the user with.
      * @throws Exception        If the communication with the VCS fails.
      */
-    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws Exception;
+    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws Exception;
 }

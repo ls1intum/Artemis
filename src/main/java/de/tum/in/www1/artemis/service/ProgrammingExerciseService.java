@@ -1024,7 +1024,7 @@ public class ProgrammingExerciseService {
             for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
                 ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
                 try {
-                    v.setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
+                    v.setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
                             programmingExerciseStudentParticipation.getStudent().getLogin());
                 }
                 catch (Exception e) {

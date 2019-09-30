@@ -361,13 +361,13 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String username) throws BitbucketException {
-        setStudentRepositoryPermission(repositoryUrl, username, VersionControlRepositoryPermission.READ_ONLY);
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
+        setStudentRepositoryPermission(repositoryUrl, username, projectKey, VersionControlRepositoryPermission.READ_ONLY);
     }
 
-    private void setStudentRepositoryPermission(URL repositoryUrl, String username, VersionControlRepositoryPermission repositoryPermission) throws BitbucketException {
+    private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
+            throws BitbucketException {
         String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
-        String projectKey = getProjectName(repositoryUrl);
         String repositorySlug = getRepositoryName(repositoryUrl);
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
