@@ -63,6 +63,10 @@ public class ProgrammingExerciseParticipationService {
         return solutionParticipationRepository.findById(participationId);
     }
 
+    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) {
+        return solutionParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+    }
+
     /**
      * Tries to retrieve a student participation for the given exercise id and username.
      *

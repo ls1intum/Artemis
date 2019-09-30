@@ -236,6 +236,11 @@ public class ProgrammingSubmissionService {
      */
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
+        ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
+        return createSubmissionWithCommitHash(participation, lastCommitHash, submissionType);
+    }
+
+    private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         ObjectId lastCommitHash;
         try {
@@ -244,8 +249,35 @@ public class ProgrammingSubmissionService {
         catch (EntityNotFoundException ex) {
             throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
         }
+        return lastCommitHash;
+    }
 
-        return createSubmissionWithCommitHash(participation, lastCommitHash, submissionType);
+    /**
+     * Create a submission with the given submissionType and commitHash for the solutionParticipation of the provided programming exercise.
+     * @param programmingExerciseId ProgrammingExercise id
+     * @param submissionType        Will be used for setting the submissionType of the create submission.
+     * @param commitHash            Will be used for the created submission. If null, the last commit hash of the solutionParticipation will be used.
+     */
+    public void createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash) {
+        Optional<SolutionProgrammingExerciseParticipation> participationOpt = programmingExerciseParticipationService
+                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        if (participationOpt.isEmpty()) {
+            log.debug("No solution participation exists for programming exercise with id " + programmingExerciseId);
+            return;
+        }
+        ProgrammingExerciseParticipation participation = participationOpt.get();
+        if (commitHash == null) {
+            try {
+                // If no commitHash was provided, we use the last commit from the participation repository as a fallback.
+                commitHash = getLastCommitHashForParticipation(participation);
+            }
+            catch (IllegalStateException ex) {
+                log.debug("No commit hash found for the participation repository of participation id " + participation.getId());
+                return;
+            }
+        }
+        ProgrammingSubmission submission = createSubmissionWithCommitHash(participation, commitHash, submissionType);
+        notifyUserAboutSubmission(submission);
     }
 
     private ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
@@ -337,7 +369,6 @@ public class ProgrammingSubmissionService {
         if (testCasesChanged) {
             try {
                 List<ProgrammingExerciseParticipation> participations = new LinkedList<>();
-                participations.add(programmingExercise.getSolutionParticipation());
                 participations.add(programmingExercise.getTemplateParticipation());
                 List<ProgrammingSubmission> submissions = createSubmissionWithCommitHashForParticipationsOfExercise(participations, commitHash, SubmissionType.TEST);
                 notifyUserTriggerBuildForNewSubmissions(submissions);

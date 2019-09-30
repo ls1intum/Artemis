@@ -248,6 +248,8 @@ public class ProgrammingSubmissionResource {
             log.error("Commit hash could not be parsed for submission from exercise " + exerciseId, ex);
         }
 
+        // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
+        programmingSubmissionService.createSolutionParticipationSubmission(exerciseId, SubmissionType.TEST, lastCommitId);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChanged(exerciseId, true, lastCommitId);
 
