@@ -1,18 +1,86 @@
 <div class="timeline-box">
     <div class="test-schedule">
         <div class="test-schedule-row">
-            <jhi-programming-exercise-test-schedule-date-picker class="test-schedule-date" [label]="'Release Date'"> </jhi-programming-exercise-test-schedule-date-picker>
-            <jhi-programming-exercise-test-schedule-date-picker class="test-schedule-date" [label]="'Due Date'"> </jhi-programming-exercise-test-schedule-date-picker>
-            <!--            <div class="test-schedule-date">-->
-            <!--                <div-->
-            <!--                    data-toggle="tooltip"-->
-            <!--                    data-placement="bottom"-->
-            <!--                    title="Release Date"-->
-            <!--                    class="btn btn-light btn-circle"-->
-            <!--                >-->
-            <!--                    <fa-icon icon="calendar-plus" size="2x"></fa-icon>-->
-            <!--                </div>-->
-            <!--            </div>-->
+            <jhi-programming-exercise-test-schedule-date-picker
+                [(ngModel)]="exercise.releaseDate"
+                (onDateReset)="exercise.releaseDate = null"
+                class="test-schedule-date"
+                [label]="'artemisApp.exercise.releaseDate'"
+            ></jhi-programming-exercise-test-schedule-date-picker>
+            <div class="test-schedule-date">
+                <div class="mb-2">
+                    <span class="font-weight-bold">
+                        Tests
+                    </span>
+                    <fa-icon
+                        icon="question-circle"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div class="btn btn-light--scheduled-test btn-circle">
+                    <fa-icon icon="cogs" size="lg"></fa-icon>
+                </div>
+            </div>
+            <jhi-programming-exercise-test-schedule-date-picker
+                [(ngModel)]="exercise.dueDate"
+                (onDateReset)="exercise.dueDate = null; exercise.buildAndTestStudentSubmissionsAfterDueDate = null"
+                class="test-schedule-date"
+                [label]="'artemisApp.exercise.dueDate'"
+            >
+            </jhi-programming-exercise-test-schedule-date-picker>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="exercise.dueDate"
+                class="test-schedule-date"
+                [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = null"
+                [startAt]="exercise?.dueDate"
+                [min]="exercise?.dueDate"
+                [label]="'artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.label'"
+            >
+            </jhi-programming-exercise-test-schedule-date-picker>
+            <div *ngIf="exercise.buildAndTestStudentSubmissionsAfterDueDate" class="test-schedule-date">
+                <div class="mb-2">
+                    <span class="font-weight-bold">
+                        Tests
+                    </span>
+                    <fa-icon
+                        icon="question-circle"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div class="btn btn-light--scheduled-test btn-circle">
+                    <fa-icon icon="cogs" size="lg"></fa-icon>
+                </div>
+            </div>
+            <div *ngIf="exercise.dueDate" class="test-schedule-date">
+                <div class="mb-2">
+                    <span class="font-weight-bold">
+                        Tests
+                    </span>
+                    <fa-icon
+                        icon="question-circle"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div *ngIf="!hasManualTests" class="btn btn-light--scheduled-test btn-circle" [style.background-color]="'gray'" (click)="toggleHasManualTests()">
+                    <fa-icon icon="user-plus" size="lg"></fa-icon>
+                </div>
+                <div
+                    *ngIf="hasManualTests"
+                    (click)="toggleHasManualTests()"
+                    class="btn btn-light--scheduled-test btn-circle calendar-event-toggle"
+                    [style.background-color]="'#3c763d'"
+                >
+                    <fa-icon class="icon-static" icon="user-check" size="lg"></fa-icon>
+                    <fa-icon class="icon-remove" icon="user-minus" size="lg"></fa-icon>
+                </div>
+            </div>
         </div>
     </div>
 </div>

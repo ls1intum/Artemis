@@ -218,8 +218,4 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             },
         );
     }
-
-    public onProgrammingExerciseUpdate(programmingExercise: ProgrammingExercise) {
-        this.programmingExercise = programmingExercise;
-    }
 }
