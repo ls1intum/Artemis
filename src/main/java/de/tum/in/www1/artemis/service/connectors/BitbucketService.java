@@ -362,7 +362,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
-        setStudentRepositoryPermission(repositoryUrl, username, projectKey, VersionControlRepositoryPermission.READ_ONLY);
+        setStudentRepositoryPermission(repositoryUrl, projectKey, username, VersionControlRepositoryPermission.READ_ONLY);
     }
 
     private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
