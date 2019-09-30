@@ -250,8 +250,8 @@ public class ProgrammingSubmissionResource {
         }
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
-        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionService.createSolutionParticipationSubmission(exerciseId, SubmissionType.TEST, lastCommitId);
-        submissionOpt.ifPresent(programmingSubmissionService::notifyUserAboutSubmission);
+        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitId);
+        programmingSubmissionService.notifyUserAboutSubmission(submission);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChanged(exerciseId, true);
 
