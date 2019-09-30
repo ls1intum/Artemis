@@ -259,6 +259,8 @@ public class ProgrammingSubmissionService {
      * @param programmingExerciseId ProgrammingExercise id
      * @param submissionType        Will be used for setting the submissionType of the create submission.
      * @param commitHash            Will be used for the created submission. If null, the last commit hash of the solutionParticipation will be used.
+     * @return The created solutionSubmission.
+     * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
      */
     public ProgrammingSubmission createSolutionParticipationSubmission(Long programmingExerciseId, SubmissionType submissionType, @Nullable ObjectId commitHash)
             throws EntityNotFoundException {
