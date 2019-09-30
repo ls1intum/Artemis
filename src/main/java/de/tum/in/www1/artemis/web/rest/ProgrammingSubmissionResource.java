@@ -235,14 +235,10 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!(exercise instanceof ProgrammingExercise)) {
-            log.warn("REST request to inform about changed test cases of non existing ProgrammingExercise : {}", exerciseId);
-            return ResponseEntity.notFound().build();
-        }
+        // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
+        programmingExerciseService.setTestCasesChanged(exerciseId, true);
 
         List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
-
         programmingSubmissionService.notifyUserTriggerBuildForNewSubmissions(submissions);
 
         return ResponseEntity.ok().build();
