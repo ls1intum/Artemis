@@ -134,7 +134,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
+        } else if (
+            (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) &&
+            this.hasParticipations(exercise)
+        ) {
             const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
                 if (this.isExerciseInDueDate(exercise)) {

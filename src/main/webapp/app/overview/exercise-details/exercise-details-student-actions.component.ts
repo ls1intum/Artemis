@@ -31,7 +31,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
     readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
     readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly FILE_UPLOAD_EXERCISE = ParticipationStatus.FILE_UPLOAD_EXERCISE;
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
@@ -91,7 +90,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
+        } else if (
+            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
+            this.hasParticipations(this.exercise)
+        ) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
                 if (this.isExerciseInDueDate(this.exercise)) {
@@ -103,11 +105,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 return ParticipationStatus.EXERCISE_SUBMITTED;
             } else {
                 return ParticipationStatus.UNINITIALIZED;
-            }
-        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD && this.hasParticipations(this.exercise)) {
-            const participation = this.exercise.studentParticipations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return ParticipationStatus.FILE_UPLOAD_EXERCISE;
             }
         }
 

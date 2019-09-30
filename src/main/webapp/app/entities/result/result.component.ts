@@ -123,7 +123,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     evaluateTemplateStatus() {
-        if (this.isModelingOrText() && this.participation && this.participation.exercise) {
+        if (this.isModelingOrTextOrFileUpload() && this.participation && this.participation.exercise) {
             const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
             if (this.isSubmissionInDueTime()) {
                 if (this.hasResultAndScore()) {
@@ -163,11 +163,13 @@ export class ResultComponent implements OnInit, OnChanges {
         return null;
     }
 
-    isModelingOrText() {
+    isModelingOrTextOrFileUpload() {
         return (
             this.participation.initializationState === InitializationState.FINISHED &&
             this.participation.exercise &&
-            (this.participation.exercise.type === ExerciseType.MODELING || this.participation.exercise.type === ExerciseType.TEXT)
+            (this.participation.exercise.type === ExerciseType.MODELING ||
+                this.participation.exercise.type === ExerciseType.TEXT ||
+                this.participation.exercise.type === ExerciseType.FILE_UPLOAD)
         );
     }
 
