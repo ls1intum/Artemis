@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+
 import java.util.List;
 
 public class UMLActivity extends UMLActivityElement {
@@ -23,6 +27,17 @@ public class UMLActivity extends UMLActivityElement {
         for (UMLActivityElement childElement : childElements) {
             childElement.setParentActivity(this);
         }
+    }
+
+    @Override
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLActivity)) {
+            return 0;
+        }
+
+        UMLActivity referenceActivity = (UMLActivity) reference;
+
+        return NameSimilarity.levenshteinSimilarity(name, referenceActivity.getName());
     }
 
     @Override

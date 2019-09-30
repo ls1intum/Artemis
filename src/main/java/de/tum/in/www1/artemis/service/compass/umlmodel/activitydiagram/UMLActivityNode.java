@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
 import com.google.common.base.CaseFormat;
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+
+import java.util.Objects;
 
 public class UMLActivityNode extends UMLActivityElement {
 
@@ -14,6 +19,21 @@ public class UMLActivityNode extends UMLActivityElement {
         super(name, jsonElementID);
 
         this.type = type;
+    }
+
+    @Override
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLActivityNode)) {
+            return 0;
+        }
+
+        UMLActivityNode referenceNode = (UMLActivityNode) reference;
+
+        if (!Objects.equals(getType(), referenceNode.getType())) {
+            return 0;
+        }
+
+        return NameSimilarity.levenshteinSimilarity(name, referenceNode.getName());
     }
 
     @Override

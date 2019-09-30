@@ -4,8 +4,6 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public abstract class UMLActivityElement extends UMLElement {
@@ -19,17 +17,6 @@ public abstract class UMLActivityElement extends UMLElement {
         super(jsonElementID);
 
         this.name = name;
-    }
-
-    @Override
-    public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLActivityElement)) {
-            return 0;
-        }
-
-        UMLActivityElement referenceElement = (UMLActivityElement) reference;
-
-        return NameSimilarity.levenshteinSimilarity(name, referenceElement.getName());
     }
 
     @Override
