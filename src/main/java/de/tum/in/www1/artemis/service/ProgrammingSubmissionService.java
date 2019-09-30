@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -211,7 +213,7 @@ public class ProgrammingSubmissionService {
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        setTestCasesChanged(programmingExercise.getId(), false);
+        setTestCasesChanged(programmingExercise.getId(), false, null);
     }
 
     /**
@@ -232,7 +234,6 @@ public class ProgrammingSubmissionService {
      * @return created submission.
      * @throws IllegalStateException if the last commit hash can't be retrieved.
      */
-    @Transactional
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
@@ -244,7 +245,12 @@ public class ProgrammingSubmissionService {
             throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
         }
 
-        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(lastCommitHash.getName()).submitted(true)
+        return createSubmissionWithCommitHash(participation, lastCommitHash, submissionType);
+    }
+
+    @Transactional
+    public ProgrammingSubmission createSubmissionWithCommitHash(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
         return programmingSubmissionRepository.save(newSubmission);
@@ -258,12 +264,27 @@ public class ProgrammingSubmissionService {
      * @param submissionType the type for the submissions to be created.
      * @return list of created submissions (might be smaller as the list of provided participations!).
      */
-    @Transactional
     public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
             SubmissionType submissionType) {
         return participations.stream().map(participation -> {
             try {
                 return createSubmissionWithLastCommitHashForParticipation(participation, submissionType);
+            }
+            catch (IllegalStateException ex) {
+                // The exception is already logged, we just return null here.
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public List<ProgrammingSubmission> createSubmissionWithCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
+            @Nullable ObjectId commitHash, SubmissionType submissionType) {
+        if (commitHash == null) {
+            return createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, submissionType);
+        }
+        return participations.stream().map(participation -> {
+            try {
+                return createSubmissionWithCommitHash(participation, commitHash, submissionType);
             }
             catch (IllegalStateException ex) {
                 // The exception is already logged, we just return null here.
@@ -309,15 +330,20 @@ public class ProgrammingSubmissionService {
      * @return the updated ProgrammingExercise.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged, @Nullable ObjectId commitHash) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
 
         if (testCasesChanged) {
-            List<ProgrammingExerciseParticipation> participations = new LinkedList<>();
-            participations.add(programmingExercise.getSolutionParticipation());
-            participations.add(programmingExercise.getTemplateParticipation());
-            List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
-            notifyUserTriggerBuildForNewSubmissions(submissions);
+            try {
+                List<ProgrammingExerciseParticipation> participations = new LinkedList<>();
+                participations.add(programmingExercise.getSolutionParticipation());
+                participations.add(programmingExercise.getTemplateParticipation());
+                List<ProgrammingSubmission> submissions = createSubmissionWithCommitHashForParticipationsOfExercise(participations, commitHash, SubmissionType.TEST);
+                notifyUserTriggerBuildForNewSubmissions(submissions);
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Last commit hash for test repository participation could not be retrieved for programming exercise with id " + programmingExerciseId);
+            }
         }
 
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that

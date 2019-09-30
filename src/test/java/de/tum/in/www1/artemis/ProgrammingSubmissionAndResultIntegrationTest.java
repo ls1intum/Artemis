@@ -417,17 +417,16 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         }
         assertThat(submissions.stream().allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST))).isTrue();
 
-        // Phase 2: Now the CI informs Artemis about the student participation build results.
-        postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK, false);
-        postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK, false);
+        // Phase 2: Now the CI informs Artemis about the participation build results.
         postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK, false);
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
         participations = participationRepository.getAllWithEagerSubmissionsAndResults();
-        assertThat(participations).hasSize(4);
-        assertThat(results).hasSize(4);
+        // After a push to the test repository, only the solution and template repository are built.
+        assertThat(participations).hasSize(2);
+        assertThat(results).hasSize(2);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
             assertThat(hasMatchingSubmission);

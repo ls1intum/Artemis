@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -50,18 +51,18 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -237,8 +238,18 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
+        ObjectId lastCommitId = null;
+        try {
+            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            lastCommitId = ObjectId.fromString(lastCommitHash);
+            log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
+        }
+        catch (Exception ex) {
+            log.error("Commit hash could not be parsed for submission from exercise " + exerciseId, ex);
+        }
+
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
+        programmingSubmissionService.setTestCasesChanged(exerciseId, true, lastCommitId);
 
         return ResponseEntity.ok().build();
     }

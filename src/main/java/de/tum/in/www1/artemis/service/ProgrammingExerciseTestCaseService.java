@@ -86,7 +86,7 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
+        programmingSubmissionService.setTestCasesChanged(exerciseId, true, null);
         return updatedTests;
     }
 
@@ -103,7 +103,7 @@ public class ProgrammingExerciseTestCaseService {
             testCase.setWeight(1);
         }
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
+        programmingSubmissionService.setTestCasesChanged(exerciseId, true, null);
         return testCases;
     }
 
