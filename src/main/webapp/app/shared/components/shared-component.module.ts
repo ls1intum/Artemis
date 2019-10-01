@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { ButtonComponent } from './';
+import { ButtonComponent, TooltipComponent } from './';
 import { ArtemisSharedModule } from 'app/shared';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [ButtonComponent],
-    exports: [ButtonComponent],
+    declarations: [ButtonComponent, TooltipComponent],
+    exports: [ButtonComponent, TooltipComponent],
 })
 export class ArtemisSharedComponentModule {}

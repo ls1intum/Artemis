@@ -7,8 +7,9 @@ import * as moment from 'moment';
     selector: 'jhi-programming-exercise-test-schedule-date-picker',
     template: `
         <div>
-            <div class="font-weight-bold">
-                {{ label | translate }}
+            <div>
+                <span class="font-weight-bold" [jhiTranslate]="label"></span>
+                <jhi-tooltip *ngIf="tooltipText" placement="top" [text]="tooltipText"></jhi-tooltip>
             </div>
             <div class="invisible-date-time-picker">
                 <input
@@ -50,7 +51,8 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() startAt: Moment;
     @Input() min: Moment;
     @Input() max: Moment;
-    @Input() label: String;
+    @Input() label: string;
+    @Input() tooltipText: string;
     @Output() onDateReset = new EventEmitter();
 
     _onChange = (val: Moment) => {};

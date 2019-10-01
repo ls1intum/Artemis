@@ -60,11 +60,15 @@
         border-color: #3e8acc;
         border-width: 2px;
 
-        &--scheduled-test {
+        &.scheduled-test {
             width: 30px;
             height: 30px;
             border-radius: 15px;
             background-color: #3c763d;
+
+            &--deactivated {
+                background-color: gray;
+            }
         }
     }
 }

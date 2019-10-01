@@ -386,7 +386,7 @@ public class ProgrammingExerciseService {
 
         // template build plan
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoName, testRepoName);
-        // solution build plan
+        // solution build plan(PageableSearchDTO, User)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
 
         // save to get the id required for the webhook
