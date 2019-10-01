@@ -51,7 +51,7 @@ describe('DeleteDialogDirective', () => {
             });
     });
 
-    it('directive should correctly initialized', fakeAsync(() => {
+    it('directive should be correctly initialized', fakeAsync(() => {
         fixture.detectChanges();
         const directiveEl = fixture.debugElement.query(By.directive(DeleteDialogDirective));
         expect(directiveEl).to.be.not.null;
@@ -60,7 +60,7 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.additionalCheckboxText).to.be.equal('additional');
         expect(directiveInstance.entityTitle).to.be.equal('title');
         expect(directiveInstance.deleteQuestion).to.be.equal('question');
-        expect(directiveInstance.deleteConfirmationText).to.be.equal('deleteConfirmationText');
+        expect(directiveInstance.deleteConfirmationText).to.be.equal('text');
         expect(directiveInstance.checkboxText).to.be.equal('checkbox');
     }));
 
