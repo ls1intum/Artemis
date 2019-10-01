@@ -33,6 +33,7 @@
             "onlineCourse": "Online Kurs",
             "registrationEnabled": "Registrierung aktiviert",
             "presentationScoreEnabled": "Präsentationsergebnis aktiviert",
+            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",

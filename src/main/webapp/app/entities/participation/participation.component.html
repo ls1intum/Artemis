@@ -40,7 +40,7 @@
                         <span jhiTranslate="artemisApp.participation.student">Student</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="presentationScore" *ngIf="exercise?.isAtLeastInstructor && exercise?.type !== QUIZ">
+                    <th jhiSortBy="presentationScore" *ngIf="this.presentationScoreEnabled">
                         <span jhiTranslate="artemisApp.participation.presentationScore">Presentation Score</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>

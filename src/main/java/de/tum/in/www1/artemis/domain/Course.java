@@ -91,8 +91,8 @@ public class Course implements Serializable {
     @Column(name = "registration_enabled")
     private Boolean registrationEnabled;
 
-    @Column(name = "presentation_score_enabled")
-    private Boolean presentationScoreEnabled;
+    @Column(name = "presentation_score")
+    private Integer presentationScore;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -286,17 +286,17 @@ public class Course implements Serializable {
         this.registrationEnabled = registrationEnabled;
     }
 
-    public Boolean isPresentationScoreEnabled() {
-        return presentationScoreEnabled;
+    public Integer getPresentationScore() {
+        return presentationScore;
     }
 
-    public Course presentationScoreEnabled(Boolean presentationScoreEnabled) {
-        this.presentationScoreEnabled = presentationScoreEnabled;
+    public Course presentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
         return this;
     }
 
-    public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
-        this.presentationScoreEnabled = presentationScoreEnabled;
+    public void setPresentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
     }
 
     public Set<Exercise> getExercises() {
@@ -450,6 +450,6 @@ public class Course implements Serializable {
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
                 + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
                 + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
-                + ", presentationScoreEnabled='" + isPresentationScoreEnabled() + "}";
+                + ", presentationScore='" + getPresentationScore() + "}";
     }
 }

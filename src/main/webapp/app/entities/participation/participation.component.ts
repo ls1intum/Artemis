@@ -80,7 +80,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (!this.exercise.course) {
             return false;
         }
-        return this.exercise.isAtLeastTutor && this.exercise.type !== this.QUIZ && this.exercise.course.presentationScoreEnabled;
+        return this.exercise.isAtLeastTutor && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled;
     }
 
     addPresentation(participation: StudentParticipation) {

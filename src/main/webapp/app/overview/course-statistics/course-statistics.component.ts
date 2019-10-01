@@ -261,7 +261,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         totalMaxScore: 0,
                         absoluteScore: 0,
                         presentationScore: 0,
-                        presentationScoreEnabled: exercise.type !== this.QUIZ && exercise.course && exercise.course.presentationScoreEnabled,
+                        presentationScoreEnabled: exercise.presentationScoreEnabled,
                         names: [],
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
@@ -324,6 +324,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
+                groupedExercises[index].presentationScoreEnabled = groupedExercises[index].presentationScoreEnabled || exercise.presentationScoreEnabled;
                 groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores, groupedExercises[index].notGraded];
             }
         });

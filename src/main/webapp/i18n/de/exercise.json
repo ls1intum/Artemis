@@ -65,6 +65,7 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "notificiationText": "Optional: Mitteilung über die Änderung",
+            "presentationScoreEnabled": "Präsentationsergebnis aktiviert",
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
             },

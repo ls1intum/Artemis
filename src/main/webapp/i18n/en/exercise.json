@@ -65,6 +65,7 @@
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
             "notificationText": "Optional: Notification about changes",
+            "presentationScoreEnabled": "Presentation Score enabled",
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
             },

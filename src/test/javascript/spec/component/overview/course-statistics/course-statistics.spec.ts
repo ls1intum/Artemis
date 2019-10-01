@@ -54,6 +54,7 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
+            presentationScoreEnabled: true,
         },
         {
             type: 'modeling',
@@ -81,6 +82,7 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
+            presentationScoreEnabled: true,
         },
         {
             type: 'modeling',
@@ -93,6 +95,7 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
+            presentationScoreEnabled: true,
         },
         {
             type: 'modeling',
@@ -133,6 +136,7 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
+            presentationScoreEnabled: true,
         },
     ] as ModelingExercise[];
 
@@ -147,6 +151,7 @@ describe('CourseStatisticsComponent', () => {
     course.onlineCourse = false;
     course.registrationEnabled = false;
     course.exercises = [];
+    course.presentationScore = 1;
 
     const newAttachment = {
         id: 53,

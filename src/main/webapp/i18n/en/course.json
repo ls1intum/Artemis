@@ -33,6 +33,7 @@
             "onlineCourse": "Online Course",
             "registrationEnabled": "Registration Enabled",
             "presentationScoreEnabled": "Presentation Score Enabled",
+            "presentationScore": "Required Presentation Score for Bonus",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
