@@ -67,10 +67,19 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
         this.value = obj;
     }
 
+    /**
+     * Updates the current modal using the selected value from the date picker
+     *
+     * @param newValue The new value selected by the user
+     */
     updateField(newValue: Moment) {
         this.value = newValue;
     }
 
+    /**
+     * Resets the date to null and informs parent components that the date has been reset.
+     * This makes it easier to also reset date, that can only be selected if the current date is not null
+     */
     resetDate() {
         this.value = null;
         this.onDateReset.emit();
