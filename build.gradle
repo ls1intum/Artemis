@@ -171,7 +171,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:6.8.1"
+    implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0-M10"
     implementation "io.sentry:sentry-spring:1.7.27"
 
