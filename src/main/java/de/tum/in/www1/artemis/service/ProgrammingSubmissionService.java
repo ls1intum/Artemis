@@ -269,10 +269,11 @@ public class ProgrammingSubmissionService {
     /**
      * Create a submission with SubmissionType.TEST and the provided commitHash.
      *
-     * @param programmingExerciseId ProgrammingExercise id.
-     * @param commitHash            last commitHash of the test repository, if null will use the last commitHash of the test repository.
+     * @param programmingExerciseId     ProgrammingExercise id.
+     * @param commitHash                last commitHash of the test repository, if null will use the last commitHash of the test repository.
      * @return The created solutionSubmission.
-     * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
+     * @throws EntityNotFoundException  if the programming exercise for the given id does not exist.
+     * @throws IllegalStateException    If no commitHash was no provided and no commitHash could be retrieved from the test repository.
      */
     public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable ObjectId commitHash)
             throws EntityNotFoundException, IllegalStateException {
