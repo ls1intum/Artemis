@@ -940,7 +940,7 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(newExercise.getTemplateRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
                 "Artemis Tests WebHook");
     }
 
