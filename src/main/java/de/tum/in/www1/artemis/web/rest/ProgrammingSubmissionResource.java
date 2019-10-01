@@ -226,6 +226,12 @@ public class ProgrammingSubmissionResource {
 
     /**
      * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
+     *
+     * Problem with legacy programming exercises:
+     * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
+     * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
+     * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
+     * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
