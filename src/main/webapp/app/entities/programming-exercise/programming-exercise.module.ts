@@ -32,7 +32,6 @@ import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programmi
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ProgrammingExerciseTestSchedulePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
@@ -73,7 +72,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
         // Form components
-        ProgrammingExerciseDueDateSelectComponent,
         ProgrammingExerciseTestSchedulePickerComponent,
         ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
