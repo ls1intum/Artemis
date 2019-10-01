@@ -17,7 +17,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
             (ngModelChange)="updateDueDate($event)"
             name="dueDate"
         ></jhi-date-time-picker>
-        <div id="build-and-test-date-container" class="form-check mt-1 d-flex" *ngIf="exercise.dueDate && exercise.dueDate.isValid()">
+        <div id="build-and-test-date-container" class="form-check mt-1 d-flex">
             <label class="form-check-label flex-grow-1" for="field_buildAndTestStudentSubmissionsAfterDueDate">
                 <div class="flex-grow-1 d-flex mt-1">
                     <input
@@ -25,7 +25,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
                         type="checkbox"
                         name="buildAndTestStudentSubmissionsAfterDueDate"
                         id="field_buildAndTestStudentSubmissionsAfterDueDate"
-                        [disabled]="!exercise.dueDate"
+                        [disabled]="!exercise.dueDate || !exercise.dueDate.isValid()"
                         [ngModel]="buildAndTestDateActive"
                         (ngModelChange)="toggleBuildAndTestStudentSubmissionsAfterDueDate()"
                         checked
@@ -48,7 +48,7 @@ import { hasExerciseChanged } from 'app/entities/exercise';
                         [min]="exercise.dueDate"
                         name="buildAndTestStudentSumissionsAfterDueDate"
                     ></jhi-date-time-picker>
-                    <div *ngIf="buildAndTestDateInvalid" class="alert alert-danger">
+                    <div *ngIf="exercise.dueDate && exercise.dueDate.isValid() && buildAndTestDateInvalid" class="alert alert-danger">
                         <span [jhiTranslate]="'artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.invalid'"></span>
                     </div>
                 </div>
@@ -86,14 +86,26 @@ export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
      * Set the due date. When the due date is set it needs to be checked if the automatic submission date is also set - this should then be updated, too.
      * @param dueDate of the programming exercise.
      */
-    public updateDueDate(dueDate: string) {
-        const updatedDueDate = moment(dueDate).isValid() ? moment(dueDate) : null;
-        const updatedProgrammingExercise = { ...this.exercise, dueDate: updatedDueDate && updatedDueDate.isValid() ? updatedDueDate : null };
-        this.buildAndTestDateInvalid =
-            !updatedDueDate ||
-            !updatedDueDate.isValid() ||
-            (this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate) ||
-            (!!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && updatedDueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate));
+    public updateDueDate(dueDate: moment.Moment | null) {
+        const updatedProgrammingExercise = {
+            ...this.exercise,
+            dueDate: dueDate && dueDate.isValid() ? dueDate : null,
+            buildAndTestStudentSubmissionsAfterDueDate: dueDate ? this.exercise.buildAndTestStudentSubmissionsAfterDueDate : null,
+        };
+        if (!dueDate) {
+            this.buildAndTestDateActive = false;
+        }
+        // The build and test date is set, but the due date empty or invalid.
+        const buildAndTestDateWithoutValidDueDate = this.exercise.buildAndTestStudentSubmissionsAfterDueDate && (!dueDate || !dueDate.isValid());
+        // The checkbox is active in the ui, but the date is not set.
+        const noBuildAndTestDateSetButOptionActive = this.buildAndTestDateActive && !this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        // The buildAndTestDate must always be after the due date.
+        const buildAndTestDateIsBeforeDueDate =
+            !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
+            !!dueDate &&
+            dueDate.isValid() &&
+            dueDate.isAfter(this.exercise.buildAndTestStudentSubmissionsAfterDueDate);
+        this.buildAndTestDateInvalid = buildAndTestDateWithoutValidDueDate || noBuildAndTestDateSetButOptionActive || buildAndTestDateIsBeforeDueDate;
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);
     }
 
@@ -112,7 +124,7 @@ export class ProgrammingExerciseDueDateSelectComponent implements OnChanges {
             ...this.exercise,
             buildAndTestStudentSubmissionsAfterDueDate: !this.buildAndTestDateActive ? null : this.exercise.dueDate.clone(),
         };
-        if (!!updatedProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
+        if (!this.buildAndTestDateActive || !!updatedProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
             this.buildAndTestDateInvalid = false;
         }
         this.onProgrammingExerciseUpdate.emit(updatedProgrammingExercise);

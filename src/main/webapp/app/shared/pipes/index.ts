@@ -8,3 +8,4 @@ export * from './sanitize-html.pipe';
 export * from './truncate.pipe';
 export * from './type-check.pipe';
 export * from './exercise-type.pipe';
+export * from './average-by.pipe';

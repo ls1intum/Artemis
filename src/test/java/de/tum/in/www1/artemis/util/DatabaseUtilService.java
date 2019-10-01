@@ -166,6 +166,11 @@ public class DatabaseUtilService {
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
+    public Result addParticipationWithResultForExercise(Exercise exercise, String login) {
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        return addResultToParticipation(participation);
+    }
+
     public void addInstructor(final String instructorGroup, final String instructorName) {
         var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, 1).get(0);
         instructor = userRepo.save(instructor);
@@ -339,6 +344,7 @@ public class DatabaseUtilService {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
+        programmingExercise.generateAndSetProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setPublishBuildPlanUrl(true);
