@@ -621,7 +621,7 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    public ProgrammingExercise findByIdWithEagerStudentParticipations(Long programmingExerciseId) throws EntityNotFoundException {
+    public ProgrammingExercise findByIdWithEagerStudentParticipations(long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipations(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
@@ -1014,25 +1014,27 @@ public class ProgrammingExerciseService {
      * They will still be able to read the code, but won't be able to change it.
      *
      * @param programmingExerciseId     ProgrammingExercise id.
+     * @return a list of participations for which the locking operation has failed. If everything went as expected, this should be an empty list.
      * @throws EntityNotFoundException  if the programming exercise can't be found.
      */
-    public void removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
+    public List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
         log.info("Invoking scheduled task programming exercise with id " + programmingExerciseId + ".");
 
         ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
-        versionControlService.ifPresent(v -> {
-            for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
-                ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-                try {
-                    v.setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
-                            programmingExerciseStudentParticipation.getStudent().getLogin());
-                }
-                catch (Exception e) {
-                    log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                            + studentParticipation.getId());
-                }
+        List<ProgrammingExerciseStudentParticipation> failedLockOperations = new LinkedList<>();
+        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
+            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+            try {
+                versionControlService.get().setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                        programmingExerciseStudentParticipation.getStudent().getLogin());
             }
-        });
+            catch (Exception e) {
+                log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
+                        + studentParticipation.getId());
+                failedLockOperations.add(programmingExerciseStudentParticipation);
+            }
+        }
+        return failedLockOperations;
     }
 
     /**

@@ -127,7 +127,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
-                "tooltip": "Dein Repository ist gesperrt, weil das Abgabedatum abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen mehr daran machen."
+                "tooltip": "Dein Repository ist gesperrt, weil das Abgabedatum abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             }
         }
     }
