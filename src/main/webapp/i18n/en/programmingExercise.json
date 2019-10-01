@@ -123,7 +123,9 @@
                 "manualReviewTooltip": "After all tests have been run, the tutors and instructors have to review all submissions manually one last time",
                 "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting from the specified date",
                 "dueDateTooltip": "The deadline on which submitting and committing new code will be deactivated for all students",
-                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed."
+                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
+                "alertNewDueDate": "The due date has been set to the release date!",
+                "alertNewAfterDueDate": "The after due date has been set to the release date!"
             },
             "import": {
                 "attention": "Attention! ",

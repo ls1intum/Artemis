@@ -1,7 +1,6 @@
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { isMoment, Moment } from 'moment';
+import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
+import { isDate, Moment } from 'moment';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-test-schedule-date-picker',
@@ -12,28 +11,20 @@ import * as moment from 'moment';
                 <jhi-tooltip *ngIf="tooltipText" placement="top" [text]="tooltipText"></jhi-tooltip>
             </div>
             <div class="invisible-date-time-picker">
-                <input
-                    #dateInput="ngModel"
-                    class="form-control"
-                    [ngModel]="value"
-                    [min]="min?.isValid() ? min.toDate() : null"
-                    [max]="max?.isValid() ? max.toDate() : null"
-                    (ngModelChange)="updateField($event)"
-                    [owlDateTime]="dt"
-                />
+                <input class="form-control" [ngModel]="val" [min]="min" [max]="max" (ngModelChange)="updateField($event)" [owlDateTime]="dt" />
             </div>
-            <button *ngIf="!value" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-circle">
+            <button *ngIf="!val" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-circle">
                 <fa-icon class="icon-calendar-plus" icon="calendar-plus" size="2x"></fa-icon>
             </button>
-            <button *ngIf="value" (click)="resetDate()" type="button" class="btn btn-light btn-circle calendar-event-toggle">
+            <button *ngIf="val" (click)="resetDate()" type="button" class="btn btn-light btn-circle calendar-event-toggle">
                 <fa-icon class="icon-static" icon="calendar-check" size="2x"></fa-icon>
                 <fa-icon class="icon-remove" icon="calendar-minus" size="2x"></fa-icon>
             </button>
-            <div *ngIf="value">
-                {{ value | date: 'MMM, dd' }}<br />
-                {{ value | date: 'HH:mm' }}
+            <div *ngIf="val">
+                {{ val | date: 'MMM, dd' }}<br />
+                {{ val | date: 'HH:mm' }}
             </div>
-            <owl-date-time [startAt]="startAt?.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
+            <owl-date-time [startAt]="startAt" #dt></owl-date-time>
         </div>
     `,
     providers: [
@@ -47,15 +38,22 @@ import * as moment from 'moment';
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
-    @Input() value: any;
-    @Input() startAt: Moment;
+    @Input() val: Date | null;
+    @Input() startAt: Moment | null;
     @Input() min: Moment;
     @Input() max: Moment;
     @Input() label: string;
     @Input() tooltipText: string;
     @Output() onDateReset = new EventEmitter();
 
-    _onChange = (val: Moment) => {};
+    _onChange: any = () => {};
+
+    set value(val: Moment | null) {
+        if (val !== undefined && this.val !== val) {
+            this.val = !val ? null : isDate(val) ? val : val.toDate();
+            this._onChange(val);
+        }
+    }
 
     registerOnChange(fn: any): void {
         this._onChange = fn;
@@ -66,12 +64,11 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     setDisabledState(isDisabled: boolean): void {}
 
     writeValue(obj: any): void {
-        this.value = isMoment(obj) ? (obj as Moment).toDate() : obj;
+        this.value = obj;
     }
 
     updateField(newValue: Moment) {
         this.value = newValue;
-        this._onChange(moment(this.value));
     }
 
     resetDate() {

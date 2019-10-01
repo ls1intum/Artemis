@@ -123,7 +123,9 @@
                 "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutoren noch einmal alle Abgabgen manuell bewerten",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studenten können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
                 "dueDateTooltip": "Die final Deadline, zu welcher alle Abgabgen und Commits für Studenten gesperrt werden",
-                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist"
+                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist",
+                "alertNewDueDate": "Das Abgabedatum wurde auf das Releasedatum gesetzt!",
+                "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!"
             },
             "import": {
                 "attention": "Achtung! ",

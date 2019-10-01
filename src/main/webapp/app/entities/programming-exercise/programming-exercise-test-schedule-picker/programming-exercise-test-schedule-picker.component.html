@@ -3,7 +3,7 @@
         <div class="test-schedule-row">
             <jhi-programming-exercise-test-schedule-date-picker
                 [(ngModel)]="exercise.releaseDate"
-                (onDateReset)="exercise.releaseDate = null"
+                (ngModelChange)="updateReleaseDate($event)"
                 class="test-schedule-date"
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
@@ -21,7 +21,7 @@
             </div>
             <jhi-programming-exercise-test-schedule-date-picker
                 [(ngModel)]="exercise.dueDate"
-                (onDateReset)="exercise.dueDate = null; exercise.buildAndTestStudentSubmissionsAfterDueDate = null"
+                (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = null"
                 class="test-schedule-date"
                 label="artemisApp.exercise.dueDate"
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
@@ -31,9 +31,8 @@
                 *ngIf="exercise.dueDate"
                 class="test-schedule-date"
                 [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
-                (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = null"
-                [startAt]="exercise?.dueDate"
-                [min]="exercise?.dueDate"
+                [startAt]="exercise.dueDate"
+                [min]="exercise.dueDate"
                 label="artemisApp.programmingExercise.timeline.afterDueDate"
                 tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
             >
