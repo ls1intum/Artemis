@@ -34,7 +34,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     notificationText: string | null;
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
-    dueDateInvalid = false;
 
     maxScorePattern = MAX_SCORE_PATTERN;
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number

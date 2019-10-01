@@ -13,7 +13,9 @@ export class ProgrammingExerciseTestSchedulePickerComponent implements OnInit {
     hasManualTests: boolean;
 
     ngOnInit(): void {
-        this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        if (!this.exercise.id) {
+            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        }
     }
 
     toggleHasManualTests() {

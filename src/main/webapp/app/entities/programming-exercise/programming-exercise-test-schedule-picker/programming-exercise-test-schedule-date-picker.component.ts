@@ -30,7 +30,7 @@ import * as moment from 'moment';
                 <fa-icon class="icon-remove" icon="calendar-minus" size="2x"></fa-icon>
             </button>
             <div *ngIf="value">
-                {{ value | date: 'EEE dd' }}<br />
+                {{ value | date: 'MMM, dd' }}<br />
                 {{ value | date: 'HH:mm' }}
             </div>
             <owl-date-time [startAt]="startAt?.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
