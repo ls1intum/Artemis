@@ -10,7 +10,6 @@ import { AssessmentType } from 'app/entities/assessment-type';
 export class ProgrammingExerciseTestSchedulePickerComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     readonly assessmentType = AssessmentType;
-    hasManualTests: boolean;
 
     ngOnInit(): void {
         if (!this.exercise.id) {
