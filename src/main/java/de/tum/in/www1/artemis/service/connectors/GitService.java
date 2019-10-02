@@ -84,8 +84,23 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws InterruptedException, GitAPIException {
+        return getOrCheckoutRepository(participation, REPO_CLONE_PATH);
+    }
+
+    /**
+     * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
+     * Saves the local repo in the default path.
+     *
+     * @param participation Participation the remote repository belongs to.
+     * @param targetPath path where the repo is located on disk
+     * @return the repository if it could be checked out
+     * @throws IOException if the repository could not be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
+     */
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl, true, repoClonePath);
+        Repository repository = getOrCheckoutRepository(repoUrl, true, targetPath);
         repository.setParticipation(participation);
         return repository;
     }
@@ -109,14 +124,14 @@ public class GitService {
      *
      * @param repoUrl   The remote repository.
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
-     * @param repoClonePath path where the repo is located on disk
+     * @param targetPath path where the repo is located on disk
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet, String repoClonePath) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
 
-        Path localPath = new java.io.File(repoClonePath + folderNameForRepositoryUrl(repoUrl)).toPath();
+        Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
@@ -635,11 +650,11 @@ public class GitService {
      * Deletes a local repository folder for a Participation.
      *
      * @param participation Participation Object.
-     * @param repoClonePath path where the repo is located on disk
+     * @param targetPath path where the repo is located on disk
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(ProgrammingExerciseParticipation participation, String repoClonePath) throws IOException {
-        Path repoPath = new java.io.File(repoClonePath + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
+    public void deleteLocalRepository(ProgrammingExerciseParticipation participation, String targetPath) throws IOException {
+        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
@@ -661,11 +676,11 @@ public class GitService {
      * Deletes a local repository folder for a repoUrl.
      *
      * @param repoUrl url of the repository.
-     * @param repoClonePath path where the repo is located on disk
+     * @param targetPath path where the repo is located on disk
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(URL repoUrl, String repoClonePath) {
-        Path repoPath = new java.io.File(repoClonePath + folderNameForRepositoryUrl(repoUrl)).toPath();
+    public void deleteLocalRepository(URL repoUrl, String targetPath) {
+        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             try {
@@ -693,11 +708,11 @@ public class GitService {
      * Zip the content of a git repository.
      *
      * @param repo Local Repository Object.
-     * @param repoClonePath path where the repo is located on disk
+     * @param targetPath path where the repo is located on disk
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */
-    public Path zipRepository(Repository repo, String repoClonePath) throws IOException {
+    public Path zipRepository(Repository repo, String targetPath) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
@@ -705,8 +720,8 @@ public class GitService {
         String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
 
         Path repoPath = repo.getLocalPath();
-        Path zipFilePath = Paths.get(repoClonePath, "zippedRepos", zipRepoName);
-        Files.createDirectories(Paths.get(repoClonePath, "zippedRepos"));
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
+        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             Files.walk(repoPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());

@@ -349,7 +349,7 @@ public class ExerciseResource {
 
         File zipFile;
         if (allStudents) {
-            zipFile = exerciseService.exportParticipationsAllStudents(exerciseId, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName, squashAfterInstructor,
+            zipFile = exerciseService.exportAllStudentRepositories(exerciseId, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName, squashAfterInstructor,
                     normalizeCodeStyle);
         }
         else {
@@ -360,7 +360,7 @@ public class ExerciseResource {
                         .build();
             }
 
-            zipFile = exerciseService.exportParticipations(exerciseId, studentList, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName,
+            zipFile = exerciseService.exportStudentRepositories(exerciseId, studentList, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName,
                     squashAfterInstructor, normalizeCodeStyle);
         }
         if (zipFile == null) {

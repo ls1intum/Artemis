@@ -339,10 +339,9 @@ public class ExerciseService {
      * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
-    @Transactional(readOnly = true)
-    public java.io.File exportParticipationsAllStudents(Long exerciseId, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, boolean addStudentName,
+    public java.io.File exportAllStudentRepositories(Long exerciseId, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, boolean addStudentName,
             boolean squashAfterInstructor, boolean normalizeCodeStyle) {
-        return exportParticipationsHelper(exerciseId, null, true, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+        return exportStudentRepositoriesHelper(exerciseId, null, true, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor, normalizeCodeStyle);
     }
 
     /**
@@ -357,14 +356,14 @@ public class ExerciseService {
      * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
      * @return a zip file containing all requested participations
      */
-    @Transactional(readOnly = true)
-    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate,
+    public java.io.File exportStudentRepositories(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate,
             boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
-        return exportParticipationsHelper(exerciseId, studentIds, false, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor,
+        return exportStudentRepositoriesHelper(exerciseId, studentIds, false, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor,
                 normalizeCodeStyle);
     }
 
-    private java.io.File exportParticipationsHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions,
+    @Transactional(readOnly = true)
+    private java.io.File exportStudentRepositoriesHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions,
             ZonedDateTime filterLateSubmissionsDate, boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
