@@ -38,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -84,21 +83,7 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws IOException, InterruptedException, GitAPIException {
-        return getOrCheckoutRepository(participation, REPO_CLONE_PATH);
-    }
-
-    /**
-     * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
-     *
-     * @param participation Participation the remote repository belongs to.
-     * @param repoClonePath path where the repo is located on disk
-     * @return the repository if it could be checked out
-     * @throws IOException if the repository could not be checked out.
-     * @throws InterruptedException if the repository could not be checked out.
-     * @throws GitAPIException if the repository could not be checked out.
-     */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String repoClonePath) throws IOException, InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl, true, repoClonePath);
         repository.setParticipation(participation);

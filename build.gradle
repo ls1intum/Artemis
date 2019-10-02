@@ -34,7 +34,7 @@ plugins {
     id "net.ltgt.apt"
 //    id "org.liquibase.gradle"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.24.2"
+    id "com.diffplug.gradle.spotless" version "3.24.3"
 }
 
 sourceCompatibility=12
@@ -103,7 +103,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks "bootRun"
 
 group = "de.tum.in.www1.artemis"
-version = "3.7.1"
+version = "3.7.2"
 description = "Interactive Learning with Individual Feedback"
 
 springBoot {
@@ -171,7 +171,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:6.8.1"
+    implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0-M10"
     implementation "io.sentry:sentry-spring:1.7.27"
 

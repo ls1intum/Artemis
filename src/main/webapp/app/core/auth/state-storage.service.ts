@@ -3,31 +3,31 @@ import { SessionStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })
 export class StateStorageService {
-    constructor(private $sessionStorage: SessionStorageService) {}
+    constructor(private sessionStorage: SessionStorageService) {}
 
     getPreviousState(): string | null {
-        return this.$sessionStorage.retrieve('previousState');
+        return this.sessionStorage.retrieve('previousState');
     }
 
     resetPreviousState(): void {
-        this.$sessionStorage.clear('previousState');
+        this.sessionStorage.clear('previousState');
     }
 
     storePreviousState(previousStateName: any, previousStateParams: any): void {
         const previousState = { name: previousStateName, params: previousStateParams };
-        this.$sessionStorage.store('previousState', previousState);
+        this.sessionStorage.store('previousState', previousState);
     }
 
     getDestinationState(): string | null {
-        return this.$sessionStorage.retrieve('destinationState');
+        return this.sessionStorage.retrieve('destinationState');
     }
 
     storeUrl(url: string | null) {
-        this.$sessionStorage.store('previousUrl', url);
+        this.sessionStorage.store('previousUrl', url);
     }
 
     getUrl(): string | null {
-        return this.$sessionStorage.retrieve('previousUrl');
+        return this.sessionStorage.retrieve('previousUrl');
     }
 
     storeDestinationState(destinationState: any, destinationStateParams: any, fromState: any): void {
@@ -41,6 +41,6 @@ export class StateStorageService {
                 name: fromState.name,
             },
         };
-        this.$sessionStorage.store('destinationState', destinationInfo);
+        this.sessionStorage.store('destinationState', destinationInfo);
     }
 }

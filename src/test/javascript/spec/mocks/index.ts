@@ -13,3 +13,4 @@ export * from './mock-sync.storage';
 export * from './mock-cookie.service';
 export * from './mock-code-editor-conflict-state.service';
 export * from './mock-exercise-hint.service';
+export * from './mock-programming-exercise-paging.service';

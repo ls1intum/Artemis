@@ -51,15 +51,19 @@ export class LoginService {
             // 1: Clear the auth tokens from the browser's caches.
             .removeAuthTokenFromCaches()
             .pipe(
-                // 2: Set the user's auth object to null as components might have to act on the user being logged out.
+                // 2: Clear all other caches (this is important so if a new user logs in, no old values are available
+                tap(() => {
+                    return this.authServerProvider.clearCaches();
+                }),
+                // 3: Set the user's auth object to null as components might have to act on the user being logged out.
                 tap(() => {
                     return this.accountService.authenticate(null);
                 }),
-                // 3: Clear all existing alerts of the user.
+                // 4: Clear all existing alerts of the user.
                 tap(() => {
                     return this.alertService.clear();
                 }),
-                // 4: Navigate to the login screen.
+                // 5: Navigate to the login screen.
                 switchMap(() => {
                     return from(this.router.navigateByUrl('/'));
                 }),

@@ -1,6 +1,6 @@
 package ${packageName};
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
@@ -14,7 +14,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.2 (01.09.2019)
+ * @version 3.0 (25.09.2019)
  * <br><br>
  * This test evaluates if the specified attributes in the structure oracle are correctly implemented with the expected type, visibility modifiers and annotations,
  * based on its definition in the structure oracle (test.json).
@@ -36,7 +36,7 @@ public class AttributeTest extends StructuralTest {
         List<Object[]> testData = new ArrayList<Object[]>();
 
         if (structureOracleJSON == null) {
-            return testData;
+            fail("The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
         }
 
         for (int i = 0; i < structureOracleJSON.length(); i++) {
@@ -49,6 +49,9 @@ public class AttributeTest extends StructuralTest {
                 String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[]{ expectedClassName, expectedPackageName, expectedClassJSON });
             }
+        }
+        if (testData.size() == 0) {
+            fail("No tests for attributes available in the structural oracle (test.json). Either provide attributes information or delete AttributeTest.java!");
         }
         return testData;
     }
@@ -116,10 +119,18 @@ public class AttributeTest extends StructuralTest {
 
             String expectedAttributeInformation = "the expected attribute '" + expectedName + "' of the class '" + expectedClassName + "'";
 
-            assertTrue("Problem: the name of " + expectedAttributeInformation + " is not implemented as expected.", nameIsRight);
-            assertTrue("Problem: the type of " + expectedAttributeInformation + " is not implemented as expected.", typeIsRight);
-            assertTrue("Problem: the modifier(s) (access type, abstract, etc.) of " + expectedAttributeInformation + " are not implemented as expected.", modifiersAreRight);
-            assertTrue("Problem: the annotation(s) of " + expectedAttributeInformation + " are not implemented as expected.", annotationsAreRight);
+            if (!nameIsRight) {
+                fail("The name of " + expectedAttributeInformation + " is not implemented as expected.");
+            }
+            if (!typeIsRight) {
+                fail("The type of " + expectedAttributeInformation + " is not implemented as expected.");
+            }
+            if (!modifiersAreRight) {
+                fail("The modifier(s) (access type, abstract, etc.) of " + expectedAttributeInformation + " are not implemented as expected.");
+            }
+            if (!annotationsAreRight) {
+                fail("The annotation(s) of " + expectedAttributeInformation + " are not implemented as expected.");
+            }
         }
     }
 
@@ -132,10 +143,12 @@ public class AttributeTest extends StructuralTest {
     private void checkEnumValues(Class<?> observedClass, JSONArray expectedEnumValues) {
         Object[] observedEnumValues = observedClass.getEnumConstants();
 
-        assertNotNull("Problem: the enum '" + expectedClassName + "' does not contain any enum constants. Please implement them.", observedEnumValues);
-
-        assertTrue("Problem: the enum '" + expectedClassName + "' does not contain all the expected enum values. Please implement the missing enums.",
-            expectedEnumValues.length() == observedEnumValues.length);
+        if (observedEnumValues == null) {
+            fail("The enum '" + expectedClassName + "' does not contain any enum constants. Make sure to implement them.");
+        }
+        if (expectedEnumValues.length() != observedEnumValues.length) {
+            fail("The enum '" + expectedClassName + "' does not contain all the expected enum values. Make sure to implement the missing enums.");
+        }
 
         for(int i = 0; i < expectedEnumValues.length(); i++) {
             String expectedEnumValue = expectedEnumValues.getString(i);
@@ -149,7 +162,7 @@ public class AttributeTest extends StructuralTest {
                 }
             }
             if(!enumValueExists) {
-                fail("Problem: the class '" + expectedClassName + "' does not include the enum value: " + expectedEnumValue
+                fail("The class '" + expectedClassName + "' does not include the enum value: " + expectedEnumValue
                     + ". Make sure to implement it as expected.");
             }
         }

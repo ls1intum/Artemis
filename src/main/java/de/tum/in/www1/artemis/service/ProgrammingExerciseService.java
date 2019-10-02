@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +20,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -39,20 +44,18 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
@@ -63,21 +66,27 @@ public class ProgrammingExerciseService {
 
     private final GitService gitService;
 
+    private final ExerciseHintService exerciseHintService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
-    private final SubmissionRepository submissionRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final SubmissionRepository submissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final CourseRepository courseRepository;
+
     private final ParticipationService participationService;
+
+    private final ResultRepository resultRepository;
 
     private final UserService userService;
 
@@ -85,30 +94,43 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final GroupNotificationService groupNotificationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationService participationService, StudentParticipationRepository studentParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
+            ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
+            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
+        this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
-        this.resourceLoader = resourceLoader;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.participationService = participationService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.courseRepository = courseRepository;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resourceLoader = resourceLoader;
+        this.groupNotificationService = groupNotificationService;
+        this.websocketMessagingService = websocketMessagingService;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -120,6 +142,7 @@ public class ProgrammingExerciseService {
      * @return A list of created {@link ProgrammingSubmission programming submissions} for the changed exercise
      * @throws EntityNotFoundException If the exercise with the given ID does not exist
      */
+    @Transactional
     public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
         Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
         if (exerciseOpt.isEmpty()) {
@@ -166,6 +189,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The checked out exercise in the repository
      * @param participation The student participation for the student id, which should be added.
      */
+    @Transactional
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String studentId = participation.getStudent().getLogin();
 
@@ -288,11 +312,13 @@ public class ProgrammingExerciseService {
      * @return The newly setup exercise
      * @throws Exception If anything goes wrong
      */
+    @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+        programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
-        String testRepoName = projectKey.toLowerCase() + "-tests";
-        String solutionRepoName = projectKey.toLowerCase() + "-solution";
+        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -313,11 +339,13 @@ public class ProgrammingExerciseService {
 
         initParticipations(programmingExercise);
 
-        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        String templatePlanName = BuildPlanType.TEMPLATE.getName();
+        String solutionPlanName = BuildPlanType.SOLUTION.getName();
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
 
         // Save participations to get the ids required for the webhooks
         templateParticipation.setProgrammingExercise(programmingExercise);
@@ -325,9 +353,9 @@ public class ProgrammingExerciseService {
         templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
-        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
-        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
+        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
+        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
+        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
@@ -370,9 +398,9 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
 
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoName, testRepoName);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -387,6 +415,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise
      */
+    @Transactional
     public void initParticipations(ProgrammingExercise programmingExercise) {
 
         Participation solutionParticipation = programmingExercise.getSolutionParticipation();
@@ -493,6 +522,7 @@ public class ProgrammingExerciseService {
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
+    @Transactional
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
@@ -526,6 +556,7 @@ public class ProgrammingExerciseService {
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
+    @Transactional
     public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
@@ -538,6 +569,7 @@ public class ProgrammingExerciseService {
      * @param participation The template participation
      * @return The ProgrammingExercise where the given Participation is the template Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
@@ -548,6 +580,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution participation
      * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
+    @Transactional
     public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
@@ -558,6 +591,7 @@ public class ProgrammingExerciseService {
      * @param participation The solution or template participation
      * @return The ProgrammingExercise where the given Participation is the solution or template Participation
      */
+    @Transactional
     public Optional<ProgrammingExercise> getExerciseForSolutionOrTemplateParticipation(Participation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationIdOrSolutionParticipationId(participation.getId());
     }
@@ -569,13 +603,14 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
+    @Transactional
     public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
         else {
-            throw new EntityNotFoundException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
         }
     }
 
@@ -587,6 +622,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
      */
+    @Transactional
     public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
         if (programmingExercise.isPresent()) {
@@ -607,6 +643,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise for which the participations should get saved
      */
+    @Transactional
     public void saveParticipations(ProgrammingExercise programmingExercise) {
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
@@ -622,6 +659,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
@@ -636,6 +674,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
      */
+    @Transactional
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
@@ -663,6 +702,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
+    @Transactional
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
@@ -729,30 +769,37 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
+    @Transactional
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
-            if (programmingExercise.getTemplateBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
             }
-            if (programmingExercise.getSolutionBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
@@ -771,5 +818,234 @@ public class ProgrammingExerciseService {
      */
     public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
+
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param testCasesChanged set to true to mark the programming exercise as dirty.
+     * @return the updated ProgrammingExercise.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     */
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        if (programmingExerciseOpt.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
+        }
+
+        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
+        // should get an updated result.
+        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !hasAtLeastOneStudentResult(programmingExercise)) {
+            return programmingExercise;
+        }
+        programmingExercise.setTestCasesChanged(testCasesChanged);
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Send a websocket message about the new state to the client.
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        return updatedProgrammingExercise;
+    }
+
+    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
+        // Is true if the exercise is released and has at least one result.
+        // TODO: We can't use the resultService here due to a circular dependency issue.
+        return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+    }
+
+    /**
+     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        final var searchTerm = search.getSearchTerm();
+
+        final var exercisePage = authCheckService.isAdmin()
+                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
+                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
+     * All basic include everything except for repositories, or build plans on a remote version control server, or
+     * continuous integration server. <br>
+     * There are however, a couple of things that will never get copied:
+     * <ul>
+     *     <li>The ID</li>
+     *     <li>The template and solution participation</li>
+     *     <li>The number of complaints, assessments and more feedback requests</li>
+     *     <li>The tutor/student participations</li>
+     *     <li>The questions asked by students</li>
+     *     <li>The example submissions</li>
+     * </ul>
+     *
+     * @param templateExercise The template exercise which should get imported
+     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @return The newly created exercise
+     */
+    @Transactional
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Set values we don't want to copy to null
+        setupExerciseForImport(newExercise);
+        newExercise.generateAndSetProjectKey();
+        final var projectKey = newExercise.getProjectKey();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
+        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
+        setupTestRepository(newExercise, projectKey);
+        initParticipations(newExercise);
+
+        // Hints and test cases
+        exerciseHintService.copyExerciseHints(templateExercise, newExercise);
+        programmingExerciseRepository.save(newExercise);
+        importTestCases(templateExercise, newExercise);
+
+        return newExercise;
+    }
+
+    /**
+     * Import all base repositories from one exercise. These include the template, the solution and the test
+     * repository. Participation repositories from students or tutors will not get copied!
+     *
+     * @param templateExercise The template exercise having a reference to all base repositories
+     * @param newExercise The new exercise without any repositories
+     */
+    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        final var targetProjectKey = newExercise.getProjectKey();
+        final var sourceProjectKey = templateExercise.getProjectKey();
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+
+        // First, create a new project for our imported exercise
+        versionControlService.get().createProjectForExercise(newExercise);
+        // Copy all repositories
+        Arrays.stream(RepositoryType.values()).forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getName(), targetProjectKey, repo.getName()));
+        // Add the necessary hooks notifying Artemis about changes after commits have been pushed
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
+                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
+        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+                "Artemis Tests WebHook");
+    }
+
+    /**
+     * Imports all base build plans for an exercise. These include the template and the solution build plan, <b>not</b>
+     * any participation plans!
+     *
+     * @param templateExercise The template exercise which plans should get copied
+     * @param newExercise The new exercise to which all plans should get copied
+     * @throws HttpException If the copied build plans could not get triggered
+     */
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+        final var templateKey = templateExercise.getProjectKey();
+        final var targetKey = newExercise.getProjectKey();
+        final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
+        final var targetExerciseProjectKey = newExercise.getProjectKey();
+
+        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
+        // running the plan for the first time
+        continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
+        continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
+        continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTemplateRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getSolutionRepositoryName());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryName());
+        try {
+            continuousIntegrationService.get().triggerBuild(templateParticipation);
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException e) {
+            log.error("Unable to trigger imported build plans", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
+     * The remaining contents stay the same, especially the weights.
+     *
+     * @param templateExercise The template exercise which test cases should get copied
+     * @param targetExercise The new exercise to which all test cases should get copied to
+     */
+    private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
+            final var copy = new ProgrammingExerciseTestCase();
+
+            // Copy everything except for the referenced exercise
+            copy.setActive(testCase.isActive());
+            copy.setAfterDueDate(testCase.isAfterDueDate());
+            copy.setTestName(testCase.getTestName());
+            copy.setWeight(testCase.getWeight());
+            copy.setExercise(targetExercise);
+            programmingExerciseTestCaseRepository.save(copy);
+            return copy;
+        }).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
+     * repository on the version control server!
+     *
+     * @param newExercise
+     * @param projectKey
+     */
+    private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
+
+    /**
+     * Sets up a new exercise for importing it by setting all values, that should either never get imported, or
+     * for which we should create new entities (e.g. test cases) to null. This ensures that we do not copy
+     * anything by accident.
+     *
+     * @param newExercise
+     */
+    private void setupExerciseForImport(ProgrammingExercise newExercise) {
+        newExercise.setId(null);
+        newExercise.setTemplateParticipation(null);
+        newExercise.setSolutionParticipation(null);
+        newExercise.setExerciseHints(null);
+        newExercise.setTestCases(null);
+        newExercise.setAttachments(null);
+        newExercise.setNumberOfMoreFeedbackRequests(null);
+        newExercise.setNumberOfComplaints(null);
+        newExercise.setNumberOfAssessments(null);
+        newExercise.setTutorParticipations(null);
+        newExercise.setExampleSubmissions(null);
+        newExercise.setStudentQuestions(null);
+        newExercise.setStudentParticipations(null);
     }
 }

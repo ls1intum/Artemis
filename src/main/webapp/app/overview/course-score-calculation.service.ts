@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 
-import { Result } from '../entities/result/result.model';
-import { Course } from '../entities/course/course.model';
-import { Exercise } from '../entities/exercise/exercise.model';
+import { Result } from 'app/entities/result';
+import { Course } from 'app/entities/course';
+import { Exercise } from 'app/entities/exercise';
 import { Participation } from '../entities/participation';
 
 import * as moment from 'moment';
@@ -43,9 +43,9 @@ export class CourseScoreCalculationService {
                 }
             }
         }
-        scores.set(ABSOLUTE_SCORE, this.round(absoluteScore, 1));
+        scores.set(ABSOLUTE_SCORE, CourseScoreCalculationService.round(absoluteScore, 1));
         if (maxScore > 0) {
-            scores.set(RELATIVE_SCORE, this.round((absoluteScore / maxScore) * 100, 1));
+            scores.set(RELATIVE_SCORE, CourseScoreCalculationService.round((absoluteScore / maxScore) * 100, 1));
         } else {
             scores.set(RELATIVE_SCORE, 0);
         }
@@ -54,7 +54,7 @@ export class CourseScoreCalculationService {
         return scores;
     }
 
-    private round(value: any, exp: number) {
+    private static round(value: any, exp: number) {
         // helper function to make actually rounding possible
         if (typeof exp === 'undefined' || +exp === 0) {
             return Math.round(value);
@@ -63,7 +63,7 @@ export class CourseScoreCalculationService {
         value = +value;
         exp = +exp;
 
-        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+        if (isNaN(value) || !(exp % 1 === 0)) {
             return NaN;
         }
 
@@ -87,7 +87,7 @@ export class CourseScoreCalculationService {
     getParticipationForExercise(exercise: Exercise): Participation | null {
         if (exercise.studentParticipations != null && exercise.studentParticipations.length > 0) {
             const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
-            return this.convertDateForParticipationFromServer(exerciseParticipation);
+            return CourseScoreCalculationService.convertDateForParticipationFromServer(exerciseParticipation);
         } else {
             return null;
         }
@@ -103,7 +103,7 @@ export class CourseScoreCalculationService {
 
         if (results !== undefined) {
             for (let i = 0; i < results.length; i++) {
-                resultsArray.push(this.convertDateForResultFromServer(results[i]));
+                resultsArray.push(CourseScoreCalculationService.convertDateForResultFromServer(results[i]));
             }
 
             if (resultsArray.length <= 0) {
@@ -147,12 +147,12 @@ export class CourseScoreCalculationService {
         return chosenResult;
     }
 
-    private convertDateForResultFromServer(result: Result): Result {
+    private static convertDateForResultFromServer(result: Result): Result {
         result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
         return result;
     }
 
-    private convertDateForParticipationFromServer(participation: Participation): Participation {
+    private static convertDateForParticipationFromServer(participation: Participation): Participation {
         participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
         return participation;
     }

@@ -1,6 +1,17 @@
 import { NgModule } from '@angular/core';
-import { HtmlForMarkdownPipe, KeysPipe, RemoveKeysPipe, RemovePositiveAutomaticFeedbackPipe, SafeHtmlPipe, SafeUrlPipe, SanitizeHtmlPipe, TruncatePipe, TypeCheckPipe } from './';
-import { ExerciseTypePipe } from 'app/entities/exercise';
+import {
+    AverageByPipe,
+    ExerciseTypePipe,
+    HtmlForMarkdownPipe,
+    KeysPipe,
+    RemoveKeysPipe,
+    RemovePositiveAutomaticFeedbackPipe,
+    SafeHtmlPipe,
+    SafeUrlPipe,
+    SanitizeHtmlPipe,
+    TruncatePipe,
+    TypeCheckPipe,
+} from './';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @NgModule({
@@ -16,6 +27,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
         HtmlForMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
+        AverageByPipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -29,6 +41,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
         TruncatePipe,
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
+        AverageByPipe,
     ],
 })
 export class ArtemisSharedPipesModule {}

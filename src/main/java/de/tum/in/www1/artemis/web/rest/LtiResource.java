@@ -90,7 +90,7 @@ public class LtiResource {
 
         // Check if exercise ID is valid
         Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
-        if (!optionalExercise.isPresent()) {
+        if (optionalExercise.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Exercise not found");
             return;
         }
@@ -108,18 +108,20 @@ public class LtiResource {
 
         // If the current user was created within the last 15 seconds, we just created the user
         // Display a welcome message to the user
-        Boolean isNewUser = SecurityUtils.isAuthenticated()
+        boolean isNewUser = SecurityUtils.isAuthenticated()
                 && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
 
-        String redirectUrl = request.getScheme() + // "http"
+        // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
+
+        String redirectUrl = request.getScheme() + // "https"
                 "://" +                                // "://"
-                request.getServerName() +              // "myhost"
-                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/courses/" + exercise.getCourse().getId() + "/exercise/"
-                + exercise.getId() + (isNewUser ? "?welcome" : "") + (!SecurityUtils.isAuthenticated() ? "?login" : "") + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "")
-                + "jwt=" + jwt;
+                request.getServerName() +              // "artemis.ase.in.tum.de"
+                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/overview/" + exercise.getCourse().getId()
+                + "/exercises/" + exercise.getId() + (isNewUser ? "?welcome" : "") + (!SecurityUtils.isAuthenticated() ? "?login" : "")
+                + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
 
         response.sendRedirect(redirectUrl);
     }
