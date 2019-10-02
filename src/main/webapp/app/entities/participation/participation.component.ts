@@ -84,6 +84,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     addPresentation(participation: StudentParticipation) {
+        if (!this.presentationScoreEnabled) {
+            return;
+        }
         participation.presentationScore = 1;
         this.participationService.update(participation).subscribe(
             () => {},
@@ -94,6 +97,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     removePresentation(participation: StudentParticipation) {
+        if (!this.presentationScoreEnabled) {
+            return;
+        }
         participation.presentationScore = 0;
         this.participationService.update(participation).subscribe(
             () => {},

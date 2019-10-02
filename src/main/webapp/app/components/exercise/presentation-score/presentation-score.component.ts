@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise';
     selector: 'jhi-presentation-score-checkbox',
     template: `
         <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <div class="form-group" *ngIf="exercise.course && exercise.course.presentationScore !== 0">
+            <div class="form-group" *ngIf="this.showPresentationScoreCheckbox()">
                 <div class="form-check custom-control custom-checkbox">
                     <input
                         type="checkbox"
@@ -26,4 +26,8 @@ import { Exercise } from 'app/entities/exercise';
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
+
+    showPresentationScoreCheckbox(): boolean {
+        return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
+    }
 }

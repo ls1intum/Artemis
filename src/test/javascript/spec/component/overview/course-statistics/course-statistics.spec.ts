@@ -27,7 +27,7 @@ describe('CourseStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseScoreCalculationService: CourseScoreCalculationService;
 
-    const exercises = [
+    const modelingExercises = [
         {
             type: 'modeling',
             id: 192,
@@ -40,6 +40,7 @@ describe('CourseStatisticsComponent', () => {
                     id: 248,
                     initializationState: 'FINISHED',
                     initializationDate: moment('2019-06-17T09:29:34.908+02:00'),
+                    presentationScore: 2,
                     student: {
                         id: 9,
                         login: 'artemis_test_user_1',
@@ -82,7 +83,6 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
-            presentationScoreEnabled: true,
         },
         {
             type: 'modeling',
@@ -95,7 +95,6 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
-            presentationScoreEnabled: true,
         },
         {
             type: 'modeling',
@@ -136,7 +135,6 @@ describe('CourseStatisticsComponent', () => {
             numberOfParticipations: 0,
             numberOfAssessments: 0,
             numberOfComplaints: 0,
-            presentationScoreEnabled: true,
         },
     ] as ModelingExercise[];
 
@@ -191,7 +189,7 @@ describe('CourseStatisticsComponent', () => {
 
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
-        courseToAdd.exercises = [...exercises];
+        courseToAdd.exercises = [...modelingExercises];
         spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
@@ -202,8 +200,9 @@ describe('CourseStatisticsComponent', () => {
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#relative-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
+        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
         const exercise: any = comp.groupedExercises[0];
+        expect(exercise.presentationScore).to.equal(2);
         expect(exercise.notGraded.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotGraded']);
         expect(exercise.scores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseAchievedScore']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
