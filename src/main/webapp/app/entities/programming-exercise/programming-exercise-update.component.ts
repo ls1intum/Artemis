@@ -94,7 +94,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.programmingExercise.releaseDate = null;
                         this.programmingExercise.shortName = '';
                         this.programmingExercise.title = '';
-                        this.onProgrammingExerciseUpdate(this.programmingExercise);
                     } else {
                         if (params['courseId']) {
                             const courseId = params['courseId'];
