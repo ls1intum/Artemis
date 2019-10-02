@@ -103,7 +103,7 @@ public class RepositoryWebsocketResource {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
         // User must have the necessary permissions to update a file.
-        // When the buildAndTestAfterDueDate is set, the student change the repository content anymore after the due date.
+        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
         boolean repositoryIsLocked = programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation);
         if (repositoryIsLocked || !programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
