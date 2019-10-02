@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,20 +33,30 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseParticipationService participationService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ProgrammingExerciseService programmingExerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     @Override
-    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet)
+            throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationService.findParticipation(participationId);
+        // Error case 1: The participation is not from a programming exercise.
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new IllegalArgumentException();
+        // Error case 2: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
+            throw new IllegalAccessException();
+        }
+        // Error case 3: The user's participation repository is locked.
+        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
@@ -122,21 +131,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
-        Participation participation = participationService.findParticipation(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            return notFound();
-        }
-        boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
-        if (!hasPermissions) {
-            return forbidden();
-        }
-        ProgrammingExercise programmingExercise = ((ProgrammingExerciseParticipation) participation).getProgrammingExercise();
-        // When the buildAndTestAfterDueDate is set, the student can't commit into the repository anymore.
-        // The student does not have permissions to push into the remote repo, but as we use the artemis credentials for pushing to the remote here, we have to check manually.
-        boolean repositoryIsLocked = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
-        if (repositoryIsLocked) {
-            return forbidden();
-        }
         return super.commitChanges(participationId);
     }
 

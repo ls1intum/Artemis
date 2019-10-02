@@ -1038,6 +1038,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Check if the repository of the given participation is locked.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     *
+     * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
+     *
+     * @param participation ProgrammingExerciseParticipation
+     * @return true if repository is locked, false if not.
+     */
+    public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+        }
+        return false;
+    }
+
+    /**
      * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
      * The remaining contents stay the same, especially the weights.
      *
