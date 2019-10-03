@@ -25,12 +25,4 @@
         [smallButton]="smallButtons"
         *ngIf="isOpenedInIntelliJ && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
     ></jhi-ide-button>
-    <jhi-ide-button
-        (click)="buildAndTest()"
-        buttonLabel="Build & Test"
-        [buttonLoading]="false"
-        [smallButton]="smallButtons"
-        *ngIf="isOpenedInIntelliJ && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
-    >
-    </jhi-ide-button>
 </div>

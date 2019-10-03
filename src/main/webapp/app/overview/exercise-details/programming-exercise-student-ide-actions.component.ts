@@ -114,9 +114,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     submitChanges() {
         this.javaBridge.submit();
-    }
-
-    buildAndTest() {
-        this.ideBuildAndTestService.buildAndTestExercise(this.exercise as ProgrammingExercise);
+        this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 }

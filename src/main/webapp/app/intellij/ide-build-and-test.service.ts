@@ -20,12 +20,16 @@ export class IdeBuildAndTestService {
     ) {}
 
     buildAndTestExercise(exercise: ProgrammingExercise) {
-        // Get the participation data for the current participation ID
         const participationId = exercise.studentParticipations[0].id;
-        this.buildLogService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
-
         // Trigger a build for the current participation
         this.submissionService.triggerBuild(participationId).subscribe();
+
+        this.listenOnBuildOutputAndForwardChanges(exercise);
+    }
+
+    listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise) {
+        const participationId = exercise.studentParticipations[0].id;
+        this.buildLogService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
         this.javaBridge.onBuildStarted();
 
         // Listen for the new result on the websocket
@@ -44,8 +48,6 @@ export class IdeBuildAndTestService {
                 }),
             )
             .subscribe();
-
-        // If there is no feedback, because the build failed, fetch the logs, otherwise forward the feedback
     }
 
     private forwardBuildLogs() {

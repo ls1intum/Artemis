@@ -22,6 +22,8 @@ import { ArtemisSharedModule } from 'app/shared';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
+import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,11 +34,13 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     let debugElement: DebugElement;
     let javaBridge: JavaBridgeService;
     let courseExerciseService: CourseExerciseService;
+    let ideBuildService: IdeBuildAndTestService;
 
     let startExerciseStub: SinonStub;
     let ideStateStub: SinonStub;
     let cloneSpy: SinonSpy;
     let submitSpy: SinonSpy;
+    let forwardBuildSpy: SinonSpy;
 
     const exercise = { id: 42 } as Exercise;
     const ideState = { opened: 40 } as IntelliJState;
@@ -46,6 +50,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule],
             declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
+                { provide: IdeBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
@@ -58,8 +63,10 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 javaBridge = debugElement.injector.get(JavaBridgeService);
+                ideBuildService = debugElement.injector.get(IdeBuildAndTestService);
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
+                forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
                 cloneSpy = spy(javaBridge, 'clone');
                 submitSpy = spy(javaBridge, 'submit');
                 ideStateStub = stub(javaBridge, 'state');
@@ -138,5 +145,14 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
         comp.importIntoIntelliJ();
         expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', 'Test Title', 42, 456);
+    });
+
+    it('should submit the changes and then forward the build results on submit', () => {
+        comp.exercise = exercise;
+        comp.submitChanges();
+
+        expect(submitSpy).to.have.been.calledOnce;
+        expect(forwardBuildSpy).to.have.been.calledOnce;
+        expect(forwardBuildSpy).to.have.been.calledImmediatelyAfter(submitSpy);
     });
 });
