@@ -273,6 +273,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepo.count()).as("one exercise got stored").isEqualTo(currentExerciseRepoSize + 1L);
         assertThat(courseRepo.count()).as("a course got stored").isEqualTo(currentCourseRepoSize + 1L);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
+        assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
     public void addCourseWithOneTextExercise() {
@@ -286,6 +287,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
     public void addCourseWithOneTextExerciseDueDateReached() {
@@ -361,6 +363,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
@@ -368,6 +371,8 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findById(course.getId()).get();
     }
