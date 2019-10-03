@@ -8,15 +8,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         <div>
             <div>
                 <span class="font-weight-bold" [jhiTranslate]="label"></span>
-                <jhi-tooltip *ngIf="tooltipText" placement="top" [text]="tooltipText"></jhi-tooltip>
+                <jhi-help-icon *ngIf="tooltipText" placement="top" [text]="tooltipText"></jhi-help-icon>
             </div>
             <div class="invisible-date-time-picker">
                 <input class="form-control" [ngModel]="val" [min]="min" [max]="max" (ngModelChange)="updateField($event)" [owlDateTime]="dt" />
             </div>
-            <button *ngIf="!val" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-circle">
+            <button *ngIf="!val" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-lifecycle">
                 <fa-icon class="icon-calendar-plus" icon="calendar-plus" size="2x"></fa-icon>
             </button>
-            <button *ngIf="val" (click)="resetDate()" type="button" class="btn btn-light btn-circle calendar-event-toggle">
+            <button *ngIf="val" (click)="resetDate()" type="button" class="btn btn-light btn-lifecycle calendar-event-toggle">
                 <fa-icon class="icon-static" icon="calendar-check" size="2x"></fa-icon>
                 <fa-icon class="icon-remove" icon="calendar-minus" size="2x"></fa-icon>
             </button>

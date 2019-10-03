@@ -13,9 +13,9 @@
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests">
                         Automatic Tests
                     </span>
-                    <jhi-tooltip placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-tooltip>
+                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
-                <div class="btn btn-light scheduled-test btn-circle">
+                <div class="btn btn-light scheduled-test btn-lifecycle">
                     <fa-icon icon="cogs" size="lg"></fa-icon>
                 </div>
             </div>
@@ -44,9 +44,9 @@
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests">
                         Automatic Tests
                     </span>
-                    <jhi-tooltip placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsAfterDueDateTooltip"></jhi-tooltip>
+                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsAfterDueDateTooltip"></jhi-help-icon>
                 </div>
-                <div class="btn btn-light scheduled-test btn-circle">
+                <div class="btn btn-light scheduled-test btn-lifecycle">
                     <fa-icon icon="cogs" size="lg"></fa-icon>
                 </div>
             </div>
@@ -55,11 +55,11 @@
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.manualReview">
                         Manual Review
                     </span>
-                    <jhi-tooltip placement="top" text="artemisApp.programmingExercise.timeline.manualReviewTooltip"></jhi-tooltip>
+                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.manualReviewTooltip"></jhi-help-icon>
                 </div>
                 <div
                     *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC"
-                    class="btn btn-light scheduled-test scheduled-test--deactivated btn-circle"
+                    class="btn btn-light scheduled-test scheduled-test--deactivated btn-lifecycle"
                     (click)="toggleHasManualTests()"
                 >
                     <fa-icon icon="user-plus" size="lg"></fa-icon>
@@ -67,7 +67,7 @@
                 <div
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC"
                     (click)="toggleHasManualTests()"
-                    class="btn btn-light scheduled-test btn-circle calendar-event-toggle"
+                    class="btn btn-light scheduled-test btn-lifecycle calendar-event-toggle"
                 >
                     <fa-icon class="icon-static" icon="user-check" size="lg"></fa-icon>
                     <fa-icon class="icon-remove" icon="user-minus" size="lg"></fa-icon>

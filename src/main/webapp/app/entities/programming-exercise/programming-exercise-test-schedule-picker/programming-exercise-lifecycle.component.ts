@@ -4,11 +4,11 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 @Component({
-    selector: 'jhi-programming-exercise-test-schedule-picker',
-    templateUrl: './programming-exercise-test-schedule-picker.component.html',
+    selector: 'jhi-programming-exercise-lifecycle',
+    templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
-export class ProgrammingExerciseTestSchedulePickerComponent implements OnInit {
+export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     readonly assessmentType = AssessmentType;
 

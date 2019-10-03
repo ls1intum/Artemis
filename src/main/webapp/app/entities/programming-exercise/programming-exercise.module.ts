@@ -33,9 +33,10 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ProgrammingExerciseTestSchedulePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
+import { ProgrammingExerciseLifecycleComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/entities/programming-exercise/programming-exercise-plans-and-repositories-preview.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -71,8 +72,9 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
+        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         // Form components
-        ProgrammingExerciseTestSchedulePickerComponent,
+        ProgrammingExerciseLifecycleComponent,
         ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
     entryComponents: [
