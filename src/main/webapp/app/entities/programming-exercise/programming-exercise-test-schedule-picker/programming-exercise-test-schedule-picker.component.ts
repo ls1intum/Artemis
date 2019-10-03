@@ -23,6 +23,7 @@ export class ProgrammingExerciseTestSchedulePickerComponent implements OnInit {
     /**
      * Toggles the assessment type between AUTOMATIC (only tests in repo will be run using build plans) and
      * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
+     *
      */
     toggleHasManualTests() {
         this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC;
