@@ -7,11 +7,14 @@ import { filter, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CodeEditorBuildLogService, DomainType } from 'app/code-editor';
 import { BuildLogEntryArray } from 'app/entities/build-log';
+import { Observable, Subject } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
 })
 export class IdeBuildAndTestService {
+    private buildFinished = new Subject<void>();
+
     constructor(
         private submissionService: ProgrammingSubmissionService,
         private participationWebsocketService: ParticipationWebsocketService,
@@ -27,7 +30,7 @@ export class IdeBuildAndTestService {
         this.listenOnBuildOutputAndForwardChanges(exercise);
     }
 
-    listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise) {
+    listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise): Observable<void> {
         const participationId = exercise.studentParticipations[0].id;
         this.buildLogService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
         this.javaBridge.onBuildStarted();
@@ -42,12 +45,15 @@ export class IdeBuildAndTestService {
                     if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
                         result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.detailText!));
                         this.javaBridge.onBuildFinished();
+                        this.buildFinished.next();
                     } else {
                         this.forwardBuildLogs();
                     }
                 }),
             )
             .subscribe();
+
+        return this.buildFinished;
     }
 
     private forwardBuildLogs() {
@@ -58,6 +64,7 @@ export class IdeBuildAndTestService {
                 tap((logs: BuildLogEntryArray) => {
                     const logErrors = logs.extractErrors();
                     this.javaBridge.onBuildFailed(JSON.stringify(logErrors));
+                    this.buildFinished.next();
                 }),
             )
             .subscribe();
