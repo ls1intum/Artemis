@@ -13,6 +13,13 @@ import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExercisePa
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
+export type ProgrammingExerciseTestCaseStateDTO = {
+    released: boolean;
+    hasStudentResult: boolean;
+    testCasesChanged: boolean;
+    buildAndTestStudentSubmissionsAfterDueDate: moment.Moment | null;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
@@ -35,6 +42,21 @@ export class ProgrammingExerciseService {
 
     squashTemplateRepositoryCommits(exerciseId: number) {
         return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
+    }
+
+    /**
+     * Imports a programming exercise by cloning the entity itself plus all bas build plans and repositories
+     * (template, solution, test).
+     *
+     * @param adaptedSourceProgrammingExercise The exercise that should be imported, including adapted values for the
+     *                                         new exercise. E.g. with another title than the original exercise. Old
+     *                                         values that should get discarded (like the old ID) will be handled by the
+     *                                         server.
+     */
+    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+        return this.http
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
@@ -69,8 +91,8 @@ export class ProgrammingExerciseService {
      *
      * @param exerciseId ProgrammingExercise id
      */
-    isReleasedAndHasResults(exerciseId: number): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/is-released-and-has-results`, { observe: 'response' });
+    getProgrammingExerciseTestCaseState(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseTestCaseStateDTO>> {
+        return this.http.get<ProgrammingExerciseTestCaseStateDTO>(`${this.resourceUrl}/${exerciseId}/test-case-state`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

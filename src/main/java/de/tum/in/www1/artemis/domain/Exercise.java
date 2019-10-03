@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 @DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
@@ -663,5 +663,10 @@ public abstract class Exercise implements Serializable {
 
     public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
         this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
+    }
+
+    public boolean isReleased() {
+        ZonedDateTime releaseDate = getReleaseDate();
+        return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 }

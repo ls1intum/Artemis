@@ -11,6 +11,7 @@ export const enum ProgrammingLanguage {
 }
 
 export class ProgrammingExercise extends Exercise {
+    public projectKey: string | null;
     public templateParticipation: TemplateProgrammingExerciseParticipation;
     public solutionParticipation: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl: string;
@@ -22,6 +23,7 @@ export class ProgrammingExercise extends Exercise {
     public sequentialTestRuns: boolean | null;
 
     public buildAndTestStudentSubmissionsAfterDueDate: Moment | null;
+    public testCasesChanged: boolean;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);

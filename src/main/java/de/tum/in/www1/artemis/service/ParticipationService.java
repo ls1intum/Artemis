@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,9 +18,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -411,12 +408,14 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.get().copyRepository(participation.getProgrammingExercise().getTemplateRepositoryUrlAsUrl(),
-                    participation.getStudent().getLogin());
-            if (Optional.ofNullable(repositoryUrl).isPresent()) {
-                participation.setRepositoryUrl(repositoryUrl.toString());
-                participation.setInitializationState(InitializationState.REPO_COPIED);
-            }
+            final var exercise = participation.getProgrammingExercise();
+            final var projectKey = exercise.getProjectKey();
+            final var username = participation.getStudent().getLogin();
+            final var repoName = RepositoryType.TEMPLATE.getName();
+            final var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, username).withUser(username);
+            participation.setRepositoryUrl(newRepoUrl.toString());
+            participation.setInitializationState(REPO_COPIED);
+
             return save(participation);
         }
         else {
@@ -437,8 +436,11 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(participation.getProgrammingExercise().getTemplateBuildPlanId(),
-                    participation.getStudent().getLogin());
+            final var projectKey = participation.getProgrammingExercise().getProjectKey();
+            final var planName = BuildPlanType.TEMPLATE.getName();
+            final var username = participation.getStudent().getLogin();
+            final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
+            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
@@ -833,7 +835,7 @@ public class ParticipationService {
                 gitService.get().deleteLocalRepository(programmingExerciseParticipation);
             }
             catch (Exception ex) {
-                log.error("Error while deleting local repository", ex.getMessage());
+                log.error("Error while deleting local repository", ex);
             }
         }
         else if (participation.getExercise() instanceof ModelingExercise) {
