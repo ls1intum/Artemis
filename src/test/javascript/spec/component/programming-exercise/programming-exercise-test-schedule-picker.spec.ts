@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import {
     ProgrammingExerciseTestScheduleDatePickerComponent,
-    ProgrammingExerciseTestSchedulePickerComponent,
+    ProgrammingExerciseLifecycleComponent,
 } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
@@ -14,14 +14,14 @@ import { ArtemisSharedModule } from 'app/shared';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
-import { TooltipComponent } from 'app/shared/components';
+import { HelpIconComponent } from 'app/shared/components';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
-    let comp: ProgrammingExerciseTestSchedulePickerComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseTestSchedulePickerComponent>;
+    let comp: ProgrammingExerciseLifecycleComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
     let debugElement: DebugElement;
 
     const nextDueDate = moment().add(5, 'days');
@@ -31,12 +31,12 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [ProgrammingExerciseTestSchedulePickerComponent, MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent), MockComponent(TooltipComponent)],
+            declarations: [ProgrammingExerciseLifecycleComponent, MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent), MockComponent(HelpIconComponent)],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseTestSchedulePickerComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
             });
