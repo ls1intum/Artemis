@@ -11,7 +11,7 @@
             "deleted": "A lecture is deleted with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the lecture <strong>{{ title }}</strong>? This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the Lecture to confirm."
+                "typeNameToConfirm": "Please type in the name of the lecture to confirm."
             },
             "title": "Title",
             "description": "Description",
