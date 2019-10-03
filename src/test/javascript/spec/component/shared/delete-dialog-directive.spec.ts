@@ -21,7 +21,7 @@ const expect = chai.expect;
 @Component({
     selector: 'jhi-test-component',
     template:
-        '<button jhiDeleteDialog entityTitle="title" deleteQuestion="question" deleteConfirmationText="text" (delete)="delete($event)" checkboxText="checkbox" additionalCheckboxText="additional"></button>',
+        '<button jhiDeleteButton entityTitle="title" deleteQuestion="question" deleteConfirmationText="text" (delete)="delete($event)" checkboxText="checkbox" additionalCheckboxText="additional"></button>',
 })
 class TestComponent {
     eventCalled: { checkboxValue: boolean; additionalCheckboxValue: boolean };

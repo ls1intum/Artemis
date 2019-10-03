@@ -49,15 +49,12 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
-                                type="button"
-                                jhiDeleteDialog
+                                jhiDeleteButton
                                 [entityTitle]="notification.id"
                                 deleteQuestion="artemisApp.notificationManagement.delete.question"
                                 (delete)="deleteNotification(notification.id)"
-                                class="btn btn-danger btn-sm"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                         </div>
                     </td>

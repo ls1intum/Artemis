@@ -81,17 +81,14 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
-                                type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                jhiDeleteDialog
+                                jhiDeleteButton
                                 [entityTitle]="modelingExercise.title"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                 (delete)="deleteModelingExercise(modelingExercise.id)"
-                                class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon icon="times"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                         </div>
                     </td>
