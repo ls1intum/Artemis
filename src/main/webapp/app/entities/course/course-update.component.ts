@@ -82,9 +82,9 @@ export class CourseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.value));
+            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.value));
+            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
         }
     }
 
@@ -185,8 +185,7 @@ export class CourseUpdateComponent implements OnInit {
         if (presentationScoreControl.disabled) {
             presentationScoreControl.enable();
         } else {
-            presentationScoreControl.patchValue(0);
-            presentationScoreControl.disable();
+            presentationScoreControl.reset({ value: 0, disabled: true });
         }
     }
 }

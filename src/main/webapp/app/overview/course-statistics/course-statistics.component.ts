@@ -324,6 +324,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
+                // check if presentation score is enabled for at least one exercise
                 groupedExercises[index].presentationScoreEnabled = groupedExercises[index].presentationScoreEnabled || exercise.presentationScoreEnabled;
                 groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores, groupedExercises[index].notGraded];
             }
