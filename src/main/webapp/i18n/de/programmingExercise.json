@@ -16,7 +16,7 @@
             "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
                 "question": "Soll Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
-                "studentReposBuildPlans": "Löschen Sie zusätzlich alle Studenten-Repositories und Studenten-Build-Pläne (Achtung: Dies kann NICHT rückgängig gemacht werden!). Bevor Sie diese Option aktivieren, empfehlen wir Ihnen, die Übung zuerst zu archivieren!",
+                "studentReposBuildPlans": "Alle Studenten-Repositories und Studenten-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
                 "baseReposBuildPlans": "Löschen Sie zusätzlich Templates, Lösungs- und Testrepos und erstellen Sie Pläne (Achtung: Das kann NICHT rückgängig gemacht werden!). Bevor Sie diese Option aktivieren, empfehlen wir Ihnen, diese Build-Pläne und Repos zuerst zu sichern!"
             },
             "detail": {
