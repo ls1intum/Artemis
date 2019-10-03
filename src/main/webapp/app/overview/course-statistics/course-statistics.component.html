@@ -20,8 +20,9 @@
                     [chartType]="doughnutChartType"
                 ></canvas>
             </div>
-            <div>
+            <div *ngIf="course.presentationScore !== 0">
                 <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | translate: { number: this.totalPresentationScore } }}</h2>
+                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | translate: { number: course.presentationScore } }}</h2>
             </div>
         </div>
         <div class="col-12 col-md-8">

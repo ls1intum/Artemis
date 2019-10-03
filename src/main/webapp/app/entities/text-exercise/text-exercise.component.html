@@ -26,6 +26,9 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="presentationScoreEnabled">
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled">Presentation Score enabled</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -39,6 +42,7 @@
                     <td>{{ textExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ textExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ textExercise.maxScore }}</td>
+                    <td>{{ textExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button

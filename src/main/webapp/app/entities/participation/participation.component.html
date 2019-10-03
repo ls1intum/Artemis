@@ -71,8 +71,8 @@
                     <td>
                         <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
                     </td>
-                    <td>
-                        <span>{{ participation.presentationScore != null ? participation.presentationScore : 0 }}</span>
+                    <td *ngIf="participation.presentationScoreEnabled">
+                        <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">

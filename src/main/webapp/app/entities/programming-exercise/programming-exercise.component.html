@@ -58,6 +58,9 @@
                     <th jhiSortBy="allowOnlineEditor">
                         <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon icon="sort"></fa-icon>
                     </th>
+                    <th jhiSortBy="presentationScoreEnabled">
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled">Presentation Score enabled</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -121,6 +124,7 @@
 
                     <td>{{ programmingExercise.publishBuildPlanUrl }}</td>
                     <td>{{ programmingExercise.allowOnlineEditor }}</td>
+                    <td>{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
