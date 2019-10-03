@@ -61,7 +61,11 @@
             background-color: mediumseagreen;
 
             &--deactivated {
-                background-color: gray;
+                background-color: orange;
+            }
+
+            &--can-toggle {
+                cursor: pointer;
             }
         }
     }
