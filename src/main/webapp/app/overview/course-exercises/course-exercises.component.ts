@@ -5,10 +5,11 @@ import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { sum } from 'lodash';
 import { CourseScoreCalculationService } from 'app/overview';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -136,7 +137,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const filtered = this.course!.exercises.filter(
-            exercise => (!needsWorkFilterActive || this.needsWork(exercise)) && (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))),
+            exercise =>
+                (!needsWorkFilterActive || this.needsWork(exercise)) &&
+                (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
+                (!isIntelliJ || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
     }

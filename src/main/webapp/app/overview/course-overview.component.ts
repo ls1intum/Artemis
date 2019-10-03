@@ -7,6 +7,7 @@ import { CachingStrategy } from 'app/shared';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -23,6 +24,7 @@ export class CourseOverviewComponent implements OnInit {
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
+    isIntelliJ = isIntelliJ;
 
     constructor(
         private courseService: CourseService,

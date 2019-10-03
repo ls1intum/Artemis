@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <div class="course-info-bar">
+    <div class="course-info-bar" [class.course-info-bar--ide]="isIntelliJ">
         <div class="row">
             <div class="col general-info">
                 <h3>{{ course.title }}</h3>
@@ -24,10 +24,10 @@
         <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
         </div>
-        <div class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
+        <div *ngIf="!isIntelliJ" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
         </div>
-        <div class="tab-item statistics" routerLink="statistics" routerLinkActive="active">
+        <div *ngIf="!isIntelliJ" class="tab-item statistics" routerLink="statistics" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
         </div>
     </div>
