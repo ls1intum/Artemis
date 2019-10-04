@@ -7,9 +7,8 @@ export class DeleteDialogDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
-    @Input() checkboxText: string;
-    @Input() additionalCheckboxText: string;
-    @Output() delete = new EventEmitter<any>();
+    @Input() additionalChecks?: { [key: string]: string };
+    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
 
@@ -26,7 +25,6 @@ export class DeleteDialogDirective implements OnInit {
         this.renderer.addClass(this.el.nativeElement, 'btn-sm');
         this.renderer.addClass(this.el.nativeElement, 'mr-1');
         this.renderer.setProperty(this.el.nativeElement, 'type', 'submit');
-        this.renderer.setProperty(this.el.nativeElement, 'textContent', this.translateService.instant('entity.action.delete'));
 
         // create a span with delete text
         this.deleteTextSpan = this.renderer.createElement('span');
@@ -49,8 +47,7 @@ export class DeleteDialogDirective implements OnInit {
             entityTitle: this.entityTitle,
             deleteQuestion: this.deleteQuestion,
             deleteConfirmationText: this.deleteConfirmationText,
-            checkboxText: this.checkboxText,
-            additionalCheckboxText: this.additionalCheckboxText,
+            additionalChecks: this.additionalChecks,
         };
         this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(result => {
             this.delete.emit(result);

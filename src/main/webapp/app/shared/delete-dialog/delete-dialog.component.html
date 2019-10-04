@@ -6,13 +6,14 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
-        <div class="checkbox" *ngIf="checkboxText">
-            <label class="control-label text-danger"> <input type="checkbox" name="checkbox" [(ngModel)]="checkboxValue" />&nbsp;{{ checkboxText | translate }}</label>
-        </div>
-        <div class="checkbox" *ngIf="additionalCheckboxText">
-            <label class="control-label text-danger">
-                <input type="checkbox" name="additionalCheckbox" [(ngModel)]="additionalCheckboxValue" />&nbsp;{{ additionalCheckboxText | translate }}
-            </label>
+        <div *ngIf="additionalChecks">
+            <div *ngFor="let checkKey of objectKeys(additionalChecks)">
+                <div class="checkbox" *ngIf="additionalChecks[checkKey]">
+                    <label class="control-label text-danger">
+                        <input type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{ additionalChecks[checkKey] | translate }}
+                    </label>
+                </div>
+            </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText">
             <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>

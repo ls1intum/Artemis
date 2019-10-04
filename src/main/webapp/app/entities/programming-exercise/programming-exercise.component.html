@@ -244,8 +244,10 @@
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                                     (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    checkboxText="artemisApp.programmingExercise.delete.studentReposBuildPlans"
-                                    additionalCheckboxText="artemisApp.programmingExercise.delete.baseReposBuildPlans"
+                                    [additionalChecks]="{
+                                        deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                        deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                    }"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>

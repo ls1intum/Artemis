@@ -17,11 +17,8 @@ export class DeleteDialogData {
     // i18n key, if undefined no safety check will take place (input name of the entity)
     deleteConfirmationText?: string;
 
-    // i18n key, if defined checkbox with translated text will be added
-    checkboxText?: string;
-
-    // i18n key, if defined additional checkbox with translated text will be added
-    additionalCheckboxText?: string;
+    // object with check name as a key and i18n key as a value, keys will be used for the return statement
+    additionalChecks?: { [key: string]: string };
 }
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
@@ -38,8 +35,7 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
-        this.modalRef.componentInstance.checkboxText = deleteDialogData.checkboxText;
-        this.modalRef.componentInstance.additionalCheckboxText = deleteDialogData.additionalCheckboxText;
+        this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
     }
 }

@@ -102,8 +102,11 @@
                                 [entityTitle]="participation.student.firstName"
                                 deleteQuestion="artemisApp.participation.delete.question"
                                 (delete)="deleteParticipation(participation.id, $event)"
-                                [checkboxText]="exercise.type === PROGRAMMING ? 'artemisApp.participation.deleteBuildPlan' : null"
-                                [additionalCheckboxText]="exercise.type === PROGRAMMING ? 'artemisApp.participation.deleteRepository' : null"
+                                [additionalChecks]="
+                                    exercise.type === PROGRAMMING
+                                        ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
+                                        : null
+                                "
                             >
                                 <fa-icon icon="times"></fa-icon>
                             </button>

@@ -60,8 +60,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      * @param $event passed from delete dialog to represent if checkboxes were checked
      */
-    deleteProgrammingExercise(programmingExerciseId: number, $event: { checkboxValue: boolean; additionalCheckboxValue: boolean }) {
-        this.programmingExerciseService.delete(programmingExerciseId, $event.checkboxValue, $event.additionalCheckboxValue).subscribe(
+    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

@@ -1,23 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { mapValues } from 'lodash';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
-export class DeleteDialogComponent {
+export class DeleteDialogComponent implements OnInit {
     confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
-    checkboxText?: string;
-    additionalCheckboxText?: string;
-    checkboxValue: boolean;
-    additionalCheckboxValue: boolean;
+    additionalChecks?: { [key: string]: string };
+    additionalChecksValues?: { [key: string]: boolean };
 
-    constructor(public activeModal: NgbActiveModal) {
-        this.checkboxValue = false;
-        this.additionalCheckboxValue = false;
+    objectKeys = Object.keys;
+
+    constructor(public activeModal: NgbActiveModal) {}
+
+    ngOnInit(): void {
+        if (this.additionalChecks) {
+            this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
+        }
     }
 
     /**
@@ -31,6 +35,6 @@ export class DeleteDialogComponent {
      * Closes the dialog with a 'confirm' message, so the user of the service can use this message to delete the entity
      */
     confirmDelete() {
-        this.activeModal.close({ checkboxValue: this.checkboxValue, additionalCheckboxValue: this.additionalCheckboxValue });
+        this.activeModal.close(this.additionalChecksValues);
     }
 }
