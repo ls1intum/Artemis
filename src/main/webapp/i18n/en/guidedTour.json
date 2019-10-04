@@ -12,7 +12,7 @@
         },
         "cancel": {
             "headline": "Tutorial cancelled",
-            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on \"Start tutorial\" from the account menu."
+            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on <tt>Start tutorial</tt> from the account menu."
         },
         "clickHint": {
             "text": "Click on the highlighted element to proceed with the tour."

@@ -24,7 +24,7 @@
             </div>
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
-                <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
+                <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForMarkdown"></div>
                 <div *ngIf="currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
@@ -42,7 +42,7 @@
                         <fa-icon icon="info-circle"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <span jhiTranslate="{{ currentTourStep.hintTranslateKey }}"></span>
+                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
