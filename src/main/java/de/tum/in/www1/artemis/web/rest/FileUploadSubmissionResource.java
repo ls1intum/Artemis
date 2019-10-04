@@ -262,7 +262,7 @@ public class FileUploadSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
+        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
             return forbidden();
         }
