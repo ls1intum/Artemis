@@ -550,6 +550,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    public ProgrammingExercise findByIdWithEagerStudentParticipations(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipations(programmingExerciseId);
+        if (programmingExercise.isPresent()) {
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
+    }
+
+    /**
      * Find a programming exercise by its id, including all test cases
      *
      * @param id of the programming exercise.
@@ -849,7 +866,7 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(newExercise.getTemplateRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
                 "Artemis Tests WebHook");
     }
 
@@ -893,6 +910,51 @@ public class ProgrammingExerciseService {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }
+    }
+
+    /**
+     * Remove the write permissions for all students for their programming exercise repository.
+     * They will still be able to read the code, but won't be able to change it.
+     *
+     * @param programmingExerciseId     ProgrammingExercise id.
+     * @return a list of participations for which the locking operation has failed. If everything went as expected, this should be an empty list.
+     * @throws EntityNotFoundException  if the programming exercise can't be found.
+     */
+    public List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
+        log.info("Invoking scheduled task 'remove write permissions from all student repositories' for programming exercise with id " + programmingExerciseId + ".");
+
+        ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
+        List<ProgrammingExerciseStudentParticipation> failedLockOperations = new LinkedList<>();
+        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
+            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+            try {
+                versionControlService.get().setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                        programmingExerciseStudentParticipation.getStudent().getLogin());
+            }
+            catch (Exception e) {
+                log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
+                        + studentParticipation.getId());
+                failedLockOperations.add(programmingExerciseStudentParticipation);
+            }
+        }
+        return failedLockOperations;
+    }
+
+    /**
+     * Check if the repository of the given participation is locked.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     *
+     * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
+     *
+     * @param participation ProgrammingExerciseParticipation
+     * @return true if repository is locked, false if not.
+     */
+    public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+        }
+        return false;
     }
 
     /**
