@@ -275,7 +275,7 @@ public class FileUploadSubmissionResource {
             fileUploadSubmission.setParticipation(participation);
         }
         else {
-            // only try to get and set the model if the fileUploadSubmission existed before
+            // only try to get and set the file upload if the fileUploadSubmission existed before
             fileUploadSubmission = optionalFileUploadSubmission.get();
         }
 
