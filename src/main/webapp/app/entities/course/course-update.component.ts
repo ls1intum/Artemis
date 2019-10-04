@@ -12,7 +12,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MAX_SCORE_PATTERN } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, PRESENTATION_SCORE_PATTERN } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared';
 
@@ -26,7 +26,6 @@ export class CourseUpdateComponent implements OnInit {
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly maxScorePattern = MAX_SCORE_PATTERN;
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
@@ -39,6 +38,7 @@ export class CourseUpdateComponent implements OnInit {
     presentationScoreEnabled = false;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
+    presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
 
     constructor(
         private courseService: CourseService,
@@ -67,7 +67,10 @@ export class CourseUpdateComponent implements OnInit {
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
-            presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [Validators.min(1)]),
+            presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
+                Validators.min(1),
+                regexValidator(this.presentationScorePattern),
+            ]),
             color: new FormControl(this.course.color),
             courseIcon: new FormControl(this.course.courseIcon),
         });
