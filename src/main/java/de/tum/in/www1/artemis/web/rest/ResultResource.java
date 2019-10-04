@@ -526,7 +526,7 @@ public class ResultResource {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
             // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
             // (= e.g. build error in programming exercises) is different from there being an empty feedback list
-            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(notFound());
+            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(ResponseEntity.notFound().build());
         }
         catch (Exception e) {
             log.error("REST request to get Result failed : {}", resultId, e);
