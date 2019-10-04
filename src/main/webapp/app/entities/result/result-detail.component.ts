@@ -4,6 +4,9 @@ import { RepositoryService } from 'app/entities/repository';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
+import { tap, catchError, switchMap } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 // Modal -> Result details view
 @Component({
@@ -13,7 +16,8 @@ import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     @Input() showTestNames = false;
-    isLoading: boolean;
+    isLoading = false;
+    loadingFailed = false;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
 
@@ -26,19 +30,30 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
         this.isLoading = true;
-        this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
-            this.result.feedbacks = res.body!;
-            this.feedbackList = res.body!;
-            if (!this.feedbackList || this.feedbackList.length === 0) {
-                // If we don't have received any feedback, we fetch the buid log outputs
-                this.repositoryService.buildlogs(this.result.participation!.id).subscribe((repoResult: BuildLogEntry[]) => {
-                    this.buildLogs = new BuildLogEntryArray(...repoResult);
-                    this.isLoading = false;
-                });
-            } else {
+        this.resultService
+            .getFeedbackDetailsForResult(this.result.id)
+            .pipe(
+                switchMap(res => {
+                    this.result.feedbacks = res.body!;
+                    this.feedbackList = res.body!;
+                    if (!this.feedbackList || this.feedbackList.length === 0) {
+                        // If we don't have received any feedback, we fetch the buid log outputs
+                        return this.repositoryService.buildlogs(this.result.participation!.id).pipe(
+                            tap((repoResult: BuildLogEntry[]) => {
+                                this.buildLogs = new BuildLogEntryArray(...repoResult);
+                            }),
+                        );
+                    }
+                    return of(null);
+                }),
+                catchError((error: HttpErrorResponse) => {
+                    // TODO: When the server would give better error information, we could improve the UI.
+                    this.loadingFailed = true;
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
                 this.isLoading = false;
-            }
-        });
-        this.isLoading = false;
+            });
     }
 }
