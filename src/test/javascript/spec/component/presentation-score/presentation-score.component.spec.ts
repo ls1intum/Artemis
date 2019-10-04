@@ -3,12 +3,6 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PresentationScoreComponent } from 'app/components/exercise/presentation-score/presentation-score.component';
 import { Course } from 'app/entities/course';
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { MockSyncStorage } from '../../mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { AccountService } from 'app/core';
-import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise';
 
 chai.use(sinonChai);
@@ -46,14 +40,9 @@ describe('PresentationScoreComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, ArtemisTestModule],
             declarations: [PresentationScoreComponent],
-            providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: AccountService, useClass: MockAccountService },
-            ],
         })
+            .overrideTemplate(PresentationScoreComponent, '')
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(PresentationScoreComponent);
