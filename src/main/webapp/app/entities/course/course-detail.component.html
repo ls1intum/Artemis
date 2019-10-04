@@ -42,7 +42,7 @@
                     <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                     <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled">Presentation Score Enabled</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
                 <dd>
                     <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
                     <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>

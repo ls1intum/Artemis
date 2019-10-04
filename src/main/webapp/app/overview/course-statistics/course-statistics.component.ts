@@ -431,13 +431,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculatePresentationScores(): void {
-        const quizzesPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, PRESENTATION_SCORE);
         const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
         const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
         const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
         const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, PRESENTATION_SCORE);
         const presentationScores = {};
-        presentationScores[ExerciseType.QUIZ] = quizzesPresentationScore;
+        presentationScores[ExerciseType.QUIZ] = 0;
         presentationScores[ExerciseType.PROGRAMMING] = programmingExercisePresentationScore;
         presentationScores[ExerciseType.MODELING] = modelingExercisePresentationScore;
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
