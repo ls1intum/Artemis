@@ -124,6 +124,10 @@
                     "course": "Course",
                     "doImport": "Import"
                 }
+            },
+            "repositoryIsLocked": {
+                "title": "Your Repository is locked.",
+                "tooltip": "The due date has passed, your repository is locked. You can still read the code but not make any changes to it."
             }
         }
     }
