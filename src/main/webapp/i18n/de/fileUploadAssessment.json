@@ -11,7 +11,7 @@
                 "heading": "Tutor Dashboard zur Bewertung von Datei Upload Aufgabe \"{{exerciseTitle}}\""
             },
             "messages": {
-                "lock": "Diese Datei kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Datei bevor du ein neues öffnest.",
+                "lock": "Diese Datei Abgabe kann jetzt exklusiv nur noch von dir bewertet werden. Bitte bewerte diese Datei Abgabe bevor du eine neue öffnest.",
                 "confirmSubmission": "Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst sie nachträglich nicht mehr ändern."
             },
             "error": {
