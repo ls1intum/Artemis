@@ -32,6 +32,7 @@ import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.servic
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
+import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,7 +58,12 @@ describe('FileUploadSubmissionComponent', () => {
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
             ],
-            declarations: [FileUploadSubmissionComponent, MockComponent(ResizableInstructionsComponent), MockComponent(ComplaintsForTutorComponent)],
+            declarations: [
+                FileUploadSubmissionComponent,
+                MockComponent(ResizableInstructionsComponent),
+                MockComponent(ComplaintsForTutorComponent),
+                MockComponent(FileUploadResultComponent),
+            ],
             providers: [
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -94,7 +100,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.fileUploadExercise).to.be.equal(fileUploadExercise);
         expect(comp.isAfterAssessmentDueDate).to.be.true;
         expect(comp.numberOfAllowedComplaints).to.be.undefined;
-        expect(comp.submission).to.be.undefined;
 
         const maxScore = debugElement.query(By.css('div p strong'));
         expect(maxScore).to.exist;

@@ -526,6 +526,7 @@ public class CourseResource {
 
         long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
