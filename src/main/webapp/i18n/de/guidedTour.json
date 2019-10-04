@@ -12,7 +12,7 @@
         },
         "cancel": {
             "headline": "Tutorial abgebrochen",
-            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial starten</tt> im Account-Menü."
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Account-Menü."
         },
         "clickHint": {
             "text": "Klicke auf das Element um die Tour fortzusetzen."
