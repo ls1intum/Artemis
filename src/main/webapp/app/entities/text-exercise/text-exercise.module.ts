@@ -9,7 +9,6 @@ import { ArtemisCategorySelectorModule } from 'app/components/category-selector/
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -22,7 +21,6 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisMarkdownEditorModule,
-        ArtemisPresentationScoreModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],

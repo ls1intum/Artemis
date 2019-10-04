@@ -67,12 +67,13 @@ export class CourseUpdateComponent implements OnInit {
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
-            presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }),
+            presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [Validators.min(1)]),
             color: new FormControl(this.course.color),
             courseIcon: new FormControl(this.course.courseIcon),
         });
         this.courseImageFileName = this.course.courseIcon;
         this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
+        this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
     previousState() {
@@ -184,8 +185,10 @@ export class CourseUpdateComponent implements OnInit {
         const presentationScoreControl = this.courseForm.controls['presentationScore'];
         if (presentationScoreControl.disabled) {
             presentationScoreControl.enable();
+            this.presentationScoreEnabled = true;
         } else {
             presentationScoreControl.reset({ value: 0, disabled: true });
+            this.presentationScoreEnabled = false;
         }
     }
 }

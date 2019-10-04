@@ -16,7 +16,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
-import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute];
 
@@ -29,7 +28,6 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisMarkdownEditorModule,
-        ArtemisPresentationScoreModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent, FileUploadExerciseDeleteDialogComponent],
     entryComponents: [FileUploadExerciseDeleteDialogComponent],

@@ -65,7 +65,10 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "notificiationText": "Optional: Mitteilung über die Änderung",
-            "presentationScoreEnabled": "Präsentationsergebnis aktiviert",
+            "presentationScoreEnabled": {
+                "title": "Präsentationsergebnis aktiviert",
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann kann der Tutor auf zur Seite \"Teilnahmen\" dieser Übung navigieren und eine Präsentation für einen Studenten eintragen, wenn eine gehalten wurde."
+            },
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
             },

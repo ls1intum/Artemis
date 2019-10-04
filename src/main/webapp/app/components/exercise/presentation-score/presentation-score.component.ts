@@ -15,9 +15,15 @@ import { Exercise } from 'app/entities/exercise';
                         [ngModel]="exercise.presentationScoreEnabled"
                         (ngModelChange)="exercise.presentationScoreEnabled = !exercise.presentationScoreEnabled"
                     />
-                    <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled"
+                    <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
                         >Presentation Score Enabled</label
                     >
+                    <fa-icon
+                        icon="question-circle"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | translate }}"
+                    ></fa-icon>
                 </div>
             </div>
         </ng-container>
