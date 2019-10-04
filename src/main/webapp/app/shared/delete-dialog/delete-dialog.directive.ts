@@ -49,8 +49,8 @@ export class DeleteDialogDirective implements OnInit {
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(result => {
-            this.delete.emit(result);
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe((additionalChecksValues: { [key: string]: boolean }) => {
+            this.delete.emit(additionalChecksValues);
         });
     }
 
