@@ -17,7 +17,7 @@ export const createFileUploadSubmission = () => {
 };
 
 export class MockFileUploadSubmissionService {
-    getDataForFileUploadEditor = (participationId: number) => of(fileUploadParticipation);
+    getDataForFileUploadEditor = (participationId: number) => of(createFileUploadSubmission());
     update = (fileUploadSubmission: FileUploadSubmission, exerciseId: number) => {
         fileUploadSubmission.result = new Result();
         return of({ body: fileUploadSubmission });

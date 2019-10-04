@@ -204,8 +204,16 @@ public class ComplaintService {
 
         StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
         if (originalParticipation != null && originalParticipation.getExercise() != null) {
-            Exercise exerciseWithOnlyTitle;
-            exerciseWithOnlyTitle = originalParticipation.getExercise() instanceof TextExercise ? new TextExercise() : new ModelingExercise();
+            Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
+            if (exerciseWithOnlyTitle instanceof TextExercise) {
+                exerciseWithOnlyTitle = new TextExercise();
+            }
+            else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
+                exerciseWithOnlyTitle = new ModelingExercise();
+            }
+            else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
+                exerciseWithOnlyTitle = new FileUploadExercise();
+            }
             exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
             exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
 
@@ -214,7 +222,19 @@ public class ComplaintService {
 
         Submission originalSubmission = complaint.getResult().getSubmission();
         if (originalSubmission != null) {
-            Submission submissionWithOnlyId = originalSubmission instanceof TextSubmission ? new TextSubmission() : new ModelingSubmission();
+            Submission submissionWithOnlyId;
+            if (originalSubmission instanceof TextSubmission) {
+                submissionWithOnlyId = new TextSubmission();
+            }
+            else if (originalSubmission instanceof ModelingSubmission) {
+                submissionWithOnlyId = new ModelingSubmission();
+            }
+            else if (originalSubmission instanceof FileUploadSubmission) {
+                submissionWithOnlyId = new FileUploadSubmission();
+            }
+            else {
+                return;
+            }
             submissionWithOnlyId.setId(originalSubmission.getId());
             complaint.getResult().setSubmission(submissionWithOnlyId);
         }
