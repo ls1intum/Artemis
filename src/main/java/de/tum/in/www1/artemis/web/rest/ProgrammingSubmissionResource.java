@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -49,18 +51,18 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -212,7 +214,8 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds);
+        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
+                programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds));
         List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
                 SubmissionType.INSTRUCTOR);
 
@@ -223,6 +226,12 @@ public class ProgrammingSubmissionResource {
 
     /**
      * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise.
+     *
+     * Problem with legacy programming exercises:
+     * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
+     * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
+     * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
+     * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
@@ -235,11 +244,22 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
-        // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseService.setTestCasesChanged(exerciseId, true);
+        ObjectId lastCommitId = null;
+        try {
+            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            lastCommitId = ObjectId.fromString(lastCommitHash);
+            log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
+        }
+        catch (Exception ex) {
+            log.debug("Commit hash could not be parsed for from test repository from exercise " + exerciseId
+                    + ", the submission will be created with the latest commitHash of the solution repository.", ex);
+        }
 
-        List<ProgrammingSubmission> submissions = programmingExerciseService.notifyChangedTestCases(exerciseId, requestBody);
-        programmingSubmissionService.notifyUserTriggerBuildForNewSubmissions(submissions);
+        // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
+        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitId);
+        programmingSubmissionService.notifyUserAboutSubmission(submission);
+        // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
 
         return ResponseEntity.ok().build();
     }
