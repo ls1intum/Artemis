@@ -52,6 +52,7 @@ import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-s
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
 
 chai.use(sinonChai);
@@ -84,6 +85,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getStudentParticipationWithLatestResultStub: SinonStub;
     let getLatestPendingSubmissionStub: SinonStub;
     let getHintsForExerciseStub: SinonStub;
+    let guidedTourService: GuidedTourService;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let routeSubject: Subject<Params>;
@@ -122,6 +124,7 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
+                guidedTourService = TestBed.get(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
                 codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
@@ -593,6 +596,7 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
         const result = { id: 3, successful: false };
