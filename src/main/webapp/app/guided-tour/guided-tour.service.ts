@@ -260,10 +260,10 @@ export class GuidedTourService {
      * Get the last step that the user visited during the given tour
      */
     public getLastSeenTourStepIndex(): number {
-        if (!this.currentTour) {
+        if (!this.availableTourForComponent) {
             return 0;
         }
-        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.currentTour!.settingsKey);
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
         return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
     }
 
@@ -303,7 +303,6 @@ export class GuidedTourService {
             }
         } else {
             if (userInteraction === UserInteractionEvent.CLICK) {
-                console.log('click observer disconnect');
                 from(this.observeDomMutations(targetNode, userInteraction))
                     .pipe(take(1))
                     .subscribe((mutations: MutationRecord[]) => {
@@ -330,7 +329,6 @@ export class GuidedTourService {
         return new Promise(resolve => {
             const observer = new MutationObserver(mutations => {
                 if (userInteraction === UserInteractionEvent.CLICK) {
-                    console.log('click observer disconnect');
                     observer.disconnect();
                     this.enableNextStepClick();
                 } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
@@ -403,10 +401,10 @@ export class GuidedTourService {
     }
 
     private getFilteredTourSteps(): TourStep[] {
-        if (!this.currentTour) {
+        if (!this.availableTourForComponent) {
             return [];
         }
-        return this.currentTour.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
+        return this.availableTourForComponent.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**
