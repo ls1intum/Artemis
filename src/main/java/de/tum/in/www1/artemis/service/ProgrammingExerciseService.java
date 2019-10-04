@@ -1018,7 +1018,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException  if the programming exercise can't be found.
      */
     public List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
-        log.info("Invoking scheduled task programming exercise with id " + programmingExerciseId + ".");
+        log.info("Invoking scheduled task 'remove write permissions from all student repositories' for programming exercise with id " + programmingExerciseId + ".");
 
         ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedLockOperations = new LinkedList<>();
