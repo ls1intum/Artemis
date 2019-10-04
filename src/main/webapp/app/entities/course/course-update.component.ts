@@ -12,7 +12,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, PRESENTATION_SCORE_PATTERN } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared';
 
