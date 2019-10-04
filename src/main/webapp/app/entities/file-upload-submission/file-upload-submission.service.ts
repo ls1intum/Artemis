@@ -61,16 +61,20 @@ export class FileUploadSubmissionService {
      * Returns next File Upload submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<FileUploadSubmission> {
-        return this.http.get<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submission-without-assessment`);
+    getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<FileUploadSubmission> {
+        let url = `api/exercises/${exerciseId}/file-upload-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<FileUploadSubmission>(url);
     }
 
     /**
      * Returns data for File Upload editor from the server
      * @param participationId the id of the participation
      */
-    getDataForFileUploadEditor(participationId: number): Observable<any> {
-        return this.http.get<any>(`api/file-upload-editor/${participationId}`);
+    getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
+        return this.http.get<FileUploadSubmission>(`api/participations/${participationId}/file-upload-editor`, { responseType: 'json' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
