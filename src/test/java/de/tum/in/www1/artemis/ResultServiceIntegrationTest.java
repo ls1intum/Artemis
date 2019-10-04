@@ -80,7 +80,7 @@ public class ResultServiceIntegrationTest {
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
-        solutionParticipation = solutionProgrammingExerciseRepository.findByProgrammingExerciseId(programmingExercise.getId()).get();
+        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         templateParticipation = programmingExercise.getTemplateParticipation();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
