@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.RepositoryService;
@@ -48,18 +47,18 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId, boolean pullOnGet) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        String testRepoName = exercise.getTestRepositoryName();
-        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName).getURL();
-        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnGet);
+    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet)
+            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+        final var exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        final var repoUrl = exercise.getTestRepositoryUrlAsUrl();
+
+        return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
 
     @Override
     URL getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        return versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName).getURL();
+        return exercise.getTestRepositoryUrlAsUrl();
     }
 
     @Override

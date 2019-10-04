@@ -47,7 +47,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -72,17 +71,11 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    private final SubmissionRepository submissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final CourseRepository courseRepository;
 
     private final ParticipationService participationService;
 
@@ -94,10 +87,6 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
-    private final GroupNotificationService groupNotificationService;
-
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Value("${server.url}")
@@ -105,11 +94,10 @@ public class ProgrammingExerciseService {
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
-            ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
-            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -117,68 +105,15 @@ public class ProgrammingExerciseService {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.submissionRepository = submissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.courseRepository = courseRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
-        this.groupNotificationService = groupNotificationService;
-        this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-    }
-
-    /**
-     * Notifies all participations of the given programmingExercise (including the template & solution participation!) about changes of the test cases.
-     * This method creates submissions for the participations so that the result when it comes in can be mapped to them.
-     *
-     * @param exerciseId of programming exercise the test cases got changed.
-     * @param requestBody The request body received from the VCS
-     * @return A list of created {@link ProgrammingSubmission programming submissions} for the changed exercise
-     * @throws EntityNotFoundException If the exercise with the given ID does not exist
-     */
-    @Transactional
-    public List<ProgrammingSubmission> notifyChangedTestCases(Long exerciseId, Object requestBody) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> exerciseOpt = programmingExerciseRepository.findByIdWithEagerParticipations(exerciseId);
-        if (exerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
-        }
-        ProgrammingExercise programmingExercise = exerciseOpt.get();
-        // All student repository builds and the builds of the template & solution repository must be triggered now!
-        Set<ProgrammingExerciseParticipation> participations = new HashSet<>();
-        participations.add(programmingExercise.getSolutionParticipation());
-        participations.add(programmingExercise.getTemplateParticipation());
-        participations.addAll(programmingExercise.getStudentParticipations().stream().map(p -> (ProgrammingExerciseParticipation) p).collect(Collectors.toSet()));
-
-        List<ProgrammingSubmission> submissions = new ArrayList<>();
-
-        for (ProgrammingExerciseParticipation participation : participations) {
-            ProgrammingSubmission submission = new ProgrammingSubmission();
-            submission.setType(SubmissionType.TEST);
-            submission.setSubmissionDate(ZonedDateTime.now());
-            submission.setSubmitted(true);
-            submission.setParticipation((Participation) participation);
-            try {
-                String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-                log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participation.getId());
-                submission.setCommitHash(lastCommitHash);
-            }
-            catch (Exception ex) {
-                log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
-            }
-
-            ProgrammingSubmission storedSubmission = submissionRepository.save(submission);
-            submissions.add(storedSubmission);
-            // TODO: I think it is a problem that the test repository just triggers the build in bamboo before the submission is created.
-            // It could be that Artemis is not available and the results come in before the submission is ready.
-            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
-        }
-        return submissions;
     }
 
     /**
@@ -314,6 +249,7 @@ public class ProgrammingExerciseService {
      */
     @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+        programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
@@ -614,6 +550,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    public ProgrammingExercise findByIdWithEagerStudentParticipations(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipations(programmingExerciseId);
+        if (programmingExercise.isPresent()) {
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
+    }
+
+    /**
      * Find a programming exercise by its id, including all test cases
      *
      * @param id of the programming exercise.
@@ -774,25 +727,31 @@ public class ProgrammingExerciseService {
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
-            if (programmingExercise.getTemplateBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
+
+            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+            if (templateBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
             }
-            if (programmingExercise.getSolutionBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+            if (solutionBuildPlanId != null) {
+                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
-                gitService.deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+                versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
+                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
@@ -813,46 +772,14 @@ public class ProgrammingExerciseService {
         return programmingExerciseRepository.findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
     }
 
-    /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
-     * This method also sends out a notification to the client if testCasesChanged = true.
-     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
-     *
-     * @param programmingExerciseId id of a ProgrammingExercise.
-     * @param testCasesChanged set to true to mark the programming exercise as dirty.
-     * @return the updated ProgrammingExercise.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
-     */
-    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
-        if (programmingExerciseOpt.isEmpty()) {
-            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " could not be found");
-        }
-
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
-        // should get an updated result.
-        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !hasAtLeastOneStudentResult(programmingExercise)) {
-            return programmingExercise;
-        }
-        programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Send a websocket message about the new state to the client.
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
-        // Send a notification to the client to inform the instructor about the test case update.
-        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
-        return updatedProgrammingExercise;
-    }
-
-    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // TODO: We can't use the resultService here due to a circular dependency issue.
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+    }
+
+    public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
+        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**
@@ -899,6 +826,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
+        newExercise.generateAndSetProjectKey();
         final var projectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
@@ -928,8 +856,6 @@ public class ProgrammingExerciseService {
         final var sourceProjectKey = templateExercise.getProjectKey();
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
-        // The project key is always the first half of a repo slug
-        final var targetSlugPrefix = targetProjectKey.toLowerCase();
 
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
@@ -940,7 +866,7 @@ public class ProgrammingExerciseService {
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(newExercise.getTemplateRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
+        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
                 "Artemis Tests WebHook");
     }
 
@@ -984,6 +910,51 @@ public class ProgrammingExerciseService {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }
+    }
+
+    /**
+     * Remove the write permissions for all students for their programming exercise repository.
+     * They will still be able to read the code, but won't be able to change it.
+     *
+     * @param programmingExerciseId     ProgrammingExercise id.
+     * @return a list of participations for which the locking operation has failed. If everything went as expected, this should be an empty list.
+     * @throws EntityNotFoundException  if the programming exercise can't be found.
+     */
+    public List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId) throws EntityNotFoundException {
+        log.info("Invoking scheduled task 'remove write permissions from all student repositories' for programming exercise with id " + programmingExerciseId + ".");
+
+        ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
+        List<ProgrammingExerciseStudentParticipation> failedLockOperations = new LinkedList<>();
+        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
+            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+            try {
+                versionControlService.get().setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                        programmingExerciseStudentParticipation.getStudent().getLogin());
+            }
+            catch (Exception e) {
+                log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
+                        + studentParticipation.getId());
+                failedLockOperations.add(programmingExerciseStudentParticipation);
+            }
+        }
+        return failedLockOperations;
+    }
+
+    /**
+     * Check if the repository of the given participation is locked.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     *
+     * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
+     *
+     * @param participation ProgrammingExerciseParticipation
+     * @return true if repository is locked, false if not.
+     */
+    public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+        }
+        return false;
     }
 
     /**

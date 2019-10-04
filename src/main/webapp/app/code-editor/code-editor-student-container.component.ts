@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
+import * as moment from 'moment';
 import { ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { CodeEditorContainer } from './';
 import { TranslateService } from '@ngx-translate/core';
@@ -43,6 +44,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
+    repositoryIsLocked = false;
 
     constructor(
         private resultService: ResultService,
@@ -74,11 +76,15 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
+                        const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
+                        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
                     }),
                 )
                 .subscribe(
                     () => {
                         this.loadingParticipation = false;
+                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
                     },
                     err => {
                         this.participationCouldNotBeFetched = true;
@@ -86,7 +92,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
-        this.guidedTourService.enableTour(codeEditorTour);
     }
 
     ngOnDestroy() {

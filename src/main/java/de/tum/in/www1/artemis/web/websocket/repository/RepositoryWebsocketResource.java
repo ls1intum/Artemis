@@ -54,11 +54,14 @@ public class RepositoryWebsocketResource {
 
     private final ExerciseService exerciseService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             SimpMessageSendingOperations messagingTemplate, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -66,6 +69,7 @@ public class RepositoryWebsocketResource {
         this.repositoryService = repositoryService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
@@ -97,8 +101,11 @@ public class RepositoryWebsocketResource {
             return;
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        // User must have the necessary permissions to update a file
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
+
+        // User must have the necessary permissions to update a file.
+        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
+        boolean repositoryIsLocked = programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation);
+        if (repositoryIsLocked || !programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;

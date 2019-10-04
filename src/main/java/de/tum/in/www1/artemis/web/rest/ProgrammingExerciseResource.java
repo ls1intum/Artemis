@@ -172,6 +172,7 @@ public class ProgrammingExerciseResource {
 
         // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
         // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
+        programmingExercise.generateAndSetProjectKey();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         // Only save after checking for errors
         programmingExerciseService.saveParticipations(programmingExercise);
@@ -342,6 +343,8 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseService.importRepositories(template, imported);
         try {
+            // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
+            // an import as the source exercise might still have this trigger.
             programmingExerciseService.importBuildPlans(template, imported);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
         }
