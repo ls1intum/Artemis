@@ -15,7 +15,7 @@
         (nextSubmission)="nextSubmission.emit()"
         [hasConflict]="conflicts !== null"
         (resolveConflict)="resolveConflict.emit()"
-        [hasComplaint]="complaint !== null"
+        [hasComplaint]="!!complaint"
     ></jhi-assessment-header>
 
     <jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>
