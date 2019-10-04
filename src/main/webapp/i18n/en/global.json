@@ -98,7 +98,8 @@
             },
             "language": "Language",
             "guidedTour": "Guided tour",
-            "startTour": "Start tour",
+            "startTutorial": "Start tutorial",
+            "continueTutorial": "Continue tutorial",
             "noNotifications": "No notifications available",
             "showAllNotifications": "Show all notifications"
         },

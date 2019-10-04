@@ -836,7 +836,7 @@ public class ParticipationService {
                 gitService.get().deleteLocalRepository(programmingExerciseParticipation);
             }
             catch (Exception ex) {
-                log.error("Error while deleting local repository", ex.getMessage());
+                log.error("Error while deleting local repository", ex);
             }
         }
         else if (participation.getExercise() instanceof ModelingExercise) {
