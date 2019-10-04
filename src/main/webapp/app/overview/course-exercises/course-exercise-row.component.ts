@@ -27,6 +27,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() extendedLink = false;
+    @Input() hasGuidedTour: boolean;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;

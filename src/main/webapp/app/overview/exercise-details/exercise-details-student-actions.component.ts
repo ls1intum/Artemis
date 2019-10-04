@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
@@ -10,8 +10,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { cloneRepositoryTour, courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -55,7 +53,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -175,7 +172,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
-                        this.startCloneRepositoryGuidedTour();
                     }
                 },
                 error => {
@@ -219,18 +215,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.repositoryPassword = password;
             }
         });
-    }
-
-    /**
-     * Start the clone repository guided tour if the user has not viewed and finished the tour yet
-     */
-    startCloneRepositoryGuidedTour() {
-        if (this.guidedTourService.checkTourStateFinished(courseExerciseOverviewTour)) {
-            this.guidedTourService.enableTour(cloneRepositoryTour);
-            // Set timeout for clone repository button to render
-            setTimeout(() => {
-                this.guidedTourService.startTour();
-            }, 1000);
-        }
     }
 }

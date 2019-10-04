@@ -10,6 +10,7 @@
         class="tour-step tour-{{ currentTourStep.orientation }}"
         [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
+        [class.video-tour]="isVideoTourStep()"
         [style.top.px]="topPosition"
         [style.left.px]="leftPosition"
         [style.width.px]="calculatedTourStepWidth"
@@ -19,16 +20,13 @@
         <div class="tour-block">
             <div class="tour-block__header">
                 <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
-                <div class="close" (click)="guidedTourService.skipTour()"></div>
+                <div *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
                 <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
                 <div *ngIf="currentTourStep.imageUrl">
                     <img src="{{ currentTourStep.imageUrl }}" />
-                </div>
-                <div *ngIf="currentTourStep.videoUrl">
-                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
                 </div>
                 <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a
@@ -47,30 +45,42 @@
                         <span jhiTranslate="{{ currentTourStep.hintTranslateKey }}"></span>
                     </div>
                 </div>
-                <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction">
-                    <div class="step-hint__icon">
-                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" icon="hand-point-up"></fa-icon>
-                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" icon="i-cursor"></fa-icon>
-                        <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" icon="circle-notch"></fa-icon>
+                <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
+                    <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
+                        <fa-icon icon="check"></fa-icon>
                     </div>
+                    <ng-template #userInteractionIcons>
+                        <div class="step-hint__icon">
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" icon="hand-point-up"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" icon="i-cursor"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" icon="circle-notch"></fa-icon>
+                        </div>
+                    </ng-template>
                     <div class="step-hint__label">
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
                     </div>
                 </div>
+                <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="video"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <span jhiTranslate="tour.videoHint.text"></span>
+                    </div>
+                </div>
+                <div *ngIf="currentTourStep.videoUrl">
+                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+                </div>
             </div>
             <div class="tour-block__buttons">
-                <button
-                    [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage || this.currentTourStep.userInteractionEvent"
-                    class="back-button"
-                    (click)="guidedTourService.backStep()"
-                >
+                <button [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
                         <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
