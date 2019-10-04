@@ -12,7 +12,7 @@ export class DeleteDialogComponent implements OnInit {
     deleteQuestion: string;
     deleteConfirmationText: string;
     additionalChecks?: { [key: string]: string };
-    additionalChecksValues?: { [key: string]: boolean };
+    additionalChecksValues: { [key: string]: boolean } = {};
 
     objectKeys = Object.keys;
 
