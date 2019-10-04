@@ -5,17 +5,16 @@
                 "headline": "Installiere die notwendigen Tools",
                 "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
                 "java": {
-                    "content": "Installiere Java JDK (1.8.212 oder 11.0.3 oder 12.0.1). Stelle dabei sicher, dass du JDK und JRE auswählst.",
-                    "hint": "Hinweis: Wenn du ein Linux System verwendest, dann musst du JDK 11.0.3 oder 12.0.1 nutzen, da JDK 1.8.x einige Funktionen nicht unterstützt, die wir später in unseren Aufgaben benötigen.",
+                    "content": "Installiere das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und nicht JRE auswählst.",
                     "linkText": "Lade Java JDK herunter"
                 },
                 "eclipse": {
-                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐03 oder später)",
+                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐09 oder neuer)",
                     "linkText": "Lade Eclipse IDE herunter"
                 },
                 "sourceTree": {
-                    "content": "Installiere SourceTree mit git (3.1.2 oder später für macOS oder Windows)",
-                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt.",
+                    "content": "Installiere die neueste Version von SourceTree mit git (3.2.1 oder neuer für macOS oder Windows)",
+                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. Git Kraken oder die Kommandozeile verwenden.",
                     "linkText": "Lade SourceTree herunter"
                 },
                 "sourceTreeSetup": {
@@ -73,7 +72,7 @@
                 "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen."
             },
             "importEclipse": {
-                "headline": "Importiere das Projekt in Eclipse",
+                "headline": "Importiere das Java Projekt in Eclipse",
                 "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert."
             },
             "inspectProject": {

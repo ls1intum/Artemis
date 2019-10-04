@@ -5,17 +5,16 @@
                 "headline": "Install required tools",
                 "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
                 "java": {
-                    "content": "Please download and install Java JDK (1.8.212 or 11.0.3 or 12.0.1). Make sure to choose JDK and NOT JRE.",
-                    "hint": "Please note: if you use a Linux system, you must use the JDK 11.0.3 or 12.0.1 because the JDK 1.8.x does not support specific features on Linux that we need in later exercises.",
+                    "content": "Please download and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and NOT JRE.",
                     "linkText": "Download Java JDK"
                 },
                 "eclipse": {
-                    "content": "Please download and install Eclipse IDE for Java Developers (2019‐03 or later)",
+                    "content": "Please download and install Eclipse IDE for Java Developers (2019‐09 or later)",
                     "linkText": "Download Eclipse IDE"
                 },
                 "sourceTree": {
-                    "content": "Please download and install SourceTree with git (3.1.2 or later for macOS or Windows).",
-                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree",
+                    "content": "Please download and install SourceTree with git (3.2.1 or later for macOS or Windows).",
+                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use Git Kraken or the command line.",
                     "linkText": "Download SourceTree"
                 },
                 "sourceTreeSetup": {
@@ -73,7 +72,7 @@
                 "content": "Watch the following video to understand the basic functions in SourceTree."
             },
             "importEclipse": {
-                "headline": "Import project in Eclipse",
+                "headline": "Import the Java project in Eclipse",
                 "content": "Watch the following video to understand how to import the project in Eclipse."
             },
             "inspectProject": {
