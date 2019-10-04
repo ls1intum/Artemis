@@ -59,8 +59,7 @@ public class ScheduleService {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
         ScheduledFuture future = scheduledTasks.get(taskId);
         if (future != null) {
-            log.debug("Cancelling scheduled task for Exercise \"" + exercise.getTitle() + "\" (#"
-                    + exercise.getId() + ").");
+            log.debug("Cancelling scheduled task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
             future.cancel(false);
             removeScheduledTask(exercise, lifecycle);
         }
