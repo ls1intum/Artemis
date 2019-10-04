@@ -20,14 +20,10 @@ const expect = chai.expect;
 
 @Component({
     selector: 'jhi-test-component',
-    template:
-        '<button jhiDeleteButton entityTitle="title" deleteQuestion="question" deleteConfirmationText="text" (delete)="delete($event)" checkboxText="checkbox" additionalCheckboxText="additional"></button>',
+    template: '<button jhiDeleteButton entityTitle="title" deleteQuestion="question" deleteConfirmationText="text" (delete)="delete($event)"></button>',
 })
 class TestComponent {
-    eventCalled: { checkboxValue: boolean; additionalCheckboxValue: boolean };
-    delete($event: { checkboxValue: boolean; additionalCheckboxValue: boolean }) {
-        this.eventCalled = $event;
-    }
+    delete($event: { [key: string]: boolean }) {}
 }
 
 describe('DeleteDialogDirective', () => {
@@ -57,11 +53,9 @@ describe('DeleteDialogDirective', () => {
         expect(directiveEl).to.be.not.null;
 
         const directiveInstance = directiveEl.injector.get(DeleteDialogDirective);
-        expect(directiveInstance.additionalCheckboxText).to.be.equal('additional');
         expect(directiveInstance.entityTitle).to.be.equal('title');
         expect(directiveInstance.deleteQuestion).to.be.equal('question');
         expect(directiveInstance.deleteConfirmationText).to.be.equal('text');
-        expect(directiveInstance.checkboxText).to.be.equal('checkbox');
     }));
 
     it('on click should call delete dialog service', fakeAsync(() => {

@@ -100,11 +100,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param $event passed from delete dialog to represent if checkboxes were checked
      */
     deleteParticipation(participationId: number, $event: { [key: string]: boolean }) {
-        let requestOptions;
-        if ($event && $event.deleteBuildPlan && $event.deleteRepository) {
-            requestOptions = { deleteBuildPlan: $event.deleteBuildPlan, deleteRepository: $event.deleteRepository };
-        }
-        this.participationService.delete(participationId, requestOptions).subscribe(
+        const deleteBuildPlan = $event.deleteBuildPlan ? $event.deleteBuildPlan : false;
+        const deleteRepository = $event.deleteRepository ? $event.deleteRepository : false;
+        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
