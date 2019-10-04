@@ -41,6 +41,8 @@ describe('GuidedTourComponent', () => {
     });
 
     const courseOverviewTour: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
@@ -105,9 +107,11 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
 

@@ -88,14 +88,6 @@ public interface VersionControlService {
     void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
 
     /**
-     * Gets the project name of a given repository url
-     *
-     * @param repositoryUrl The repository url
-     * @return The project name
-     */
-    String getProjectName(URL repositoryUrl);
-
-    /**
      * Gets the repository name of a given repository url
      *
      * @param repositoryUrl The repository url
@@ -122,4 +114,14 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      */
     VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName);
+
+    /**
+     * Removes the user's write permissions for a repository.
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param projectKey        The projectKey that the repo is part of in the VCS.
+     * @param username          String to identify the user with.
+     * @throws Exception        If the communication with the VCS fails.
+     */
+    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws Exception;
 }
