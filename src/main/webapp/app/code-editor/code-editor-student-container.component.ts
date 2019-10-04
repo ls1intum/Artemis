@@ -84,6 +84,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                 .subscribe(
                     () => {
                         this.loadingParticipation = false;
+                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
                     },
                     err => {
                         this.participationCouldNotBeFetched = true;
@@ -91,7 +92,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                     },
                 );
         });
-        this.guidedTourService.enableTour(codeEditorTour);
     }
 
     ngOnDestroy() {
