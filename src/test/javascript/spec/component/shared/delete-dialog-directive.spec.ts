@@ -11,7 +11,7 @@ import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
-import { DeleteDialogDirective } from 'app/shared/delete-dialog/delete-dialog.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 
@@ -20,11 +20,9 @@ const expect = chai.expect;
 
 @Component({
     selector: 'jhi-test-component',
-    template: '<button jhiDeleteButton entityTitle="title" deleteQuestion="question" deleteConfirmationText="text" (delete)="delete($event)"></button>',
+    template: '<button jhiDeleteButton entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
 })
-class TestComponent {
-    delete($event: { [key: string]: boolean }) {}
-}
+class TestComponent {}
 
 describe('DeleteDialogDirective', () => {
     let comp: TestComponent;
@@ -35,7 +33,7 @@ describe('DeleteDialogDirective', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
-            declarations: [TestComponent, DeleteDialogDirective, DeleteDialogComponent, JhiAlertErrorComponent],
+            declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, JhiAlertErrorComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
@@ -49,10 +47,20 @@ describe('DeleteDialogDirective', () => {
 
     it('directive should be correctly initialized', fakeAsync(() => {
         fixture.detectChanges();
-        const directiveEl = fixture.debugElement.query(By.directive(DeleteDialogDirective));
-        expect(directiveEl).to.be.not.null;
 
-        const directiveInstance = directiveEl.injector.get(DeleteDialogDirective);
+        // Check that button was assigned with proper classes and type.
+        const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.mr-1'));
+        expect(deleteButton).to.exist;
+        expect(deleteButton.properties['type']).to.be.equal('submit');
+
+        // Check that delete text span was added to the DOM.
+        const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
+        expect(deleteTextSpan).to.exist;
+        expect(deleteTextSpan.properties['textContent']).to.exist;
+
+        const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
+        expect(directiveEl).to.be.not.null;
+        const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
         expect(directiveInstance.entityTitle).to.be.equal('title');
         expect(directiveInstance.deleteQuestion).to.be.equal('question');
         expect(directiveInstance.deleteConfirmationText).to.be.equal('text');
@@ -63,7 +71,7 @@ describe('DeleteDialogDirective', () => {
         console.error = jest.fn();
         fixture.detectChanges();
         const deleteDialogSpy = sinon.spy(deleteDialogService, 'openDeleteDialog');
-        const directiveEl = fixture.debugElement.query(By.directive(DeleteDialogDirective));
+        const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         directiveEl.nativeElement.click();
         fixture.detectChanges();
         expect(deleteDialogSpy.callCount).to.equal(1);

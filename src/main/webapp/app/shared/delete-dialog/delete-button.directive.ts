@@ -3,7 +3,7 @@ import { Output, EventEmitter, Input, Directive, HostListener, Renderer2, Elemen
 import { TranslateService } from '@ngx-translate/core';
 
 @Directive({ selector: '[jhiDeleteButton]' })
-export class DeleteDialogDirective implements OnInit {
+export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
