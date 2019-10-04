@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
+import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
 
 @Service
 public class ConflictingResultService {
@@ -22,8 +23,11 @@ public class ConflictingResultService {
 
     private ConflictingResultRepository conflictingResultRepository;
 
-    public ConflictingResultService(ConflictingResultRepository conflictingResultRepository) {
+    private ModelAssessmentConflictRepository modelAssessmentConflictRepository;
+
+    public ConflictingResultService(ConflictingResultRepository conflictingResultRepository, ModelAssessmentConflictRepository modelAssessmentConflictRepository) {
         this.conflictingResultRepository = conflictingResultRepository;
+        this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
     }
 
     /**
@@ -95,5 +99,27 @@ public class ConflictingResultService {
                 .collect(Collectors.toSet());
         newFeedbacks.stream().filter(feedback -> !existingConflictingResultsElementIds.contains(feedback.getReferenceElementId()))
                 .forEach(feedback -> conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback)));
+    }
+
+    /**
+     * Delete all conflicting results for the given resultId. It also handles all referencing entities properly to avoid foreign key constraint violations.
+     *
+     * @param resultId the id of the result for which all referencing conflicting results should be deleted
+     */
+    void deleteConflictingResultsByResultId(Long resultId) {
+        List<ConflictingResult> conflictingResults = conflictingResultRepository.getAllByResult_Id(resultId);
+
+        for (ConflictingResult conflictingResult : conflictingResults) {
+            if (conflictingResult.getConflict() != null) {
+                conflictingResult.getConflict().getResultsInConflict().remove(conflictingResult);
+            }
+
+            List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingConflictingResult_Id(conflictingResult.getId());
+            for (ModelAssessmentConflict conflict : conflicts) {
+                modelAssessmentConflictRepository.delete(conflict);
+            }
+
+            conflictingResultRepository.delete(conflictingResult);
+        }
     }
 }
