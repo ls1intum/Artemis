@@ -52,8 +52,8 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
-            SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService) {
-        super(submissionRepository, userService);
+            SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService, AuthorizationCheckService authCheckService) {
+        super(submissionRepository, userService, authCheckService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -272,6 +272,20 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
+     * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param fileUploadExercise the exercise the submission should belong to
+     * @return a locked file upload submission that needs an assessment
+     */
+    @Transactional
+    public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
+        FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
+                .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
+        lockSubmission(fileUploadSubmission);
+        return fileUploadSubmission;
+    }
+
+    /**
      * The same as `save()`, but without participation, is used by example submission, which aren't linked to any participation
      *
      * @param fileUploadSubmission the submission to notifyCompass
@@ -298,7 +312,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        return fileUploadSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
     }
 
     /**
@@ -307,7 +321,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 
     /**
