@@ -1,6 +1,8 @@
 import { SimpleChanges } from '@angular/core';
-import { Participation } from 'app/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result';
+import { ExerciseType } from 'app/entities/exercise';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 /**
  * Check if the participation has changed.
@@ -33,4 +35,12 @@ export const hasSolutionParticipationChanged = (changes: SimpleChanges) => {
 
 export const getLatestResult = (participation: Participation): Result | null => {
     return participation.results ? participation.results.reduce((currentMax, result) => (result.id > currentMax.id ? result : currentMax)) : null;
+};
+
+export const isModelingOrTextOrFileUpload = (participation: StudentParticipation) => {
+    return (
+        participation.initializationState === InitializationState.FINISHED &&
+        participation.exercise &&
+        (participation.exercise.type === ExerciseType.MODELING || participation.exercise.type === ExerciseType.TEXT || participation.exercise.type === ExerciseType.FILE_UPLOAD)
+    );
 };

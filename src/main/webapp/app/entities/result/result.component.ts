@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ParticipationService, StudentParticipation, InitializationState } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation, InitializationState, isModelingOrTextOrFileUpload } from 'app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -122,7 +122,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     evaluateTemplateStatus() {
-        if (this.isModelingOrTextOrFileUpload() && this.participation && this.participation.exercise) {
+        if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
             const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
             if (this.isSubmissionInDueTime()) {
                 if (this.hasResultAndScore()) {
@@ -160,16 +160,6 @@ export class ResultComponent implements OnInit, OnChanges {
             }
         }
         return null;
-    }
-
-    isModelingOrTextOrFileUpload() {
-        return (
-            this.participation.initializationState === InitializationState.FINISHED &&
-            this.participation.exercise &&
-            (this.participation.exercise.type === ExerciseType.MODELING ||
-                this.participation.exercise.type === ExerciseType.TEXT ||
-                this.participation.exercise.type === ExerciseType.FILE_UPLOAD)
-        );
     }
 
     buildResultString() {
