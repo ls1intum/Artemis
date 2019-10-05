@@ -38,7 +38,7 @@ export const getLatestResult = (participation: Participation): Result | null => 
 };
 
 /**
- * Check if participation is related to a modeling, text or file_upload exercise
+ * Checks if given participation is related to a modeling, text or file_upload exercise.
  *
  * @param participation
  */
@@ -48,4 +48,14 @@ export const isModelingOrTextOrFileUpload = (participation: StudentParticipation
         participation.exercise &&
         (participation.exercise.type === ExerciseType.MODELING || participation.exercise.type === ExerciseType.TEXT || participation.exercise.type === ExerciseType.FILE_UPLOAD)
     );
+};
+
+/**
+ * Checks if given participation has results.
+ *
+ * @param participation
+ * @return {boolean}
+ */
+export const hasResults = (participation: Participation) => {
+    return participation.results && participation.results.length > 0;
 };

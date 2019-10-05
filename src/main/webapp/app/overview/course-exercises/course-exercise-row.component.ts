@@ -12,7 +12,7 @@ import {
 } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, ParticipationService, ParticipationWebsocketService, StudentParticipation, hasResults } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
@@ -144,7 +144,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(exercise.studentParticipations[0])) {
+                if (!hasResults(exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
@@ -173,10 +173,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
-    }
-
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
     }
 
     showDetails(event: any) {

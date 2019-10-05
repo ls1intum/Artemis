@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus, hasExerciseDueDatePassed, hasStudentParticipations } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, hasResults } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
@@ -82,7 +82,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
-                if (!this.hasResults(this.exercise.studentParticipations[0])) {
+                if (!hasResults(this.exercise.studentParticipations[0])) {
                     return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
@@ -111,10 +111,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
-    }
-
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
     }
 
     repositoryUrl(participation: Participation) {
