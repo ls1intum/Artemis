@@ -20,11 +20,6 @@ import { JhiWebsocketService } from 'app/core';
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges {
-    // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-
     @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -128,6 +123,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.showTestNames = this.showTestNames;
+        modalRef.componentInstance.exerciseType = this.participation.exercise.type;
     }
 
     downloadBuildResult(participationId: number) {

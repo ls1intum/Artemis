@@ -10,12 +10,12 @@ import {
 } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
-import { ResultDetailComponent } from 'app/entities/result';
+import { ArtemisResultModule, ResultDetailComponent } from 'app/entities/result';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule],
+    imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule, ArtemisResultModule],
     declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
-    entryComponents: [ProgrammingExerciseInstructionComponent, ResultDetailComponent, ProgrammingExerciseInstructionTaskStatusComponent],
+    entryComponents: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
     providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper, ProgrammingExerciseInstructionService, ProgrammingExercisePlantUmlService],
 })

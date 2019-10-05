@@ -6,6 +6,7 @@ import {
     TestCaseState,
 } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
@@ -51,5 +52,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
         modalRef.componentInstance.tests = tests;
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
     }
 }

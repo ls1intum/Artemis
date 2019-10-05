@@ -7,6 +7,7 @@ import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { ExerciseType } from 'app/entities/exercise';
 
 // Modal -> Result details view
 @Component({
@@ -18,6 +19,7 @@ export class ResultDetailComponent implements OnInit {
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
     @Input() showTestNames = false;
+    @Input() exerciseType: ExerciseType;
     isLoading = false;
     loadingFailed = false;
     feedbackList: Feedback[];
@@ -25,6 +27,11 @@ export class ResultDetailComponent implements OnInit {
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
 
+    /**
+     * Load the result feedbacks if necessary and assign them to the component.
+     * When a result has feedbacks assigned to it, no server call will be executed.
+     *
+     */
     ngOnInit(): void {
         this.isLoading = true;
         of(this.result.feedbacks)
@@ -32,16 +39,13 @@ export class ResultDetailComponent implements OnInit {
                 // If the result already has feedbacks assigned to it, don't query the server.
                 switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id))),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    if (!feedbacks || !feedbacks.length) {
-                        // If we don't have received any feedback, we fetch the build log outputs
-                        return this.repositoryService.buildlogs(this.result.participation!.id).pipe(
-                            tap((repoResult: BuildLogEntry[]) => {
-                                this.buildLogs = new BuildLogEntryArray(...repoResult);
-                            }),
-                        );
+                    // If we don't have received any feedback, we fetch the build log outputs for programming exercises.
+                    if (this.exerciseType === ExerciseType.PROGRAMMING && (!feedbacks || !feedbacks.length)) {
+                        return this.fetchAndSetBuildLogs(this.result.participation!.id);
+                    } else if (feedbacks && feedbacks.length) {
+                        // If we have feedback, filter it if needed and assign it to the component.
+                        this.filterAndSetFeedbacks(feedbacks);
                     }
-                    // If we have feedback, filter it if needed and assign it to the component.
-                    this.filterAndSetFeedbacks(feedbacks);
                     return of(null);
                 }),
                 catchError((error: HttpErrorResponse) => {
@@ -71,5 +75,13 @@ export class ResultDetailComponent implements OnInit {
                 })
                 .filter(Boolean) as Feedback[];
         }
+    };
+
+    private fetchAndSetBuildLogs = (participationId: number) => {
+        return this.repositoryService.buildlogs(participationId).pipe(
+            tap((repoResult: BuildLogEntry[]) => {
+                this.buildLogs = new BuildLogEntryArray(...repoResult);
+            }),
+        );
     };
 }

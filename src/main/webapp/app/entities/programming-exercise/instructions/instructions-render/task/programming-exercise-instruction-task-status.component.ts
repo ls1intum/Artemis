@@ -7,6 +7,7 @@ import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
 } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -67,6 +68,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
         modalRef.componentInstance.feedbackFilter = this.tests;
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
     }
 
     public openHintsModal() {
