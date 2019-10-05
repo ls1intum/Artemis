@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -20,6 +22,15 @@ public class UMLAttribute extends UMLElement {
 
         this.name = name;
         this.attributeType = attributeType;
+    }
+
+    /**
+     * Get the parent class of this attribute, i.e. the UML class that contains it.
+     *
+     * @return the UML class that contains this attribute
+     */
+    public UMLClass getParentClass() {
+        return parentClass;
     }
 
     /**
@@ -70,5 +81,16 @@ public class UMLAttribute extends UMLElement {
     @Override
     public String getType() {
         return UML_ATTRIBUTE_TYPE;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLAttribute otherAttribute = (UMLAttribute) obj;
+
+        return Objects.equals(otherAttribute.getAttributeType(), attributeType) && Objects.equals(otherAttribute.getParentClass().getName(), parentClass.getName());
     }
 }
