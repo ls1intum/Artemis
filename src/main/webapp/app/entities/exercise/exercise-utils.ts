@@ -21,5 +21,5 @@ export const problemStatementHasChanged = (changes: SimpleChanges) => {
  * @return {boolean}
  */
 export const hasExerciseDueDatePassed = (exercise: Exercise) => {
-    return exercise.dueDate ? exercise.dueDate.isAfter(moment()) : true;
+    return !!exercise.dueDate && exercise.dueDate.isAfter(moment());
 };
