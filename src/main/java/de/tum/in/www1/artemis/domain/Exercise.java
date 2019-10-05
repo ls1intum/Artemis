@@ -93,6 +93,9 @@ public abstract class Exercise implements Serializable {
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
 
+    @Column(name = "presentation_score_enabled")
+    private Boolean presentationScoreEnabled;
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
@@ -622,7 +625,7 @@ public abstract class Exercise implements Serializable {
         return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
                 + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
                 + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", categories='"
-                + getCategories() + "'" + "}";
+                + getCategories() + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
@@ -668,5 +671,13 @@ public abstract class Exercise implements Serializable {
     public boolean isReleased() {
         ZonedDateTime releaseDate = getReleaseDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    public Boolean getPresentationScoreEnabled() {
+        return presentationScoreEnabled;
+    }
+
+    public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
+        this.presentationScoreEnabled = presentationScoreEnabled;
     }
 }
