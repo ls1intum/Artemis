@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.ABSTRACT_CLASS;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.CLASS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
@@ -7,6 +9,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
@@ -55,9 +58,9 @@ class UMLClassTest {
     void setUp() throws NoSuchFieldException {
         MockitoAnnotations.initMocks(this);
 
-        umlClass = spy(new UMLClass("myClass", List.of(attribute1, attribute2), List.of(method1, method2), "classId", UMLClass.UMLClassType.CLASS));
+        umlClass = spy(new UMLClass("myClass", List.of(attribute1, attribute2), List.of(method1, method2), "classId", CLASS));
 
-        FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("type"), UMLClass.UMLClassType.CLASS);
+        FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("type"), CLASS);
         FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("attributes"), List.of(attribute3, attribute4));
         FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("methods"), List.of(method3, method4));
         when(referenceClass.getName()).thenReturn("myClass");
@@ -111,7 +114,7 @@ class UMLClassTest {
 
     @Test
     void similarity_differentClassType() throws NoSuchFieldException {
-        FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("type"), UMLClass.UMLClassType.ABSTRACT_CLASS);
+        FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("type"), ABSTRACT_CLASS);
 
         double similarity = umlClass.similarity(referenceClass);
 
@@ -215,5 +218,14 @@ class UMLClassTest {
         int elementCount = umlClass.getElementCount();
 
         assertThat(elementCount).isEqualTo(5);
+    }
+
+    @Test
+    void getType() {
+        umlClass = new UMLClass("myClass", Collections.emptyList(), Collections.emptyList(), "classId", ABSTRACT_CLASS);
+
+        String classType = umlClass.getType();
+
+        assertThat(classType).isEqualTo("AbstractClass");
     }
 }

@@ -73,6 +73,7 @@
             "statistics": {
                 "totalScore": "Your total score",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
+                "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",

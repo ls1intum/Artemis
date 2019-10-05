@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import java.util.Objects;
+
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public abstract class UMLActivityElement extends UMLElement {
@@ -17,17 +17,6 @@ public abstract class UMLActivityElement extends UMLElement {
         super(jsonElementID);
 
         this.name = name;
-    }
-
-    @Override
-    public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLActivityElement)) {
-            return 0;
-        }
-
-        UMLActivityElement referenceElement = (UMLActivityElement) reference;
-
-        return NameSimilarity.levenshteinSimilarity(name, referenceElement.getName());
     }
 
     @Override
@@ -57,7 +46,25 @@ public abstract class UMLActivityElement extends UMLElement {
      *
      * @param parentActivity the parent activity that contains this activity element
      */
-    protected void setParentActivity(UMLActivity parentActivity) {
+    public void setParentActivity(UMLActivity parentActivity) {
         this.parentActivity = parentActivity;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLActivityElement otherActivityElement = (UMLActivityElement) obj;
+
+        if (otherActivityElement.getParentActivity() == null && parentActivity == null) {
+            return true;
+        }
+        else if (otherActivityElement.getParentActivity() != null && parentActivity != null) {
+            return Objects.equals(otherActivityElement.getParentActivity().getName(), parentActivity.getName());
+        }
+
+        return false;
     }
 }
