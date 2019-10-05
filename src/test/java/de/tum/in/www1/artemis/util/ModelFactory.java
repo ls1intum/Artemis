@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.util;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import com.google.common.collect.Sets;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -57,7 +55,9 @@ public class ModelFactory {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
-            student.setGroups(Sets.newHashSet(groups));
+            if (groups != null) {
+                student.setGroups(Set.of(groups));
+            }
             generatedUsers.add(student);
         }
         return generatedUsers;

@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.common.collect.Sets;
-
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 
@@ -80,7 +78,7 @@ public class ExerciseTest {
         when(submission2.getResult()).thenReturn(ratedResult);
         when(submission3.getResult()).thenReturn(ratedResult);
 
-        when(studentParticipationInitialized.getSubmissions()).thenReturn(Sets.newHashSet(submission1, submission2, submission3));
+        when(studentParticipationInitialized.getSubmissions()).thenReturn(Set.of(submission1, submission2, submission3));
     }
 
     @Test
@@ -186,7 +184,7 @@ public class ExerciseTest {
     @Test
     public void filterForCourseDashboard_submissionsWithRatedResultsOrder() {
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
     @Test
@@ -196,7 +194,7 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(unratedResult);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
     @Test
@@ -206,7 +204,7 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(null);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission3));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
     @Test
@@ -216,14 +214,14 @@ public class ExerciseTest {
         when(submission3.getResult()).thenReturn(unratedResult);
 
         exercise.filterForCourseDashboard(filterForCourseDashboard_prepareParticipations(), "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Sets.newHashSet(submission1));
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
     }
 
     private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
         StudentParticipation participation = new StudentParticipation();
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setExercise(exercise);
-        participation.setSubmissions(Sets.newHashSet(submission1, submission2, submission3));
+        participation.setSubmissions(Set.of(submission1, submission2, submission3));
 
         List<StudentParticipation> participations = new ArrayList<>();
         participations.add(participation);

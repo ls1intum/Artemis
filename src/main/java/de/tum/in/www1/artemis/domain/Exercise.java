@@ -12,7 +12,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-import com.google.common.collect.Sets;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -585,7 +584,9 @@ public abstract class Exercise implements Serializable {
             }
 
             // add submission to participation
-            participation.setSubmissions(Sets.newHashSet(submission));
+            if (submission != null) {
+                participation.setSubmissions(Set.of(submission));
+            }
 
             // remove unnecessary results from participation
             participation.setResults(null);
@@ -594,7 +595,7 @@ public abstract class Exercise implements Serializable {
             participation.setExercise(null);
 
             // add participation into an array
-            setStudentParticipations(Sets.newHashSet(participation));
+            setStudentParticipations(Set.of(participation));
         }
     }
 
