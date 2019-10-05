@@ -101,12 +101,6 @@ public class ExerciseTest {
     }
 
     @Test
-    public void findRelevantParticipation_null() {
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(null);
-        assertThat(relevantParticipation).isNull();
-    }
-
-    @Test
     public void findRelevantParticipation_empty() {
         StudentParticipation relevantParticipation = exercise.findRelevantParticipation(new ArrayList<>());
         assertThat(relevantParticipation).isNull();

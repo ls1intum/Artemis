@@ -456,23 +456,21 @@ public abstract class Exercise implements Serializable {
      */
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
-        if (participations != null) {
-            for (StudentParticipation participation : participations) {
-                if (participation.getExercise() != null && participation.getExercise().equals(this)) {
-                    if (participation.getInitializationState() == InitializationState.INITIALIZED) {
-                        // InitializationState INITIALIZED is preferred
-                        // => if we find one, we can return immediately
-                        return participation;
-                    }
-                    else if (participation.getInitializationState() == InitializationState.INACTIVE) {
-                        // InitializationState INACTIVE is also ok
-                        // => if we can't find INITIALIZED, we return that one
-                        relevantParticipation = participation;
-                    }
-                    else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                            || participation.getExercise() instanceof FileUploadExercise) {
-                        return participation;
-                    }
+        for (StudentParticipation participation : participations) {
+            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+                if (participation.getInitializationState() == InitializationState.INITIALIZED) {
+                    // InitializationState INITIALIZED is preferred
+                    // => if we find one, we can return immediately
+                    return participation;
+                }
+                else if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                    // InitializationState INACTIVE is also ok
+                    // => if we can't find INITIALIZED, we return that one
+                    relevantParticipation = participation;
+                }
+                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
+                        || participation.getExercise() instanceof FileUploadExercise) {
+                    return participation;
                 }
             }
         }
@@ -559,7 +557,7 @@ public abstract class Exercise implements Serializable {
         setCourse(null);
 
         // get user's participation for the exercise
-        StudentParticipation participation = findRelevantParticipation(participations);
+        StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
