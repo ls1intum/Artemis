@@ -54,7 +54,7 @@
             "instructorDashboard": "Instructor Dashboard",
             "presentationScoreEnabled": {
                 "title": "Presentation Score",
-                "description": "Activate this checkbox to define the amount of presentations a student has hold to receive the grade bonus for the lecture. Afterwards you can define for every created exercise, if this feature should be activated."
+                "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
             },
             "presentationScore": "Required Presentation Score for Bonus"
         }
