@@ -17,7 +17,7 @@ export class DeleteDialogData {
     // i18n key, if undefined no safety check will take place (input name of the entity)
     deleteConfirmationText?: string;
 
-    // object with check name as a key and i18n key as a value, keys will be used for the return statement
+    // object with check name as a key and i18n key as a value, check names will be used for the return statement
     additionalChecks?: { [key: string]: string };
 }
 @Injectable({ providedIn: 'root' })

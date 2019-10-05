@@ -179,8 +179,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Deletes quiz upload exercise
-     * @param quizExerciseId id of the exercise that will be deleted
+     * Deletes quiz exercise
+     * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     deleteQuizExercise(quizExerciseId: number) {
         this.quizExerciseService.delete(quizExerciseId).subscribe(

@@ -14,6 +14,7 @@ export class DeleteDialogComponent implements OnInit {
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
 
+    // used by *ngFor in the template
     objectKeys = Object.keys;
 
     constructor(public activeModal: NgbActiveModal) {}
