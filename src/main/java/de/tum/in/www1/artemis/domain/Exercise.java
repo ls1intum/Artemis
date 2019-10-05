@@ -571,7 +571,8 @@ public abstract class Exercise implements Serializable {
 
         // add relevant submission with its result to participation
         if (participation != null) {
-            // find appropriate submission
+            // find the latest submission with a rated result, otherwise the latest submission with
+            // an unrated result or alternatively the latest submission without a result
             Set<Submission> submissions = participation.getSubmissions();
             Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
 
