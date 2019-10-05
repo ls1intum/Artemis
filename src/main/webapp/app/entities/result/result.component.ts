@@ -67,10 +67,15 @@ export class ResultComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         // Get results initially if necessary
         if (this.participation && !this.hasParticipationResults() && this.course && this.participation.exercise) {
-            this.resultService.findResultsForParticipation(this.course.id, this.participation.exercise.id, this.participation.id).subscribe(results => {
-                this.participation.results = results.body!;
-                this.init();
-            });
+            this.resultService.findResultsForParticipation(this.course.id, this.participation.exercise.id, this.participation.id).subscribe(
+                results => {
+                    this.participation.results = results.body!;
+                    this.init();
+                },
+                error => {
+                    this.init();
+                },
+            );
         } else {
             this.init();
         }
