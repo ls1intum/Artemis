@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 class UMLClassDiagramTest {
@@ -129,7 +128,7 @@ class UMLClassDiagramTest {
 
     @Test
     void getModelElements() {
-        List<Similarity<UMLElement>> elementList = classDiagram.getModelElements();
+        List<UMLElement> elementList = classDiagram.getModelElements();
 
         assertThat(elementList).containsExactlyInAnyOrder(umlClass1, umlClass2, umlClass3, umlRelationship1, umlRelationship2, umlRelationship3, umlPackage1, umlPackage2,
                 umlPackage3);
@@ -139,7 +138,7 @@ class UMLClassDiagramTest {
     void getModelElements_emptyElementLists() {
         classDiagram = new UMLClassDiagram(987654321, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-        List<Similarity<UMLElement>> elementList = classDiagram.getModelElements();
+        List<UMLElement> elementList = classDiagram.getModelElements();
 
         assertThat(elementList).isEmpty();
     }
