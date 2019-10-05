@@ -28,6 +28,9 @@
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></th>
+                    <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -42,6 +45,7 @@
                     <td>{{ fileUploadExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ fileUploadExercise.maxScore }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
+                    <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button
