@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService, StudentParticipation, InitializationState, isModelingOrTextOrFileUpload } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result';
+import { isSubmissionInDueTime } from 'app/entities/submission';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -125,7 +126,11 @@ export class ResultComponent implements OnInit, OnChanges {
     evaluateTemplateStatus() {
         if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
             const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
-            if (this.isSubmissionInDueTime()) {
+            if (
+                this.participation.submissions &&
+                this.participation.submissions.length > 0 &&
+                isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise)
+            ) {
                 if (initializedResultWithScore(this.result)) {
                     // Prevent that result is shown before assessment due date
                     if (!assessmentDueDate || assessmentDueDate.isBefore()) {
@@ -190,16 +195,6 @@ export class ResultComponent implements OnInit, OnChanges {
             return false;
         }
         return this.participation.results != null && this.participation.results.length > 0;
-    }
-
-    isSubmissionInDueTime(): boolean {
-        const submission = this.participation.submissions[0];
-        if (submission && submission.submissionDate && this.participation.exercise.dueDate) {
-            submission.submissionDate = moment(submission.submissionDate);
-            return submission.submissionDate.isBefore(this.participation.exercise.dueDate);
-        } else {
-            return !this.participation.exercise.dueDate;
-        }
     }
 
     showDetails(result: Result) {
