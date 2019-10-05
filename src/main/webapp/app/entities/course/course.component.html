@@ -44,6 +44,10 @@
                         <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span
                         ><fa-icon icon="sort"></fa-icon>
                     </th>
+                    <th jhiSortBy="presentationScoreEnabled">
+                        <span>{{ 'artemisApp.course.presentationScoreEnabled' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -69,6 +73,10 @@
                         <td>
                             <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                             <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
+                        </td>
+                        <td>
+                            <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
+                            <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
                         </td>
                         <td class="text-right">
                             <div class="btn-group flex-btn-group-container">
