@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, hasExerciseDueDatePassed } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
@@ -141,7 +141,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         ) {
             const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (this.isExerciseInDueDate(exercise)) {
+                if (hasExerciseDueDatePassed(exercise)) {
                     return ParticipationStatus.EXERCISE_ACTIVE;
                 } else {
                     return ParticipationStatus.EXERCISE_MISSED;
@@ -167,10 +167,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
-    }
-
-    isExerciseInDueDate(exercise: Exercise): boolean {
-        return exercise.dueDate ? exercise.dueDate.isAfter(moment()) : true;
     }
 
     showDetails(event: any) {
