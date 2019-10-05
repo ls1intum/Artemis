@@ -198,7 +198,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!this.participation) {
             return false;
         }
-        return this.participation.results && this.participation.results.length > 0;
+        return this.participation.results != null && this.participation.results.length > 0;
     }
 
     isSubmissionInDueTime(): boolean {
