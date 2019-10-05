@@ -146,12 +146,8 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Submission is in due time of exercise and has a result with score.
         if (submissionInDueTime && initializedResultWithScore(this.result)) {
-            // Prevent that result is shown before assessment due date
-            if (!assessmentDueDate || assessmentDueDate.isBefore()) {
-                return ResultTemplateStatus.HAS_RESULT;
-            } else {
-                return ResultTemplateStatus.NO_RESULT;
-            }
+            // Prevent that the result is shown before assessment due date
+            return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
         } // Submission is in due time of exercise and doesn't have a result with score.
         else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
             return ResultTemplateStatus.SUBMITTED;

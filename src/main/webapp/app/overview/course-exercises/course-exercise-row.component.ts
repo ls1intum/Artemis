@@ -6,13 +6,13 @@ import {
     ExerciseType,
     getIcon,
     getIconTooltip,
-    ParticipationStatus,
     hasExerciseDueDatePassed,
     hasStudentParticipations,
+    ParticipationStatus,
 } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, ParticipationService, ParticipationWebsocketService, StudentParticipation, hasResults } from 'app/entities/participation';
+import { hasResults, InitializationState, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
@@ -126,53 +126,74 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Handles the evaluation of participation status.
+     *
+     * @param exercise
+     * @return {ParticipationStatus}
+     */
     participationStatus(exercise: Exercise): ParticipationStatus {
+        // Evaluate the participation status for quiz exercises.
         if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (
-                !hasStudentParticipations(exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
-                quizExercise.visibleToStudents
-            ) {
-                return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!hasStudentParticipations(exercise)) {
-                return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_SUBMITTED;
-            } else {
-                if (!hasResults(exercise.studentParticipations[0])) {
-                    return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-                }
-                return ParticipationStatus.QUIZ_FINISHED;
-            }
-        } else if (
-            (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) &&
-            hasStudentParticipations(exercise)
-        ) {
-            const participation = exercise.studentParticipations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (hasExerciseDueDatePassed(exercise)) {
-                    return ParticipationStatus.EXERCISE_ACTIVE;
-                } else {
-                    return ParticipationStatus.EXERCISE_MISSED;
-                }
-            } else if (participation.initializationState === InitializationState.FINISHED) {
-                return ParticipationStatus.EXERCISE_SUBMITTED;
-            } else {
-                return ParticipationStatus.UNINITIALIZED;
-            }
+            return this.participationStatusForQuizExercise(exercise);
         }
 
+        // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
+        if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) && hasStudentParticipations(exercise)) {
+            return this.participationStatusForModelingTextFileUploadExercise(exercise);
+        }
+
+        // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
         if (!hasStudentParticipations(exercise)) {
             return ParticipationStatus.UNINITIALIZED;
         } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
+    }
+
+    /**
+     * Handles the evaluation of participation status for quiz exercises.
+     *
+     * @param exercise
+     * @return {ParticipationStatus}
+     */
+    private participationStatusForQuizExercise(exercise: Exercise): ParticipationStatus {
+        const quizExercise = exercise as QuizExercise;
+        if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+            return ParticipationStatus.QUIZ_NOT_STARTED;
+        } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+            return ParticipationStatus.QUIZ_UNINITIALIZED;
+        } else if (!hasStudentParticipations(exercise)) {
+            return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
+        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+            return ParticipationStatus.QUIZ_ACTIVE;
+        } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+            return ParticipationStatus.QUIZ_SUBMITTED;
+        } else {
+            return !hasResults(exercise.studentParticipations[0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
+        }
+    }
+
+    /**
+     * Handles the evaluation of participation status for modeling, text and file upload exercises if the exercise has participations.
+     *
+     * @param exercise
+     * @return {ParticipationStatus}
+     */
+    private participationStatusForModelingTextFileUploadExercise(exercise: Exercise): ParticipationStatus {
+        const participation = exercise.studentParticipations[0];
+
+        // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date. The more detailed evaluation of active exercises takes place in the result component.
+        // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
+        if (participation.initializationState === InitializationState.INITIALIZED) {
+            return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
+        } // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
+        else if (participation.initializationState === InitializationState.FINISHED) {
+            return ParticipationStatus.EXERCISE_SUBMITTED;
+        } else {
+            return ParticipationStatus.UNINITIALIZED;
+        }
     }
 
     showDetails(event: any) {
