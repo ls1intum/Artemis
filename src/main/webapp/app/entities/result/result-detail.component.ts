@@ -4,7 +4,7 @@ import { RepositoryService } from 'app/entities/repository';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
-import { tap, catchError, switchMap } from 'rxjs/operators';
+import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
@@ -15,6 +15,8 @@ import { of } from 'rxjs';
 })
 export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
+    // Specify the feedback.text values that should be shown, all other values will not be visible.
+    @Input() feedbackFilter: string[];
     @Input() showTestNames = false;
     isLoading = false;
     loadingFailed = false;
@@ -24,26 +26,22 @@ export class ResultDetailComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
 
     ngOnInit(): void {
-        if (this.result.feedbacks && this.result.feedbacks.length > 0) {
-            // make sure to reuse existing feedback items and to load feedback at most only once when this component is opened
-            this.feedbackList = this.result.feedbacks;
-            return;
-        }
         this.isLoading = true;
-        this.resultService
-            .getFeedbackDetailsForResult(this.result.id)
+        of(this.result.feedbacks)
             .pipe(
-                switchMap(res => {
-                    this.result.feedbacks = res.body!;
-                    this.feedbackList = res.body!;
-                    if (!this.feedbackList || this.feedbackList.length === 0) {
-                        // If we don't have received any feedback, we fetch the buid log outputs
+                // If the result already has feedbacks assigned to it, don't query the server.
+                switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id))),
+                switchMap((feedbacks: Feedback[] | undefined | null) => {
+                    if (!feedbacks || !feedbacks.length) {
+                        // If we don't have received any feedback, we fetch the build log outputs
                         return this.repositoryService.buildlogs(this.result.participation!.id).pipe(
                             tap((repoResult: BuildLogEntry[]) => {
                                 this.buildLogs = new BuildLogEntryArray(...repoResult);
                             }),
                         );
                     }
+                    // If we have feedback, filter it if needed and assign it to the component.
+                    this.filterAndSetFeedbacks(feedbacks);
                     return of(null);
                 }),
                 catchError((error: HttpErrorResponse) => {
@@ -56,4 +54,22 @@ export class ResultDetailComponent implements OnInit {
                 this.isLoading = false;
             });
     }
+
+    private getFeedbackDetailsForResult(resultId: number) {
+        return this.resultService.getFeedbackDetailsForResult(resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
+    }
+
+    private filterAndSetFeedbacks = (feedbackList: Feedback[]) => {
+        // TODO: The input object is mutated, this could lead to unexpected bugs.
+        this.result.feedbacks = feedbackList!;
+        if (!this.feedbackFilter) {
+            this.feedbackList = feedbackList;
+        } else {
+            this.feedbackList = this.feedbackFilter
+                .map(test => {
+                    return feedbackList.find(({ text }) => text === test);
+                })
+                .filter(Boolean) as Feedback[];
+        }
+    };
 }

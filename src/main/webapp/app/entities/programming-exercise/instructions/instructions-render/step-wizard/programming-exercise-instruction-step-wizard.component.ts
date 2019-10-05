@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from 'app/entities/result';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
+import { Result, ResultDetailComponent } from 'app/entities/result';
 import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
@@ -49,7 +48,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         if (failedTests.length + notExecutedTests.length <= 0) {
             return;
         }
-        const modalRef = this.modalService.open(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
         modalRef.componentInstance.tests = tests;
     }
