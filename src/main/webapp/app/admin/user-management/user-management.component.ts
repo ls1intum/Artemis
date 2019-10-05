@@ -150,7 +150,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Deletes a user
-     * @param login if the user that should be deleted
+     * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
         this.userService.delete(login).subscribe(() => {
