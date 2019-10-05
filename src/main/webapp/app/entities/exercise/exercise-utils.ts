@@ -52,7 +52,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     }
 
     // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-    if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) && hasStudentParticipations(exercise)) {
+    if ([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasStudentParticipations(exercise)) {
         return participationStatusForModelingTextFileUploadExercise(exercise);
     }
 

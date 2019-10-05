@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ParticipationService, StudentParticipation, InitializationState, isModelingOrTextOrFileUpload } from 'app/entities/participation';
+import { ParticipationService, StudentParticipation, isModelingOrTextOrFileUpload } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result';
 import { isSubmissionInDueTime } from 'app/entities/submission';
 import { Result, ResultDetailComponent, ResultService } from '.';
@@ -122,7 +122,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    evaluateTemplateStatus() {
+    private evaluateTemplateStatus() {
         if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
             // Evaluate the template status for modeling, text and file upload exercise.
             this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
@@ -175,7 +175,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    dateAsMoment(date: any) {
+    private dateAsMoment(date: any) {
         if (date) {
             if (moment.isMoment(date)) {
                 return date;
@@ -208,11 +208,8 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.result!.hasFeedback;
     }
 
-    hasParticipationResults(): boolean {
-        if (!this.participation) {
-            return false;
-        }
-        return this.participation.results != null && this.participation.results.length > 0;
+    private hasParticipationResults(): boolean {
+        return this.participation && this.participation.results && this.participation.results.length > 0;
     }
 
     showDetails(result: Result) {
