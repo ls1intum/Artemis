@@ -49,6 +49,11 @@
     font-size: 12px;
     line-height: 1.428571429;
     border-radius: 20px;
+    background-color: mediumseagreen;
+
+    &--deactivated {
+        background-color: orange;
+    }
 
     &.btn-light {
         border-color: #3e8acc;
@@ -58,11 +63,6 @@
             width: 30px;
             height: 30px;
             border-radius: 15px;
-            background-color: mediumseagreen;
-
-            &--deactivated {
-                background-color: orange;
-            }
 
             &--can-toggle {
                 cursor: pointer;

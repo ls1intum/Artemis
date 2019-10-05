@@ -13,7 +13,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
             <div class="invisible-date-time-picker">
                 <input class="form-control" [ngModel]="val" [min]="min" [max]="max" (ngModelChange)="updateField($event)" [owlDateTime]="dt" />
             </div>
-            <button *ngIf="!val" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-lifecycle">
+            <button *ngIf="!val" [owlDateTimeTrigger]="dt" type="button" class="btn btn-light btn-lifecycle" [class.btn-lifecycle--deactivated]="!val">
                 <fa-icon class="icon-calendar-plus" icon="calendar-plus" size="2x"></fa-icon>
             </button>
             <button *ngIf="val" (click)="resetDate()" type="button" class="btn btn-light btn-lifecycle calendar-event-toggle">
@@ -23,6 +23,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
             <div *ngIf="val">
                 {{ val | date: 'MMM, dd' }}<br />
                 {{ val | date: 'HH:mm' }}
+            </div>
+            <div *ngIf="!val" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">
+                not set
             </div>
             <owl-date-time [startAt]="startAt" #dt></owl-date-time>
         </div>
