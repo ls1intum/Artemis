@@ -5,7 +5,7 @@
                 "headline": "Install required tools",
                 "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
                 "java": {
-                    "content": "Please download and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and NOT JRE.",
+                    "content": "Please download and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and <span class='red'>NOT</span> JRE.",
                     "linkText": "Download Java JDK"
                 },
                 "eclipse": {
@@ -14,7 +14,7 @@
                 },
                 "sourceTree": {
                     "content": "Please download and install SourceTree with git (3.2.1 or later for macOS or Windows).",
-                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use Git Kraken or the command line.",
+                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> or the <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>command line</a>.",
                     "linkText": "Download SourceTree"
                 },
                 "sourceTreeSetup": {
@@ -33,7 +33,7 @@
             },
             "currentExercise": {
                 "headline": "Current Exercise",
-                "content": "In this tutorial we will have a look at the 'Hello World' exercise."
+                "content": "In this tutorial we will have a look at the <tt>Hello World</tt> exercise."
             },
             "exerciseType": {
                 "headline": "Exercise type",

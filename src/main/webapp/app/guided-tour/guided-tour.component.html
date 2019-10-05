@@ -23,12 +23,9 @@
                 <div *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
-                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
+                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="sub-headline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
                 <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForMarkdown"></div>
-                <div *ngIf="currentTourStep.imageUrl">
-                    <img src="{{ currentTourStep.imageUrl }}" />
-                </div>
-                <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
+                <div class="step-link" *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a
                         [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
                         jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}"
@@ -61,6 +58,9 @@
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
                     </div>
+                </div>
+                <div *ngIf="currentTourStep.imageUrl">
+                    <img src="{{ currentTourStep.imageUrl }}" />
                 </div>
                 <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
                     <div class="step-hint__icon">
