@@ -3,13 +3,13 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <ng-container [ngSwitch]="templateStatus">
-    <ng-container *ngSwitchCase="IS_BUILDING">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
             <fa-icon icon="circle-notch" size="lg" [spin]="true" class="mr-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
-    <ng-container *ngSwitchCase="HAS_RESULT">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result"
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass">
@@ -35,7 +35,7 @@
             </span>
         </ng-container>
     </ng-container>
-    <ng-container *ngSwitchCase="LATE">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
         <ng-container *ngIf="result"
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass">
@@ -45,16 +45,16 @@
             </span>
         </ng-container>
     </ng-container>
-    <ng-container *ngSwitchCase="NO_RESULT">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.NO_RESULT">
         <span class="text-muted">
             <fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;
             <span jhiTranslate="artemisApp.result.noResult">No results</span>
         </span>
     </ng-container>
-    <ng-container *ngSwitchCase="SUBMITTED">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.SUBMITTED">
         <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | translate }}</span>
     </ng-container>
-    <ng-container *ngSwitchCase="LATE_NO_FEEDBACK">
+    <ng-container *ngSwitchCase="ResultTemplateStatus.LATE_NO_FEEDBACK">
         <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | translate }}</span>
     </ng-container>
 </ng-container>

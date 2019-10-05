@@ -11,13 +11,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
 import * as moment from 'moment';
 
-const enum ResultTemplateStatus {
-    IS_BUILDING = 'is-building',
-    HAS_RESULT = 'has-result',
-    NO_RESULT = 'no-result',
-    SUBMITTED = 'submitted', // submitted, not yet graded
-    LATE_NO_FEEDBACK = 'late-no-feedback', // started, submitted too late, not graded
-    LATE = 'late', // submitted too late, graded
+enum ResultTemplateStatus {
+    IS_BUILDING = 'IS_BUILDING',
+    HAS_RESULT = 'HAS_RESULT',
+    NO_RESULT = 'NO_RESULT',
+    SUBMITTED = 'SUBMITTED', // submitted, not yet graded
+    LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK', // started, submitted too late, not graded
+    LATE = 'LATE', // submitted too late, graded
 }
 
 @Component({
@@ -35,13 +35,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
-
-    readonly IS_BUILDING = ResultTemplateStatus.IS_BUILDING;
-    readonly HAS_RESULT = ResultTemplateStatus.HAS_RESULT;
-    readonly LATE = ResultTemplateStatus.LATE;
-    readonly NO_RESULT = ResultTemplateStatus.NO_RESULT;
-    readonly SUBMITTED = ResultTemplateStatus.SUBMITTED;
-    readonly LATE_NO_FEEDBACK = ResultTemplateStatus.LATE_NO_FEEDBACK;
+    readonly ResultTemplateStatus = ResultTemplateStatus;
 
     @Input() course: Course;
     @Input() participation: StudentParticipation;
