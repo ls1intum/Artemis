@@ -90,10 +90,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.courseService.find(targetCourseId).subscribe(res => (this.programmingExercise.course = res.body!));
 
                         this.programmingExercise.dueDate = null;
+                        this.programmingExercise.projectKey = null;
+                        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
                         this.programmingExercise.assessmentDueDate = null;
                         this.programmingExercise.releaseDate = null;
                         this.programmingExercise.shortName = '';
                         this.programmingExercise.title = '';
+                        this.onProgrammingExerciseUpdate(this.programmingExercise);
                     } else {
                         if (params['courseId']) {
                             const courseId = params['courseId'];

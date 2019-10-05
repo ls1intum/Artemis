@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -11,9 +14,12 @@ abstract class SubmissionService {
 
     private UserService userService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService) {
+    protected AuthorizationCheckService authCheckService;
+
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -26,6 +32,33 @@ abstract class SubmissionService {
         long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
+        }
+    }
+
+    /**
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
+     */
+    public void hideDetails(Submission submission) {
+        // do not send old submissions or old results to the client
+        if (submission.getParticipation() != null) {
+            submission.getParticipation().setSubmissions(null);
+            submission.getParticipation().setResults(null);
+
+            Exercise exercise = submission.getParticipation().getExercise();
+            if (exercise != null) {
+                // make sure that sensitive information is not sent to the client for students
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    exercise.filterSensitiveInformation();
+                    submission.setResult(null);
+                }
+                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                    StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+                    studentParticipation.setStudent(null);
+                }
+            }
         }
     }
 }

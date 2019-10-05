@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { HighlightColors } from '../highlight-colors';
+import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { Feedback, FeedbackType } from 'app/entities/feedback';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({
-    selector: 'jhi-text-assessment-detail',
-    templateUrl: './text-assessment-detail.component.html',
-    styleUrls: ['./text-assessment-detail.component.scss'],
+    selector: 'jhi-assessment-detail',
+    templateUrl: './assessment-detail.component.html',
+    styleUrls: ['./assessment-detail.component.scss'],
 })
-export class TextAssessmentDetailComponent {
+export class AssessmentDetailComponent {
     @Input() public assessment: Feedback;
     @Input() public block: TextBlock | undefined;
     @Output() public assessmentChange = new EventEmitter<Feedback>();
@@ -27,7 +27,8 @@ export class TextAssessmentDetailComponent {
 
     public delete() {
         const referencedText = this.block ? this.block.text : this.assessment.reference;
-        const confirmation = confirm(`Delete Assessment "${referencedText}"?`);
+        const confirmationMessage = referencedText ? 'Delete Assessment "${referencedText}"?' : 'Delete Assessment ?';
+        const confirmation = confirm(confirmationMessage);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);
         }
