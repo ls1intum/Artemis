@@ -972,6 +972,6 @@ public class ParticipationService {
      * @return student's participations
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentId(Long studentId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findAllByStudentIdWithSubmissionsWithResult(studentId, exercises);
+        return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsAndResults(studentId, exercises);
     }
 }
