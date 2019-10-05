@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService, StudentParticipation, InitializationState, isModelingOrTextOrFileUpload } from 'app/entities/participation';
+import { initializedResultWithScore } from 'app/entities/result';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -125,7 +126,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
             const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
             if (this.isSubmissionInDueTime()) {
-                if (this.hasResultAndScore()) {
+                if (initializedResultWithScore(this.result)) {
                     // Prevent that result is shown before assessment due date
                     if (!assessmentDueDate || assessmentDueDate.isBefore()) {
                         this.templateStatus = ResultTemplateStatus.HAS_RESULT;
@@ -135,7 +136,7 @@ export class ResultComponent implements OnInit, OnChanges {
                 } else {
                     this.templateStatus = ResultTemplateStatus.SUBMITTED;
                 }
-            } else if (this.hasResultAndScore() && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+            } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
                 this.templateStatus = ResultTemplateStatus.LATE;
             } else {
                 this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
@@ -143,7 +144,7 @@ export class ResultComponent implements OnInit, OnChanges {
         } else {
             if (this.isBuilding) {
                 this.templateStatus = ResultTemplateStatus.IS_BUILDING;
-            } else if (this.hasResultAndScore()) {
+            } else if (initializedResultWithScore(this.result)) {
                 this.templateStatus = ResultTemplateStatus.HAS_RESULT;
             } else {
                 this.templateStatus = ResultTemplateStatus.NO_RESULT;
@@ -199,10 +200,6 @@ export class ResultComponent implements OnInit, OnChanges {
         } else {
             return !this.participation.exercise.dueDate;
         }
-    }
-
-    hasResultAndScore() {
-        return this.result && (this.result.score || this.result.score === 0);
     }
 
     showDetails(result: Result) {

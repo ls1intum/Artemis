@@ -37,6 +37,11 @@ export const getLatestResult = (participation: Participation): Result | null => 
     return participation.results ? participation.results.reduce((currentMax, result) => (result.id > currentMax.id ? result : currentMax)) : null;
 };
 
+/**
+ * Check if participation is related to a modeling, text or file_upload exercise
+ *
+ * @param participation
+ */
 export const isModelingOrTextOrFileUpload = (participation: StudentParticipation) => {
     return (
         participation.initializationState === InitializationState.FINISHED &&
