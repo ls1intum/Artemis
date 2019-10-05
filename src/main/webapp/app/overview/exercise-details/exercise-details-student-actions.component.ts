@@ -1,7 +1,7 @@
-import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus, hasExerciseDueDatePassed, hasStudentParticipations } from 'app/entities/exercise';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Exercise, ExerciseType, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, hasResults } from 'app/entities/participation';
+import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
@@ -64,55 +64,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         });
     }
 
-    participationStatus(): ParticipationStatus {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = this.exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (
-                !hasStudentParticipations(this.exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
-                quizExercise.visibleToStudents
-            ) {
-                return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!hasStudentParticipations(this.exercise)) {
-                return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_SUBMITTED;
-            } else {
-                if (!hasResults(this.exercise.studentParticipations[0])) {
-                    return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-                }
-                return ParticipationStatus.QUIZ_FINISHED;
-            }
-        } else if (
-            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
-            hasStudentParticipations(this.exercise)
-        ) {
-            const participation = this.exercise.studentParticipations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (hasExerciseDueDatePassed(this.exercise)) {
-                    return ParticipationStatus.EXERCISE_ACTIVE;
-                } else {
-                    return ParticipationStatus.EXERCISE_MISSED;
-                }
-            } else if (participation.initializationState === InitializationState.FINISHED) {
-                return ParticipationStatus.EXERCISE_SUBMITTED;
-            } else {
-                return ParticipationStatus.UNINITIALIZED;
-            }
-        }
-
-        if (!hasStudentParticipations(this.exercise)) {
-            return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
-        }
-        return ParticipationStatus.INACTIVE;
-    }
-
     repositoryUrl(participation: Participation) {
         return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
@@ -156,7 +107,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 participation => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatus();
+                        this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
@@ -182,7 +133,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 participation => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatus();
+                        this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                 },
                 error => {

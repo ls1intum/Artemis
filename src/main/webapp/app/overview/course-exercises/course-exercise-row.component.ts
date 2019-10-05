@@ -1,18 +1,9 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import {
-    Exercise,
-    ExerciseCategory,
-    ExerciseService,
-    ExerciseType,
-    getIcon,
-    getIconTooltip,
-    hasExerciseDueDatePassed,
-    hasStudentParticipations,
-    ParticipationStatus,
-} from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { hasResults, InitializationState, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { participationStatus } from 'app/entities/exercise';
+import { ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
@@ -72,10 +63,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
-                this.exercise.participationStatus = this.participationStatus(this.exercise);
+                this.exercise.participationStatus = participationStatus(this.exercise);
             }
         });
-        this.exercise.participationStatus = this.participationStatus(this.exercise);
+        this.exercise.participationStatus = participationStatus(this.exercise);
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
@@ -124,76 +115,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
             exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
         );
-    }
-
-    /**
-     * Handles the evaluation of participation status.
-     *
-     * @param exercise
-     * @return {ParticipationStatus}
-     */
-    participationStatus(exercise: Exercise): ParticipationStatus {
-        // Evaluate the participation status for quiz exercises.
-        if (exercise.type === ExerciseType.QUIZ) {
-            return this.participationStatusForQuizExercise(exercise);
-        }
-
-        // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-        if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) && hasStudentParticipations(exercise)) {
-            return this.participationStatusForModelingTextFileUploadExercise(exercise);
-        }
-
-        // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-        if (!hasStudentParticipations(exercise)) {
-            return ParticipationStatus.UNINITIALIZED;
-        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
-        }
-        return ParticipationStatus.INACTIVE;
-    }
-
-    /**
-     * Handles the evaluation of participation status for quiz exercises.
-     *
-     * @param exercise
-     * @return {ParticipationStatus}
-     */
-    private participationStatusForQuizExercise(exercise: Exercise): ParticipationStatus {
-        const quizExercise = exercise as QuizExercise;
-        if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-            return ParticipationStatus.QUIZ_NOT_STARTED;
-        } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-            return ParticipationStatus.QUIZ_UNINITIALIZED;
-        } else if (!hasStudentParticipations(exercise)) {
-            return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
-            return ParticipationStatus.QUIZ_ACTIVE;
-        } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
-            return ParticipationStatus.QUIZ_SUBMITTED;
-        } else {
-            return !hasResults(exercise.studentParticipations[0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
-        }
-    }
-
-    /**
-     * Handles the evaluation of participation status for modeling, text and file upload exercises if the exercise has participations.
-     *
-     * @param exercise
-     * @return {ParticipationStatus}
-     */
-    private participationStatusForModelingTextFileUploadExercise(exercise: Exercise): ParticipationStatus {
-        const participation = exercise.studentParticipations[0];
-
-        // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date. The more detailed evaluation of active exercises takes place in the result component.
-        // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
-        if (participation.initializationState === InitializationState.INITIALIZED) {
-            return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
-        } else if (participation.initializationState === InitializationState.FINISHED) {
-            // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
-            return ParticipationStatus.EXERCISE_SUBMITTED;
-        } else {
-            return ParticipationStatus.UNINITIALIZED;
-        }
     }
 
     showDetails(event: any) {
