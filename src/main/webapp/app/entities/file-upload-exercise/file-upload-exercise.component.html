@@ -71,7 +71,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
-                                *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                                *jhiHasAnyAuthority="['ROLE_ADMIN, ROLE_INSTRUCTOR']"
                                 jhiDeleteButton
                                 [entityTitle]="fileUploadExercise.title"
                                 deleteQuestion="artemisApp.exercise.delete.question"
