@@ -7,7 +7,7 @@
         <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed; else loadingFailedContainer">
+        <ng-container *ngIf="!loadingFailed && feedbackList.length; else noFeedbacksContainer">
             <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
                     Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
@@ -36,7 +36,7 @@
             </div>
         </ng-container>
     </ng-template>
-    <ng-template #loadingFailedContainer>
+    <ng-template #noFeedbacksContainer>
         <pre jhiTranslate="artemisApp.result.noResultDetails">No result details available</pre>
     </ng-template>
 </div>
