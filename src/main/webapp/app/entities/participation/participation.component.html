@@ -99,7 +99,7 @@
                             <button
                                 *ngIf="exercise.isAtLeastInstructor"
                                 jhiDeleteButton
-                                [entityTitle]="participation.student.firstName"
+                                [entityTitle]="participation.student.name"
                                 deleteQuestion="artemisApp.participation.delete.question"
                                 (delete)="deleteParticipation(participation.id, $event)"
                                 [additionalChecks]="
