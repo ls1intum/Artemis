@@ -343,6 +343,18 @@ public class ProgrammingSubmissionService {
         }
     }
 
+    public void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
+        ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
+        try {
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            notifyUserAboutSubmission(submission);
+        }
+        catch (HttpException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
+            notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
     /**
      * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
      * This method should be used if the solution participation would otherwise not be built.

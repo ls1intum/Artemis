@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -50,9 +52,14 @@ public class ResultService {
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService) {
+            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -61,6 +68,8 @@ public class ResultService {
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -180,7 +189,16 @@ public class ResultService {
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            resultRepository.save(result);
+            result = resultRepository.save(result);
+
+            // If the solution participation was updated, also trigger the template participation build.
+            if (isSolutionParticipation && result.getSubmission().getType().equals(SubmissionType.TEST)) {
+                // We use the last commitHash of the test repository.
+                ObjectId testCommitHash = ObjectId.fromString(((ProgrammingSubmission) result.getSubmission()).getCommitHash());
+                programmingSubmissionService.createSubmissionTriggerBuildAndNotifyUser(
+                        programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExercise.getId()), testCommitHash, SubmissionType.TEST);
+            }
+
         }
         return Optional.ofNullable(result);
     }
