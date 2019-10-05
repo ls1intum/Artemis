@@ -84,18 +84,13 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     init() {
-        if (this.result) {
-            this.evaluate();
-        } else if (this.participation && this.participation.id) {
-            if (this.hasParticipationResults()) {
-                // Find latest result in results array.
-                this.result = this.participation.results.reduce((acc, res) => (res.completionDate! > acc.completionDate! ? res : acc));
-                // Make sure result and participation are connected.
-                this.result.participation = this.participation;
-            }
-
-            this.evaluate();
+        if (this.participation && this.participation.id && this.hasParticipationResults()) {
+            // Find latest result in results array.
+            this.result = this.participation.results.reduce((acc, res) => (res.completionDate! > acc.completionDate! ? res : acc));
+            // Make sure result and participation are connected.
+            this.result.participation = this.participation;
         }
+        this.evaluate();
     }
 
     evaluate() {
