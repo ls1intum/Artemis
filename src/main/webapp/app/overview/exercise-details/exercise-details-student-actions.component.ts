@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus, hasExerciseDueDatePassed } from 'app/entities/exercise';
+import { Exercise, ExerciseType, ParticipationStatus, hasExerciseDueDatePassed, hasStudentParticipations } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
@@ -70,12 +70,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
             } else if (
-                !this.hasParticipations(this.exercise) &&
+                !hasStudentParticipations(this.exercise) &&
                 (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
                 quizExercise.visibleToStudents
             ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!this.hasParticipations(this.exercise)) {
+            } else if (!hasStudentParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
             } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
@@ -89,7 +89,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             }
         } else if (
             (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
-            this.hasParticipations(this.exercise)
+            hasStudentParticipations(this.exercise)
         ) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
@@ -105,16 +105,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             }
         }
 
-        if (!this.hasParticipations(this.exercise)) {
+        if (!hasStudentParticipations(this.exercise)) {
             return ParticipationStatus.UNINITIALIZED;
         } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
-    }
-
-    hasParticipations(exercise: Exercise): boolean {
-        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {

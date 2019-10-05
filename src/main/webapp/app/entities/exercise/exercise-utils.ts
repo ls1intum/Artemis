@@ -23,3 +23,13 @@ export const problemStatementHasChanged = (changes: SimpleChanges) => {
 export const hasExerciseDueDatePassed = (exercise: Exercise) => {
     return !!exercise.dueDate && exercise.dueDate.isAfter(moment());
 };
+
+/**
+ * Checks if the given exercise has student participations.
+ *
+ * @param exercise
+ * @return {boolean}
+ */
+export const hasStudentParticipations = (exercise: Exercise) => {
+    return exercise.studentParticipations && exercise.studentParticipations.length > 0;
+};

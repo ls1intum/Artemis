@@ -1,5 +1,15 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, hasExerciseDueDatePassed } from 'app/entities/exercise';
+import {
+    Exercise,
+    ExerciseCategory,
+    ExerciseService,
+    ExerciseType,
+    getIcon,
+    getIconTooltip,
+    ParticipationStatus,
+    hasExerciseDueDatePassed,
+    hasStudentParticipations,
+} from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
@@ -121,9 +131,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (!this.hasParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+            } else if (
+                !hasStudentParticipations(exercise) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
+                quizExercise.visibleToStudents
+            ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!this.hasParticipations(exercise)) {
+            } else if (!hasStudentParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
             } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
@@ -137,7 +151,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         } else if (
             (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) &&
-            this.hasParticipations(exercise)
+            hasStudentParticipations(exercise)
         ) {
             const participation = exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
@@ -153,16 +167,12 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         }
 
-        if (!this.hasParticipations(exercise)) {
+        if (!hasStudentParticipations(exercise)) {
             return ParticipationStatus.UNINITIALIZED;
         } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
-    }
-
-    hasParticipations(exercise: Exercise): boolean {
-        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
     }
 
     hasResults(participation: Participation): boolean {
