@@ -124,35 +124,58 @@ export class ResultComponent implements OnInit, OnChanges {
 
     evaluateTemplateStatus() {
         if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
-            const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
-            if (
-                this.participation.submissions &&
-                this.participation.submissions.length > 0 &&
-                isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise)
-            ) {
-                if (initializedResultWithScore(this.result)) {
-                    // Prevent that result is shown before assessment due date
-                    if (!assessmentDueDate || assessmentDueDate.isBefore()) {
-                        this.templateStatus = ResultTemplateStatus.HAS_RESULT;
-                    } else {
-                        this.templateStatus = ResultTemplateStatus.NO_RESULT;
-                    }
-                } else {
-                    this.templateStatus = ResultTemplateStatus.SUBMITTED;
-                }
-            } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
-                this.templateStatus = ResultTemplateStatus.LATE;
-            } else {
-                this.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
-            }
+            // Evaluate the template status for modeling, text and file upload exercise.
+            this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
         } else {
-            if (this.isBuilding) {
-                this.templateStatus = ResultTemplateStatus.IS_BUILDING;
-            } else if (initializedResultWithScore(this.result)) {
-                this.templateStatus = ResultTemplateStatus.HAS_RESULT;
+            // Evaluate the template status for quiz and programming exercise.
+            this.templateStatus = this.evaluateTemplateStatusForQuizProgrammingExercises();
+        }
+    }
+
+    /**
+     * Evaluates the template status modeling, text and file upload exercises
+     *
+     * @return {ResultTemplateStatus}
+     */
+    private evaluateTemplateStatusForModelingTextFileUploadExercises() {
+        const submissionInDueTime =
+            this.participation.submissions != null &&
+            this.participation.submissions.length > 0 &&
+            isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise);
+        const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
+
+        // Submission is in due time of exercise and has a result with score.
+        if (submissionInDueTime && initializedResultWithScore(this.result)) {
+            // Prevent that result is shown before assessment due date
+            if (!assessmentDueDate || assessmentDueDate.isBefore()) {
+                return ResultTemplateStatus.HAS_RESULT;
             } else {
-                this.templateStatus = ResultTemplateStatus.NO_RESULT;
+                return ResultTemplateStatus.NO_RESULT;
             }
+        } // Submission is in due time of exercise and doesn't have a result with score.
+        else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
+            return ResultTemplateStatus.SUBMITTED;
+        } // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
+        else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+            return ResultTemplateStatus.LATE;
+        } // Submission is not in due time of exercise and tThere is actually no feedback for the submission or the feedback should not be displayed yet.
+        else {
+            return ResultTemplateStatus.LATE_NO_FEEDBACK;
+        }
+    }
+
+    /**
+     * Evaluates the template status quiz and programming exercises
+     *
+     * @return {ResultTemplateStatus}
+     */
+    private evaluateTemplateStatusForQuizProgrammingExercises() {
+        if (this.isBuilding) {
+            return ResultTemplateStatus.IS_BUILDING;
+        } else if (initializedResultWithScore(this.result)) {
+            return ResultTemplateStatus.HAS_RESULT;
+        } else {
+            return ResultTemplateStatus.NO_RESULT;
         }
     }
 
