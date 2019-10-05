@@ -176,14 +176,10 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     private dateAsMoment(date: any) {
-        if (date) {
-            if (moment.isMoment(date)) {
-                return date;
-            } else {
-                return moment(date);
-            }
+        if (date == null) {
+            return null;
         }
-        return null;
+        return moment.isMoment(date) ? date : moment(date);
     }
 
     buildResultString() {
