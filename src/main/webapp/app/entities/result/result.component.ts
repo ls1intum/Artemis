@@ -88,10 +88,9 @@ export class ResultComponent implements OnInit, OnChanges {
             this.evaluate();
         } else if (this.participation && this.participation.id) {
             if (this.hasParticipationResults()) {
-                const result = this.getLatestResult(this.participation.results);
-
-                // Make sure result and participation are connected
-                this.result = result;
+                // Find latest result in results array.
+                this.result = this.participation.results.reduce((acc, res) => (res.completionDate! > acc.completionDate! ? res : acc));
+                // Make sure result and participation are connected.
                 this.result.participation = this.participation;
             }
 
@@ -256,24 +255,5 @@ export class ResultComponent implements OnInit, OnChanges {
             return ['far', 'check-circle'];
         }
         return ['far', 'times-circle'];
-    }
-
-    /**
-     * Find latest result in results array
-     *
-     * @param {Result} results
-     */
-    getLatestResult(results: Result[]) {
-        results.sort((r1: Result, r2: Result) => {
-            if (r1.completionDate! > r2.completionDate!) {
-                return -1;
-            }
-            if (r1.completionDate! < r2.completionDate!) {
-                return 1;
-            }
-            return 0;
-        });
-
-        return results[0];
     }
 }
