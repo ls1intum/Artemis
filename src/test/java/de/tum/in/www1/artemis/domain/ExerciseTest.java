@@ -132,7 +132,7 @@ public class ExerciseTest {
         assertThat(relevantParticipation).isEqualTo(studentParticipationFinished);
     }
 
-    /* Primarily the functionality of findAppropriateSubmission() is tested with the following tests */
+    /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
 
     @Test
     public void filterForCourseDashboard_filterSensitiveInformation() {

@@ -572,7 +572,8 @@ public abstract class Exercise implements Serializable {
         // add relevant submission with its result to participation
         if (participation != null) {
             // find appropriate submission
-            Submission submission = findAppropriateSubmission(participation.getSubmissions());
+            Set<Submission> submissions = participation.getSubmissions();
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
 
             // filter sensitive information in submission's result
             if (isStudent && submission != null && submission.getResult() != null) {
@@ -602,10 +603,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    private Submission findAppropriateSubmission(Set<Submission> submissions) {
-        if (submissions == null || submissions.isEmpty())
-            return null;
-
+    private Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
@@ -626,34 +624,15 @@ public abstract class Exercise implements Serializable {
         }
 
         if (submissionsWithRatedResult.size() > 0) {
-            return getLatestSubmission(submissionsWithRatedResult);
+            return submissionsWithRatedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
         }
         else if (submissionsWithUnratedResult.size() > 0) {
-            return getLatestSubmission(submissionsWithUnratedResult);
+            return submissionsWithUnratedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
         }
-        else {
-            return getLatestSubmission(submissionsWithoutResult);
+        else if (submissionsWithoutResult.size() > 0) {
+            return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
         }
-    }
-
-    /**
-     * Sorts a list of submission by submissionDate and returns the latest one
-     *
-     * @param submissions list of submissions that should be sorted
-     * @return submission
-     */
-    private Submission getLatestSubmission(List<Submission> submissions) {
-        if (submissions == null || submissions.isEmpty())
-            return null;
-
-        Comparator<Submission> comparator = ((Submission s1, Submission s2) -> {
-            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null)
-                return 0;
-            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
-        });
-
-        submissions.sort(comparator);
-        return submissions.get(submissions.size() - 1);
+        return null;
     }
 
     @Override
