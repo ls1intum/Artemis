@@ -16,8 +16,8 @@
                 "title": "File Upload Submission"
             },
             "filePath": "File Path",
-            "feedbackResult": "You received {{ credits }} credits for {{ part }} part",
-            "feedbackResultDetail": "with following feedback: {{ detailText }}",
+            "feedbackResult": "You received {{ credits }} credit(s)",
+            "feedbackResultDetail": "with the following feedback: {{ detailText }}",
             "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
             "file": "File",
             "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 2 MB",

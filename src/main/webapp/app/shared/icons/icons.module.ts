@@ -110,6 +110,7 @@ import {
     faWrench,
     faHandPointUp,
     faICursor,
+    faVideo,
     faCalendarPlus,
     faCalendarMinus,
     faCalendarCheck,
@@ -275,5 +276,6 @@ export class ArtemisIconsModule {
         library.addIcons(faEquals);
         library.addIcons(faHandPointUp);
         library.addIcons(faICursor);
+        library.addIcons(faVideo);
     }
 }

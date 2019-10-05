@@ -138,6 +138,10 @@
                     "doImport": "Import"
                 }
             },
+            "repositoryIsLocked": {
+                "title": "Your Repository is locked.",
+                "tooltip": "The due date has passed, your repository is locked. You can still read the code but not make any changes to it."
+            },
             "preview": {
                 "label": "Preview",
                 "tooltip": "For every programming exercises, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
