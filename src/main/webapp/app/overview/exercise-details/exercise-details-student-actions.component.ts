@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseType, ParticipationStatus, hasExerciseDueDatePassed } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
@@ -93,7 +93,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         ) {
             const participation = this.exercise.studentParticipations[0];
             if (participation.initializationState === InitializationState.INITIALIZED) {
-                if (this.isExerciseInDueDate(this.exercise)) {
+                if (hasExerciseDueDatePassed(this.exercise)) {
                     return ParticipationStatus.EXERCISE_ACTIVE;
                 } else {
                     return ParticipationStatus.EXERCISE_MISSED;
@@ -119,10 +119,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
-    }
-
-    isExerciseInDueDate(exercise: Exercise): boolean {
-        return exercise.dueDate ? exercise.dueDate.isAfter(moment()) : true;
     }
 
     repositoryUrl(participation: Participation) {
