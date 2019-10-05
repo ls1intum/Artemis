@@ -5,6 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
+import { HttpErrorResponse } from '@angular/common/http';
 
 // Modal -> Result details view
 @Component({
@@ -16,13 +17,15 @@ export class ProgrammingExerciseInstructionResultDetailComponent implements OnIn
     @Input() result: Result;
     @Input() tests: string[];
     @Input() showTestNames = false;
-    isLoading: boolean;
+    isLoading = false;
+    loadingFailed = false;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
 
     ngOnInit(): void {
+        this.isLoading = true;
         of(this.result.feedbacks)
             .pipe(
                 switchMap(feedbacks => (feedbacks ? of(feedbacks) : this.loadResultDetails(this.result))),
@@ -33,17 +36,20 @@ export class ProgrammingExerciseInstructionResultDetailComponent implements OnIn
                     }),
                 ),
                 tap(feedbacks => (this.feedbackList = feedbacks)),
+                catchError((error: HttpErrorResponse) => {
+                    // TODO: When the server would give better error information, we could improve the UI.
+                    this.loadingFailed = true;
+                    return of(null);
+                }),
             )
-            .subscribe();
+            .subscribe(() => (this.isLoading = false));
     }
 
     loadResultDetails(result: Result): Observable<Feedback[]> {
-        this.isLoading = true;
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
             filter(res => !!res && !!res.body),
             map(res => res.body as Feedback[]),
             catchError(() => of([] as Feedback[])),
-            tap(() => (this.isLoading = false)),
         );
     }
 }
