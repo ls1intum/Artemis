@@ -9,12 +9,17 @@ import { Exercise } from 'app/entities/exercise';
  * @param exercise
  */
 export const isSubmissionInDueTime = (submission: Submission, exercise: Exercise) => {
-    if (submission.submissionDate && exercise.dueDate) {
-        // submission is in due time if submissionDate is before the dueDate of the exercise
+    // If the exercise has no dueDate set, every submission is in time.
+    if (!exercise.dueDate) {
+        return true;
+    }
+
+    // If the submissionDate is before the dueDate of the exercise, the submission is in time.
+    if (submission.submissionDate) {
         submission.submissionDate = moment(submission.submissionDate);
         return submission.submissionDate.isBefore(exercise.dueDate);
-    } else {
-        // submission is in due time if the exercise has no dueDate
-        return !exercise.dueDate;
     }
+
+    // If the submission has no submissionDate set, the submission cannot be in time.
+    return false;
 };
