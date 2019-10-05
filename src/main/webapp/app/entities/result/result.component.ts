@@ -148,14 +148,14 @@ export class ResultComponent implements OnInit, OnChanges {
         if (submissionInDueTime && initializedResultWithScore(this.result)) {
             // Prevent that the result is shown before assessment due date
             return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
-        } // Submission is in due time of exercise and doesn't have a result with score.
-        else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
+        } else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
+            // Submission is in due time of exercise and doesn't have a result with score.
             return ResultTemplateStatus.SUBMITTED;
-        } // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
-        else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+        } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+            // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
             return ResultTemplateStatus.LATE;
-        } // Submission is not in due time of exercise and tThere is actually no feedback for the submission or the feedback should not be displayed yet.
-        else {
+        } else {
+            // Submission is not in due time of exercise and tThere is actually no feedback for the submission or the feedback should not be displayed yet.
             return ResultTemplateStatus.LATE_NO_FEEDBACK;
         }
     }

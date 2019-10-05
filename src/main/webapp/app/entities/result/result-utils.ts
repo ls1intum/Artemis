@@ -6,5 +6,5 @@ import { Result } from 'app/entities/result/result.model';
  * @param result
  */
 export const initializedResultWithScore = (result: Result | null) => {
-    return result != undefined && (result.score || result.score === 0);
+    return result != null && (result.score || result.score === 0);
 };

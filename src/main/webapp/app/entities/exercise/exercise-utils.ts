@@ -20,7 +20,9 @@ export const problemStatementHasChanged = (changes: SimpleChanges) => {
  * @return {boolean}
  */
 export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
-    if (exercise.dueDate == null) return false;
+    if (exercise.dueDate == null) {
+        return false;
+    }
     return exercise.dueDate.isBefore();
 };
 

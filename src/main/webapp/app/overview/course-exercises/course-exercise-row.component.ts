@@ -188,8 +188,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
         if (participation.initializationState === InitializationState.INITIALIZED) {
             return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
-        } // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
-        else if (participation.initializationState === InitializationState.FINISHED) {
+        } else if (participation.initializationState === InitializationState.FINISHED) {
+            // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
             return ParticipationStatus.EXERCISE_SUBMITTED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
