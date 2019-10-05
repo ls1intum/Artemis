@@ -571,7 +571,7 @@ public abstract class Exercise implements Serializable {
             }
         }
 
-        // add relevant submission with its result to participation
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
             // find the latest submission with a rated result, otherwise the latest submission with
             // an unrated result or alternatively the latest submission without a result
