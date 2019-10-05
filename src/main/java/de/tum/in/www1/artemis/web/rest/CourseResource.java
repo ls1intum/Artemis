@@ -294,7 +294,7 @@ public class CourseResource {
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
         long startParticipationCall = System.currentTimeMillis();
-        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentId(user.getId(), activeExercises);
+        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeExercises);
         log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentId in " + (System.currentTimeMillis() - startParticipationCall) + "ms");
 
         for (Course course : courses) {
