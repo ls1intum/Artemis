@@ -67,7 +67,7 @@
             "notificiationText": "Optional: Mitteilung über die Änderung",
             "presentationScoreEnabled": {
                 "title": "Präsentationsergebnis aktiviert",
-                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann kann der Tutor auf zur Seite \"Teilnahmen\" dieser Übung navigieren und eine Präsentation für einen Studenten eintragen, wenn eine gehalten wurde."
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann kann der Tutor zur Seite \"Teilnahmen\" dieser Übung navigieren und eine Präsentation für einen Studenten eintragen, wenn eine gehalten wurde."
             },
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
