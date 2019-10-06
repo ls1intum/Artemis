@@ -40,7 +40,7 @@
                         <span jhiTranslate="artemisApp.participation.student">Student</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="presentationScore">
+                    <th jhiSortBy="presentationScore" *ngIf="this.presentationScoreEnabled">
                         <span jhiTranslate="artemisApp.participation.presentationScore">Presentation Score</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
@@ -71,8 +71,8 @@
                     <td>
                         <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
                     </td>
-                    <td>
-                        <span>{{ participation.presentationScore != null ? participation.presentationScore : 0 }}</span>
+                    <td *ngIf="this.presentationScoreEnabled">
+                        <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
@@ -99,7 +99,7 @@
                             <button
                                 *ngIf="exercise.isAtLeastInstructor"
                                 jhiDeleteButton
-                                [entityTitle]="participation.student.firstName"
+                                [entityTitle]="participation.student.name"
                                 deleteQuestion="artemisApp.participation.delete.question"
                                 (delete)="deleteParticipation(participation.id, $event)"
                                 [additionalChecks]="
@@ -120,7 +120,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
                             </button>
                             <button
-                                *ngIf="exercise.isAtLeastTutor && participation.presentationScore !== 1"
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore !== 1"
                                 (click)="addPresentation(participation)"
                                 class="btn btn-info btn-sm mr-1"
                             >
@@ -128,7 +128,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                             </button>
                             <button
-                                *ngIf="exercise.isAtLeastTutor && participation.presentationScore == 1"
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore == 1"
                                 (click)="removePresentation(participation)"
                                 class="btn btn-danger btn-sm mr-1"
                             >
