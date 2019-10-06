@@ -396,8 +396,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
-        // The buildAndTestAfterDueDate is set - therefore the result will not be considered rated.
-        assertThat(result.isRated()).isFalse();
+        assertThat(result.isRated()).isTrue();
     }
 
     /**

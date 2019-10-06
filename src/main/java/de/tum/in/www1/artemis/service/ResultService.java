@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static java.util.Arrays.asList;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -191,9 +189,9 @@ public class ResultService {
 
     /**
      * A result is rated if:
-     * - there is no buildAndTestAfterDueDate set and the due date has not passed OR
-     * - there is no buildAndTestAfterDueDate set and and the submission type is INSTRUCTOR / TEST
-     * - there is a buildAndTestAfterDueDate set and the buildAndTestAfterDueDate has passed and the submission type is INSTRUCTOR / TEST
+     * - the due date has not passed OR
+     * - no due date is set OR
+     * - the submission type is INSTRUCTOR / TEST
      *
      * @param result the rest for which to set the rated attribute (mutates the original object!)
      */
@@ -201,18 +199,8 @@ public class ResultService {
         ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) result.getParticipation();
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) result.getSubmission();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        SubmissionType submissionType = programmingSubmission.getType();
-        // If the buildAndTestAfterDueDate is set, a result can only be rated if the result comes in after the date and was triggered by an instructor.
-        if (programmingExercise.getDueDate() != null && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
-            boolean hasBuildAndTestDatePassed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now());
-            // This means that results with type OTHER will not be considered rated, as we can't be sure that they were executed by the instructor.
-            boolean isInstructorResult = submissionType == SubmissionType.INSTRUCTOR || submissionType == SubmissionType.TEST;
-            result.setRated(hasBuildAndTestDatePassed && isInstructorResult);
-        }
-        else {
-            // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
-            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
-        }
+        // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
+        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
     }
 
     /**
