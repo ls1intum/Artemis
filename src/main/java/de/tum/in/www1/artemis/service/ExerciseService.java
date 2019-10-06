@@ -393,7 +393,7 @@ public class ExerciseService {
      *
      * @param zipFilePath path where the zipfile should be saved
      * @param paths the paths that should be zipped
-     * @throws IOException
+     * @throws IOException if an error occured while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
