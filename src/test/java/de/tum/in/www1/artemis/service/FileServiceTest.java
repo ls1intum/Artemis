@@ -109,7 +109,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void normalizeEncodingASCII() throws IOException {
+    public void normalizeEncodingISO_8559_1() throws IOException {
         copyFile("EncodingISO_8559_1.java", "EncodingISO_8559_1.java");
         Charset charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(Charsets.ISO_8859_1);
