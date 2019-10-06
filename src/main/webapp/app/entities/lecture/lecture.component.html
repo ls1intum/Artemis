@@ -57,6 +57,7 @@
                                 </button>
                                 <button
                                     jhiDeleteButton
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
                                     [entityTitle]="lecture.title"
                                     deleteQuestion="artemisApp.lecture.delete.question"
                                     deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
