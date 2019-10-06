@@ -10,14 +10,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.slf4j.Logger;
@@ -520,22 +523,10 @@ public class FileService {
         }
 
         // Get all files in directory
-        String[] files = directory.list((current, name) -> new File(current, name).isFile());
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
 
-        for (String file : files) {
-            normalizeLineEndings(directory.getAbsolutePath() + File.separator + file);
-        }
-
-        // Recursive call
-        // Get all subdirectories
-        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
-
-        for (String subdirectory : subdirectories) {
-            if (subdirectory.equalsIgnoreCase(".git")) {
-                // ignore files in the '.git' folder
-                continue;
-            }
-            normalizeLineEndingsRecursive(directory.getAbsolutePath() + File.separator + subdirectory);
+        for (File file : files) {
+            normalizeLineEndings(file.getAbsolutePath());
         }
     }
 
@@ -554,7 +545,7 @@ public class FileService {
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
-        fileContent.replaceAll("\\r\\n?", "\n");
+        fileContent = fileContent.replaceAll("\\r\\n?", "\n");
         Files.write(replaceFilePath, fileContent.getBytes(charset));
     }
 
@@ -573,22 +564,10 @@ public class FileService {
         }
 
         // Get all files in directory
-        String[] files = directory.list((current, name) -> new File(current, name).isFile());
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
 
-        for (String file : files) {
-            convertToUTF8(directory.getAbsolutePath() + File.separator + file);
-        }
-
-        // Recursive call
-        // Get all subdirectories
-        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
-
-        for (String subdirectory : subdirectories) {
-            if (subdirectory.equalsIgnoreCase(".git")) {
-                // ignore files in the '.git' folder
-                continue;
-            }
-            convertToUTF8Recursive(directory.getAbsolutePath() + File.separator + subdirectory);
+        for (File file : files) {
+            convertToUTF8(file.getAbsolutePath());
         }
     }
 
@@ -604,16 +583,28 @@ public class FileService {
         Path replaceFilePath = Paths.get(filePath);
         byte[] contentArray = Files.readAllBytes(replaceFilePath);
 
+        Charset charset = detectCharset(contentArray);
+        log.debug("Detected charset for file {} is {}", filePath, charset.name());
+
+        String fileContent = new String(contentArray, charset);
+
+        Files.write(replaceFilePath, fileContent.getBytes(Charsets.UTF_8));
+    }
+
+    /**
+     * Detect the charset of a byte array
+     *
+     * @param contentArray The content that should be checked
+     * @return The detected charset
+     */
+    public Charset detectCharset(byte[] contentArray) {
         // Part of the apache tika library in order to detect the encoding of a file
         CharsetDetector charsetDetector = new CharsetDetector();
 
         charsetDetector.setText(contentArray);
         String charsetName = charsetDetector.detect().getName();
         Charset charset = Charset.forName(charsetName);
-        log.debug("Detected charset for file {} is {}", filePath, charsetName);
 
-        String fileContent = new String(contentArray, charset);
-
-        Files.write(replaceFilePath, fileContent.getBytes(Charset.forName("UTF-8")));
+        return charset;
     }
 }
