@@ -31,6 +31,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -45,6 +46,7 @@ import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
@@ -52,6 +54,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -100,8 +103,13 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    private final ExerciseService exerciseService;
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String REPO_DOWNLOAD_CLONE_PATH;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -110,7 +118,7 @@ public class ProgrammingExerciseService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
             ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
             ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, @Lazy ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -131,6 +139,7 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -1047,5 +1056,110 @@ public class ProgrammingExerciseService {
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);
         newExercise.setStudentParticipations(null);
+    }
+
+    /**
+     * Get participations of coding exercises of all students packed together in one zip file.
+     *
+     * @param exerciseId the id of the exercise entity
+     * @param repositoryExportOptions the options that should be used for the export
+     * @return a zip file containing all requested participations
+     */
+    public java.io.File exportAllStudentRepositories(Long exerciseId, RepositoryExportOptionsDTO repositoryExportOptions) {
+        return exportStudentRepositoriesHelper(exerciseId, null, repositoryExportOptions);
+    }
+
+    /**
+     * Get participations of coding exercises of a requested list of students packed together in one zip file.
+     *
+     * @param exerciseId the id of the exercise entity
+     * @param studentIds TUM Student-Login ID of requested students
+     * @param repositoryExportOptions the options that should be used for the export
+     * @return a zip file containing all requested participations
+     */
+    public java.io.File exportStudentRepositories(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
+        return exportStudentRepositoriesHelper(exerciseId, studentIds, repositoryExportOptions);
+    }
+
+    @Transactional(readOnly = true)
+    public java.io.File exportStudentRepositoriesHelper(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
+        // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+        String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
+
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        List<Path> zippedRepoFiles = new ArrayList<>();
+        Path zipFilePath = null;
+        if (!Optional.ofNullable(exercise).isPresent() || !(exercise instanceof ProgrammingExercise)) {
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
+            return null;
+        }
+        for (StudentParticipation participation : exercise.getStudentParticipations()) {
+            ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            try {
+                if (!repositoryExportOptions.isExportAllStudents() && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
+                        || !studentIds.contains(studentParticipation.getStudent().getLogin()))) {
+                    // participation is not relevant for zip archive.
+                    continue;
+                }
+
+                Repository repo = gitService.getOrCheckoutRepository(studentParticipation, repoDownloadClonePath);
+                gitService.resetToOriginMaster(repo); // start with clean state
+
+                if (repositoryExportOptions.isFilterLateSubmissions()) {
+                    log.debug("Filter late submissions for participation {}", participation.toString());
+                    gitService.filterLateSubmissions(repo, studentParticipation, repositoryExportOptions.getFilterLateSubmissionsDate());
+                }
+
+                if (repositoryExportOptions.isAddStudentName()) {
+                    log.debug("Adding student name to participation {}", participation.toString());
+                    addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
+                }
+
+                if (repositoryExportOptions.isSquashAfterInstructor()) {
+                    log.debug("Squashing commits for participation {}", participation.toString());
+                    gitService.squashAfterInstructor(repo, (ProgrammingExercise) exercise);
+                }
+
+                if (repositoryExportOptions.isFilterLateSubmissions()) {
+                    log.debug("Normalizing code style for participation {}", participation.toString());
+                    fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
+                    fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
+                }
+
+                log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                Path zippedRepoFile = gitService.zipRepository(repo, repoDownloadClonePath);
+                zippedRepoFiles.add(zippedRepoFile);
+
+                // We can always delete the repository as it won't be used by the student (seperate path)
+                log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
+                gitService.deleteLocalRepository(studentParticipation, repoDownloadClonePath);
+            }
+            catch (IOException | GitException | GitAPIException | InterruptedException ex) {
+                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents "
+                        + repositoryExportOptions.isExportAllStudents() + " did not work as expected: " + ex);
+            }
+        }
+        if (exercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
+            log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
+            return null;
+        }
+        try {
+            // create a large zip file with all zipped repos and provide it for download
+            log.debug("Create zip file for all repositories");
+            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
+                    exercise.getCourse().getTitle() + "-" + exercise.getTitle() + "-" + System.currentTimeMillis() + ".zip");
+            exerciseService.createZipFile(zipFilePath, zippedRepoFiles);
+            exerciseService.scheduleForDeletion(zipFilePath, 10);
+
+            log.debug("Delete all temporary zip repo files");
+            // delete the temporary zipped repo files
+            for (Path zippedRepoFile : zippedRepoFiles) {
+                Files.delete(zippedRepoFile);
+            }
+        }
+        catch (IOException ex) {
+            log.error("Archiving and deleting the local repositories did not work as expected");
+        }
+        return new java.io.File(zipFilePath.toString());
     }
 }

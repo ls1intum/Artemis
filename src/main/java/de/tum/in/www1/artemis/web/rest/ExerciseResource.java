@@ -72,10 +72,12 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
-            ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
+            ResultService resultService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -89,6 +91,7 @@ public class ExerciseResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -332,7 +335,7 @@ public class ExerciseResource {
 
         File zipFile;
         if (repositoryExportOptions.isExportAllStudents()) {
-            zipFile = exerciseService.exportAllStudentRepositories(exerciseId, repositoryExportOptions);
+            zipFile = programmingExerciseService.exportAllStudentRepositories(exerciseId, repositoryExportOptions);
         }
         else {
             studentIds = studentIds.replaceAll(" ", "");
@@ -342,7 +345,7 @@ public class ExerciseResource {
                         .build();
             }
 
-            zipFile = exerciseService.exportStudentRepositories(exerciseId, studentList, repositoryExportOptions);
+            zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, studentList, repositoryExportOptions);
         }
         if (zipFile == null) {
             return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
