@@ -41,7 +41,7 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, ArtemisResultModule, IntellijModule, ArtemisOverviewModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisOverviewModule],
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

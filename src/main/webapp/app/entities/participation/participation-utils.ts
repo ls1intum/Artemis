@@ -1,7 +1,7 @@
 import { SimpleChanges } from '@angular/core';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result';
-import { ExerciseType } from 'app/entities/exercise';
+import { Result } from 'app/entities/result/result.model';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 /**

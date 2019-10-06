@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService, StudentParticipation, isModelingOrTextOrFileUpload } from 'app/entities/participation';
-import { initializedResultWithScore } from 'app/entities/result';
-import { isSubmissionInDueTime } from 'app/entities/submission';
+import { initializedResultWithScore } from 'app/entities/result/result-utils';
+import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
