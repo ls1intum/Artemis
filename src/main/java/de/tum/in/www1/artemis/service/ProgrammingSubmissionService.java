@@ -343,6 +343,14 @@ public class ProgrammingSubmissionService {
         }
     }
 
+    /**
+     * Creates a submission with the given type and commitHash for the provided participation.
+     * Will notify the user about occurring errors when trying to trigger the build.
+     *
+     * @param participation  for which to create the submission.
+     * @param commitHash     to assign to the submission.
+     * @param submissionType to assign to the submission.
+     */
     public void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
