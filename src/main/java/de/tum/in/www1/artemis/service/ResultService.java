@@ -192,15 +192,48 @@ public class ResultService {
             result = resultRepository.save(result);
 
             // If the solution participation was updated, also trigger the template participation build.
-            if (isSolutionParticipation && result.getSubmission().getType().equals(SubmissionType.TEST)) {
-                // We use the last commitHash of the test repository.
-                ObjectId testCommitHash = ObjectId.fromString(((ProgrammingSubmission) result.getSubmission()).getCommitHash());
-                programmingSubmissionService.createSubmissionTriggerBuildAndNotifyUser(
-                        programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExercise.getId()), testCommitHash, SubmissionType.TEST);
+            if (isSolutionParticipation) {
+                triggerTemplateBuild(programmingExercise.getId(), result.getId());
             }
-
         }
         return Optional.ofNullable(result);
+    }
+
+    /**
+     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
+     * Will use the commitHash of the submission for triggering the template build.
+     *
+     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
+     * @param resultId Result id.
+     */
+    private void triggerTemplateBuild(long programmingExerciseId, long resultId) {
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.findByResultId(resultId);
+        }
+        catch (EntityNotFoundException ex) {
+            // This is an unlikely error that would mean that no submission could be created for the result. In this case we can only log and abort.
+            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
+                    + " because no submission could be found for the provided result id " + resultId);
+            return;
+        }
+        // We only trigger the template build when the test repository was changed.
+        if (!submission.getType().equals(SubmissionType.TEST)) {
+            return;
+        }
+        // We use the last commitHash of the test repository.
+        ObjectId testCommitHash = ObjectId.fromString(submission.getCommitHash());
+        TemplateProgrammingExerciseParticipation templateParticipation;
+        try {
+            templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+        }
+        catch (EntityNotFoundException ex) {
+            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
+                    + " because no template participation could be found for the given exercise");
+            return;
+        }
+        programmingSubmissionService.createSubmissionTriggerBuildAndNotifyUser(templateParticipation, testCommitHash, SubmissionType.TEST);
     }
 
     /**

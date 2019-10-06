@@ -431,4 +431,9 @@ public class ProgrammingSubmissionService {
         String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
         messagingTemplate.convertAndSend(topic, error);
     }
+
+    public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
+        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
+        return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
+    }
 }
