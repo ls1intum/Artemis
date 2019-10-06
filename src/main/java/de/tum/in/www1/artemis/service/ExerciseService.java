@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -332,16 +332,11 @@ public class ExerciseService {
      * Get participations of coding exercises of all students packed together in one zip file.
      *
      * @param exerciseId the id of the exercise entity
-     * @param filterLateSubmissions whether late submissions should be filtered out
-     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
-     * @param addStudentName whether the student name should be added to the project
-     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
-     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
+     * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    public java.io.File exportAllStudentRepositories(Long exerciseId, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, boolean addStudentName,
-            boolean squashAfterInstructor, boolean normalizeCodeStyle) {
-        return exportStudentRepositoriesHelper(exerciseId, null, true, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor, normalizeCodeStyle);
+    public java.io.File exportAllStudentRepositories(Long exerciseId, RepositoryExportOptionsDTO repositoryExportOptions) {
+        return exportStudentRepositoriesHelper(exerciseId, null, repositoryExportOptions);
     }
 
     /**
@@ -349,22 +344,15 @@ public class ExerciseService {
      *
      * @param exerciseId the id of the exercise entity
      * @param studentIds TUM Student-Login ID of requested students
-     * @param filterLateSubmissions whether late submissions should be filtered out
-     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
-     * @param addStudentName whether the student name should be added to the project
-     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
-     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
+     * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    public java.io.File exportStudentRepositories(Long exerciseId, List<String> studentIds, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate,
-            boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
-        return exportStudentRepositoriesHelper(exerciseId, studentIds, false, filterLateSubmissions, filterLateSubmissionsDate, addStudentName, squashAfterInstructor,
-                normalizeCodeStyle);
+    public java.io.File exportStudentRepositories(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
+        return exportStudentRepositoriesHelper(exerciseId, studentIds, repositoryExportOptions);
     }
 
     @Transactional(readOnly = true)
-    private java.io.File exportStudentRepositoriesHelper(Long exerciseId, List<String> studentIds, boolean allStudents, boolean filterLateSubmissions,
-            ZonedDateTime filterLateSubmissionsDate, boolean addStudentName, boolean squashAfterInstructor, boolean normalizeCodeStyle) {
+    public java.io.File exportStudentRepositoriesHelper(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
 
@@ -378,7 +366,7 @@ public class ExerciseService {
         for (StudentParticipation participation : exercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             try {
-                if (!allStudents && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
+                if (!repositoryExportOptions.isExportAllStudents() && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
                         || !studentIds.contains(studentParticipation.getStudent().getLogin()))) {
                     // participation is not relevant for zip archive.
                     continue;
@@ -387,22 +375,22 @@ public class ExerciseService {
                 Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation, repoDownloadClonePath);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
 
-                if (filterLateSubmissions) {
+                if (repositoryExportOptions.isFilterLateSubmissions()) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
-                    gitService.get().filterLateSubmissions(repo, studentParticipation, filterLateSubmissionsDate);
+                    gitService.get().filterLateSubmissions(repo, studentParticipation, repositoryExportOptions.getFilterLateSubmissionsDate());
                 }
 
-                if (addStudentName) {
+                if (repositoryExportOptions.isAddStudentName()) {
                     log.debug("Adding student name to participation {}", participation.toString());
                     programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 }
 
-                if (squashAfterInstructor) {
+                if (repositoryExportOptions.isSquashAfterInstructor()) {
                     log.debug("Squashing commits for participation {}", participation.toString());
                     gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 }
 
-                if (normalizeCodeStyle) {
+                if (repositoryExportOptions.isFilterLateSubmissions()) {
                     log.debug("Normalizing code style for participation {}", participation.toString());
                     fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
                     fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
@@ -417,8 +405,8 @@ public class ExerciseService {
                 gitService.get().deleteLocalRepository(studentParticipation, repoDownloadClonePath);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents " + allStudents
-                        + " did not work as expected: " + ex);
+                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents "
+                        + repositoryExportOptions.isExportAllStudents() + " did not work as expected: " + ex);
             }
         }
         if (exercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
@@ -429,7 +417,7 @@ public class ExerciseService {
             // create a large zip file with all zipped repos and provide it for download
             log.debug("Create zip file for all repositories");
             zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    exercise.getCourse().getTitle() + " " + exercise.getTitle() + (studentIds != null ? studentIds.hashCode() : "ALL") + ".zip");
+                    exercise.getCourse().getTitle() + "-" + exercise.getTitle() + "-" + System.currentTimeMillis() + ".zip");
             createZipFile(zipFilePath, zippedRepoFiles);
             scheduleForDeletion(zipFilePath, 10);
 

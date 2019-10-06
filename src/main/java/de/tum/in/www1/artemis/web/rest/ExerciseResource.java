@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -14,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -311,46 +309,30 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     * POST /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
-     * @param allStudents whether the repositories of all students should be downloaded
-     * @param filterLateSubmissions whether late submissions should be filtered out
-     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
-     * @param addStudentName whether the student name should be added to the project
-     * @param squashAfterInstructor whether all changes after the setup from the instructors should be squashed into one commit
-     * @param normalizeCodeStyle whether the code style should be normalized (line endings, encoding)
+     * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zipped
+     * @throws IOException if submissions can't be zippedRequestBody
      */
-    @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
+    @PostMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds, @RequestParam boolean allStudents,
-            @RequestParam boolean filterLateSubmissions, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ") Date filterLateSubmissionsDate,
-            @RequestParam boolean addStudentName, @RequestParam boolean squashAfterInstructor, @RequestParam boolean normalizeCodeStyle) throws IOException {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         Exercise exercise = exerciseService.findOne(exerciseId);
-
-        // TODO: allow multiple options:
-        // - one boolean flag per stager task (see exportParticipations)
-        // - one boolean flag that all student submissions should be downloaded
-
-        ZonedDateTime filterLateSubmissionsZonedDateTime;
-
-        if (filterLateSubmissionsDate == null) {
-            filterLateSubmissionsZonedDateTime = exercise.getDueDate();
-        }
-        else {
-            filterLateSubmissionsZonedDateTime = ZonedDateTime.ofInstant(filterLateSubmissionsDate.toInstant(), ZoneId.systemDefault());
-        }
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
 
+        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
+            repositoryExportOptions.setFilterLateSubmissionsDate(exercise.getDueDate());
+        }
+
         File zipFile;
-        if (allStudents) {
-            zipFile = exerciseService.exportAllStudentRepositories(exerciseId, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName, squashAfterInstructor,
-                    normalizeCodeStyle);
+        if (repositoryExportOptions.isExportAllStudents()) {
+            zipFile = exerciseService.exportAllStudentRepositories(exerciseId, repositoryExportOptions);
         }
         else {
             studentIds = studentIds.replaceAll(" ", "");
@@ -360,8 +342,7 @@ public class ExerciseResource {
                         .build();
             }
 
-            zipFile = exerciseService.exportStudentRepositories(exerciseId, studentList, filterLateSubmissions, filterLateSubmissionsZonedDateTime, addStudentName,
-                    squashAfterInstructor, normalizeCodeStyle);
+            zipFile = exerciseService.exportStudentRepositories(exerciseId, studentList, repositoryExportOptions);
         }
         if (zipFile == null) {
             return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))

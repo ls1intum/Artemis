@@ -11,6 +11,7 @@ import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { RepositoryExportOptions } from 'app/scores';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -55,26 +56,8 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(
-        exerciseId: number,
-        students: string[],
-        allStudents: boolean,
-        filterLateSubmissions: boolean,
-        filterLateSubmissionsDate: moment.Moment | null,
-        addStudentName: boolean,
-        squashAfterInstructor: boolean,
-        normalizeCodeStyle: boolean,
-    ): Observable<HttpResponse<Blob>> {
-        const params = new HttpParams()
-            .set('allStudents', allStudents.toString())
-            .set('filterLateSubmissions', filterLateSubmissions.toString())
-            .set('filterLateSubmissionsDate', filterLateSubmissionsDate == null ? '' : filterLateSubmissionsDate.toJSON())
-            .set('addStudentName', addStudentName.toString())
-            .set('squashAfterInstructor', squashAfterInstructor.toString())
-            .set('normalizeCodeStyle', normalizeCodeStyle.toString());
-
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
-            params,
+    exportRepos(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/participations/${students}`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });
