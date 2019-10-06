@@ -51,7 +51,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.tests = tests;
+        modalRef.componentInstance.feedbackFilter = tests;
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
     }
 }
