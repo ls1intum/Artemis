@@ -159,7 +159,6 @@ public class ResultService {
 
         Result result;
         try {
-            // The returned result is linked to the corresponding participation and submission.
             result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
         }
         catch (Exception ex) {
