@@ -8,6 +8,8 @@ import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-result',
@@ -102,13 +104,20 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
+        } else if (this.participation.exercise && this.participation.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.participation.exercise as ProgrammingExercise;
+            const preliminary = this.translate.instant('artemisApp.result.preliminary');
+            // If the buildAndTestAfterDueDate is set for a programming exercise and the date has not yet passed, we add (preliminary) to the result string.
+            const showPreliminaryFlag =
+                !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isAfter(moment.now());
+            return showPreliminaryFlag ? `${this.result!.resultString} ${preliminary}` : this.result!.resultString;
         }
         return this.result!.resultString;
     }
 
     buildResultTooltip() {
         if (this.result && this.result.resultString.includes('(preliminary)')) {
-            return this.translate.instant('artemisApp.result.preliminary');
+            return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
     }
 
