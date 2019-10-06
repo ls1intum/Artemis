@@ -7,6 +7,7 @@ import java.util.Objects;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLMethod extends UMLElement {
 
@@ -77,6 +78,10 @@ public class UMLMethod extends UMLElement {
 
         UMLMethod referenceMethod = (UMLMethod) reference;
 
+        if (!parentsSimilar(referenceMethod)) {
+            return similarity;
+        }
+
         int elementCount = parameters.size() + 2;
         double weight = 1.0 / elementCount;
 
@@ -91,6 +96,21 @@ public class UMLMethod extends UMLElement {
         }
 
         return ensureSimilarityRange(similarity);
+    }
+
+    /**
+     * Checks if the parent classes of this method and the given reference method are similar/equal by comparing the similarity IDs of both parent classes. If the similarity
+     * IDs are not set, it calculates the similarity of the parent classes itself and checks against the configured equality threshold.
+     *
+     * @param referenceMethod the reference method of which the parent class is compared against the parent class of this method
+     * @return true if the parent classes are similar/equal, false otherwise
+     */
+    private boolean parentsSimilar(UMLMethod referenceMethod) {
+        if (parentClass.getSimilarityID() >= 0 && referenceMethod.getParentClass().getSimilarityID() >= 0) {
+            return parentClass.getSimilarityID() == referenceMethod.getParentClass().getSimilarityID();
+        }
+
+        return parentClass.similarity(referenceMethod.getParentClass()) > CompassConfiguration.EQUALITY_THRESHOLD;
     }
 
     @Override

@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 public abstract class UMLElement implements Similarity<UMLElement> {
 
-    private int similarityID; // id of similarity set the element belongs to
+    private int similarityID = -1; // id of similarity set the element belongs to
 
     private String jsonElementID; // unique element id //TODO rename into uniqueId?
 
