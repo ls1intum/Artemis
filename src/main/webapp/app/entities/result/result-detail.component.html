@@ -3,11 +3,17 @@
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">&times;</button>
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative;">
+    <!--
+    Loading state
+-->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
+    <!--
+    Feedbacks container
+-->
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed && feedbackList.length; else noFeedbacksContainer">
+        <ng-container *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer">
             <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
                 <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
                     Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
@@ -26,16 +32,25 @@
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
-            <div *ngIf="!feedbackList || feedbackList.length == 0">
-                <dl class="buildoutput dl-horizontal" [hidden]="!buildLogs || buildLogs.length == 0">
-                    <ng-container *ngFor="let logEntry of buildLogs">
-                        <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
-                        <dd [innerHtml]="logEntry.log | safeHtml"></dd>
-                    </ng-container>
-                </dl>
-            </div>
+            <div *ngIf="!feedbackList || feedbackList.length == 0"></div>
         </ng-container>
     </ng-template>
+    <!--
+    Build logs container
+-->
+    <ng-template #buildLogsContainer>
+        <ng-container *ngIf="buildLogs && buildLogs.length; else noFeedbacksContainer">
+            <dl class="buildoutput dl-horizontal">
+                <ng-container *ngFor="let logEntry of buildLogs">
+                    <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
+                    <dd [innerHtml]="logEntry.log | safeHtml"></dd>
+                </ng-container>
+            </dl>
+        </ng-container>
+    </ng-template>
+    <!--
+    No content fallback
+-->
     <ng-template #noFeedbacksContainer>
         <pre jhiTranslate="artemisApp.result.noResultDetails">No result details available</pre>
     </ng-template>
