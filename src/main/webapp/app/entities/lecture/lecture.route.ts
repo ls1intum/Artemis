@@ -31,7 +31,7 @@ export const lectureRoute: Routes = [
         path: 'course/:courseId/lecture',
         component: LectureComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -43,7 +43,7 @@ export const lectureRoute: Routes = [
             lecture: LectureResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -55,7 +55,7 @@ export const lectureRoute: Routes = [
             lecture: LectureResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.lecture.attachments.title',
         },
         canActivate: [UserRouteAccessService],
@@ -67,7 +67,7 @@ export const lectureRoute: Routes = [
             lecture: LectureResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -79,7 +79,7 @@ export const lectureRoute: Routes = [
             lecture: LectureResolve,
         },
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
