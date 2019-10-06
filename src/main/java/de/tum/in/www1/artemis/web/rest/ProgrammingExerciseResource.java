@@ -343,6 +343,8 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseService.importRepositories(template, imported);
         try {
+            // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
+            // an import as the source exercise might still have this trigger.
             programmingExerciseService.importBuildPlans(template, imported);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
         }

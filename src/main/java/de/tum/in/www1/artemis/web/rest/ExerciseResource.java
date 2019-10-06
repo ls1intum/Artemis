@@ -68,6 +68,8 @@ public class ExerciseResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
+    private final FileUploadSubmissionService fileUploadSubmissionService;
+
     private final ResultService resultService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
@@ -90,6 +92,7 @@ public class ExerciseResource {
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
+        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
     }
@@ -184,7 +187,7 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);

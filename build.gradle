@@ -32,7 +32,6 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-//    id "org.liquibase.gradle"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
     id "com.diffplug.gradle.spotless" version "3.24.3"
 }
@@ -103,7 +102,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks "bootRun"
 
 group = "de.tum.in.www1.artemis"
-version = "3.7.2"
+version = "3.8.0"
 description = "Interactive Learning with Individual Feedback"
 
 springBoot {
@@ -178,18 +177,16 @@ dependencies {
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
-    // Use ", version: jhipster_dependencies_version, changing: true" if you want
-    // to use a SNAPSHOT release instead of a stable release
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.2.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.3.0"
     implementation "net.logstash.logback:logstash-logback-encoder:6.2"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.9.9"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.9"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.9.9"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.9.9"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.9.9"
-    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.9.9"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.0"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.0"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.0"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.0"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.0"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.1"
@@ -202,9 +199,6 @@ dependencies {
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.liquibase:liquibase-core"
-//    liquibaseRuntime "org.liquibase:liquibase-core"
-//    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
-//    liquibaseRuntime sourceSets.main.implementationClasspath
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"
     implementation "org.springframework.boot:spring-boot-starter-logging"
@@ -220,7 +214,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 
     implementation "org.springframework.ldap:spring-ldap-core"
-    implementation "org.springframework.data:spring-data-ldap"
+    implementation "org.springframework.data:spring-data-ldap:2.2.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-config"
     implementation "org.springframework.security:spring-security-data"
@@ -234,7 +228,6 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators"
     implementation "mysql:mysql-connector-java"
-//    liquibaseRuntime "mysql:mysql-connector-java"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.0"
@@ -258,7 +251,8 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.11.0'
     testRuntime 'com.tngtech.archunit:archunit-junit5-engine:0.11.0'
-    testImplementation "org.mockito:mockito-core:3.0.0"
+    testImplementation "org.mockito:mockito-core:3.1.0"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.1.0"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2"
     testImplementation "org.awaitility:awaitility:4.0.1"

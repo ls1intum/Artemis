@@ -12,11 +12,20 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { exampleTextSubmissionRoute } from 'app/example-text-submission/example-text-submission.route';
 import { ExampleTextSubmissionComponent } from 'app/example-text-submission/example-text-submission.component';
 import { ArtemisTextAssessmentModule } from 'app/text-assessment';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArtemisTextAssessmentModule],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisTextAssessmentModule,
+        ArtemisAssessmentSharedModule,
+    ],
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],

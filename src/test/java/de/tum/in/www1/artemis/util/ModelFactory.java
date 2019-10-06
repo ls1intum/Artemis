@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.Sets;
 
@@ -51,6 +48,7 @@ public class ModelFactory {
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setCategories(new HashSet<>());
+        exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
     }
 
@@ -135,7 +133,22 @@ public class ModelFactory {
         course.setMaxComplaints(5);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
+        course.setPresentationScore(2);
         return course;
+    }
+
+    public static List<Feedback> generateFeedback() {
+        List<Feedback> feedbacks = new ArrayList<>();
+        Feedback positiveFeedback = new Feedback();
+        positiveFeedback.setCredits(2D);
+        positiveFeedback.setReference("theory");
+        feedbacks.add(positiveFeedback);
+        Feedback negativeFeedback = new Feedback();
+        negativeFeedback.setCredits(-1D);
+        negativeFeedback.setDetailText("Bad solution");
+        negativeFeedback.setReference("practice");
+        feedbacks.add(negativeFeedback);
+        return feedbacks;
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
