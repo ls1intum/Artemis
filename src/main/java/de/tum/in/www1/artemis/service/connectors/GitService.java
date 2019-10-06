@@ -398,11 +398,11 @@ public class GitService {
      * Stager Task #3: Filter late submissions Filter all commits after exercise due date
      *
      * @param repository Local Repository Object.
-     * @param participation   ProgrammingExerciseStudentParticipation associated with this repo.
+     * @param lastValidSubmission The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
     @Transactional(readOnly = true)
-    public void filterLateSubmissions(Repository repository, ProgrammingExerciseStudentParticipation participation, ZonedDateTime filterLateSubmissionsDate) {
+    public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
             // No date set in client and exercise has no due date
             return;
@@ -410,18 +410,16 @@ public class GitService {
 
         try {
             Git git = new Git(repository);
-            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream().filter(s -> s.getSubmissionDate().isBefore(filterLateSubmissionsDate))
-                    .sorted(Comparator.comparing(Submission::getSubmissionDate).reversed()).findFirst();
 
             String commitHash;
 
             if (lastValidSubmission.isPresent()) {
-                log.debug("Last valid submission for participation {} is {}", participation.toString(), lastValidSubmission.get().toString());
+                log.debug("Last valid submission for participation {} is {}", lastValidSubmission.get().getParticipation().getId(), lastValidSubmission.get().toString());
                 ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
                 commitHash = programmingSubmission.getCommitHash();
             }
             else {
-                log.debug("Last valid submission is not present for participation {}", participation.toString());
+                log.debug("Last valid submission is not present for participation {}", lastValidSubmission.get().getParticipation().toString());
                 // Get last commit before deadline
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
@@ -430,11 +428,7 @@ public class GitService {
                 RevCommit latestCommitBeforeDeadline = commits.iterator().next();
                 commitHash = latestCommitBeforeDeadline.getId().getName();
             }
-            log.debug("Last commit hash is {} for participation {}", commitHash, participation);
-            // TODO: get the latest submission before the due date from the database for the user behind the repository
-            // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
-
-            // TODO: in case the above TASKS do not work, use the below code as fallback
+            log.debug("Last commit hash is {} for participation {}", commitHash, lastValidSubmission.get().getParticipation());
 
             git.close();
 

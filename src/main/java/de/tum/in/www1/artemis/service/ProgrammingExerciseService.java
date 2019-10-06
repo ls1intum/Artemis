@@ -1047,7 +1047,11 @@ public class ProgrammingExerciseService {
 
                 if (repositoryExportOptions.isFilterLateSubmissions()) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
-                    gitService.filterLateSubmissions(repo, participation, repositoryExportOptions.getFilterLateSubmissionsDate());
+                    Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
+                            .filter(s -> s.getSubmissionDate().isBefore(repositoryExportOptions.getFilterLateSubmissionsDate()))
+                            .max(Comparator.comparing(Submission::getSubmissionDate));
+
+                    gitService.filterLateSubmissions(repo, lastValidSubmission, repositoryExportOptions.getFilterLateSubmissionsDate());
                 }
 
                 if (repositoryExportOptions.isAddStudentName()) {
