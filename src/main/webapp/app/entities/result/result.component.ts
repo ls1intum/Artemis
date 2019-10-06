@@ -118,7 +118,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     private evaluateTemplateStatus() {
-        if (isModelingOrTextOrFileUpload(this.participation) && this.participation && this.participation.exercise) {
+        if (this.participation && this.participation.exercise && isModelingOrTextOrFileUpload(this.participation)) {
             // Evaluate the template status for modeling, text and file upload exercise.
             this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
         } else {
