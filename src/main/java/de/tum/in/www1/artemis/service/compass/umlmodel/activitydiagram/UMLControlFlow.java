@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -70,4 +72,14 @@ public class UMLControlFlow extends UMLElement {
         return target;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLControlFlow otherControlFlow = (UMLControlFlow) obj;
+
+        return Objects.equals(otherControlFlow.getSource(), source) && Objects.equals(otherControlFlow.getTarget(), target);
+    }
 }
