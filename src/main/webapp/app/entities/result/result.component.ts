@@ -96,15 +96,15 @@ export class ResultComponent implements OnInit, OnChanges {
     evaluate() {
         this.evaluateTemplateStatus();
 
-        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == null || this.showUngradedResults)) {
+        if (this.templateStatus === ResultTemplateStatus.LATE) {
+            this.textColorClass = this.getTextColorClass();
+            this.resultIconClass = this.getResultIconClass();
+        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
             this.resultTooltip = this.buildResultTooltip();
-        } else if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = 'result-gray';
-            this.resultIconClass = this.getResultIconClass();
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
@@ -230,6 +230,9 @@ export class ResultComponent implements OnInit, OnChanges {
      * @return {string} the css class
      */
     getTextColorClass() {
+        if (this.templateStatus === ResultTemplateStatus.LATE) {
+            return 'result--late';
+        }
         const result = this.result!;
         if (result.score == null) {
             if (result.successful) {
