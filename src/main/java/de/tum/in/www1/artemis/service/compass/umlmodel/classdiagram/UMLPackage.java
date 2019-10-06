@@ -76,4 +76,15 @@ public class UMLPackage extends UMLElement {
     public void removeClass(UMLClass umlClass) {
         this.classes.remove(umlClass);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLPackage otherPackage = (UMLPackage) obj;
+
+        return otherPackage.classes.size() == classes.size() && otherPackage.classes.containsAll(classes) && classes.containsAll(otherPackage.classes);
+    }
 }
