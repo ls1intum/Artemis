@@ -1,7 +1,7 @@
 public class LineEndings {
 
     public void someMethod() {
-        // Some logic inside here - Update
+        // Some logic inside here
         someService.call();
     }
 }

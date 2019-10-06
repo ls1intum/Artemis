@@ -42,6 +42,15 @@ public class FileServiceTest {
         }
     }
 
+    private void writeFile(String destinationPath, byte[] content) {
+        try {
+            FileUtils.writeByteArrayToFile(new File("./exportTest/" + destinationPath), content);
+        }
+        catch (IOException ex) {
+            fail("Failed while writing test files", ex);
+        }
+    }
+
     @AfterEach
     @Before
     private void deleteFiles() throws IOException {
@@ -52,7 +61,7 @@ public class FileServiceTest {
     public void normalizeFileEndingsUnix_noChange() throws IOException {
         copyFile("LineEndingsUnix.java", "LineEndingsUnix.java");
         int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsUnix.java")).length;
-        assertThat(size).isEqualTo(128);
+        assertThat(size).isEqualTo(129);
     }
 
     @Test
@@ -60,22 +69,36 @@ public class FileServiceTest {
         copyFile("LineEndingsUnix.java", "LineEndingsUnix.java");
         fileService.normalizeLineEndings("./exportTest/LineEndingsUnix.java");
         int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsUnix.java")).length;
-        assertThat(size).isEqualTo(128);
+        assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeFileEndingsWindows_noChange() throws IOException {
-        copyFile("LineEndingsWindows.java", "LineEndingsWindows.java");
+        // We have to save the array as byte as git will automatically convert CRLF -> LF, therefor we cannot use the version of the file stored in the test data
+        byte[] lineEndingsWindowsArray = new byte[] { 112, 117, 98, 108, 105, 99, 32, 99, 108, 97, 115, 115, 32, 76, 105, 110, 101, 69, 110, 100, 105, 110, 103, 115, 32, 123, 13,
+                10, 13, 10, 32, 32, 32, 32, 112, 117, 98, 108, 105, 99, 32, 118, 111, 105, 100, 32, 115, 111, 109, 101, 77, 101, 116, 104, 111, 100, 40, 41, 32, 123, 13, 10, 32,
+                32, 32, 32, 32, 32, 32, 32, 47, 47, 32, 83, 111, 109, 101, 32, 108, 111, 103, 105, 99, 32, 105, 110, 115, 105, 100, 101, 32, 104, 101, 114, 101, 13, 10, 32, 32, 32,
+                32, 32, 32, 32, 32, 115, 111, 109, 101, 83, 101, 114, 118, 105, 99, 101, 46, 99, 97, 108, 108, 40, 41, 59, 13, 10, 32, 32, 32, 32, 125, 13, 10, 125, 13, 10 };
+        System.out.println(lineEndingsWindowsArray.length);
+        writeFile("LineEndingsWindows.java", lineEndingsWindowsArray);
         int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
-        assertThat(size).isEqualTo(134);
+        assertThat(size).isEqualTo(136);
     }
 
     @Test
     public void normalizeFileEndingsWindows_normalized() throws IOException {
-        copyFile("LineEndingsWindows.java", "LineEndingsWindows.java");
-        fileService.normalizeLineEndings("./exportTest/LineEndingsWindows.java");
+        // We have to save the array as byte as git will automatically convert CRLF -> LF, therefor we cannot use the version of the file stored in the test data
+        byte[] lineEndingsWindowsArray = new byte[] { 112, 117, 98, 108, 105, 99, 32, 99, 108, 97, 115, 115, 32, 76, 105, 110, 101, 69, 110, 100, 105, 110, 103, 115, 32, 123, 13,
+                10, 13, 10, 32, 32, 32, 32, 112, 117, 98, 108, 105, 99, 32, 118, 111, 105, 100, 32, 115, 111, 109, 101, 77, 101, 116, 104, 111, 100, 40, 41, 32, 123, 13, 10, 32,
+                32, 32, 32, 32, 32, 32, 32, 47, 47, 32, 83, 111, 109, 101, 32, 108, 111, 103, 105, 99, 32, 105, 110, 115, 105, 100, 101, 32, 104, 101, 114, 101, 13, 10, 32, 32, 32,
+                32, 32, 32, 32, 32, 115, 111, 109, 101, 83, 101, 114, 118, 105, 99, 101, 46, 99, 97, 108, 108, 40, 41, 59, 13, 10, 32, 32, 32, 32, 125, 13, 10, 125, 13, 10 };
+        writeFile("LineEndingsWindows.java", lineEndingsWindowsArray);
         int size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
-        assertThat(size).isEqualTo(128);
+        assertThat(size).isEqualTo(136);
+
+        fileService.normalizeLineEndings("./exportTest/LineEndingsWindows.java");
+        size = FileUtils.readFileToByteArray(new File("./exportTest/LineEndingsWindows.java")).length;
+        assertThat(size).isEqualTo(129);
     }
 
     @Test
