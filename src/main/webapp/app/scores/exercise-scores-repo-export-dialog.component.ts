@@ -9,6 +9,7 @@ import { Moment } from 'moment';
 import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
+import { WindowRef } from 'app/core/websocket/window.service';
 
 export type RepositoryExportOptions = {
     exportAllStudents: boolean;
@@ -30,7 +31,7 @@ export class ExerciseScoresRepoExportComponent {
     studentIdList: string;
     repositoryExportOptions: RepositoryExportOptions;
 
-    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
+    constructor(private $window: WindowRef, private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.exportInProgress = false;
         this.repositoryExportOptions = {
             exportAllStudents: false,
@@ -56,7 +57,7 @@ export class ExerciseScoresRepoExportComponent {
                 this.exportInProgress = false;
                 if (response.body) {
                     const zipFile = new Blob([response.body], { type: 'application/zip' });
-                    const url = window.URL.createObjectURL(zipFile);
+                    const url = this.$window.nativeWindow.URL.createObjectURL(zipFile);
                     const link = document.createElement('a');
                     link.setAttribute('href', url);
                     link.setAttribute('download', response.headers.get('filename')!);
