@@ -297,7 +297,7 @@ public class Result implements Serializable {
 
     /**
      * A result is rated if:
-     * - the due date has not passed OR
+     * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
      * @param exerciseDueDate date after which no normal submission is considered rated.
