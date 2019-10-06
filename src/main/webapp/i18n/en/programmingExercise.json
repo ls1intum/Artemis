@@ -133,6 +133,9 @@
                     "doImport": "Import"
                 }
             }
+        },
+        "error": {
+            "noparticipations": "No existing user was specified or no submission exists."
         }
     }
 }

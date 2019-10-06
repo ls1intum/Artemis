@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -324,7 +324,12 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+
+        if (!Optional.ofNullable(exercise).isPresent() || !(exercise instanceof ProgrammingExercise)) {
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
+            return badRequest();
+        }
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
@@ -333,23 +338,32 @@ public class ExerciseResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(exercise.getDueDate());
         }
 
-        File zipFile;
-        if (repositoryExportOptions.isExportAllStudents()) {
-            zipFile = programmingExerciseService.exportAllStudentRepositories(exerciseId, repositoryExportOptions);
-        }
-        else {
+        List<String> studentList = new ArrayList<>();
+        if (!repositoryExportOptions.isExportAllStudents()) {
             studentIds = studentIds.replaceAll(" ", "");
-            List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-            if (studentList.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
-                        .build();
-            }
-
-            zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, studentList, repositoryExportOptions);
+            studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         }
+
+        // Select the participations that should be exported
+        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
+        for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+            ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getStudent() != null
+                    && studentList.contains(studentParticipation.getStudent().getLogin()))) {
+                exportedStudentParticipations.add(programmingStudentParticipation);
+            }
+        }
+
+        if (exportedStudentParticipations.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .body(null);
+        }
+
+        File zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
-                    .build();
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 

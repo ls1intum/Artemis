@@ -1059,55 +1059,30 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Get participations of coding exercises of all students packed together in one zip file.
-     *
-     * @param exerciseId the id of the exercise entity
-     * @param repositoryExportOptions the options that should be used for the export
-     * @return a zip file containing all requested participations
-     */
-    public java.io.File exportAllStudentRepositories(Long exerciseId, RepositoryExportOptionsDTO repositoryExportOptions) {
-        return exportStudentRepositoriesHelper(exerciseId, null, repositoryExportOptions);
-    }
-
-    /**
      * Get participations of coding exercises of a requested list of students packed together in one zip file.
      *
      * @param exerciseId the id of the exercise entity
-     * @param studentIds TUM Student-Login ID of requested students
+     * @param participations participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    public java.io.File exportStudentRepositories(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
-        return exportStudentRepositoriesHelper(exerciseId, studentIds, repositoryExportOptions);
-    }
-
     @Transactional(readOnly = true)
-    public java.io.File exportStudentRepositoriesHelper(Long exerciseId, List<String> studentIds, RepositoryExportOptionsDTO repositoryExportOptions) {
+    public java.io.File exportStudentRepositories(Long exerciseId, List<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions) {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
 
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;
-        if (!Optional.ofNullable(exercise).isPresent() || !(exercise instanceof ProgrammingExercise)) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return null;
-        }
-        for (StudentParticipation participation : exercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
             try {
-                if (!repositoryExportOptions.isExportAllStudents() && (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
-                        || !studentIds.contains(studentParticipation.getStudent().getLogin()))) {
-                    // participation is not relevant for zip archive.
-                    continue;
-                }
-
-                Repository repo = gitService.getOrCheckoutRepository(studentParticipation, repoDownloadClonePath);
+                Repository repo = gitService.getOrCheckoutRepository(participation, repoDownloadClonePath);
                 gitService.resetToOriginMaster(repo); // start with clean state
 
                 if (repositoryExportOptions.isFilterLateSubmissions()) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
-                    gitService.filterLateSubmissions(repo, studentParticipation, repositoryExportOptions.getFilterLateSubmissionsDate());
+                    gitService.filterLateSubmissions(repo, participation, repositoryExportOptions.getFilterLateSubmissionsDate());
                 }
 
                 if (repositoryExportOptions.isAddStudentName()) {
@@ -1132,10 +1107,10 @@ public class ProgrammingExerciseService {
 
                 // We can always delete the repository as it won't be used by the student (seperate path)
                 log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                gitService.deleteLocalRepository(studentParticipation, repoDownloadClonePath);
+                gitService.deleteLocalRepository(participation, repoDownloadClonePath);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " and allStudents "
+                log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + participations.toString() + " and allStudents "
                         + repositoryExportOptions.isExportAllStudents() + " did not work as expected: " + ex);
             }
         }
