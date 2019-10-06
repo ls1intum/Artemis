@@ -532,6 +532,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
+            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             return resultRepository.save(result);
         } catch (Exception e) {
             log.error("Error when getting build result: " + e.getMessage());

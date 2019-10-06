@@ -193,7 +193,7 @@ public class ResultServiceIntegrationTest {
         programmingExercise.setDueDate(dueDate);
         programmingExerciseRepository.save(programmingExercise);
 
-        resultService.setProgrammingExerciseResultRated(result);
+        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
         assertThat(result.isRated() == shouldBeRated).isTrue();
     }
 

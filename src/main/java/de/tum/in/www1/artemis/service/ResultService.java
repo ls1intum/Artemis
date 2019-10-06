@@ -181,26 +181,9 @@ public class ResultService {
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            setProgrammingExerciseResultRated(result);
             resultRepository.save(result);
         }
         return Optional.ofNullable(result);
-    }
-
-    /**
-     * A result is rated if:
-     * - the due date has not passed OR
-     * - no due date is set OR
-     * - the submission type is INSTRUCTOR / TEST
-     *
-     * @param result the rest for which to set the rated attribute (mutates the original object!)
-     */
-    public void setProgrammingExerciseResultRated(Result result) {
-        ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) result.getParticipation();
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) result.getSubmission();
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        // If the buildAndTestAfterDueDate is not set, all results before the due date passes are rated (inverse).
-        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
     }
 
     /**

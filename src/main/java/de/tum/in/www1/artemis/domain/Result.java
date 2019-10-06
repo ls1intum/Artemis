@@ -296,9 +296,10 @@ public class Result implements Serializable {
     }
 
     /**
-     * Sets the result to rated if:
-     * - It was created by an instructor (SubmissionType)
-     * - OR if the submissionDate is <= the exerciseDueDate.
+     * A result is rated if:
+     * - the due date has not passed OR
+     * - no due date is set OR
+     * - the submission type is INSTRUCTOR / TEST
      * @param exerciseDueDate date after which no normal submission is considered rated.
      * @param submission to which the result belongs.
      */
