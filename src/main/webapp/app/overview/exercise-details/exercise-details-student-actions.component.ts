@@ -143,6 +143,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             );
     }
 
+    /**
+     * Wrapper for using participationStatus() in the template
+     *
+     * @return {ParticipationStatus}
+     */
+    participationStatusWrapper(): ParticipationStatus {
+        return participationStatus(this.exercise);
+    }
+
     startPractice() {
         return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
     }
