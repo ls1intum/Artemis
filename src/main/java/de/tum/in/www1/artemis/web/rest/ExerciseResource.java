@@ -79,7 +79,8 @@ public class ExerciseResource {
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
-            ResultService resultService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService) {
+            ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;

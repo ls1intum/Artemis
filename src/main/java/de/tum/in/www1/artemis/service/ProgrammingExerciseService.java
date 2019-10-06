@@ -102,11 +102,10 @@ public class ProgrammingExerciseService {
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SubmissionRepository submissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, CourseRepository courseRepository,
-            ParticipationService participationService, ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService,
-            ResourceLoader resourceLoader, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, @Lazy ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
