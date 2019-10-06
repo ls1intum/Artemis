@@ -388,6 +388,13 @@ public class ExerciseService {
         return new java.io.File(finalZipFilePath.toString());
     }
 
+    /**
+     * Create a zipfile of the given paths and save it in the zipFilePath
+     *
+     * @param zipFilePath path where the zipfile should be saved
+     * @param paths the paths that should be zipped
+     * @throws IOException
+     */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
@@ -410,6 +417,12 @@ public class ExerciseService {
 
     private static final TimeUnit UNITS = TimeUnit.SECONDS; // your time unit
 
+    /**
+     * Schedule the deletion of the given path with a given delay
+     *
+     * @param path The path that should be deleted
+     * @param delay The delay after which the path should be deleted
+     */
     public void scheduleForDeletion(Path path, long delay) {
         ScheduledFuture future = executor.schedule(() -> {
             try {
