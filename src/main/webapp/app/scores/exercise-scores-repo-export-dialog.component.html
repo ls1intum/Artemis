@@ -55,6 +55,7 @@
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="!studentIdList && !this.repositoryExportOptions.exportAllStudents && !exportInProgress" class="btn btn-default">
+            <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon icon="circle-notch" spin="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.exportRepos">Export</span>
         </button>
     </div>
