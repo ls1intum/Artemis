@@ -63,9 +63,12 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final FileService fileService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+            FileService fileService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -76,6 +79,7 @@ public class ExerciseService {
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
+        this.fileService = fileService;
     }
 
     /**
@@ -320,83 +324,6 @@ public class ExerciseService {
     }
 
     /**
-     * Get participations of coding exercises of a requested list of students packed together in one zip file.
-     *
-     * @param exerciseId the id of the exercise entity
-     * @param studentIds TUM Student-Login ID of requested students
-     * @return a zip file containing all requested participations
-     */
-    @Transactional(readOnly = true)
-    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds) {
-        Exercise exercise = findOneLoadParticipations(exerciseId);
-        List<Path> zippedRepoFiles = new ArrayList<>();
-        Path zipFilePath = null;
-        if (!Optional.ofNullable(exercise).isPresent() || !(exercise instanceof ProgrammingExercise)) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return null;
-        }
-        for (StudentParticipation participation : exercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            try {
-                if (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
-                        || !studentIds.contains(studentParticipation.getStudent().getLogin())) {
-                    // participation is not relevant for zip archive.
-                    continue;
-                }
-
-                boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(studentParticipation.getRepositoryUrlAsUrl());
-
-                Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
-                gitService.get().resetToOriginMaster(repo); // start with clean state
-                gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
-                programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
-                gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
-                // TODO: unify encoding (UTF8) and line endings (unix)
-                log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                Path zippedRepoFile = gitService.get().zipRepository(repo);
-                zippedRepoFiles.add(zippedRepoFile);
-                boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                if (!allowInlineEditor || !repoAlreadyExists) {
-                    // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
-                    // --> we are free to delete
-                    log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                    gitService.get().deleteLocalRepository(studentParticipation);
-                }
-                else {
-                    // finish with clean state
-                    gitService.get().checkoutBranch(repo);
-                    gitService.get().deleteLocalBranch(repo, "stager");
-                    gitService.get().resetToOriginMaster(repo);
-                }
-            }
-            catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
-            }
-        }
-        if (exercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
-            log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
-            return null;
-        }
-        try {
-            // create a large zip file with all zipped repos and provide it for download
-            log.debug("Create zip file for all repositories");
-            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
-            createZipFile(zipFilePath, zippedRepoFiles);
-            scheduleForDeletion(zipFilePath, 10);
-
-            log.debug("Delete all temporary zip repo files");
-            // delete the temporary zipped repo files
-            for (Path zippedRepoFile : zippedRepoFiles) {
-                Files.delete(zippedRepoFile);
-            }
-        }
-        catch (IOException ex) {
-            log.error("Archiving and deleting the local repositories did not work as expected");
-        }
-        return new java.io.File(zipFilePath.toString());
-    }
-
-    /**
      * Archives all all participations repositories for a given exerciseID,
      * if the exercise is a ProgrammingExercise
      *
@@ -461,7 +388,14 @@ public class ExerciseService {
         return new java.io.File(finalZipFilePath.toString());
     }
 
-    private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+    /**
+     * Create a zipfile of the given paths and save it in the zipFilePath
+     *
+     * @param zipFilePath path where the zipfile should be saved
+     * @param paths the paths that should be zipped
+     * @throws IOException if an error occured while zipping
+     */
+    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(path.toString());
@@ -483,7 +417,13 @@ public class ExerciseService {
 
     private static final TimeUnit UNITS = TimeUnit.SECONDS; // your time unit
 
-    private void scheduleForDeletion(Path path, long delay) {
+    /**
+     * Schedule the deletion of the given path with a given delay
+     *
+     * @param path The path that should be deleted
+     * @param delay The delay after which the path should be deleted
+     */
+    public void scheduleForDeletion(Path path, long delay) {
         ScheduledFuture future = executor.schedule(() -> {
             try {
                 log.info("Delete file " + path);
