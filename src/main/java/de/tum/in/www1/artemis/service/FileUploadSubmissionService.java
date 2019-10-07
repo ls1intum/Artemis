@@ -157,7 +157,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
         fileUploadSubmissionRepository.save(fileUploadSubmission);
 
@@ -248,27 +247,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission);
-        return fileUploadSubmission;
-    }
-
-    /**
-     * The same as `save()`, but without participation, is used by example submission, which aren't linked to any participation
-     *
-     * @param fileUploadSubmission the submission to notifyCompass
-     * @return the fileUploadSubmission entity
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission) {
-        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
-        fileUploadSubmission.setType(SubmissionType.MANUAL);
-
-        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (fileUploadSubmission.getResult() != null && fileUploadSubmission.getResult().getSubmission() == null) {
-            fileUploadSubmission.getResult().setSubmission(fileUploadSubmission);
-        }
-
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-
         return fileUploadSubmission;
     }
 

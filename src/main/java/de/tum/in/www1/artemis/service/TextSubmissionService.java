@@ -94,8 +94,6 @@ public class TextSubmissionService extends SubmissionService {
 
         participation.addSubmissions(textSubmission);
 
-        User user = participation.getStudent();
-
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
 
