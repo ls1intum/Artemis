@@ -23,7 +23,7 @@
                     <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span></dt>
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
                     </dd>
