@@ -21,6 +21,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.slf4j.Logger;
@@ -515,15 +516,17 @@ public class FileService {
      * @param startPath          the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
-    public void normalizeLineEndingsRecursive(String startPath) throws IOException {
+    public void normalizeLineEndingsDirectory(String startPath) throws IOException {
         log.debug("Normalizing file endings in directory {}", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
         }
 
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
         // Get all files in directory
-        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
             normalizeLineEndings(file.getAbsolutePath());
@@ -556,15 +559,17 @@ public class FileService {
      * @param startPath          the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
-    public void convertToUTF8Recursive(String startPath) throws IOException {
+    public void convertToUTF8Directory(String startPath) throws IOException {
         log.debug("Converting files in directory {} to UTF-8", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
         }
 
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
         // Get all files in directory
-        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
             convertToUTF8(file.getAbsolutePath());

@@ -1081,10 +1081,10 @@ public class ProgrammingExerciseService {
                     gitService.squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 }
 
-                if (repositoryExportOptions.isFilterLateSubmissions()) {
+                if (repositoryExportOptions.isNormalizeCodeStyle()) {
                     log.debug("Normalizing code style for participation {}", participation.toString());
-                    fileService.normalizeLineEndingsRecursive(repo.getLocalPath().toString());
-                    fileService.convertToUTF8Recursive(repo.getLocalPath().toString());
+                    fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
+                    fileService.convertToUTF8Directory(repo.getLocalPath().toString());
                 }
 
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
