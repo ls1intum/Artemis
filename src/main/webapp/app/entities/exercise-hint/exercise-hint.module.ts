@@ -4,10 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared';
 import {
     ExerciseHintComponent,
-    ExerciseHintDeleteDialogComponent,
-    ExerciseHintDeletePopupComponent,
     ExerciseHintDetailComponent,
-    exerciseHintPopupRoute,
     exerciseHintRoute,
     ExerciseHintStudentComponent,
     ExerciseHintStudentDialogComponent,
@@ -15,20 +12,12 @@ import {
 } from './';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 
-const ENTITY_STATES = [...exerciseHintRoute, ...exerciseHintPopupRoute];
+const ENTITY_STATES = [...exerciseHintRoute];
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownEditorModule],
-    declarations: [
-        ExerciseHintComponent,
-        ExerciseHintDetailComponent,
-        ExerciseHintUpdateComponent,
-        ExerciseHintDeleteDialogComponent,
-        ExerciseHintDeletePopupComponent,
-        ExerciseHintStudentDialogComponent,
-        ExerciseHintStudentComponent,
-    ],
-    entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintDeleteDialogComponent, ExerciseHintDeletePopupComponent, ExerciseHintStudentDialogComponent],
+    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, ExerciseHintStudentDialogComponent, ExerciseHintStudentComponent],
+    entryComponents: [ExerciseHintComponent, ExerciseHintUpdateComponent, ExerciseHintStudentDialogComponent],
     exports: [ExerciseHintStudentDialogComponent, ExerciseHintStudentComponent],
 })
 export class ArtemisExerciseHintModule {}
