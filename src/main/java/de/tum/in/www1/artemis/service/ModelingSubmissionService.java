@@ -168,18 +168,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            ModelingSubmission modelingSubmission = new ModelingSubmission();
-
-            result.setSubmission(null);
-            modelingSubmission.setResult(result);
-            modelingSubmission.setParticipation(submission.getParticipation());
-            modelingSubmission.setId(submission.getId());
-            modelingSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return modelingSubmission;
-        }).collect(Collectors.toList());
+        return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new ModelingSubmission())).collect(Collectors.toList());
     }
 
     /**

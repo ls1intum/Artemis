@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -60,5 +58,25 @@ abstract class SubmissionService {
                 }
             }
         }
+    }
+
+    /**
+     * Maps abstract Submission type to concrete submission and assigns result.
+     * @param result result that will be assigned to concrete submission
+     * @param concreteSubmission concrete submission that will be mapped from abstract submission
+     * @param <T> concrete submission type
+     * @return concrete submission of type T
+     */
+    public <T extends Submission> T mapAbstractToConcreteSubmission(Result result, T concreteSubmission) {
+        Submission submission = result.getSubmission();
+        result.setSubmission(null);
+        if (concreteSubmission instanceof TextSubmission) {
+            concreteSubmission.setLanguage(submission.getLanguage());
+        }
+        concreteSubmission.setResult(result);
+        concreteSubmission.setParticipation(submission.getParticipation());
+        concreteSubmission.setId(submission.getId());
+        concreteSubmission.setSubmissionDate(submission.getSubmissionDate());
+        return concreteSubmission;
     }
 }

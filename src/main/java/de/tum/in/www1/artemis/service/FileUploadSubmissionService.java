@@ -119,19 +119,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-
-            result.setSubmission(null);
-            fileUploadSubmission.setLanguage(submission.getLanguage());
-            fileUploadSubmission.setResult(result);
-            fileUploadSubmission.setParticipation(submission.getParticipation());
-            fileUploadSubmission.setId(submission.getId());
-            fileUploadSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return fileUploadSubmission;
-        }).collect(Collectors.toList());
+        return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new FileUploadSubmission())).collect(Collectors.toList());
     }
 
     /**

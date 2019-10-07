@@ -183,19 +183,7 @@ public class TextSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
-        return results.stream().map(result -> {
-            Submission submission = result.getSubmission();
-            TextSubmission textSubmission = new TextSubmission();
-
-            result.setSubmission(null);
-            textSubmission.setLanguage(submission.getLanguage());
-            textSubmission.setResult(result);
-            textSubmission.setParticipation(submission.getParticipation());
-            textSubmission.setId(submission.getId());
-            textSubmission.setSubmissionDate(submission.getSubmissionDate());
-
-            return textSubmission;
-        }).collect(Collectors.toList());
+        return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new TextSubmission())).collect(Collectors.toList());
     }
 
     /**
