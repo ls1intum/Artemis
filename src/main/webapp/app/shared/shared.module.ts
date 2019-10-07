@@ -19,7 +19,15 @@ import { PresentationScoreComponent } from 'app/components/exercise/presentation
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, PresentationScoreComponent],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule, DeleteButtonDirective, PresentationScoreComponent],
+    exports: [
+        ArtemisSharedCommonModule,
+        ArtemisSharedPipesModule,
+        HasAnyAuthorityDirective,
+        SecuredImageComponent,
+        TranslateModule,
+        DeleteButtonDirective,
+        PresentationScoreComponent,
+    ],
 })
 export class ArtemisSharedModule {
     static forRoot() {
