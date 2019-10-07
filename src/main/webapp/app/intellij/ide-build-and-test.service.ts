@@ -9,6 +9,10 @@ import { CodeEditorBuildLogService, DomainType } from 'app/code-editor';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject } from 'rxjs';
 
+/**
+ * Notifies the IDE about a result, that is currently building and forwards incoming test results.
+ *
+ */
 @Injectable({
     providedIn: 'root',
 })
@@ -22,6 +26,11 @@ export class IdeBuildAndTestService {
         private buildLogService: CodeEditorBuildLogService,
     ) {}
 
+    /**
+     * Trigger a new build for a participation for an exercise and notify the IDE
+     *
+     * @param exercise The exercise for which a build should get triggered
+     */
     buildAndTestExercise(exercise: ProgrammingExercise) {
         const participationId = exercise.studentParticipations[0].id;
         // Trigger a build for the current participation
@@ -30,6 +39,11 @@ export class IdeBuildAndTestService {
         this.listenOnBuildOutputAndForwardChanges(exercise);
     }
 
+    /**
+     * Listens on any new builds for the user's participation on the websocket and forwards incoming results to the IDE
+     *
+     * @param exercise The exercise for which build results should get forwarded
+     */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise): Observable<void> {
         const participationId = exercise.studentParticipations[0].id;
         this.buildLogService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
@@ -42,6 +56,7 @@ export class IdeBuildAndTestService {
                 filter(Boolean),
                 map(result => result as Result),
                 tap(result => {
+                    // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
                     if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
                         result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.detailText!));
                         this.javaBridge.onBuildFinished();

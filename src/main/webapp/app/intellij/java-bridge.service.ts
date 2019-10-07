@@ -90,18 +90,36 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
         this.intellijStateSubject.next(this.intellijState);
     }
 
+    /**
+     * Notify the IDE that a new build has started
+     */
     onBuildStarted() {
         this.window.nativeWindow.intellij.onBuildStarted();
     }
 
+    /**
+     * Notify the IDE that a build finished and all results have been sent
+     */
     onBuildFinished() {
         this.window.nativeWindow.intellij.onBuildFinished();
     }
 
+    /**
+     * Notify the IDE that a build failed. Alternative to onBuildFinished
+     *
+     * @param message The message containing all compile errors for the current build
+     */
     onBuildFailed(message: string) {
         this.window.nativeWindow.intellij.onBuildFailed(message);
     }
 
+    /**
+     * Notifies the IDE about a completed test (both positive or negative). In the case of an error,
+     * you can also send a message containing some information about why the test failed.
+     *
+     * @param success True if the test was successful, false otherwise
+     * @param message A detail message explaining the test result
+     */
     onTestResult(success: boolean, message: string) {
         this.window.nativeWindow.intellij.onTestResult(success, message);
     }
