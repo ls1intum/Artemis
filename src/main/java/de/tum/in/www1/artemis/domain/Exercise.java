@@ -616,7 +616,7 @@ public abstract class Exercise implements Serializable {
         for (Submission submission : submissions) {
             Result result = submission.getResult();
             if (result != null) {
-                if (result.isRated()) {
+                if (result.isRated() == Boolean.TRUE) {
                     submissionsWithRatedResult.add(submission);
                 }
                 else {
