@@ -581,13 +581,13 @@ public abstract class Exercise implements Serializable {
             // filter sensitive information in submission's result
             if (isStudent && submission != null && submission.getResult() != null) {
                 submission.getResult().filterSensitiveInformation();
+                participation.setResults(Set.of(submission.getResult()));
+                participation.getResults().forEach(Result::filterSensitiveInformation);
             }
 
             // add submission to participation
             if (submission != null) {
                 participation.setSubmissions(Set.of(submission));
-                participation.setResults(Set.of(submission.getResult()));
-                participation.getResults().forEach(Result::filterSensitiveInformation);
             }
 
             // remove inner exercise from participation
