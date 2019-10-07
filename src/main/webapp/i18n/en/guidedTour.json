@@ -23,6 +23,9 @@
         "waitHint": {
             "text": "Please wait until the next step is loaded."
         },
+        "modelingHint": {
+            "text": "Add or edit the UML element to continue with the tour"
+        },
         "videoHint": {
             "text": "While watching the video, follow the steps on your computer side-by-side."
         },

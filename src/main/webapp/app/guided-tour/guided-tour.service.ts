@@ -15,7 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
@@ -303,7 +303,6 @@ export class GuidedTourService {
             }
         } else {
             if (userInteraction === UserInteractionEvent.CLICK) {
-                console.log('click observer disconnect');
                 from(this.observeDomMutations(targetNode, userInteraction))
                     .pipe(take(1))
                     .subscribe((mutations: MutationRecord[]) => {
@@ -312,6 +311,14 @@ export class GuidedTourService {
                         });
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
+                        this.enableNextStepClick();
+                    });
+                });
+            } else if (userInteraction === UserInteractionEvent.MODELING) {
+                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
                 from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
                     mutations.forEach(() => {
                         this.enableNextStepClick();
@@ -327,10 +334,9 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
-        return new Promise(resolve => {
+        return new Promise(() => {
             const observer = new MutationObserver(mutations => {
-                if (userInteraction === UserInteractionEvent.CLICK) {
-                    console.log('click observer disconnect');
+                if (userInteraction === UserInteractionEvent.CLICK || userInteraction === UserInteractionEvent.MODELING) {
                     observer.disconnect();
                     this.enableNextStepClick();
                 } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
@@ -640,7 +646,9 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.shortName === guidedTour.exerciseShortName) {
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) {
+            this.enableTour(guidedTour);
+        } else if (exercise.title === guidedTour.exerciseShortName) {
             this.enableTour(guidedTour);
         }
     }

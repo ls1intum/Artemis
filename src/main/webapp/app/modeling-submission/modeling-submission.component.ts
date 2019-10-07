@@ -20,6 +20,8 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { filter } from 'rxjs/operators';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -86,6 +88,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private translateService: TranslateService,
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
+        private guidedTourService: GuidedTourService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -144,6 +147,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;
+                        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour);
                     },
                     error => {
                         if (error.status === 403) {

@@ -17,7 +17,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.list-group-item.file-item:not(.node-selected)',
-            eventListenerSelector: '.ace_text-layer',
+            clickEventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.exerciseFile.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.exerciseFile.content',
             highlightPadding: 5,
@@ -26,7 +26,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.editor-center',
-            eventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.content',
             highlightPadding: 5,
@@ -43,7 +42,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '#submit_button',
-            eventListenerSelector: 'jhi-result',
+            clickEventListenerSelector: 'jhi-result',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.content',
             hintTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.hint',
@@ -61,7 +60,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result .text-success',
-            eventListenerSelector: 'body',
+            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
@@ -71,7 +70,7 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result .text-danger .result',
-            eventListenerSelector: 'body',
+            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
@@ -101,7 +100,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
-            eventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,

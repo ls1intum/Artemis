@@ -258,6 +258,21 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return false;
     }
 
+    /**
+     * Check if the current tour step has a top orientation
+     * @return true if the current tour step orientation is bottom, otherwise false
+     */
+    public isTop(): boolean {
+        if (this.currentTourStep && this.currentTourStep.orientation) {
+            return (
+                this.currentTourStep.orientation === Orientation.TOP ||
+                this.currentTourStep.orientation === Orientation.TOPLEFT ||
+                this.currentTourStep.orientation === Orientation.TOPRIGHT
+            );
+        }
+        return false;
+    }
+
     /* ==========     Tour step calculation methods     ========== */
 
     /**
@@ -314,7 +329,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
+            topPosition = this.isTop()
+                ? this.tourStep.nativeElement.getBoundingClientRect().top - 15
+                : window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
         }
         return topPosition;
     }
@@ -411,11 +428,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Get Element for the current tour step event listener selector
      * @return selected element for the event listener or null
      */
-    public getEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.eventListenerSelector) {
+    public getClickEventListenerSelector(): HTMLElement | null {
+        if (!this.currentTourStep || !this.currentTourStep.clickEventListenerSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.eventListenerSelector);
+        return document.querySelector(this.currentTourStep.clickEventListenerSelector);
     }
 
     /**
@@ -503,9 +520,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
             if (this.currentTourStep && this.currentTourStep.userInteractionEvent && !isResizeOrScroll) {
-                const eventListenerElement = this.getEventListenerSelector();
-                if (eventListenerElement) {
-                    selectedElement = eventListenerElement;
+                const clickEventListenerElement = this.getClickEventListenerSelector();
+                if (clickEventListenerElement) {
+                    selectedElement = clickEventListenerElement;
                 }
                 this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
             }

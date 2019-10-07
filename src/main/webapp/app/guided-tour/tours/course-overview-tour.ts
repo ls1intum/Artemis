@@ -77,7 +77,7 @@ export const courseOverviewTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.card.guided-tour',
-            eventListenerSelector: 'body',
+            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.courseOverview.courseClick.headline',
             contentTranslateKey: 'tour.courseOverview.courseClick.content',
             orientation: Orientation.RIGHT,
