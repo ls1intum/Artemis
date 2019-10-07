@@ -58,6 +58,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.submissions" })
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerParticipationsAndSubmissions(@Param("exerciseId") Long exerciseId);
+
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
     List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
 

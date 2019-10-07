@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.GitException;
@@ -73,6 +75,7 @@ public class GitService {
 
     /**
      * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
+     * Saves the local repo in the default path.
      *
      * @param participation Participation the remote repository belongs to.
      * @return the repository if it could be checked out
@@ -81,14 +84,30 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws InterruptedException, GitAPIException {
+        return getOrCheckoutRepository(participation, REPO_CLONE_PATH);
+    }
+
+    /**
+     * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
+     * Saves the local repo in the default path.
+     *
+     * @param participation Participation the remote repository belongs to.
+     * @param targetPath path where the repo is located on disk
+     * @return the repository if it could be checked out
+     * @throws IOException if the repository could not be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
+     */
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl, true);
+        Repository repository = getOrCheckoutRepository(repoUrl, true, targetPath);
         repository.setParticipation(participation);
         return repository;
     }
 
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Saves the repo in the default path
      *
      * @param repoUrl   The remote repository.
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
@@ -97,8 +116,22 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
+        return getOrCheckoutRepository(repoUrl, pullOnGet, REPO_CLONE_PATH);
+    }
 
-        Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     *
+     * @param repoUrl   The remote repository.
+     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param targetPath path where the repo is located on disk
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
+     */
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
+
+        Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
@@ -365,31 +398,41 @@ public class GitService {
      * Stager Task #3: Filter late submissions Filter all commits after exercise due date
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param lastValidSubmission The last valid submission from the database or empty, if not found
+     * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
-    public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
-        if (exercise.getDueDate() == null) {
-            // No dates set on exercise
+    @Transactional(readOnly = true)
+    public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
+        if (filterLateSubmissionsDate == null) {
+            // No date set in client and exercise has no due date
             return;
         }
 
         try {
             Git git = new Git(repository);
 
-            // TODO: get the latest submission before the due date from the database for the user behind the repository
-            // TODO: get the commit hash of this submission and use this commit hash to determine the `latestCommitBeforeDeadline`
+            String commitHash;
 
-            // TODO: in case the above TASKS do not work, use the below code as fallback
-            // Get last commit before deadline
-            Date since = Date.from(Instant.EPOCH);
-            Date until = Date.from(exercise.getDueDate().toInstant());
-            RevFilter between = CommitTimeRevFilter.between(since, until);
-            Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-            RevCommit latestCommitBeforeDeadline = commits.iterator().next();
+            if (lastValidSubmission.isPresent()) {
+                log.debug("Last valid submission for participation {} is {}", lastValidSubmission.get().getParticipation().getId(), lastValidSubmission.get().toString());
+                ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
+                commitHash = programmingSubmission.getCommitHash();
+            }
+            else {
+                log.debug("Last valid submission is not present for participation");
+                // Get last commit before deadline
+                Date since = Date.from(Instant.EPOCH);
+                Date until = Date.from(filterLateSubmissionsDate.toInstant());
+                RevFilter between = CommitTimeRevFilter.between(since, until);
+                Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
+                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
+                commitHash = latestCommitBeforeDeadline.getId().getName();
+            }
+            log.debug("Last commit hash is {}", commitHash);
 
             git.close();
 
-            reset(repository, latestCommitBeforeDeadline.getId().getName());
+            reset(repository, commitHash);
 
         }
         catch (GitAPIException ex) {
@@ -588,13 +631,24 @@ public class GitService {
     }
 
     /**
-     * Deletes a local repository folder for a Participation.
+     * Deletes a local repository folder for a Participation (expected in default path).
      *
      * @param participation Participation Object.
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
-        Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
+        deleteLocalRepository(participation, REPO_CLONE_PATH);
+    }
+
+    /**
+     * Deletes a local repository folder for a Participation.
+     *
+     * @param participation Participation Object.
+     * @param targetPath path where the repo is located on disk
+     * @throws IOException if the deletion of the repository failed.
+     */
+    public void deleteLocalRepository(ProgrammingExerciseParticipation participation, String targetPath) throws IOException {
+        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
@@ -603,13 +657,24 @@ public class GitService {
     }
 
     /**
-     * Deletes a local repository folder for a repoUrl.
+     * Deletes a local repository folder for a repoUrl (expected in default path).
      *
      * @param repoUrl url of the repository.
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(URL repoUrl) {
-        Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+        deleteLocalRepository(repoUrl, REPO_CLONE_PATH);
+    }
+
+    /**
+     * Deletes a local repository folder for a repoUrl.
+     *
+     * @param repoUrl url of the repository.
+     * @param targetPath path where the repo is located on disk
+     * @throws IOException if the deletion of the repository failed.
+     */
+    public void deleteLocalRepository(URL repoUrl, String targetPath) {
+        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             try {
@@ -623,13 +688,25 @@ public class GitService {
     }
 
     /**
-     * Zip the content of a git repository.
+     * Zip the content of a git repository (expected in default path).
      *
      * @param repo Local Repository Object.
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */
     public Path zipRepository(Repository repo) throws IOException {
+        return zipRepository(repo, REPO_CLONE_PATH);
+    }
+
+    /**
+     * Zip the content of a git repository.
+     *
+     * @param repo Local Repository Object.
+     * @param targetPath path where the repo is located on disk
+     * @throws IOException if the zipping process failed.
+     * @return path to zip file.
+     */
+    public Path zipRepository(Repository repo, String targetPath) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
@@ -637,8 +714,8 @@ public class GitService {
         String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
 
         Path repoPath = repo.getLocalPath();
-        Path zipFilePath = Paths.get(REPO_CLONE_PATH, "zippedRepos", zipRepoName);
-        Files.createDirectories(Paths.get(REPO_CLONE_PATH, "zippedRepos"));
+        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
+        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             Files.walk(repoPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());

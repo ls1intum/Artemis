@@ -14,7 +14,6 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new TextLinkTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.hint',
             externalUrl: 'https://www.oracle.com/technetwork/java/javase/downloads/index.html',
             externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.linkText',
             linkType: LinkType.LINK,
