@@ -11,6 +11,7 @@ import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { RepositoryExportOptions } from 'app/scores';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -55,8 +56,8 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    exportRepos(exerciseId: number, students: string[]): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${students}`, {
+    exportRepos(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/participations/${students}`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });

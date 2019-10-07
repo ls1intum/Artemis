@@ -4,6 +4,7 @@
 
 artemis:
     repo-clone-path: ./repos/
+    repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
     ldap:
         url: <url>
