@@ -7,7 +7,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course/course.model';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
@@ -40,6 +40,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly ResultTemplateStatus = ResultTemplateStatus;
 
     @Input() course: Course;
+    @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -90,6 +91,9 @@ export class ResultComponent implements OnInit, OnChanges {
             // Make sure result and participation are connected.
             this.result.participation = this.participation;
         }
+        if (this.participation && !this.participation.exercise && this.exercise) {
+            this.participation.exercise = this.exercise;
+        }
         this.evaluate();
     }
 
@@ -112,7 +116,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation || changes.result || changes.participation) {
+        if (changes.participation || changes.result) {
             this.init();
         }
     }
