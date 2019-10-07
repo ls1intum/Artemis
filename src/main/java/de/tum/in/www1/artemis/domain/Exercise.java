@@ -588,8 +588,8 @@ public abstract class Exercise implements Serializable {
                 participation.setSubmissions(Set.of(submission));
             }
 
-            // remove unnecessary results from participation
-            participation.setResults(null);
+            // remove sensitive information from participation results
+            participation.getResults().forEach(Result::filterSensitiveInformation);
 
             // remove inner exercise from participation
             participation.setExercise(null);
