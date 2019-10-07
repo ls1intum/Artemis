@@ -20,7 +20,7 @@
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
                     "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
-                    "hint": "Kopiere und füge https://repobruegge.in.tum.de als URL ein."
+                    "hint": "Kopiere und füge https://bitbucket.ase.in.tum.de als URL ein."
                 }
             },
             "exercises": {

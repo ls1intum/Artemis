@@ -16,16 +16,16 @@
                         <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
                     </div>
                     <div class="alert alert-info" *ngIf="authenticationAttempts >= 3 && !captchaRequired" jhiTranslate="home.errors.loginWarning">
-                        Seems like you are having issues signing in :-( Please go to <a href="https://jirabruegge.in.tum.de">JIRA</a> and try to sign in there. After that, try
-                        again here.
+                        Seems like you are having issues signing in :-( Please go to <a href="https://jira.ase.in.tum.de">JIRA</a> and try to sign in there. After that, try again
+                        here.
                     </div>
                     <div class="alert alert-danger" *ngIf="captchaRequired">
                         <div jhiTranslate="home.errors.jiraWaning">
                             <span class="bold">You have entered your password too often incorrectly :-(</span><br />
-                            Please go to <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">JIRA</a>:
-                            <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">https://jirabruegge.in.tum.de/login.jsp</a>. Sign in with your account there and solve
-                            the <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>.<br />
-                            After you have solved the <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>, try again here.
+                            Please go to <a href="https://jira.ase.in.tum.de/login.jsp" target="_blank">JIRA</a>:
+                            <a href="https://jira.ase.in.tum.de/login.jsp" target="_blank">https://jira.ase.in.tum.de/login.jsp</a>. Sign in with your account there and solve the
+                            <a href="https://jira.ase.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>.<br />
+                            After you have solved the <a href="https://jira.ase.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>, try again here.
                         </div>
                     </div>
                 </div>
