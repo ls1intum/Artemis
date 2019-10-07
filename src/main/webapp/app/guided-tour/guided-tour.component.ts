@@ -68,13 +68,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'ArrowLeft': {
-                if (this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
                     this.guidedTourService.backStep();
                 }
                 break;
             }
             case 'Escape': {
-                this.guidedTourService.skipTour();
+                if (this.currentTourStep) {
+                    this.guidedTourService.skipTour();
+                }
                 break;
             }
         }
