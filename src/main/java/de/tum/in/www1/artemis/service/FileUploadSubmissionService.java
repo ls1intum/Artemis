@@ -40,8 +40,6 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final ResultService resultService;
 
-    private final ResultRepository resultRepository;
-
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -53,9 +51,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
             SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
@@ -142,25 +139,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
-     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
-     *
-     * @param submission the submission for which a new result should be created
-     * @return the newly created result
-     */
-    public Result setNewResult(FileUploadSubmission submission) {
-        Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
-        if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
-        }
-        resultRepository.save(result);
-        fileUploadSubmissionRepository.save(submission);
-        return result;
-    }
-
-    /**
      * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
      *
      * @param fileUploadSubmission the submission that should be saved
@@ -227,7 +205,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     private void lockSubmission(FileUploadSubmission fileUploadSubmission) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
-            result = setNewResult(fileUploadSubmission);
+            result = setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
         }
 
         if (result.getAssessor() == null) {

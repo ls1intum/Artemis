@@ -28,8 +28,6 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ResultService resultService;
 
-    private final ResultRepository resultRepository;
-
     private final CompassService compassService;
 
     private final ParticipationService participationService;
@@ -41,10 +39,9 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
             StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
-        this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -245,7 +242,7 @@ public class ModelingSubmissionService extends SubmissionService {
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = setNewResult(modelingSubmission);
+            result = setNewResult(modelingSubmission, modelingSubmissionRepository);
         }
 
         if (result.getAssessor() == null) {
@@ -286,25 +283,6 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         return modelingSubmission;
-    }
-
-    /**
-     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
-     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
-     *
-     * @param submission the submission for which a new result should be created
-     * @return the newly created result
-     */
-    public Result setNewResult(ModelingSubmission submission) {
-        Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
-        if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
-        }
-        resultRepository.save(result);
-        modelingSubmissionRepository.save(submission);
-        return result;
     }
 
     /**

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -14,10 +16,13 @@ abstract class SubmissionService {
 
     protected AuthorizationCheckService authCheckService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService) {
+    protected ResultRepository resultRepository;
+
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -78,5 +83,24 @@ abstract class SubmissionService {
         concreteSubmission.setId(submission.getId());
         concreteSubmission.setSubmissionDate(submission.getSubmissionDate());
         return concreteSubmission;
+    }
+
+    /**
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
+     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
+     *
+     * @param submission the submission for which a new result should be created
+     * @return the newly created result
+     */
+    public <T extends Submission> Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
+        Result result = new Result();
+        result.setSubmission(submission);
+        submission.setResult(result);
+        if (submission.getParticipation() != null) {
+            submission.getParticipation().addResult(result);
+        }
+        resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
     }
 }
