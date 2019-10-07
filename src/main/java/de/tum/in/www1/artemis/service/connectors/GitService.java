@@ -419,7 +419,7 @@ public class GitService {
                 commitHash = programmingSubmission.getCommitHash();
             }
             else {
-                log.debug("Last valid submission is not present for participation {}", lastValidSubmission.get().getParticipation().toString());
+                log.debug("Last valid submission is not present for participation");
                 // Get last commit before deadline
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
@@ -428,7 +428,7 @@ public class GitService {
                 RevCommit latestCommitBeforeDeadline = commits.iterator().next();
                 commitHash = latestCommitBeforeDeadline.getId().getName();
             }
-            log.debug("Last commit hash is {} for participation {}", commitHash, lastValidSubmission.get().getParticipation());
+            log.debug("Last commit hash is {}", commitHash);
 
             git.close();
 
