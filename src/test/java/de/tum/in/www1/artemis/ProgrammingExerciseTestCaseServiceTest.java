@@ -275,7 +275,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed (preliminary)");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getFeedbacks()).hasSize(2);
@@ -300,7 +300,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         Long expectedScore = 25L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
+        assertThat(result.getResultString()).isEqualTo("1 of 2 passed (preliminary)");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
