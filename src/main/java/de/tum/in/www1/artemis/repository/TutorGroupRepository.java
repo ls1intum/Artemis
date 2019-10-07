@@ -19,9 +19,6 @@ import de.tum.in.www1.artemis.domain.TutorGroup;
 @Repository
 public interface TutorGroupRepository extends JpaRepository<TutorGroup, Long> {
 
-    @Query("select tutor_group from TutorGroup tutor_group where tutor_group.tutor.login = ?#{principal.username}")
-    List<TutorGroup> findByTutorIsCurrentUser();
-
     @Query(value = "select distinct tutor_group from TutorGroup tutor_group left join fetch tutor_group.students", countQuery = "select count(distinct tutor_group) from TutorGroup tutor_group")
     Page<TutorGroup> findAllWithEagerRelationships(Pageable pageable);
 
