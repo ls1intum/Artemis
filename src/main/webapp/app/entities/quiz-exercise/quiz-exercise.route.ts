@@ -12,7 +12,6 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
-import { QuizExerciseDeletePopupComponent } from './quiz-exercise-delete-dialog.component';
 import { QuizExerciseResetPopupComponent } from './quiz-exercise-reset-dialog.component';
 import { QuizReEvaluateComponent } from '../../quiz/re-evaluate/quiz-re-evaluate.component';
 
@@ -99,19 +98,6 @@ export const quizExerciseRoute: Routes = [
 ];
 
 export const quizExercisePopupRoute: Routes = [
-    {
-        path: 'quiz-exercise/:id/delete',
-        component: QuizExerciseDeletePopupComponent,
-        resolve: {
-            quizExercise: QuizExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
     {
         path: 'quiz-exercise/:id/reset',
         component: QuizExerciseResetPopupComponent,
