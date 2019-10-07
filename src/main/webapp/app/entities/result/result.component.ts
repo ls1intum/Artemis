@@ -6,8 +6,7 @@ import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
@@ -39,8 +38,6 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly MODELING = ExerciseType.MODELING;
     readonly ResultTemplateStatus = ResultTemplateStatus;
 
-    @Input() course: Course;
-    @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
     @Input() short = false;
@@ -68,33 +65,36 @@ export class ResultComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit(): void {
-        // Get results initially if necessary
-        if (this.participation && !this.hasParticipationResults() && this.course && this.participation.exercise) {
-            this.resultService.findResultsForParticipation(this.course.id, this.participation.exercise.id, this.participation.id).subscribe(
-                results => {
-                    this.participation.results = results.body!;
-                    this.init();
-                },
-                error => {
-                    this.init();
-                },
-            );
-        } else {
-            this.init();
-        }
-    }
+        if (!this.result && this.participation && this.participation.id) {
+            const exercise = this.participation.exercise;
 
-    init() {
-        if (this.participation && this.participation.id && this.hasParticipationResults()) {
-            // Find latest result in results array.
-            this.result = this.participation.results.reduce((acc, res) => (res.completionDate! > acc.completionDate! ? res : acc));
-            // Make sure result and participation are connected.
-            this.result.participation = this.participation;
-        }
-        if (this.participation && !this.participation.exercise && this.exercise) {
-            this.participation.exercise = this.exercise;
+            if (this.participation.results && this.participation.results.length > 0) {
+                if (exercise && exercise.type === ExerciseType.MODELING) {
+                    // sort results by completionDate descending to ensure the newest result is shown
+                    // this is important for modeling exercises since students can have multiple tries
+                    // think about if this should be used for all types of exercises
+                    this.participation.results.sort((r1: Result, r2: Result) => {
+                        if (r1.completionDate! > r2.completionDate!) {
+                            return -1;
+                        }
+                        if (r1.completionDate! < r2.completionDate!) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                }
+                // Make sure result and participation are connected
+                this.result = this.participation.results[0];
+                this.result.participation = this.participation;
+            }
         }
         this.evaluate();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.participation || changes.result) {
+            this.ngOnInit();
+        }
     }
 
     evaluate() {
@@ -112,12 +112,6 @@ export class ResultComponent implements OnInit, OnChanges {
         } else {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             this.result = null;
-        }
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation || changes.result) {
-            this.init();
         }
     }
 
