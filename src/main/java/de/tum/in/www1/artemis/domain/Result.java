@@ -291,14 +291,15 @@ public class Result implements Serializable {
         this.rated = rated;
     }
 
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
+    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
     /**
-     * Sets the result to rated if:
-     * - It was created by an instructor (SubmissionType)
-     * - OR if the submissionDate is <= the exerciseDueDate.
+     * A result is rated if:
+     * - the submission date is before the due date OR
+     * - no due date is set OR
+     * - the submission type is INSTRUCTOR / TEST
      * @param exerciseDueDate date after which no normal submission is considered rated.
      * @param submission to which the result belongs.
      */
