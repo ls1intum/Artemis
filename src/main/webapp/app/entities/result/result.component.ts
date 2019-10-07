@@ -138,9 +138,10 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     private evaluateTemplateStatusForModelingTextFileUploadExercises() {
         const submissionInDueTime =
-            this.participation.submissions != null &&
-            this.participation.submissions.length > 0 &&
-            isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise);
+            !this.participation.exercise.dueDate ||
+            (this.participation.submissions != null &&
+                this.participation.submissions.length > 0 &&
+                isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise));
         const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
 
         // Submission is in due time of exercise and has a result with score.
