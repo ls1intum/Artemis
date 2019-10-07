@@ -12,15 +12,15 @@
                 },
                 "aceEditor": {
                     "headline": "Programmier-Editor",
-                    "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das TODO durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
+                    "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das <tt>TODO</tt> durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
                 },
                 "saveChanges": {
                     "headline": "Änderungen speichern",
-                    "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf Speichern klickst."
+                    "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf <tt>Speichern</tt> klickst."
                 },
                 "submitChanges": {
                     "headline": "Änderungen absenden",
-                    "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf 'Absenden' klickst.",
+                    "content": "Wenn du mit deinem Code zufrieden bist, dann kannst du deinen ersten Stand einreichen, indem du auf <tt>Absenden</tt> klickst.",
                     "hint": "Hier noch ein kleiner Hinweis: Du kannst bis zum Abgabedatum beliebig oft eine neue Lösung einreichen, das heißt du kannst deine Aufgaben einzeln lösen und danach einreichen."
                 }
             },

@@ -5,7 +5,7 @@
                 "headline": "Installiere die notwendigen Tools",
                 "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
                 "java": {
-                    "content": "Installiere das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und nicht JRE auswählst.",
+                    "content": "Installiere das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red'>nicht</span> JRE auswählst.",
                     "linkText": "Lade Java JDK herunter"
                 },
                 "eclipse": {
@@ -14,13 +14,13 @@
                 },
                 "sourceTree": {
                     "content": "Installiere die neueste Version von SourceTree mit git (3.2.1 oder neuer für macOS oder Windows)",
-                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. Git Kraken oder die Kommandozeile verwenden.",
+                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
                     "linkText": "Lade SourceTree herunter"
                 },
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
                     "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
-                    "hint": "Kopiere und füge https://bitbucket.ase.in.tum.de als URL ein."
+                    "hint": "Kopiere und füge <tt>https://repobruegge.in.tum.de</tt> als URL ein."
                 }
             },
             "exercises": {
@@ -33,7 +33,7 @@
             },
             "currentExercise": {
                 "headline": "Aktuelle Aufgabe",
-                "content": "In diesem Tutorial schauen wir uns die Aufgabe 'Hello World' an."
+                "content": "In diesem Tutorial schauen wir uns die Aufgabe <tt>Hello World</tt> an."
             },
             "exerciseType": {
                 "headline": "Aufgabentyp",

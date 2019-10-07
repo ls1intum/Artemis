@@ -122,7 +122,6 @@ describe('GuidedTourComponent', () => {
             expect(guidedTourComponent.currentTourStep).to.not.exist;
             guidedTourService.enableTour(courseOverviewTour);
             guidedTourService.startTour();
-            guidedTourComponentFixture.detectChanges();
             expect(guidedTourComponent.currentTourStep).to.exist;
         });
 

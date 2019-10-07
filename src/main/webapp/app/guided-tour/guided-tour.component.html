@@ -23,12 +23,9 @@
                 <div *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
-                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="subHeadline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
-                <span jhiTranslate="{{ currentTourStep.contentTranslateKey }}"></span>
-                <div *ngIf="currentTourStep.imageUrl">
-                    <img src="{{ currentTourStep.imageUrl }}" />
-                </div>
-                <div *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
+                <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="sub-headline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
+                <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForMarkdown"></div>
+                <div class="step-link" *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
                     <a
                         [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
                         jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}"
@@ -42,7 +39,7 @@
                         <fa-icon icon="info-circle"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <span jhiTranslate="{{ currentTourStep.hintTranslateKey }}"></span>
+                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
@@ -64,6 +61,9 @@
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING" jhiTranslate="tour.modelingHint.text"></span>
                     </div>
                 </div>
+                <div *ngIf="currentTourStep.imageUrl">
+                    <img src="{{ currentTourStep.imageUrl }}" />
+                </div>
                 <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
                     <div class="step-hint__icon">
                         <fa-icon icon="video"></fa-icon>
@@ -83,7 +83,12 @@
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
                     <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
-                        <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
+                        <li
+                            class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
+                            [class.current]="guidedTourService.isCurrentStep(i)"
+                            [class.n-small]="guidedTourService.currentTour.steps.indexOf(i) + 1 === this.guidedTourService.maxDots"
+                            *ngFor="let i of guidedTourService.currentTour.steps"
+                        >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
                     </ul>

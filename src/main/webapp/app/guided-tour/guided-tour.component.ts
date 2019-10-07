@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { from, fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 
 import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
