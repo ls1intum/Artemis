@@ -20,7 +20,7 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
-import { TextAssessmentDetailComponent } from 'app/text-assessment/text-assessment-detail/text-assessment-detail.component';
+import { AssessmentDetailComponent } from 'app/assessment-shared/assessment-detail/assessment-detail.component';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -55,7 +55,7 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(UpdatingResultComponent),
                 MockComponent(TextAssessmentEditorComponent),
                 MockComponent(ResizableInstructionsComponent),
-                MockComponent(TextAssessmentDetailComponent),
+                MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [

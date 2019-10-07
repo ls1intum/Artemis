@@ -52,6 +52,8 @@ import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-s
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { getElement } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -83,6 +85,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getStudentParticipationWithLatestResultStub: SinonStub;
     let getLatestPendingSubmissionStub: SinonStub;
     let getHintsForExerciseStub: SinonStub;
+    let guidedTourService: GuidedTourService;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let routeSubject: Subject<Params>;
@@ -121,6 +124,7 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
+                guidedTourService = TestBed.get(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
                 codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
@@ -524,7 +528,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
         container.ngOnInit();
-        const participation = { id: 1, results: [result] } as Participation;
+        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
@@ -545,6 +549,35 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.participation).to.deep.equal({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
+    it('should show the repository locked badge and disable the editor actions if the exercises buildAndTestAfterDueDate is set and the due date has passed', () => {
+        container.ngOnInit();
+        const participation = {
+            id: 1,
+            results: [result],
+            exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: moment().subtract(1, 'hours'), dueDate: moment().subtract(2, 'hours') } as ProgrammingExercise,
+        } as any;
+        const feedbacks = [{ id: 2 }] as Feedback[];
+        const findWithLatestResultSubject = new Subject<Participation>();
+        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
+        const isCleanSubject = new Subject();
+        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
+
+        routeSubject.next({ participationId: 1 });
+        findWithLatestResultSubject.next(participation);
+        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
+
+        containerFixture.detectChanges();
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
+
+        // Repository should be locked, the student can't write into it anymore.
+        expect(container.repositoryIsLocked).to.be.true;
+        expect(getElement(containerDebugElement, '.locked-container')).to.exist;
+        expect(container.fileBrowser.disableActions).to.be.true;
+        expect(container.actions.disableActions).to.be.true;
+    });
+
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
         const findWithLatestResultSubject = new Subject<{ body: Participation }>();
@@ -563,6 +596,7 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
         const result = { id: 3, successful: false };

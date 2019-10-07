@@ -39,9 +39,9 @@
             class="resizable-submission card markdown-preview"
             id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
-            [formattedProblemStatement]="formattedProblemStatement"
-            [formattedGradingInstructions]="formattedGradingInstructions"
-            [formattedSampleSolution]="formattedSampleSolution"
+            [problemStatement]="this.exercise.problemStatement"
+            [gradingInstructions]="this.exercise.gradingInstructions"
+            [sampleSolution]="this.exercise.sampleSolution"
             [toggleCollapse]="toggleCollapse.bind(this)"
             toggleCollapseId="submission"
         >
@@ -95,9 +95,9 @@
                 id="assessment-instructions"
                 [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
                 *ngIf="!isAtLeastInstructor || readOnly || toComplete"
-                [formattedProblemStatement]="formattedProblemStatement"
-                [formattedGradingInstructions]="formattedGradingInstructions"
-                [formattedSampleSolution]="formattedSampleSolution"
+                [problemStatement]="this.exercise.problemStatement"
+                [gradingInstructions]="this.exercise.gradingInstructions"
+                [sampleSolution]="this.exercise.sampleSolution"
                 [toggleCollapse]="toggleCollapse.bind(this)"
                 toggleCollapseId="assessment"
             >
@@ -119,12 +119,12 @@
     <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.textAssessment.assessInstruction"></div>
     <div class="row">
         <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
-            <jhi-text-assessment-detail
+            <jhi-assessment-detail
                 [(assessment)]="assessments[i]"
                 (assessmentChange)="checkScoreBoundaries()"
                 [highlightColor]="getColorForIndex(i)"
                 (deleteAssessment)="deleteAssessment($event)"
-            ></jhi-text-assessment-detail>
+            ></jhi-assessment-detail>
         </div>
     </div>
 </div>

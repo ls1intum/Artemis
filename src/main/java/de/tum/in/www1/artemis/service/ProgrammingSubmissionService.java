@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_NOTIFICATION;
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -43,6 +48,10 @@ public class ProgrammingSubmissionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -52,12 +61,15 @@ public class ProgrammingSubmissionService {
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
+            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.groupNotificationService = groupNotificationService;
+        this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
@@ -168,7 +180,6 @@ public class ProgrammingSubmissionService {
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
-    @Transactional(readOnly = true)
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
         Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
@@ -180,7 +191,7 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Trigger the CI of all student participations of the given exercise.
+     * Trigger the CI of all student participations and the template participation of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      *
      * The method is async because it would timeout a calling resource method.
@@ -197,12 +208,14 @@ public class ProgrammingSubmissionService {
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(exerciseId);
+        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
+        // Also trigger the template participation. We don't trigger the solution participation because it is triggered when the tests are changed.
+        participations.add(programmingExercise.getTemplateParticipation());
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        programmingExerciseService.setTestCasesChanged(programmingExercise.getId(), false);
+        setTestCasesChanged(programmingExercise.getId(), false);
     }
 
     /**
@@ -223,9 +236,13 @@ public class ProgrammingSubmissionService {
      * @return created submission.
      * @throws IllegalStateException if the last commit hash can't be retrieved.
      */
-    @Transactional
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
+        ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
+        return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
+    }
+
+    private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         ObjectId lastCommitHash;
         try {
@@ -234,8 +251,45 @@ public class ProgrammingSubmissionService {
         catch (EntityNotFoundException ex) {
             throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
         }
+        return lastCommitHash;
+    }
 
-        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(lastCommitHash.getName()).submitted(true)
+    private ObjectId getLastCommitHashForTestRepository(ProgrammingExercise programmingExercise) throws IllegalStateException {
+        URL repoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        ObjectId lastCommitHash;
+        try {
+            lastCommitHash = gitService.getLastCommitHash(repoUrl);
+        }
+        catch (EntityNotFoundException ex) {
+            throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
+        }
+        return lastCommitHash;
+    }
+
+    /**
+     * Create a submission with SubmissionType.TEST and the provided commitHash.
+     *
+     * @param programmingExerciseId     ProgrammingExercise id.
+     * @param commitHash                last commitHash of the test repository, if null will use the last commitHash of the test repository.
+     * @return The created solutionSubmission.
+     * @throws EntityNotFoundException  if the programming exercise for the given id does not exist.
+     * @throws IllegalStateException    If no commitHash was no provided and no commitHash could be retrieved from the test repository.
+     */
+    public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable ObjectId commitHash)
+            throws EntityNotFoundException, IllegalStateException {
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
+                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        // If no commitHash is provided, use the last commitHash for the test repository.
+        if (commitHash == null) {
+            ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
+            commitHash = getLastCommitHashForTestRepository(programmingExercise);
+        }
+        return createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, SubmissionType.TEST);
+    }
+
+    private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, ObjectId commitHash,
+            SubmissionType submissionType) {
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
         return programmingSubmissionRepository.save(newSubmission);
@@ -249,8 +303,7 @@ public class ProgrammingSubmissionService {
      * @param submissionType the type for the submissions to be created.
      * @return list of created submissions (might be smaller as the list of provided participations!).
      */
-    @Transactional
-    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseStudentParticipation> participations,
+    public List<ProgrammingSubmission> createSubmissionWithLastCommitHashForParticipationsOfExercise(List<ProgrammingExerciseParticipation> participations,
             SubmissionType submissionType) {
         return participations.stream().map(participation -> {
             try {
@@ -288,6 +341,69 @@ public class ProgrammingSubmissionService {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
+    }
+
+    /**
+     * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
+     * This method should be used if the solution participation would otherwise not be built.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @throws EntityNotFoundException if there is no programming exercise for the given id.
+     */
+    public void setTestCasesChangedAndTriggerTestCaseUpdate(Long programmingExerciseId) throws EntityNotFoundException {
+        setTestCasesChanged(programmingExerciseId, true);
+        try {
+            ProgrammingSubmission submission = createSolutionParticipationSubmissionWithTypeTest(programmingExerciseId, null);
+            triggerBuildAndNotifyUser(submission);
+            return;
+        }
+        catch (IllegalStateException ex) {
+            log.debug("No submission could be created for the programming exercise with the id " + programmingExerciseId + ", trying to trigger the build without a submission.");
+        }
+
+        // Edge case: If no submission could be created, just trigger the solution build. On receiving the result, Artemis will try to create a new submission with the result
+        // completionDate.
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService
+                .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        try {
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException ex) {
+            log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
+        }
+    }
+
+    /**
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
+     *
+     * @param programmingExerciseId id of a ProgrammingExercise.
+     * @param testCasesChanged      set to true to mark the programming exercise as dirty.
+     * @return the updated ProgrammingExercise.
+     * @throws EntityNotFoundException if the programming exercise does not exist.
+     */
+    public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
+
+        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
+        // should get an updated result.
+        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+            return programmingExercise;
+        }
+        programmingExercise.setTestCasesChanged(testCasesChanged);
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseService.save(programmingExercise);
+        // Send a websocket message about the new state to the client.
+        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+
+        return updatedProgrammingExercise;
+    }
+
+    private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
     }
 
     /**

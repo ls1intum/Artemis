@@ -41,6 +41,8 @@ describe('GuidedTourComponent', () => {
     });
 
     const courseOverviewTour: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
@@ -105,9 +107,11 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
 
@@ -165,7 +169,13 @@ describe('GuidedTourComponent', () => {
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(skipTour.calls.count()).to.equal(1);
 
+            // Reset component
             skipTour.calls.reset();
+            guidedTourComponent.currentTourStep = null;
+
+            // Skip tour with ESC key should not be possible when the component is not active
+            guidedTourComponent.handleKeyboardEvent(eventMock);
+            expect(skipTour.calls.count()).to.equal(0);
         });
     });
 

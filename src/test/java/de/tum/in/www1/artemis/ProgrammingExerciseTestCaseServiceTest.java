@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -10,10 +9,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,10 +29,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
@@ -47,6 +51,15 @@ public class ProgrammingExerciseTestCaseServiceTest {
 
     @MockBean
     WebsocketMessagingService websocketMessagingService;
+
+    @MockBean
+    GitService gitService;
+
+    @MockBean
+    ContinuousIntegrationService continuousIntegrationService;
+
+    @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -129,8 +142,10 @@ public class ProgrammingExerciseTestCaseServiceTest {
     }
 
     @Test
-    public void shouldResetTestWeights() {
+    public void shouldResetTestWeights() throws Exception {
         SecurityUtils.setAuthorizationObject();
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
 
@@ -144,11 +159,20 @@ public class ProgrammingExerciseTestCaseServiceTest {
         assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+
+        // After a test case update, the solution repository should be build, so the ContinuousIntegrationService needs to be triggered and a submission created.
+        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
+        verify(continuousIntegrationService, times(1)).triggerBuild(ArgumentMatchers.any(SolutionProgrammingExerciseParticipation.class));
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void shouldUpdateTestWeight() throws IllegalAccessException {
+    public void shouldUpdateTestWeight() throws Exception {
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
         database.addParticipationWithResultForExercise(programmingExercise, "student1");
 
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
@@ -169,6 +193,12 @@ public class ProgrammingExerciseTestCaseServiceTest {
         assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+
+        // After a test case update, the solution repository should be build, so the ContinuousIntegrationService needs to be triggered and a submission created.
+        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
+        assertThat(submissions).hasSize(1);
+        assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
+        verify(continuousIntegrationService, times(1)).triggerBuild(ArgumentMatchers.any(SolutionProgrammingExerciseParticipation.class));
     }
 
     @Test

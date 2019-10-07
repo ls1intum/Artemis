@@ -7,12 +7,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.CaseFormat;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -28,10 +26,13 @@ import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 public class CompassCalculationEngine implements CalculationEngine {
 
@@ -89,16 +90,21 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     public Map<String, List<Feedback>> getConflictingFeedbacks(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
         HashMap<String, List<Feedback>> elementConflictingFeedbackMapping = new HashMap<>();
-        UMLClassDiagram model = getModel(modelingSubmission);
+
+        UMLDiagram model = getModel(modelingSubmission);
+
         if (model == null) {
             return elementConflictingFeedbackMapping;
         }
+
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
+
             assessmentIndex.getAssessment(currentElement.getSimilarityID()).ifPresent(assessment -> {
                 List<Feedback> feedbacks = assessment.getFeedbacks(currentElement.getContext());
                 List<Feedback> feedbacksInConflict = feedbacks.stream().filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
                         .collect(Collectors.toList());
+
                 if (!feedbacksInConflict.isEmpty()) {
                     elementConflictingFeedbackMapping.put(currentElement.getJSONElementID(), feedbacksInConflict);
                 }
@@ -107,8 +113,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         return elementConflictingFeedbackMapping;
     }
 
-    private UMLClassDiagram getModel(ModelingSubmission modelingSubmission) {
-        UMLClassDiagram model = modelIndex.getModel(modelingSubmission.getId());
+    private UMLDiagram getModel(ModelingSubmission modelingSubmission) {
+        UMLDiagram model = modelIndex.getModel(modelingSubmission.getId());
         // TODO properly handle this case and make sure after server restart the modelIndex is reloaded properly
         if (model == null) {
             // handle the case that model is null (e.g. after server restart)
@@ -140,7 +146,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void buildModel(long modelSubmissionId, JsonObject jsonModel) {
         try {
-            UMLClassDiagram model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
+            UMLDiagram model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         }
@@ -156,21 +162,24 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param submission the submission for which the manual assessment is added
      */
     private void addManualAssessmentForSubmission(ModelingSubmission submission) {
-        UMLClassDiagram model = modelIndex.getModelMap().get(submission.getId());
+        UMLDiagram model = modelIndex.getModelMap().get(submission.getId());
+
         if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
+
         addNewManualAssessment(submission.getResult().getFeedbacks(), model);
+
         modelSelector.removeModelWaitingForAssessment(submission.getId());
         modelSelector.addAlreadyHandledModel(submission.getId());
     }
 
-    protected Collection<UMLClassDiagram> getUmlModelCollection() {
+    protected Collection<UMLDiagram> getUmlModelCollection() {
         return modelIndex.getModelCollection();
     }
 
-    protected Map<Long, UMLClassDiagram> getModelMap() {
+    protected Map<Long, UMLDiagram> getModelMap() {
         return modelIndex.getModelMap();
     }
 
@@ -201,8 +210,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             return null;
         }
 
-        // TODO: adjust when supporting other diagram types than class diagrams
-        UMLClassDiagram model = modelIndex.getModelMap().get(modelSubmissionId);
+        UMLDiagram model = modelIndex.getModelMap().get(modelSubmissionId);
         CompassResult compassResult = model.getLastAssessmentCompassResult();
 
         if (compassResult == null) {
@@ -220,7 +228,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     public void notifyNewAssessment(List<Feedback> modelingAssessment, long assessedModelSubmissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyHandledModel(assessedModelSubmissionId);
-        UMLClassDiagram model = modelIndex.getModel(assessedModelSubmissionId);
+        UMLDiagram model = modelIndex.getModel(assessedModelSubmissionId);
         if (model == null) {
             log.warn("Cannot add manual assessment to Compass, because the model in modelIndex is null for submission id " + assessedModelSubmissionId);
             return;
@@ -266,10 +274,10 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelSelector.removeAlreadyHandledModel(modelSubmissionId);
     }
 
-    // TODO adapt the parser to support different UML diagrams
     @Override
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
-        UMLClassDiagram model = this.modelIndex.getModelMap().get(modelId);
+        UMLDiagram model = this.modelIndex.getModelMap().get(modelId);
+
         if (model == null || grade == null || grade.getJsonIdPointsMapping() == null) {
             return new ArrayList<>();
         }
@@ -358,18 +366,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         jsonObject.addProperty("totalCoverage", getTotalCoverage());
 
         JsonObject models = new JsonObject();
-        for (Map.Entry<Long, UMLClassDiagram> modelEntry : getModelMap().entrySet()) {
+        for (Map.Entry<Long, UMLDiagram> modelEntry : getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
             model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
             model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
             int numberOfModelConflicts = 0;
-            List<UMLElement> elements = new ArrayList<>();
-            elements.addAll(modelEntry.getValue().getClassList());
-            elements.addAll(modelEntry.getValue().getRelationshipList());
-            for (UMLClass umlClass : modelEntry.getValue().getClassList()) {
-                elements.addAll(umlClass.getAttributes());
-                elements.addAll(umlClass.getMethods());
-            }
+            List<UMLElement> elements = new ArrayList<>(modelEntry.getValue().getAllModelElements());
             for (UMLElement element : elements) {
                 boolean modelHasConflict = hasConflict(element.getSimilarityID());
                 if (modelHasConflict) {
@@ -391,7 +393,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     @Override
     public double getConfidenceForElement(String elementId, long submissionId) {
-        UMLClassDiagram model = modelIndex.getModel(submissionId);
+        UMLDiagram model = modelIndex.getModel(submissionId);
         UMLElement element = model.getElementByJSONID(elementId);
         if (element == null) {
             return 0.0;
@@ -407,14 +409,9 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param modelingAssessment the feedback of a manual assessment
      * @param model              the corresponding model
      */
-    private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLClassDiagram model) {
+    private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLDiagram model) {
         Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
-        try {
-            automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
-        }
-        catch (IOException e) {
-            log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
-        }
+        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
     }
 
     /**
@@ -432,62 +429,6 @@ public class CompassCalculationEngine implements CalculationEngine {
             }
         });
         return elementIdFeedbackMap;
-    }
-
-    /**
-     * Checks if an element with the given id and of the given type exists in the given UML model.
-     *
-     * @param jsonElementID  the JSON id of the UML element
-     * @param umlElementType the type of the UML element
-     * @param model          the model to check
-     * @return if the element could be found in the given model
-     */
-    // TODO CZ: move to specific UMLModel class
-    private boolean elementExistsInModel(String jsonElementID, String umlElementType, UMLClassDiagram model) {
-        if (model == null) {
-            return false;
-        }
-
-        if (EnumUtils.isValidEnum(UMLClassType.class, CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, umlElementType))) {
-            for (UMLClass umlClass : model.getClassList()) {
-                if (umlClass.getJSONElementID().equals(jsonElementID)) {
-                    return true;
-                }
-            }
-        }
-        else if (umlElementType.equals(UMLAttribute.UML_ATTRIBUTE_TYPE)) {
-            for (UMLClass umlClass : model.getClassList()) {
-                for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
-                    if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        else if (umlElementType.equals(UMLMethod.UML_METHOD_TYPE)) {
-            for (UMLClass umlClass : model.getClassList()) {
-                for (UMLMethod umlMethod : umlClass.getMethods()) {
-                    if (umlMethod.getJSONElementID().equals(jsonElementID)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        else if (EnumUtils.isValidEnum(UMLRelationshipType.class, CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, umlElementType))) {
-            for (UMLRelationship umlRelationship : model.getRelationshipList()) {
-                if (umlRelationship.getJSONElementID().equals(jsonElementID)) {
-                    return true;
-                }
-            }
-        }
-        else if (umlElementType.equals(UMLPackage.UML_PACKAGE_TYPE)) {
-            for (UMLPackage umlPackage : model.getPackageList()) {
-                if (umlPackage.getJSONElementID().equals(jsonElementID)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private boolean hasConflict(int elementId) {

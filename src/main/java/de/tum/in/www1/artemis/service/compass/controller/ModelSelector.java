@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 
 public class ModelSelector {
 
@@ -51,15 +51,15 @@ public class ModelSelector {
         int maxCandidateListSize = 10;
 
         // Get all models that have not already been handled by the model selector
-        List<UMLClassDiagram> unhandledModels = new ArrayList<>();
-        for (UMLClassDiagram umlModel : modelIndex.getModelCollection()) {
+        List<UMLDiagram> unhandledModels = new ArrayList<>();
+        for (UMLDiagram umlModel : modelIndex.getModelCollection()) {
             if (!alreadyHandledModels.contains(umlModel.getModelSubmissionId())) {
                 unhandledModels.add(umlModel);
             }
         }
 
-        List<UMLClassDiagram> candidates = unhandledModels;
-        candidates.sort(Comparator.comparingDouble(UMLClassDiagram::getLastAssessmentCoverage));
+        List<UMLDiagram> candidates = unhandledModels;
+        candidates.sort(Comparator.comparingDouble(UMLDiagram::getLastAssessmentCoverage));
         // Make sure that the candidate list is not too big
         if (!candidates.isEmpty()) {
             double smallestCoverage = candidates.get(0).getLastAssessmentCoverage();
@@ -84,7 +84,7 @@ public class ModelSelector {
         }
 
         // Fallback: if no optimal models could be determined by similarity, select any unassessed models
-        for (UMLClassDiagram model : modelIndex.getModelCollection()) {
+        for (UMLDiagram model : modelIndex.getModelCollection()) {
             if (model.isUnassessed() && !alreadyHandledModels.contains(model.getModelSubmissionId())) {
                 alreadyHandledModels.add(model.getModelSubmissionId());
                 modelsWaitingForAssessment.add(model.getModelSubmissionId());
@@ -106,7 +106,7 @@ public class ModelSelector {
      * @param unhandledModels the unhandled models used to calculate the mean similarity of the candidate models
      * @return the given number of candidate models with the highest mean similarity
      */
-    private List<Long> computeModelsWithHighestSimilarity(int numberOfModels, List<UMLClassDiagram> candidates, List<UMLClassDiagram> unhandledModels) {
+    private List<Long> computeModelsWithHighestSimilarity(int numberOfModels, List<UMLDiagram> candidates, List<UMLDiagram> unhandledModels) {
         if (numberOfModels == 0 || candidates == null || candidates.isEmpty() || unhandledModels == null || unhandledModels.isEmpty()) {
             return new ArrayList<>();
         }
@@ -115,10 +115,10 @@ public class ModelSelector {
         SortedMap<Double, Long> sortedSimilarityMap = new TreeMap<>(Collections.reverseOrder());
         double epsilon = EPSILON;
 
-        for (UMLClassDiagram candidate : candidates) {
+        for (UMLDiagram candidate : candidates) {
             double similarity = 0;
 
-            for (UMLClassDiagram model : unhandledModels) {
+            for (UMLDiagram model : unhandledModels) {
                 similarity += model.similarity(candidate);
             }
 
