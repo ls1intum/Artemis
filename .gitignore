@@ -145,7 +145,8 @@ Desktop.ini
 .merge_file*
 .dbus/
 repos/
-/compass
+repos-download/
+compass/
 
 ######################
 # Gradle Wrapper
