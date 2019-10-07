@@ -76,7 +76,7 @@ public class ParticipationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ModelAssessmentConflictService conflictService;
+    private final ConflictingResultService conflictingResultService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -87,7 +87,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService) {
+            SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -105,7 +105,7 @@ public class ParticipationService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
-        this.conflictService = conflictService;
+        this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
     }
 
@@ -839,9 +839,6 @@ public class ParticipationService {
                 log.error("Error while deleting local repository", ex);
             }
         }
-        else if (participation.getExercise() instanceof ModelingExercise) {
-            conflictService.deleteAllConflictsForParticipation(participation);
-        }
 
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                 || participation.getExercise() instanceof FileUploadExercise) {
@@ -851,7 +848,7 @@ public class ParticipationService {
             complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
-        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation);
+        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -860,16 +857,23 @@ public class ParticipationService {
     }
 
     /**
-     * Remove all results and submissions of the given participation.
-     * Will do nothing if invoked with a participation without results/submissions.
-     * @param participation to delete results/submissions from.
+     * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
+     *
+     * @param participationId the id of the participation to delete results/submissions from.
      * @return participation without submissions and results.
      */
     @Transactional
-    public Participation deleteResultsAndSubmissionsOfParticipation(Participation participation) {
+    public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+        Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
+
+                if (participation.getExercise() instanceof ModelingExercise) {
+                    // The conflicting results referencing a result of the given participation need to be deleted to prevent Hibernate constraint violation errors.
+                    conflictingResultService.deleteConflictingResultsByResultId(result.getId());
+                }
+
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
                 // active in this case
@@ -881,8 +885,8 @@ public class ParticipationService {
                 }
             }
         }
-        // The following case is necessary, because we might have submissions without a result. At this point only submissions without a result will still be connected to the
-        // participation.
+        // The following case is necessary, because we might have submissions without a result.
+        // At this point only submissions without a result will still be connected to the participation.
         if (participation.getSubmissions() != null) {
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());

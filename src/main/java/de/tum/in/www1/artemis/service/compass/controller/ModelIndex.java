@@ -6,8 +6,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class ModelIndex {
@@ -17,7 +17,7 @@ public class ModelIndex {
     /**
      * Note: The key is the model submission id
      */
-    private Map<Long, UMLClassDiagram> modelMap;
+    private Map<Long, UMLDiagram> modelMap;
 
     private Map<UMLElement, Integer> modelElementMapping;
 
@@ -28,12 +28,12 @@ public class ModelIndex {
     }
 
     /**
-     * Get the internal "similarity" id for a model element. If the element is similar to an existing one, they share the same id.
+     * Get the internal similarity id for the given model element. If the element is similar to an existing one, they share the same similarity id. Otherwise, a new id is created.
      *
-     * @param element an element of a model
-     * @return its similarity id
+     * @param element a model element for which the corresponding similarity id should be retrieved
+     * @return the similarity id for the given model element
      */
-    int getSimilarityId(UMLElement element) {
+    int retrieveSimilarityId(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }
@@ -50,19 +50,19 @@ public class ModelIndex {
         return uniqueModelElementList.size() - 1;
     }
 
-    public void addModel(UMLClassDiagram model) {
+    public void addModel(UMLDiagram model) {
         modelMap.put(model.getModelSubmissionId(), model);
     }
 
-    public UMLClassDiagram getModel(long modelSubmissionId) {
+    public UMLDiagram getModel(long modelSubmissionId) {
         return modelMap.get(modelSubmissionId); // TODO MJ check if there? return Optional?
     }
 
-    public Map<Long, UMLClassDiagram> getModelMap() {
+    public Map<Long, UMLDiagram> getModelMap() {
         return modelMap;
     }
 
-    public Collection<UMLClassDiagram> getModelCollection() {
+    public Collection<UMLDiagram> getModelCollection() {
         return modelMap.values();
     }
 

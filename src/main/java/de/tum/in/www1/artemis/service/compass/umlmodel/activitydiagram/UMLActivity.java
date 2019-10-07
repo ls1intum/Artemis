@@ -2,16 +2,20 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+
 public class UMLActivity extends UMLActivityElement {
 
     public final static String UML_ACTIVITY_TYPE = "Activity";
 
-    private List<UMLActivityElement> activityElements;
+    private List<UMLActivityElement> childElements;
 
-    public UMLActivity(String name, List<UMLActivityElement> activityElements, String jsonElementID) {
+    public UMLActivity(String name, List<UMLActivityElement> childElements, String jsonElementID) {
         super(name, jsonElementID);
 
-        this.activityElements = activityElements;
+        this.childElements = childElements;
 
         setActivityOfContainedElements();
     }
@@ -20,9 +24,20 @@ public class UMLActivity extends UMLActivityElement {
      * Sets the parent activity of all activity elements contained in this UML activity.
      */
     private void setActivityOfContainedElements() {
-        for (UMLActivityElement activityElement : activityElements) {
-            activityElement.setParentActivity(this);
+        for (UMLActivityElement childElement : childElements) {
+            childElement.setParentActivity(this);
         }
+    }
+
+    @Override
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLActivity)) {
+            return 0;
+        }
+
+        UMLActivity referenceActivity = (UMLActivity) reference;
+
+        return NameSimilarity.levenshteinSimilarity(name, referenceActivity.getName());
     }
 
     @Override
@@ -31,11 +46,23 @@ public class UMLActivity extends UMLActivityElement {
     }
 
     /**
-     * Add an activity element to the list of activity elements contained in this UML activity.
+     * Add an activity element to the list of child elements contained in this UML activity.
      *
-     * @param activityElement the activity element that should be added
+     * @param childElement the activity element that should be added
      */
-    public void addActivityElement(UMLActivityElement activityElement) {
-        activityElements.add(activityElement);
+    public void addChildElement(UMLActivityElement childElement) {
+        childElements.add(childElement);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLActivity otherActivity = (UMLActivity) obj;
+
+        return otherActivity.childElements.size() == childElements.size() && otherActivity.childElements.containsAll(childElements)
+                && childElements.containsAll(otherActivity.childElements);
     }
 }

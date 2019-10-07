@@ -67,7 +67,7 @@ export class GuidedTourService {
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour) {
+                if (this.currentTour && this.deviceService.isDesktop()) {
                     if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(

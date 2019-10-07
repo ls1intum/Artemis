@@ -13,7 +13,7 @@
         (submit)="submit.emit()"
         (cancel)="cancel.emit()"
         (nextSubmission)="nextSubmission.emit()"
-        [hasConflict]="conflicts !== null"
+        [hasConflict]="conflicts && conflicts.length >= 0"
         (resolveConflict)="resolveConflict.emit()"
         [hasComplaint]="!!complaint"
     ></jhi-assessment-header>
