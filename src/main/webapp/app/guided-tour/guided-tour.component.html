@@ -81,7 +81,12 @@
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
                     <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
-                        <li *ngFor="let i of guidedTourService.currentTour.steps" [class.current]="guidedTourService.isCurrentStep(i)">
+                        <li
+                            class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
+                            [class.current]="guidedTourService.isCurrentStep(i)"
+                            [class.n-small]="guidedTourService.currentTour.steps.indexOf(i) + 1 === this.guidedTourService.maxDots"
+                            *ngFor="let i of guidedTourService.currentTour.steps"
+                        >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
                         </li>
                     </ul>
