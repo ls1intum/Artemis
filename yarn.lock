@@ -9660,10 +9660,10 @@ next-tick@^1.0.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
   integrity sha1-yobR/ogoFpsBICCOPchCS524NCw=
 
-ng-jhipster@0.11.2:
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.11.2.tgz#62a5786e4edcc5cb62ee6fd53a0919ef19c7958b"
-  integrity sha512-/tfpJiSABMXXKqsVFeIhhIE4AX0weoj3NxVahRWzuSzg8s07O/z61QzjanW9e8C9MYqFWZPiqNI5xV3r64Jwuw==
+ng-jhipster@0.11.1:
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.11.1.tgz#b07230d1a68901daab933b57eecabd4c9a30e72e"
+  integrity sha512-3r4dPTxD2xe4eU8uOe6XHpZ3RMzc7f1HDikdTQtz5kaeQnmpVjOkAImPB+reG3L9vsEZHXinwdcyeI4Y5/GlNQ==
   dependencies:
     tslib "^1.9.0"
 
