@@ -10,15 +10,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.tika.parser.txt.CharsetDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -447,7 +452,7 @@ public class FileService {
     }
 
     /**
-     * This replace all occurences of the target Strings with the replacement Strings in the given file and saves the file
+     * This replaces all occurences of the target Strings with the replacement Strings in the given file and saves the file
      *
      * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
      * @param startPath          the path where the start directory is located
@@ -483,7 +488,7 @@ public class FileService {
     }
 
     /**
-     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
      * order of the argument is the same
      *
      * @param filePath           the path where the file is located
@@ -502,5 +507,109 @@ public class FileService {
             fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
         }
         Files.write(replaceFilePath, fileContent.getBytes(charset));
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
+     *
+     * @see {@link #normalizeLineEndings(String) normalizeLineEndings}
+     * @param startPath          the path where the start directory is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public void normalizeLineEndingsDirectory(String startPath) throws IOException {
+        log.debug("Normalizing file endings in directory {}", startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
+        }
+
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
+        // Get all files in directory
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
+
+        for (File file : files) {
+            normalizeLineEndings(file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings in a specific file.
+     * '\r\n' gets replaced to '\n'
+     * '\r' gets replaced to '\n'
+     *
+     * @param filePath           the path where the file is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public void normalizeLineEndings(String filePath) throws IOException {
+        log.debug("Normalizing line endings in file {}", filePath);
+        // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
+        Path replaceFilePath = Paths.get(filePath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        fileContent = fileContent.replaceAll("\\r\\n?", "\n");
+        Files.write(replaceFilePath, fileContent.getBytes(charset));
+    }
+
+    /**
+     * This converts all files to the UTF-8 encoding recursively from the startPath.
+     *
+     * @see {@link #convertToUTF8(String) convertToUTF8}
+     * @param startPath          the path where the start directory is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public void convertToUTF8Directory(String startPath) throws IOException {
+        log.debug("Converting files in directory {} to UTF-8", startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
+        }
+
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
+        // Get all files in directory
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
+
+        for (File file : files) {
+            convertToUTF8(file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * This converts a specific file to the UTF-8 encoding.
+     * To determine the encoding of the file, the library juniversalchardet is used.
+     *
+     * @param filePath           the path where the file is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public void convertToUTF8(String filePath) throws IOException {
+        log.debug("Converting file {} to UTF-8", filePath);
+        Path replaceFilePath = Paths.get(filePath);
+        byte[] contentArray = Files.readAllBytes(replaceFilePath);
+
+        Charset charset = detectCharset(contentArray);
+        log.debug("Detected charset for file {} is {}", filePath, charset.name());
+
+        String fileContent = new String(contentArray, charset);
+
+        Files.write(replaceFilePath, fileContent.getBytes(Charsets.UTF_8));
+    }
+
+    /**
+     * Detect the charset of a byte array
+     *
+     * @param contentArray The content that should be checked
+     * @return The detected charset
+     */
+    public Charset detectCharset(byte[] contentArray) {
+        // Part of the apache tika library in order to detect the encoding of a file
+        CharsetDetector charsetDetector = new CharsetDetector();
+
+        charsetDetector.setText(contentArray);
+        String charsetName = charsetDetector.detect().getName();
+        Charset charset = Charset.forName(charsetName);
+
+        return charset;
     }
 }
