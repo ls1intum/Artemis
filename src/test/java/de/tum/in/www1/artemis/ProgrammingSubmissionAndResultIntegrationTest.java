@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -363,6 +364,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        // Set buildAndTestAfterDueDate in future.
+        setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -390,6 +393,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+        assertThat(result.isRated()).isTrue();
     }
 
     /**
@@ -397,7 +401,9 @@ class ProgrammingSubmissionAndResultIntegrationTest {
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
@@ -430,7 +436,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);
             assertThat(p.getResults()).hasSize(1);
-            assertThat(new ArrayList<>(p.getResults()).get(0).getId()).isEqualTo(new ArrayList<>(p.getSubmissions()).get(0).getResult().getId());
+            Result participationResult = new ArrayList<>(p.getResults()).get(0);
+            Result submissionResult = new ArrayList<>(p.getSubmissions()).get(0).getResult();
+            assertThat(participationResult.getId()).isEqualTo(submissionResult.getId());
+            // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
+            assertThat(participationResult.isRated()).isTrue();
         }
     }
 
@@ -531,5 +541,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         default:
             return participationIds.get(participationNumber);
         }
+    }
+
+    private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(exerciseId).get();
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
+        programmingExerciseRepository.save(programmingExercise);
     }
 }
