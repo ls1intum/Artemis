@@ -184,18 +184,6 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/delete' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
-                                    id="delete-quiz-{{ quizExercise.id }}"
-                                >
-                                    <fa-icon icon="times"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                                </button>
-                                <button
-                                    *ngIf="quizExercise.isAtLeastInstructor"
-                                    type="submit"
                                     [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/reset' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -203,6 +191,18 @@
                                 >
                                     <fa-icon icon="times"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
+                                </button>
+                                <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
+                                    jhiDeleteButton
+                                    [entityTitle]="quizExercise.title"
+                                    deleteQuestion="artemisApp.quizExercise.delete.question"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    (delete)="deleteQuizExercise(quizExercise.id)"
+                                    id="delete-quiz-{{ quizExercise.id }}"
+                                    class="mb-1"
+                                >
+                                    <fa-icon icon="times"></fa-icon>
                                 </button>
                             </div>
                         </div>
