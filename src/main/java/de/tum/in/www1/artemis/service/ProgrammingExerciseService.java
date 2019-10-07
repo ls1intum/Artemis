@@ -576,6 +576,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id, with eagerly loaded studentParticipations and submissions
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    public ProgrammingExercise findByIdWithEagerStudentParticipationsAndSubmissions(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipationsAndSubmissions(programmingExerciseId);
+        if (programmingExercise.isPresent()) {
+            return programmingExercise.get();
+        }
+        else {
+            throw new EntityNotFoundException("programming exercise not found");
+        }
+    }
+
+    /**
      * Find a programming exercise by its id, including all test cases
      *
      * @param id of the programming exercise.

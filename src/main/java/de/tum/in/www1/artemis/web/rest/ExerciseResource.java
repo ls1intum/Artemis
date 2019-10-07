@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
@@ -18,14 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -50,8 +46,6 @@ public class ExerciseResource {
 
     private final UserService userService;
 
-    private final CourseService courseService;
-
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
@@ -59,8 +53,6 @@ public class ExerciseResource {
     private final TutorParticipationService tutorParticipationService;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
-
-    private final ObjectMapper objectMapper;
 
     private final ComplaintRepository complaintRepository;
 
@@ -74,28 +66,22 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
-            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
-            ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseService programmingExerciseService) {
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
+            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
+            TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
+            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
-        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.objectMapper = objectMapper;
         this.complaintRepository = complaintRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -312,65 +298,6 @@ public class ExerciseResource {
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         log.info("Archive repositories was successful for Exercise : {}", id);
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
-    }
-
-    /**
-     * POST /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
-     *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
-     * @param repositoryExportOptions the options that should be used for the export
-     * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zippedRequestBody
-     */
-    @PostMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-
-        if (!Optional.ofNullable(exercise).isPresent() || !(exercise instanceof ProgrammingExercise)) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return badRequest();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
-            return forbidden();
-
-        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
-            repositoryExportOptions.setFilterLateSubmissionsDate(exercise.getDueDate());
-        }
-
-        List<String> studentList = new ArrayList<>();
-        if (!repositoryExportOptions.isExportAllStudents()) {
-            studentIds = studentIds.replaceAll(" ", "");
-            studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        }
-
-        // Select the participations that should be exported
-        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
-        for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getStudent() != null
-                    && studentList.contains(studentParticipation.getStudent().getLogin()))) {
-                exportedStudentParticipations.add(programmingStudentParticipation);
-            }
-        }
-
-        if (exportedStudentParticipations.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                    .body(null);
-        }
-
-        File zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
-        if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
