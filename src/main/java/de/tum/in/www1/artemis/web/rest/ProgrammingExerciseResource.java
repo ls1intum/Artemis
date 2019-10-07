@@ -479,40 +479,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises-with-participations/:id : get the "id" programmingExercise.
-     *
-     * @param id the id of the programmingExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
-     */
-    @GetMapping("/programming-exercises-with-participations/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
-        log.debug("REST request to get ProgrammingExercise : {}", id);
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(id);
-        if (programmingExerciseOpt.isPresent()) {
-            ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-            Course course = programmingExercise.getCourse();
-
-            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
-                    user.getId());
-            Set<StudentParticipation> participations = new HashSet<>();
-            assignmentParticipation.ifPresent(participations::add);
-            programmingExercise.setStudentParticipations(participations);
-
-            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-                return forbidden();
-            }
-
-            return ResponseEntity.ok(programmingExercise);
-        }
-        else {
-            return notFound();
-        }
-    }
-
-    /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param id the id of the programmingExercise to delete
@@ -524,9 +490,10 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
-        log.debug("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(id);
+        log.info("REST request to delete ProgrammingExercise : {}", id);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
         if (programmingExercise.isPresent()) {
+            log.info("Found ProgrammingExercise to delete with title: {}", programmingExercise.get().getTitle());
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
@@ -537,6 +504,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
         }
         else {
+            log.warn("ProgrammingExercise with id {} not found for delete request", id);
             return ResponseEntity.notFound().build();
         }
     }
@@ -553,7 +521,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
-        if (!programmingExerciseOptional.isPresent()) {
+        if (programmingExerciseOptional.isEmpty()) {
             return notFound();
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
