@@ -93,7 +93,8 @@
             },
             "language": "Sprache",
             "guidedTour": "Guided Tour",
-            "startTour": "Tour starten",
+            "startTutorial": "Tutorial starten",
+            "continueTutorial": "Tutorial fortsetzen",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
@@ -212,6 +213,9 @@
         },
         "archive": {
             "title": "Archivieren bestätigen"
+        },
+        "exportRepos": {
+            "title": "Herunterladen bestätigen"
         },
         "validation": {
             "required": "Dieses Feld wird benötigt.",

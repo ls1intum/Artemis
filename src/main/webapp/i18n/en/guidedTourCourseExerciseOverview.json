@@ -1,6 +1,28 @@
 {
     "tour": {
         "courseExerciseOverview": {
+            "installPrerequisites": {
+                "headline": "Install required tools",
+                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
+                "java": {
+                    "content": "Please download and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and NOT JRE.",
+                    "linkText": "Download Java JDK"
+                },
+                "eclipse": {
+                    "content": "Please download and install Eclipse IDE for Java Developers (2019‐09 or later)",
+                    "linkText": "Download Eclipse IDE"
+                },
+                "sourceTree": {
+                    "content": "Please download and install SourceTree with git (3.2.1 or later for macOS or Windows).",
+                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use Git Kraken or the command line.",
+                    "linkText": "Download SourceTree"
+                },
+                "sourceTreeSetup": {
+                    "headline": "Setup SourceTree",
+                    "content": "Watch the following video and follow the steps to setup SourceTree. Afterwards we are done with the setup and can have a look at the course page and its content.",
+                    "hint": "Copy and insert https://bitbucket.ase.in.tum.de as your base URL"
+                }
+            },
             "exercises": {
                 "headline": "Exercises",
                 "content": "This tab lists all exercises of the selected course."
@@ -9,13 +31,17 @@
                 "headline": "Current week",
                 "content": "The exercises of the current week will be displayed on top of the exercise list."
             },
+            "currentExercise": {
+                "headline": "Current Exercise",
+                "content": "In this tutorial we will have a look at the 'Hello World' exercise."
+            },
             "exerciseType": {
                 "headline": "Exercise type",
-                "content": "The exercise type can be distinguished by the exercise icon."
+                "content": "The exercise type can be distinguished by the exercise icon. Here it is a programming exercise."
             },
             "exerciseTags": {
                 "headline": "Exercise tags",
-                "content": "The listed tags will give further information on the exercise classification, e.g. by difficulty"
+                "content": "The listed tags will give further information on the exercise classification, e.g. by difficulty."
             },
             "courseInformation": {
                 "headline": "Course information",
@@ -27,7 +53,7 @@
             },
             "lectures": {
                 "headline": "Lectures",
-                "content": "You can find and download the all lecture slides from this tab."
+                "content": "You can find and download all lecture slides from this tab."
             },
             "statistics": {
                 "headline": "Statistics",
@@ -36,20 +62,30 @@
             "startExercise": {
                 "headline": "Start with your first programming exercise",
                 "content": "Click on the 'Start exercise' button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background."
-            }
-        },
-        "cloneRepository": {
-            "clone": {
-                "headline": "Clone repository",
-                "content": "Click on the 'Clone repository' button to clone the repository."
             },
-            "useSourceTree": {
-                "headline": "Clone in SourceTree",
-                "content": "Click on the 'Clone in SourceTree' button to clone the repository in SourceTree. Alternatively, you can also copy the displayed URL and paste it into your git client."
+            "cloneRepository": {
+                "headline": "Clone repository in SourceTree",
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree."
             },
-            "sourceTreeTutorial": {
-                "headline": "SourceTree Tutorial",
-                "content": "If you are not familiar with SourceTree, then have a look at our short tutorial on it."
+            "inspectSourceTree": {
+                "headline": "Inspect SourceTree",
+                "content": "Watch the following video to understand the basic functions in SourceTree."
+            },
+            "importEclipse": {
+                "headline": "Import the Java project in Eclipse",
+                "content": "Watch the following video to understand how to import the project in Eclipse."
+            },
+            "inspectProject": {
+                "headline": "Inspect Project",
+                "content": "In this video step we will inspect the project and solve the given task."
+            },
+            "commitAndPush": {
+                "headline": "Submit your changes",
+                "content": "Watch the following video to understand how to commit and push your changes."
+            },
+            "reviewResult": {
+                "headline": "Review your result",
+                "content": "After you have committed and pushed your changes as described in the previous video, the result will be automatically refreshed and displayed here. Artemis uses test cases to automatically assess your solution. If you now click on the exercise panel, you will get to the exercise detail page to review the test case results."
             }
         }
     }

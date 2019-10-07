@@ -44,10 +44,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     readOnly: boolean;
     toComplete: boolean;
 
-    formattedProblemStatement: SafeHtml | null;
-    formattedSampleSolution: SafeHtml | null;
-    formattedGradingInstructions: SafeHtml | null;
-
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
     resizableMinHeight = 200;
@@ -177,10 +173,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
         });
 

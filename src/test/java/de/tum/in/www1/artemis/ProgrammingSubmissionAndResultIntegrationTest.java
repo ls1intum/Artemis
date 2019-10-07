@@ -8,10 +8,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -140,8 +138,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
 
-        templateParticipationId = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
-        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId).get().getId();
+        templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
+        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
         participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
     }
 
@@ -366,6 +364,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
+        // Set buildAndTestAfterDueDate in future.
+        setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -393,6 +393,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(participation.getSubmissions().size()).isEqualTo(1);
+        assertThat(result.isRated()).isTrue();
     }
 
     /**
@@ -400,34 +401,34 @@ class ProgrammingSubmissionAndResultIntegrationTest {
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
         SecurityUtils.setAuthorizationObject();
-        participations.add(participationRepository.getOneWithEagerSubmissions(templateParticipationId));
         participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
-        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(0)));
-        participations.add(participationRepository.getOneWithEagerSubmissions(participationIds.get(1)));
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        assertThat(submissions).hasSize(4); // There should be a 1-1 relationship from submissions to participations.
+        // We only create submissions for the solution participation after a push to the test repository.
+        assertThat(submissions).hasSize(1);
         for (Participation participation : participations) {
             assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).collect(Collectors.toList())).hasSize(1);
         }
         assertThat(submissions.stream().allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST))).isTrue();
 
-        // Phase 2: Now the CI informs Artemis about the student participation build results.
-        postResult(IntegrationTestParticipationType.STUDENT, 0, HttpStatus.OK, false);
-        postResult(IntegrationTestParticipationType.STUDENT, 1, HttpStatus.OK, false);
-        postResult(IntegrationTestParticipationType.TEMPLATE, 0, HttpStatus.OK, false);
+        // Phase 2: Now the CI informs Artemis about the participation build results.
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
+        // The number of total participations should not have changed.
+        assertThat(participationRepository.count()).isEqualTo(4);
         // Now for both student's submission a result should have been created and assigned to the submission.
         List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
-        participations = participationRepository.getAllWithEagerSubmissionsAndResults();
-        assertThat(participations).hasSize(4);
-        assertThat(results).hasSize(4);
+        participations = new LinkedList<>();
+        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
+        // After a push to the test repository, only the solution and template repository are built.
+        assertThat(results).hasSize(1);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
             assertThat(hasMatchingSubmission);
@@ -435,7 +436,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);
             assertThat(p.getResults()).hasSize(1);
-            assertThat(new ArrayList<>(p.getResults()).get(0).getId()).isEqualTo(new ArrayList<>(p.getSubmissions()).get(0).getResult().getId());
+            Result participationResult = new ArrayList<>(p.getResults()).get(0);
+            Result submissionResult = new ArrayList<>(p.getSubmissions()).get(0).getResult();
+            assertThat(participationResult.getId()).isEqualTo(submissionResult.getId());
+            // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
+            assertThat(participationResult.isRated()).isTrue();
         }
     }
 
@@ -536,5 +541,11 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         default:
             return participationIds.get(participationNumber);
         }
+    }
+
+    private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(exerciseId).get();
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
+        programmingExerciseRepository.save(programmingExercise);
     }
 }
