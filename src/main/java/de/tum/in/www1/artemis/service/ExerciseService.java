@@ -281,7 +281,7 @@ public class ExerciseService {
      */
     @Transactional
     public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        log.debug("Request to delete Exercise : {}", exercise.getTitle());
+        log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
