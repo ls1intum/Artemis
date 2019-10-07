@@ -3,6 +3,8 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
+        <!-- TODO: Link and Import are deactivated at the moment, so that instructors actually need to generate new programming exercises because otherwise the build plan
+                   settings might be wrong
         <button
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-link-entity"
@@ -14,6 +16,7 @@
                 Link new Programming Exercise
             </span>
         </button>
+
         <button
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-import-entity"
@@ -25,6 +28,7 @@
                 Import new programming exercise
             </span>
         </button>
+        -->
         <button
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"

@@ -23,13 +23,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.tika.parser.txt.CharsetDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+
+import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
@@ -502,11 +503,11 @@ public class FileService {
         Path replaceFilePath = Paths.get(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
-        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        String fileContent = Files.readString(replaceFilePath, charset);
         for (int i = 0; i < targetStrings.size(); i++) {
             fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
         }
-        Files.write(replaceFilePath, fileContent.getBytes(charset));
+        Files.writeString(replaceFilePath, fileContent, charset);
     }
 
     /**
@@ -547,9 +548,9 @@ public class FileService {
         Path replaceFilePath = Paths.get(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
-        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        String fileContent = Files.readString(replaceFilePath, charset);
         fileContent = fileContent.replaceAll("\\r\\n?", "\n");
-        Files.write(replaceFilePath, fileContent.getBytes(charset));
+        Files.writeString(replaceFilePath, fileContent, charset);
     }
 
     /**
@@ -593,7 +594,7 @@ public class FileService {
 
         String fileContent = new String(contentArray, charset);
 
-        Files.write(replaceFilePath, fileContent.getBytes(Charsets.UTF_8));
+        Files.writeString(replaceFilePath, fileContent, Charsets.UTF_8);
     }
 
     /**
@@ -608,8 +609,7 @@ public class FileService {
 
         charsetDetector.setText(contentArray);
         String charsetName = charsetDetector.detect().getName();
-        Charset charset = Charset.forName(charsetName);
 
-        return charset;
+        return Charset.forName(charsetName);
     }
 }

@@ -848,7 +848,7 @@ public class ParticipationService {
             complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
-        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation);
+        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -859,11 +859,12 @@ public class ParticipationService {
     /**
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
-     * @param participation to delete results/submissions from.
+     * @param participationId the id of the participation to delete results/submissions from.
      * @return participation without submissions and results.
      */
     @Transactional
-    public Participation deleteResultsAndSubmissionsOfParticipation(Participation participation) {
+    public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+        Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
@@ -884,8 +885,8 @@ public class ParticipationService {
                 }
             }
         }
-        // The following case is necessary, because we might have submissions without a result. At this point only submissions without a result will still be connected to the
-        // participation.
+        // The following case is necessary, because we might have submissions without a result.
+        // At this point only submissions without a result will still be connected to the participation.
         if (participation.getSubmissions() != null) {
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());
