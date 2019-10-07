@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,8 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -30,45 +27,21 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class FileUploadSubmissionResource {
+public class FileUploadSubmissionResource extends GenericSubmissionResource<FileUploadSubmission, FileUploadExercise> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    private final CourseService courseService;
-
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final ExerciseService exerciseService;
-
-    private final UserService userService;
-
-    private final ParticipationService participationService;
-
-    private final ResultRepository resultRepository;
-
-    public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
-            FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
-        this.userService = userService;
-        this.exerciseService = exerciseService;
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.courseService = courseService;
+    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService) {
+        super(courseService, authCheckService, userService, exerciseService, participationService);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
-        this.authCheckService = authCheckService;
-        this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -294,26 +267,5 @@ public class FileUploadSubmissionResource {
         }
 
         return ResponseEntity.ok(fileUploadSubmission);
-    }
-
-    private ResponseEntity<FileUploadSubmission> checkExerciseValidity(FileUploadExercise fileUploadExercise) {
-        if (fileUploadExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
-        if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 }

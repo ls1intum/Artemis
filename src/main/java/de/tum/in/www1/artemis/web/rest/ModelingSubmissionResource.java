@@ -14,7 +14,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
@@ -34,14 +33,11 @@ import io.swagger.annotations.*;
  */
 @RestController
 @RequestMapping("/api")
-public class ModelingSubmissionResource {
+public class ModelingSubmissionResource extends GenericSubmissionResource<ModelingSubmission, ModelingExercise> {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final String GET_200_SUBMISSIONS_REASON = "";
 
@@ -49,29 +45,15 @@ public class ModelingSubmissionResource {
 
     private final ModelingExerciseService modelingExerciseService;
 
-    private final ParticipationService participationService;
-
-    private final CourseService courseService;
-
-    private final AuthorizationCheckService authCheckService;
-
     private final CompassService compassService;
-
-    private final ExerciseService exerciseService;
-
-    private final UserService userService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
             ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
             ExerciseService exerciseService, UserService userService) {
+        super(courseService, authCheckService, userService, exerciseService, participationService);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
-        this.participationService = participationService;
-        this.courseService = courseService;
-        this.authCheckService = authCheckService;
         this.compassService = compassService;
-        this.exerciseService = exerciseService;
-        this.userService = userService;
     }
 
     /**

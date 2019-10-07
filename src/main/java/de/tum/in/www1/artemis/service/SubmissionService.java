@@ -92,7 +92,7 @@ abstract class SubmissionService {
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
-    public <T extends Submission> Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
+    public Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);

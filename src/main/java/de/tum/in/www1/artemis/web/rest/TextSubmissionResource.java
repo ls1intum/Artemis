@@ -10,8 +10,6 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +20,6 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -30,42 +27,25 @@ import io.github.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class TextSubmissionResource {
+public class TextSubmissionResource extends GenericSubmissionResource<TextSubmission, TextExercise> {
 
     private static final String ENTITY_NAME = "textSubmission";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExerciseService exerciseService;
-
     private final TextExerciseService textExerciseService;
 
-    private final CourseService courseService;
-
-    private final ParticipationService participationService;
-
     private final TextSubmissionService textSubmissionService;
-
-    private final UserService userService;
-
-    private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
             AuthorizationCheckService authCheckService) {
+        super(courseService, authCheckService, userService, exerciseService, participationService);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
-        this.courseService = courseService;
-        this.participationService = participationService;
         this.textSubmissionService = textSubmissionService;
-        this.userService = userService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -133,26 +113,6 @@ public class TextSubmissionResource {
         log.debug("REST request to get TextSubmission : {}", id);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(textSubmission);
-    }
-
-    private ResponseEntity<TextSubmission> checkExerciseValidity(TextExercise textExercise) {
-        if (textExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 
     /**
