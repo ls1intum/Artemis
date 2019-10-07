@@ -3,7 +3,6 @@ import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, StudentParticipation } from 'app/entities/participation';
-import { Course } from 'app/entities/course';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
@@ -23,8 +22,6 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    @Input() exerciseType: ExerciseType;
-    @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
@@ -77,7 +74,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 // Ignore initial null result of subscription
                 filter(result => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
-                filter((result: Result) => this.showUngradedResults || result.rated === true),
+                filter((result: Result) => this.showUngradedResults || result.rated),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
             )
