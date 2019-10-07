@@ -214,6 +214,9 @@
         "archive": {
             "title": "Archivieren bestätigen"
         },
+        "exportRepos": {
+            "title": "Herunterladen bestätigen"
+        },
         "validation": {
             "required": "Dieses Feld wird benötigt.",
             "minlength": "Dieses Feld muss mind. {{min}} Zeichen lang sein.",

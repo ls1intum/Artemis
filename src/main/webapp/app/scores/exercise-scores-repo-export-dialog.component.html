@@ -7,7 +7,7 @@
         <jhi-alert-error></jhi-alert-error>
         <p jhiTranslate="instructorDashboard.exportRepos.question" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">Confirm export</p>
         <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required [disabled]="repositoryExportOptions.exportAllStudents"></textarea>
-        <p>(This action can take several minutes depending on number and size of repositories.)</p>
+        <p jhiTranslate="instructorDashboard.exportRepos.timeWarning">(This action can take several minutes depending on number and size of repositories.)</p>
         <div class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllStudents" />

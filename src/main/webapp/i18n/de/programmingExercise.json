@@ -108,7 +108,7 @@
             "export": {
                 "downloadAllStudents": "Lade Repositories von allen Studenten herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
-                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe",
+                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
                 "addStudentName": "Name der Studenten zum Projekt hinzufügen",
                 "squashAfterInstructor": "Alle Commits des Studenten in ein Commit zusammenfassen",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)"
