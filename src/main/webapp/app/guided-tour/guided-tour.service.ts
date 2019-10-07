@@ -9,7 +9,7 @@ import { debounceTime } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService } from 'app/core';
+import { AccountService, User } from 'app/core';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
@@ -46,9 +46,11 @@ export class GuidedTourService {
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
      */
     public init() {
-        // Retrieve the guided tour setting from the account service
-        this.accountService.identity().then(user => {
-            this.guidedTourSettings = user ? user.guidedTourSettings : [];
+        // Retrieve the guided tour setting from the account service after the user is logged in
+        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+            if (user) {
+                this.guidedTourSettings = user ? user.guidedTourSettings : [];
+            }
         });
 
         // Reset guided tour availability on router navigation
@@ -65,7 +67,7 @@ export class GuidedTourService {
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour) {
+                if (this.currentTour && this.deviceService.isDesktop()) {
                     if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(
@@ -260,10 +262,10 @@ export class GuidedTourService {
      * Get the last step that the user visited during the given tour
      */
     public getLastSeenTourStepIndex(): number {
-        if (!this.currentTour) {
+        if (!this.availableTourForComponent) {
             return 0;
         }
-        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.currentTour!.settingsKey);
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
         return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
     }
 
@@ -409,10 +411,10 @@ export class GuidedTourService {
     }
 
     private getFilteredTourSteps(): TourStep[] {
-        if (!this.currentTour) {
+        if (!this.availableTourForComponent) {
             return [];
         }
-        return this.currentTour.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
+        return this.availableTourForComponent.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**

@@ -169,7 +169,13 @@ describe('GuidedTourComponent', () => {
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(skipTour.calls.count()).to.equal(1);
 
+            // Reset component
             skipTour.calls.reset();
+            guidedTourComponent.currentTourStep = null;
+
+            // Skip tour with ESC key should not be possible when the component is not active
+            guidedTourComponent.handleKeyboardEvent(eventMock);
+            expect(skipTour.calls.count()).to.equal(0);
         });
     });
 
