@@ -1,0 +1,40 @@
+{
+    "tour": {
+        "modelingExercise": {
+            "editorArea": {
+                "headline": "Modeling Exercise",
+                "content": "Here on this page you have to solve a modeling exercise. You can see a checkered canvas - the editor area - where you can drag and drop the UML elements, which are displayed on the right side of the canvas, into."
+            },
+            "addUmlElement": {
+                "headline": "Add UML elements",
+                "description": {
+                    "content": "To add a UML element, simply drag and drop one of the elements from the right side into the editor area on the left side as shown in the animation below."
+                },
+                "task": {
+                    "content": "Now that you have seen how the drag and drop feature works, please try it out by dragging the <tt>Class</tt> element into the editor area."
+                }
+            },
+            "editUmlElement": {
+                "headline": "Edit UML element",
+                "content": "You can edit the UML elements on your canvas by double-clicking the element as shown in the animation below. Feel free to try it out after this tutorial"
+            },
+            "createAssociation": {
+                "headline": "Create associations",
+                "description": {
+                    "content": "To create an association between elements, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship as shown in the animation below."
+                },
+                "task": {
+                    "content": "Now that you know how to create associations, please try it out by dragging another <tt>Class</tt> element into the editor area and connect both classes."
+                }
+            },
+            "saveAndSubmit": {
+                "headline": "Save and submit your model",
+                "content": "You can always save your current model by clicking on <tt>Save</tt>. When you are finally done with your model, click on <tt>Submit</tt> to hand in your solution."
+            },
+            "help": {
+                "headline": "Help menu",
+                "content": "In the help menu, you can find more descriptions on how to use the modeling editor."
+            }
+        }
+    }
+}

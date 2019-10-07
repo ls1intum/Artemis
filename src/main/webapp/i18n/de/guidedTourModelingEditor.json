@@ -1,0 +1,40 @@
+{
+    "tour": {
+        "modelingExercise": {
+            "editorArea": {
+                "headline": "Modellierungsaufgabe ",
+                "content": "Hier auf dieser Seite sollst du eine Modellierungsaufgabe lösen. Auf der linken Seite siehst du eine karierte Fläche - die Editierfläche - auf welche du die UML Elemente, die auf neben der Editierfläche aufgelistet sind, per Drag and Drop hinzufügen kannst."
+            },
+            "addUmlElement": {
+                "headline": "UML Elemente hinzufügen",
+                "description": {
+                    "content": "Um UML Elemente hinzuzufügen, musst du nur eines der aufgelisteten UML Elemente neben der Editierfläche per Drag and Drop auf die Editierfläche ziehen. Die abgebildete Animation, zeigt dir wie das funktioniert."
+                },
+                "task": {
+                    "content": "Jetzt da du weißt, wie man UML Elemente hinzufügst, versuche bitte das <tt>Class</tt> Element auf die Editierfläche zu ziehen."
+                }
+            },
+            "editUmlElement": {
+                "headline": "UML Elemente bearbeiten",
+                "content": "Du kannst ein UML Element auf deiner Editierfläche bearbeiten, indem du das Element per Doppelklick auswählst. Die abgebildete Animation, zeigt dir wie das funktioniert. Probiere das Bearbeiten eines UML Elementes nach diesem Tutorial aus."
+            },
+            "createAssociation": {
+                "headline": "Beziehungen erstellen",
+                "description": {
+                    "content": "Um eine Beziehung hinzuzufügen, wähle die Ausgangsklasse mit einem Klick aus und erkenne die vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Beziehungen. Klicke und halte einen dieser Punkte gedrückt und ziehe die Maus auf einen anderen blauen Halbkreis, um eine Beziehung zu erstellen."
+                },
+                "task": {
+                    "content": "Jetzt da du weißt, wie man Beziehungen erstellt, versuche bitte ein weiteres <tt>Class</tt> Element auf deine Editierfläche zu ziehen und beide Elemente zu verbinden."
+                }
+            },
+            "saveAndSubmit": {
+                "headline": "Modellierung speichern und absenden",
+                "content": "Du kannst den aktuellen Status deiner Modellierung jederzeit speichern, indem du auf <tt>Speichern</tt> klickst. Wenn du mit deiner Modellierung fertig bist, dann klicke auf <tt>Absenden</tt>, um deine Lösung einzureichen."
+            },
+            "help": {
+                "headline": "Hilfemenü",
+                "content": "Im Hilfemenü findest du weitere Beschreibungen zu weiteren Funktionalitäten des Modellierungseditors."
+            }
+        }
+    }
+}
