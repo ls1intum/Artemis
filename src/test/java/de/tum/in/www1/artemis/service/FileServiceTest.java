@@ -9,9 +9,7 @@ import java.nio.charset.Charset;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,7 +50,7 @@ public class FileServiceTest {
     }
 
     @AfterEach
-    @Before
+    @BeforeEach
     private void deleteFiles() throws IOException {
         FileUtils.deleteDirectory(new File("./exportTest/"));
     }

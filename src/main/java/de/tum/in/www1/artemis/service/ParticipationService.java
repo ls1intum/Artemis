@@ -408,10 +408,11 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            final var exercise = participation.getProgrammingExercise();
-            final var projectKey = exercise.getProjectKey();
+            final var programmingExercise = participation.getProgrammingExercise();
+            final var projectKey = programmingExercise.getProjectKey();
             final var username = participation.getStudent().getLogin();
-            final var repoName = RepositoryType.TEMPLATE.getName();
+            // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
+            final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             final var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, username).withUser(username);
             participation.setRepositoryUrl(newRepoUrl.toString());
             participation.setInitializationState(REPO_COPIED);
@@ -848,7 +849,7 @@ public class ParticipationService {
             complaintRepository.deleteByResult_Participation_Id(participationId);
         }
 
-        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation);
+        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -859,11 +860,12 @@ public class ParticipationService {
     /**
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
-     * @param participation to delete results/submissions from.
+     * @param participationId the id of the participation to delete results/submissions from.
      * @return participation without submissions and results.
      */
     @Transactional
-    public Participation deleteResultsAndSubmissionsOfParticipation(Participation participation) {
+    public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+        Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
@@ -884,8 +886,8 @@ public class ParticipationService {
                 }
             }
         }
-        // The following case is necessary, because we might have submissions without a result. At this point only submissions without a result will still be connected to the
-        // participation.
+        // The following case is necessary, because we might have submissions without a result.
+        // At this point only submissions without a result will still be connected to the participation.
         if (participation.getSubmissions() != null) {
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());

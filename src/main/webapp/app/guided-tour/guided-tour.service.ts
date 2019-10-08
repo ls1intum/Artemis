@@ -9,7 +9,7 @@ import { debounceTime } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService } from 'app/core';
+import { AccountService, User } from 'app/core';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
@@ -46,14 +46,16 @@ export class GuidedTourService {
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
      */
     public init() {
-        // Retrieve the guided tour setting from the account service
-        this.accountService.identity().then(user => {
-            this.guidedTourSettings = user ? user.guidedTourSettings : [];
+        // Retrieve the guided tour setting from the account service after the user is logged in
+        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+            if (user) {
+                this.guidedTourSettings = user ? user.guidedTourSettings : [];
+            }
         });
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (event instanceof NavigationStart) {
+            if (this.currentTour && event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
@@ -179,7 +181,7 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    private finishGuidedTour() {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -210,7 +212,7 @@ export class GuidedTourService {
      * Show the cancel hint every time a user skips a tour
      */
     private showCancelHint(): void {
-        clickOnElement('#account-menu');
+        clickOnElement('#account-menu[aria-expanded="false"]');
         setTimeout(() => {
             this.currentTour = cloneDeep(cancelTour);
             // Proceed with tour if it has tour steps and the tour display is allowed for current window size
