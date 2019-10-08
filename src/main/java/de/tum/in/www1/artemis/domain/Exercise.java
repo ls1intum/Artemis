@@ -578,11 +578,22 @@ public abstract class Exercise implements Serializable {
             Set<Submission> submissions = participation.getSubmissions();
             Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
 
+            // only transmit the relevant result
+            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
+
+            if (result != null) {
+                // remove inner participation from result
+                result.setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    result.filterSensitiveInformation();
+                }
+                participation.setResults(Set.of(result));
+            }
+
             // filter sensitive information in submission's result
             if (isStudent && submission != null && submission.getResult() != null) {
                 submission.getResult().filterSensitiveInformation();
-                participation.setResults(Set.of(submission.getResult()));
-                participation.getResults().forEach(Result::filterSensitiveInformation);
             }
 
             // add submission to participation
