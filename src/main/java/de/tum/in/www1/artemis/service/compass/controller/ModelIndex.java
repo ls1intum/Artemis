@@ -76,7 +76,7 @@ public class ModelIndex {
      * @return the number of unique model elements
      */
     public int getNumberOfUniqueElements() {
-        return this.uniqueModelElementList.size();
+        return uniqueModelElementList.size();
     }
 
     /**
@@ -85,7 +85,7 @@ public class ModelIndex {
      * @return the model element to similarity id mapping
      */
     public Map<UMLElement, Integer> getModelElementMapping() {
-        return this.modelElementMapping;
+        return modelElementMapping;
     }
 
     public Collection<UMLElement> getUniqueElements() {
