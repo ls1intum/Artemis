@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
+import { DialogType } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -13,6 +14,7 @@ export class DeleteDialogComponent implements OnInit {
     deleteConfirmationText: string;
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
+    dialogType: DialogType = DialogType.Delete;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;

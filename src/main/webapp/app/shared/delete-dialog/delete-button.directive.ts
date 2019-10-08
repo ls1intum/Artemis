@@ -2,12 +2,19 @@ import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/
 import { Output, EventEmitter, Input, Directive, HostListener, Renderer2, ElementRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
+export const enum DialogType {
+    Delete = 'delete',
+    Reset = 'reset',
+    Cleanup = 'cleanup',
+}
+
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
+    @Input() dialogType: DialogType = DialogType.Delete;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
@@ -48,6 +55,7 @@ export class DeleteButtonDirective implements OnInit {
             deleteQuestion: this.deleteQuestion,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
+            dialogType: this.dialogType,
         };
         this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe((additionalChecksValues: { [key: string]: boolean }) => {
             this.delete.emit(additionalChecksValues);
