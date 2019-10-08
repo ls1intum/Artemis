@@ -408,10 +408,11 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            final var exercise = participation.getProgrammingExercise();
-            final var projectKey = exercise.getProjectKey();
+            final var programmingExercise = participation.getProgrammingExercise();
+            final var projectKey = programmingExercise.getProjectKey();
             final var username = participation.getStudent().getLogin();
-            final var repoName = RepositoryType.TEMPLATE.getName();
+            // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
+            final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             final var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, username).withUser(username);
             participation.setRepositoryUrl(newRepoUrl.toString());
             participation.setInitializationState(REPO_COPIED);

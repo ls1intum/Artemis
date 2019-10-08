@@ -185,17 +185,17 @@ public class BitbucketService implements VersionControlService {
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
-        final var sourceRepoSlug = sourceProjectKey.toLowerCase() + "-" + sourceRepositoryName;
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         final Map<String, Object> body = new HashMap<>();
         body.put("name", targetRepoSlug);
-        body.put("project", new HashMap<>());
-        ((Map) body.get("project")).put("key", targetProjectKey);
+        final var projectMap = new HashMap<>();
+        projectMap.put("key", targetProjectKey);
+        body.put("project", projectMap);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepoSlug);
-        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepoSlug;
+        log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
+        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
         try {
             final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
@@ -208,15 +208,16 @@ public class BitbucketService implements VersionControlService {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepoSlug);
+                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepositoryName);
             }
             else {
-                throw e;
+                log.error("Could not fork base repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug, e);
+                throw new BitbucketException("Error while forking repository", e);
             }
         }
         catch (Exception emAll) {
-            log.error("Could not fork base repository" + targetRepoSlug, emAll);
-            throw new BitbucketException("Error while forking repository");
+            log.error("Could not fork base repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug, emAll);
+            throw new BitbucketException("Error while forking repository", emAll);
         }
 
         return null;
@@ -247,7 +248,7 @@ public class BitbucketService implements VersionControlService {
      * @return The repository slug
      * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
      */
-    private String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
+    public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 3) {
