@@ -683,15 +683,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise and student with eager results.
+     * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
      * @param exerciseId the id of exercise
      * @param studentId the id of student
      * @return the list of programming exercise participations belonging to exercise and student
      */
     @Transactional(readOnly = true)
-    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
+    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(Long exerciseId, Long studentId) {
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exerciseId, studentId);
     }
 
     /**
