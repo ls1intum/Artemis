@@ -18,6 +18,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    isDeleting: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -61,6 +62,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param $event passed from delete dialog to represent if checkboxes were checked
      */
     deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.isDeleting = true;
         this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -69,6 +71,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 });
             },
             error => this.onError(error),
+            () => (this.isDeleting = false),
         );
     }
 
