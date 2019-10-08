@@ -6,6 +6,7 @@ export const enum DialogType {
     Delete = 'delete',
     Reset = 'reset',
     Cleanup = 'cleanup',
+    Archive = 'archive',
 }
 
 @Directive({ selector: '[jhiDeleteButton]' })
@@ -37,7 +38,20 @@ export class DeleteButtonDirective implements OnInit {
         this.deleteTextSpan = this.renderer.createElement('span');
         this.renderer.addClass(this.deleteTextSpan, 'd-none');
         this.renderer.addClass(this.deleteTextSpan, 'd-md-inline');
-        this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
+        switch (this.dialogType) {
+            case DialogType.Delete:
+                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
+                break;
+            case DialogType.Reset:
+                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.reset'));
+                break;
+            case DialogType.Archive:
+                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.cleanup'));
+                break;
+            case DialogType.Cleanup:
+                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.archive'));
+                break;
+        }
         this.renderer.appendChild(this.el.nativeElement, this.deleteTextSpan);
 
         // update the span title on each language change
