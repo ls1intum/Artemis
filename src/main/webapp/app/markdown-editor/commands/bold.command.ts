@@ -15,23 +15,25 @@ export class BoldCommand extends Command {
     execute(): void {
         const selectedText = this.getSelectedText();
         let textToAdd = '';
-        let whiteSpaceIndex = selectedText.indexOf(' ');
+        let updatedTxt = '';
 
         if (selectedText.includes('**')) {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
             if (selectedText.charAt(0) == ' ' && selectedText.charAt(selectedText.length - 1) == ' ') {
-                var updatedTxt = selectedText.slice(1, selectedText.length - 1);
-                //var removed2snd=updatedTxt.slice(0,selectedText.length-1);
+                //eliminates white space at the beginning and end of selected text
+                updatedTxt = selectedText.slice(1, selectedText.length - 1);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(' ' + textToAdd + ' ');
             } else if (selectedText.charAt(selectedText.length - 1) == ' ') {
-                var updatedTxt = selectedText.slice(0, selectedText.length - 1);
+                //eliminates white space at end of selected text
+                updatedTxt = selectedText.slice(0, selectedText.length - 1);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(textToAdd + ' ');
             } else if (selectedText.charAt(0) == ' ') {
-                var updatedTxt = selectedText.slice(1, selectedText.length);
+                //eliminates white space at the beginning of selected text
+                updatedTxt = selectedText.slice(1, selectedText.length);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(' ' + textToAdd);
             } else {
