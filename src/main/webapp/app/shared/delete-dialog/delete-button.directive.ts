@@ -1,15 +1,7 @@
-import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { Output, EventEmitter, Input, Directive, HostListener, Renderer2, ElementRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-
-/**
- * Defines the type of the action handled by delete dialog
- */
-export const enum ActionType {
-    Delete = 'delete',
-    Reset = 'reset',
-    Cleanup = 'cleanup',
-}
+import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {

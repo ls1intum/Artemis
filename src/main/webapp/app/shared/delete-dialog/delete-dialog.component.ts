@@ -1,15 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
-import { ActionType } from 'app/shared/delete-dialog/delete-button.directive';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent implements OnInit {
-    // @ts-ignore
-    public actionTypes = ActionType;
+    readonly actionTypes = ActionType;
 
     confirmEntityName: string;
     entityTitle: string;
