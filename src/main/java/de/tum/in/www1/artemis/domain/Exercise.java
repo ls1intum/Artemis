@@ -581,6 +581,8 @@ public abstract class Exercise implements Serializable {
             // only transmit the relevant result
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
 
+            Set<Result> results = result != null ? Set.of(result) : Set.of();
+
             if (result != null) {
                 // remove inner participation from result
                 result.setParticipation(null);
@@ -588,7 +590,6 @@ public abstract class Exercise implements Serializable {
                 if (isStudent) {
                     result.filterSensitiveInformation();
                 }
-                participation.setResults(Set.of(result));
             }
 
             // filter sensitive information in submission's result
@@ -600,6 +601,8 @@ public abstract class Exercise implements Serializable {
             if (submission != null) {
                 participation.setSubmissions(Set.of(submission));
             }
+
+            participation.setResults(results);
 
             // remove inner exercise from participation
             participation.setExercise(null);
