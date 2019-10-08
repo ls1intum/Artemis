@@ -657,45 +657,49 @@ export class GuidedTourService {
      * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
      */
     public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
-        const totalCount = this.currentTour!.steps.length;
+        if (this.currentTour!.steps.length < this.maxDots) {
+            return;
+        }
+
         const transformXIntervalNext = -26;
         const transformXIntervalPrev = 26;
 
-        if (totalCount > this.maxDots) {
-            const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
-            const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
-            const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
-            const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
-            const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
+        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
+        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
+        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
+        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
+        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
 
-            if (currentIndex < nextIndex) {
-                if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
-                    this.transformCount += transformXIntervalNext;
-                    nextDot.classList.remove('n-small');
-                    nextPlusOneDot.classList.add('n-small');
-                    dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                    dotList.querySelectorAll('li').forEach((node, index) => {
-                        if (index === nextIndex - 4) {
-                            node.classList.remove('p-small');
-                        } else if (index === nextIndex - 3) {
-                            node.classList.add('p-small');
-                        }
-                    });
-                }
-            } else {
-                if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-                    this.transformCount += transformXIntervalPrev;
-                    nextDot.classList.remove('p-small');
-                    nextPlusOneDot.classList.add('p-small');
-                    dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                    dotList.querySelectorAll('li').forEach((node, index) => {
-                        if (index === currentIndex + 3) {
-                            node.classList.remove('n-small');
-                        } else if (index === currentIndex + 2) {
-                            node.classList.add('n-small');
-                        }
-                    });
-                }
+        // Handles forward navigation
+        if (currentIndex < nextIndex) {
+            // Moves the n-small and p-small class one dot further
+            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+                this.transformCount += transformXIntervalNext;
+                nextDot.classList.remove('n-small');
+                nextPlusOneDot.classList.add('n-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex - 4) {
+                        node.classList.remove('p-small');
+                    } else if (index === nextIndex - 3) {
+                        node.classList.add('p-small');
+                    }
+                });
+            }
+        } else {
+            // Handles backwards navigation
+            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+                this.transformCount += transformXIntervalPrev;
+                nextDot.classList.remove('p-small');
+                nextPlusOneDot.classList.add('p-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex + 4) {
+                        node.classList.remove('n-small');
+                    } else if (index === nextIndex + 3) {
+                        node.classList.add('n-small');
+                    }
+                });
             }
         }
     }
