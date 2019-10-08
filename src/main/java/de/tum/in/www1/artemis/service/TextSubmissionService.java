@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -31,8 +30,6 @@ public class TextSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ParticipationService participationService;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -40,10 +37,9 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.participationService = participationService;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.messagingTemplate = messagingTemplate;
     }
@@ -144,14 +140,7 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
-                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return getSubmissionWithoutManualResult(textExercise).map(TextSubmission.class::cast);
     }
 
     /**

@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -40,8 +39,6 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final ResultService resultService;
 
-    private final ParticipationService participationService;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -51,9 +48,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
             SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
         this.resultService = resultService;
@@ -117,25 +113,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
         return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new FileUploadSubmission())).collect(Collectors.toList());
-    }
-
-    /**
-     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
-     * assessment for the corresponding submission yet.
-     *
-     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
-     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
-     */
-    @Transactional(readOnly = true)
-    public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
-        Random r = new Random();
-        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(fileUploadExercise.getId())
-                .stream().map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
     /**
@@ -244,7 +221,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional
     public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
-        FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
+        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) getSubmissionWithoutManualResult(fileUploadExercise)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission);
         return fileUploadSubmission;

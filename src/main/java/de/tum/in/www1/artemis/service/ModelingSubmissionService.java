@@ -30,8 +30,6 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final CompassService compassService;
 
-    private final ParticipationService participationService;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -39,11 +37,10 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
             StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.compassService = compassService;
-        this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
     }
@@ -142,15 +139,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
-                .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Random r = new Random();
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return getSubmissionWithoutManualResult(modelingExercise).map(ModelingSubmission.class::cast);
     }
 
     /**
