@@ -32,7 +32,7 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM FileUploadSubmission submission WHERE submission.participation.exercise.course.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    @Query("SELECT COUNT (DISTINCT submission) FROM #{#entityName} submission WHERE submission.participation.exercise.course.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
 
     /**
@@ -40,7 +40,7 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM FileUploadSubmission submission WHERE submission.participation.exercise.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    @Query("SELECT COUNT (DISTINCT submission) FROM #{#entityName} submission WHERE submission.participation.exercise.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
 
     /**
