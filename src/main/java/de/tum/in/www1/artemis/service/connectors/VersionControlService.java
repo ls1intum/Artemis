@@ -5,6 +5,7 @@ import java.net.URL;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -113,7 +114,7 @@ public interface VersionControlService {
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName);
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
 
     /**
      * Removes the user's write permissions for a repository.
@@ -124,4 +125,15 @@ public interface VersionControlService {
      * @throws Exception        If the communication with the VCS fails.
      */
     void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws Exception;
+
+    /**
+     * Gets the repository slug from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The repository slug
+     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
+     */
+    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle
+    // this in the future
+    String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
 }
