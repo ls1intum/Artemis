@@ -194,6 +194,7 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
+        log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepoSlug);
         final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepoSlug;
         try {
             final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
