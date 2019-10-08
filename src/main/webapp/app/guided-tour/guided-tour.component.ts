@@ -244,15 +244,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public backdropClick(event: Event): void {
         if (this.guidedTourService.preventBackdropFromAdvancing) {
             event.stopPropagation();
-            // When the user clicks on the backdrop while seeing the cancel tour step or last tour step, the cancel tour will be finished automatically
-            if (this.isCancelTour() || this.guidedTourService.isOnLastStep) {
-                this.guidedTourService.finishGuidedTour();
-            }
         } else {
             this.guidedTourService.nextStep();
         }
+        // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
+        if (this.isCancelTour()) {
+            this.guidedTourService.finishGuidedTour();
+        }
     }
 
+    /**
+     * Determines if the cancel tour is currently displayed
+     */
     private isCancelTour() {
         return this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline';
     }
