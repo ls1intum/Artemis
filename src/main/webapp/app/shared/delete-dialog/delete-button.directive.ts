@@ -2,11 +2,13 @@ import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/
 import { Output, EventEmitter, Input, Directive, HostListener, Renderer2, ElementRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
+/**
+ * Defines the type of the delete dialog
+ */
 export const enum DialogType {
     Delete = 'delete',
     Reset = 'reset',
     Cleanup = 'cleanup',
-    Archive = 'archive',
 }
 
 @Directive({ selector: '[jhiDeleteButton]' })
@@ -44,9 +46,6 @@ export class DeleteButtonDirective implements OnInit {
                 break;
             case DialogType.Reset:
                 this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.reset'));
-                break;
-            case DialogType.Archive:
-                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.cleanup'));
                 break;
             case DialogType.Cleanup:
                 this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.archive'));

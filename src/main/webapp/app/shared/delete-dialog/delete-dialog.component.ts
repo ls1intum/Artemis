@@ -8,7 +8,9 @@ import { DialogType } from 'app/shared/delete-dialog/delete-button.directive';
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent implements OnInit {
-    DialogType = DialogType;
+    // @ts-ignore
+    public dialogTypes = DialogType;
+
     confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;

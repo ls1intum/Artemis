@@ -1,10 +1,9 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title">
-            <span *ngIf="dialogType === DialogType.Delete" jhiTranslate="entity.delete.title">Confirm delete operation</span>
-            <span *ngIf="dialogType === DialogType.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
-            <span *ngIf="dialogType === DialogType.Archive" jhiTranslate="entity.archive.title">Confirm archive operation</span>
-            <span *ngIf="dialogType === DialogType.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
+        <h4 class="modal-title" [ngSwitch]="dialogType">
+            <span *ngSwitchCase="dialogTypes.Delete" jhiTranslate="entity.delete.title">Confirm delete operation</span>
+            <span *ngSwitchCase="dialogTypes.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
+            <span *ngSwitchCase="dialogTypes.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -34,3 +33,5 @@
         </button>
     </div>
 </form>
+
+Add loading to the delete button e.g. for prog exercise Replace Archive with Download Get rid of popup service
