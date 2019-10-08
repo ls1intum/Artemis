@@ -21,3 +21,9 @@ jobs:
       run: ./gradlew -Pprod -Pwar clean bootWar
       env:
         CI: true
+    - run: ln -s `ls build/libs/` ./build/libs/Artemis.war
+    - name: Upload Artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: Artemis.war
+        path: build/libs/
