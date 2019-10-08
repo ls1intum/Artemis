@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -93,8 +94,9 @@ public abstract class Exercise implements Serializable {
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
 
+    @Nullable
     @Column(name = "presentation_score_enabled")
-    private Boolean presentationScoreEnabled;
+    private Boolean presentationScoreEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
