@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.naming.NoPermissionException;
-
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
@@ -198,15 +196,13 @@ public class RepositoryWebsocketResource {
      *
      * @param submission information about file update
      * @param repository repository in which to fetch and update the file
-     * @throws InterruptedException
      * @throws IOException
-     * @throws NoPermissionException
      */
     private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
         Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
 
-        if (!file.isPresent()) {
-            FileSubmissionError error = new FileSubmissionError(submission.getFileName(), "File could not be found.");
+        if (file.isEmpty()) {
+            throw new IOException("File could not be found.");
         }
 
         InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
