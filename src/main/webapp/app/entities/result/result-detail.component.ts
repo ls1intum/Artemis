@@ -30,7 +30,7 @@ export class ResultDetailComponent implements OnInit {
             this.result.feedbacks = res.body!;
             this.feedbackList = res.body!;
             if ((!this.feedbackList || this.feedbackList.length === 0) && this.result.participation) {
-                // If we don't have received any feedback, we fetch the buid log outputs
+                // If we don't have received any feedback, we fetch the build log outputs
                 this.repositoryService.buildlogs(this.result.participation.id).subscribe((repoResult: BuildLogEntry[]) => {
                     this.buildLogs = new BuildLogEntryArray(...repoResult);
                     this.isLoading = false;
