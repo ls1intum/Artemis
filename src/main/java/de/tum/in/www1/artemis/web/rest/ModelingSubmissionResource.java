@@ -336,16 +336,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getResult() != null && (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null)) {
-            modelingSubmission.setResult(null);
-        }
-
-        if (modelingSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            modelingSubmission.getResult().setAssessor(null);
-        }
-
-        return ResponseEntity.ok(modelingSubmission);
+        return ResponseEntity.ok(modelingSubmissionService.hideResultDetails(modelingSubmission, modelingExercise));
     }
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {

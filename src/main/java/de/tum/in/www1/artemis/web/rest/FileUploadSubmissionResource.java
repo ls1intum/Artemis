@@ -256,16 +256,6 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        // do not send the result to the client if the assessment is not finished
-        if (fileUploadSubmission.getResult() != null && (fileUploadSubmission.getResult().getCompletionDate() == null || fileUploadSubmission.getResult().getAssessor() == null)) {
-            fileUploadSubmission.setResult(null);
-        }
-
-        // do not send the assessor information to students
-        if (fileUploadSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getResult().setAssessor(null);
-        }
-
-        return ResponseEntity.ok(fileUploadSubmission);
+        return ResponseEntity.ok(fileUploadSubmissionService.hideResultDetails(fileUploadSubmission, fileUploadExercise));
     }
 }

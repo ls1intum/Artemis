@@ -18,7 +18,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
     @Value("${jhipster.clientApp.name}")
     protected String applicationName;
 
-    protected static final String ENTITY_NAME = "submission";
+    protected static final String ENTITY_NAME = "genericSubmission";
 
     protected final CourseService courseService;
 
