@@ -257,7 +257,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Determines if the cancel tour is currently displayed
      */
     private isCancelTour() {
-        return this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline';
+        return this.currentTourStep ? this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline' : false;
     }
 
     /**
