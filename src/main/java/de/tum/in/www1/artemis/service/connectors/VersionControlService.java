@@ -113,8 +113,9 @@ public interface VersionControlService {
      * @param targetProjectKey The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
+     * @throws BitbucketException if forking the repository fails
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws BitbucketException;
 
     /**
      * Removes the user's write permissions for a repository.
@@ -133,7 +134,6 @@ public interface VersionControlService {
      * @return The repository slug
      * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
      */
-    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle
-    // this in the future
-    String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
+    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle this in the future
+    String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException;
 }
