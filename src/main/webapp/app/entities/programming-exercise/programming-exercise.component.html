@@ -135,6 +135,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -144,6 +145,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/exercise', programmingExercise.id, 'participation']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -155,6 +157,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                    [disabled]="isDeleting"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -164,6 +167,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     routerLink="/exercise/{{ programmingExercise.id }}/hints"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -173,6 +177,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     routerLink="programming-exercise/{{ programmingExercise.id }}/manage-test-cases"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -184,6 +189,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -193,6 +199,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName != null && programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -202,6 +209,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName == null && programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -211,19 +219,19 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
+                                    class="btn btn-info btn-sm mr-1"
+                                    [disabled]="isDeleting"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/exportRepos' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'archive'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
+                                    <fa-icon [icon]="'download'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
                                 </button>
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -237,6 +245,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [disabled]="isDeleting"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/reset' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"

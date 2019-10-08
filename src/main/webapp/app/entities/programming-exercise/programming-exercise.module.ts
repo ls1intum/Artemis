@@ -3,8 +3,6 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    ProgrammingExerciseArchiveDialogComponent,
-    ProgrammingExerciseArchivePopupComponent,
     ProgrammingExerciseCleanupDialogComponent,
     ProgrammingExerciseCleanupPopupComponent,
     ProgrammingExerciseComponent,
@@ -59,8 +57,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
@@ -72,8 +68,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseUpdateComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        ProgrammingExerciseArchivePopupComponent,
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
