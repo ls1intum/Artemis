@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,44 +31,83 @@ public class ModelIndex {
     }
 
     /**
-     * Get the internal similarity id for the given model element. If the element is similar to an existing one, they share the same similarity id. Otherwise, a new id is created.
+     * Get the internal similarity ID for the given model element. If the element is similar to an existing one, they share the same similarity id, i.e. they are in the same
+     * similarity set. Otherwise, the given element does not belong to an existing similarity set and a new similarity ID is created for the element.
      *
-     * @param element a model element for which the corresponding similarity id should be retrieved
-     * @return the similarity id for the given model element
+     * @param element a model element for which the corresponding similarity ID should be retrieved
+     * @return the similarity ID for the given model element, i.e. the ID of the similarity set the element belongs to
      */
     int retrieveSimilarityId(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }
-        // element is similar to existing element
+
+        Map<Double, Integer> similarityToIdMapping = new HashMap<>();
+
+        double similarity;
         for (UMLElement knownElement : uniqueModelElementList) {
-            if (knownElement.similarity(element) > CompassConfiguration.EQUALITY_THRESHOLD) {
-                modelElementMapping.put(element, knownElement.getSimilarityID());
-                return knownElement.getSimilarityID();
+            similarity = knownElement.similarity(element);
+            if (similarity > CompassConfiguration.EQUALITY_THRESHOLD) {
+                // element is similar to existing element
+                similarityToIdMapping.put(similarity, knownElement.getSimilarityID());
             }
         }
-        // element does not fit already known element
+
+        if (!similarityToIdMapping.isEmpty()) {
+            // get the similarity ID of the similarity set for which the element has the maximum similarity
+            int maxSimilarityId = Collections.max(similarityToIdMapping.entrySet(), Comparator.comparingDouble(Map.Entry::getKey)).getValue();
+            modelElementMapping.put(element, maxSimilarityId);
+            return maxSimilarityId;
+        }
+
+        // element does not fit already known element / similarity set
         uniqueModelElementList.add(element);
         modelElementMapping.put(element, uniqueModelElementList.size() - 1);
         return uniqueModelElementList.size() - 1;
     }
 
+    /**
+     * Add a new model to the model map.
+     *
+     * @param model the new model that should be added
+     */
     public void addModel(UMLDiagram model) {
         modelMap.put(model.getModelSubmissionId(), model);
     }
 
+    /**
+     * Get the model that belongs to the given submission ID from the model map.
+     *
+     * @param modelSubmissionId the ID of the submission to which the requested model belongs to
+     * @return the model that belong to the submission with the given ID
+     */
     public UMLDiagram getModel(long modelSubmissionId) {
         return modelMap.get(modelSubmissionId); // TODO MJ check if there? return Optional?
     }
 
+    /**
+     * Get the model map. It maps submission IDs to the models of the corresponding submissions.
+     *
+     * @return the model map
+     */
     public Map<Long, UMLDiagram> getModelMap() {
         return modelMap;
     }
 
+    /**
+     * Get the collection of all the models.
+     *
+     * @return the collection of models
+     */
     public Collection<UMLDiagram> getModelCollection() {
         return modelMap.values();
     }
 
+    /**
+     * Get the number of models.
+     *
+     * @return the number of models
+     */
     int getModelCollectionSize() {
         return modelMap.size();
     }
@@ -88,6 +130,11 @@ public class ModelIndex {
         return modelElementMapping;
     }
 
+    /**
+     * Get the collection of unique elements. Each unique element represents a similarity set.
+     *
+     * @return the collection of unique elements
+     */
     public Collection<UMLElement> getUniqueElements() {
         return uniqueModelElementList;
     }
