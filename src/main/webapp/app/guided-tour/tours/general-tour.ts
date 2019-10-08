@@ -15,7 +15,7 @@ export const cancelTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.LEFT,
             closeAction: () => {
-                clickOnElement('#account-menu');
+                clickOnElement('#account-menu[aria-expanded="true"]');
             },
         }),
     ],
