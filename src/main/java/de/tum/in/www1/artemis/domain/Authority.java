@@ -23,6 +23,15 @@ public class Authority implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public Authority() {
+        // empty constructor would not be available otherwise
+    }
+
+    public Authority(String name) {
+        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
+        setName(name);
+    }
+
     @NotNull
     @Size(max = 50)
     @Id

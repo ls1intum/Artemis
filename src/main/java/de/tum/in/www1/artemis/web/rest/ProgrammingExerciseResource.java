@@ -479,6 +479,40 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises-with-participations/:id : get the "id" programmingExercise.
+     *
+     * @param id the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/programming-exercises/{id}/with-participations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
+        log.debug("REST request to get ProgrammingExercise : {}", id);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(id);
+        if (programmingExerciseOpt.isPresent()) {
+            ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+            Course course = programmingExercise.getCourse();
+
+            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
+                    user.getId());
+            Set<StudentParticipation> participations = new HashSet<>();
+            assignmentParticipation.ifPresent(participations::add);
+            programmingExercise.setStudentParticipations(participations);
+
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+                return forbidden();
+            }
+
+            return ResponseEntity.ok(programmingExercise);
+        }
+        else {
+            return notFound();
+        }
+    }
+
+    /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param id the id of the programmingExercise to delete
