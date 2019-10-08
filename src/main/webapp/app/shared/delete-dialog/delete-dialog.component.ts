@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
-import { DialogType } from 'app/shared/delete-dialog/delete-button.directive';
+import { ActionType } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -9,7 +9,7 @@ import { DialogType } from 'app/shared/delete-dialog/delete-button.directive';
 })
 export class DeleteDialogComponent implements OnInit {
     // @ts-ignore
-    public dialogTypes = DialogType;
+    public actionTypes = ActionType;
 
     confirmEntityName: string;
     entityTitle: string;
@@ -17,7 +17,7 @@ export class DeleteDialogComponent implements OnInit {
     deleteConfirmationText: string;
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
-    dialogType: DialogType = DialogType.Delete;
+    dialogType: ActionType = ActionType.Delete;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;

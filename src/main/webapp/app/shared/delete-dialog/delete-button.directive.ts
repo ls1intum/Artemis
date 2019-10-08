@@ -3,9 +3,9 @@ import { Output, EventEmitter, Input, Directive, HostListener, Renderer2, Elemen
 import { TranslateService } from '@ngx-translate/core';
 
 /**
- * Defines the type of the delete dialog
+ * Defines the type of the action handled by delete dialog
  */
-export const enum DialogType {
+export const enum ActionType {
     Delete = 'delete',
     Reset = 'reset',
     Cleanup = 'cleanup',
@@ -17,7 +17,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
-    @Input() dialogType: DialogType = DialogType.Delete;
+    @Input() dialogType: ActionType = ActionType.Delete;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
@@ -41,13 +41,13 @@ export class DeleteButtonDirective implements OnInit {
         this.renderer.addClass(this.deleteTextSpan, 'd-none');
         this.renderer.addClass(this.deleteTextSpan, 'd-md-inline');
         switch (this.dialogType) {
-            case DialogType.Delete:
+            case ActionType.Delete:
                 this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
                 break;
-            case DialogType.Reset:
+            case ActionType.Reset:
                 this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.reset'));
                 break;
-            case DialogType.Cleanup:
+            case ActionType.Cleanup:
                 this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.archive'));
                 break;
         }

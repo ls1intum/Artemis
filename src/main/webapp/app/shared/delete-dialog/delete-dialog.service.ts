@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { Observable, from } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { DialogType } from 'app/shared/delete-dialog/delete-button.directive';
+import { ActionType } from 'app/shared/delete-dialog/delete-button.directive';
 
 /**
  * Data that will be passed to the delete dialog component
@@ -22,7 +22,7 @@ export class DeleteDialogData {
     additionalChecks?: { [key: string]: string };
 
     // type of the dialog that will be opened with the button
-    dialogType: DialogType;
+    dialogType: ActionType;
 }
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
