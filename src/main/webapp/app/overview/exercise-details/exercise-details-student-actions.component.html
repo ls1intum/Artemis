@@ -19,7 +19,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === QUIZ_NOT_STARTED"
+            *ngIf="participationStatusWrapper() === QUIZ_NOT_STARTED"
             (click)="startExercise()"
         ></button>
         <button
@@ -30,14 +30,14 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             id="student-quiz-start-{{ exercise.id }}"
-            *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === QUIZ_UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | translate"
-            *ngIf="participationStatus() === QUIZ_ACTIVE"
+            *ngIf="participationStatusWrapper() === QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -54,7 +54,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_SUBMITTED"
+            *ngIf="participationStatusWrapper() === QUIZ_SUBMITTED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -64,7 +64,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED && showResult"
+            *ngIf="participationStatusWrapper() === QUIZ_FINISHED && showResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -94,7 +94,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -163,7 +163,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -173,7 +173,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isOnlineEditorAllowed() && participationStatus() == INITIALIZED && exercise.studentParticipations && exercise.studentParticipations.length > 0"
+            *ngIf="isOnlineEditorAllowed() && participationStatusWrapper() == INITIALIZED && exercise.studentParticipations && exercise.studentParticipations.length > 0"
             routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
         ></button>
         <button
@@ -186,7 +186,7 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+            *ngIf="exercise.studentParticipations && participationStatusWrapper() == INITIALIZED && exercise.studentParticipations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>
@@ -197,7 +197,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === INACTIVE"
+            *ngIf="participationStatusWrapper() === INACTIVE"
             (click)="resumeProgrammingExercise()"
         ></button>
         <ng-template #popContent>
@@ -258,7 +258,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -323,7 +323,7 @@
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === UNINITIALIZED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"

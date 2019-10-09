@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { Course } from 'app/entities/course';
 import { Exercise } from 'app/entities/exercise';
 import { Participation } from '../entities/participation';
