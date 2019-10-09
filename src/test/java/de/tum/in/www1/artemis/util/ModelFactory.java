@@ -3,11 +3,10 @@ package de.tum.in.www1.artemis.util;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import com.google.common.collect.Sets;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -56,7 +55,9 @@ public class ModelFactory {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
-            student.setGroups(Sets.newHashSet(groups));
+            if (groups != null) {
+                student.setGroups(Set.of(groups));
+            }
             generatedUsers.add(student);
         }
         return generatedUsers;
@@ -190,5 +191,21 @@ public class ModelFactory {
         toBeImported.generateAndSetProjectKey();
 
         return toBeImported;
+    }
+
+    public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setInitializationState(initializationState);
+        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setExercise(exercise);
+        studentParticipation.setStudent(user);
+        return studentParticipation;
+    }
+
+    public static Result generateResult(boolean rated, long score) {
+        Result result = new Result();
+        result.setRated(rated);
+        result.setScore(score);
+        return result;
     }
 }

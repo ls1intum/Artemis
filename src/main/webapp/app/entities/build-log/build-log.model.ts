@@ -18,6 +18,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
     /**
      * Filters compilation errors from build log and groups them by filename.
      * Safely unescapes messages within the build log to avoid vulnerability to injection.
+     *
      */
     extractErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
         if (this.length) {
