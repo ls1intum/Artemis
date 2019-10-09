@@ -40,7 +40,8 @@
             "positive": "Positive",
             "graded": "Graded",
             "notGraded": "Not graded",
-            "preliminary": "Your result is not final. More tests will be executed after the exercise's due date."
+            "preliminary": "Your result is not final. More tests will be executed after the exercise's due date.",
+            "noResultDetails": "No result details available."
         }
     }
 }

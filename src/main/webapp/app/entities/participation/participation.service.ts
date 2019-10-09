@@ -175,6 +175,9 @@ export class ParticipationService {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations && participations.length > 0) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
+            combinedParticipation.initializationState = participations[0].initializationState;
+            combinedParticipation.initializationDate = participations[0].initializationDate;
+            combinedParticipation.presentationScore = participations[0].presentationScore;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
@@ -198,6 +201,14 @@ export class ParticipationService {
                     ? combinedParticipation.submissions.concat(participation.submissions)
                     : participation.submissions;
             }
+        });
+
+        // make sure that results and submissions are connected with the participation because some components need this
+        combinedParticipation.results.forEach(result => {
+            result.participation = combinedParticipation;
+        });
+        combinedParticipation.submissions.forEach(submission => {
+            submission.participation = combinedParticipation;
         });
     }
 

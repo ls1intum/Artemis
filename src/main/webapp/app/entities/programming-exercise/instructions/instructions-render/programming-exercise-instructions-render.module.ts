@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import {
     ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseInstructionResultDetailComponent,
     ProgrammingExerciseInstructionService,
     ProgrammingExerciseInstructionStepWizardComponent,
     ProgrammingExerciseInstructionTaskStatusComponent,
@@ -11,16 +10,12 @@ import {
 } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisResultModule, ResultDetailComponent } from 'app/entities/result';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule],
-    declarations: [
-        ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseInstructionStepWizardComponent,
-        ProgrammingExerciseInstructionTaskStatusComponent,
-        ProgrammingExerciseInstructionResultDetailComponent,
-    ],
-    entryComponents: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionResultDetailComponent, ProgrammingExerciseInstructionTaskStatusComponent],
+    imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule, ArtemisResultModule],
+    declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
+    entryComponents: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
     providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper, ProgrammingExerciseInstructionService, ProgrammingExercisePlantUmlService],
 })

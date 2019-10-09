@@ -1,7 +1,7 @@
-import { Component, HostBinding, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Exercise, ExerciseType, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
@@ -29,9 +29,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
     readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
     readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly MODELING_EXERCISE = ParticipationStatus.MODELING_EXERCISE;
-    readonly TEXT_EXERCISE = ParticipationStatus.TEXT_EXERCISE;
-    readonly FILE_UPLOAD_EXERCISE = ParticipationStatus.FILE_UPLOAD_EXERCISE;
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
@@ -65,62 +62,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-    }
-
-    participationStatus(): ParticipationStatus {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = this.exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (
-                !this.hasParticipations(this.exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
-                quizExercise.visibleToStudents
-            ) {
-                return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!this.hasParticipations(this.exercise)) {
-                return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_SUBMITTED;
-            } else {
-                if (!this.hasResults(this.exercise.studentParticipations[0])) {
-                    return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-                }
-                return ParticipationStatus.QUIZ_FINISHED;
-            }
-        } else if (
-            (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.FILE_UPLOAD) &&
-            this.hasParticipations(this.exercise)
-        ) {
-            const participation = this.exercise.studentParticipations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                switch (this.exercise.type) {
-                    case ExerciseType.MODELING:
-                        return ParticipationStatus.MODELING_EXERCISE;
-                    case ExerciseType.TEXT:
-                        return ParticipationStatus.TEXT_EXERCISE;
-                    case ExerciseType.FILE_UPLOAD:
-                        return ParticipationStatus.FILE_UPLOAD_EXERCISE;
-                }
-            }
-        }
-
-        if (!this.hasParticipations(this.exercise)) {
-            return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
-        }
-        return ParticipationStatus.INACTIVE;
-    }
-
-    hasParticipations(exercise: Exercise): boolean {
-        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
-    }
-
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
     }
 
     repositoryUrl(participation: Participation) {
@@ -166,7 +107,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 participation => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatus();
+                        this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
@@ -192,7 +133,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 participation => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatus();
+                        this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                 },
                 error => {
@@ -200,6 +141,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                     this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
+    }
+
+    /**
+     * Wrapper for using participationStatus() in the template
+     *
+     * @return {ParticipationStatus}
+     */
+    participationStatusWrapper(): ParticipationStatus {
+        return participationStatus(this.exercise);
     }
 
     startPractice() {

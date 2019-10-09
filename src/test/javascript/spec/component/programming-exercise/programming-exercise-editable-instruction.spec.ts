@@ -12,7 +12,7 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
