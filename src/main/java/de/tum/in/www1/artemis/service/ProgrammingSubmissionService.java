@@ -344,40 +344,18 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
-     * Will use the commitHash of the submission for triggering the template build.
+     * Trigger the template repository build with the given commitHash.
      *
-     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
-     * @param resultId Result id.
+     * @param programmingExerciseId     is used to retrieve the template participation.
+     * @param commitHash                will be used for the created submission.
+     * @param submissionType            will be used for the created submission.
+     * @throws EntityNotFoundException  if the programming exercise has no template participation (edge case).
      */
-    public void triggerTemplateBuild(long programmingExerciseId, long resultId) {
-        ProgrammingSubmission submission;
-        try {
-            submission = findByResultId(resultId);
-        }
-        catch (EntityNotFoundException ex) {
-            // This is an unlikely error that would mean that no submission could be created for the result. In this case we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no submission could be found for the provided result id " + resultId);
-            return;
-        }
-        // We only trigger the template build when the test repository was changed.
-        if (!submission.getType().equals(SubmissionType.TEST)) {
-            return;
-        }
-        // We use the last commitHash of the test repository.
-        ObjectId testCommitHash = ObjectId.fromString(submission.getCommitHash());
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, ObjectId commitHash, SubmissionType submissionType) throws EntityNotFoundException {
         TemplateProgrammingExerciseParticipation templateParticipation;
-        try {
-            templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
-        }
-        catch (EntityNotFoundException ex) {
-            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no template participation could be found for the given exercise");
-            return;
-        }
-        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, testCommitHash, SubmissionType.TEST);
+        templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+        // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
     }
 
     /**
