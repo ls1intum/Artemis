@@ -202,6 +202,14 @@ export class ParticipationService {
                     : participation.submissions;
             }
         });
+
+        // make sure that results and submissions are connected with the participation because some components need this
+        combinedParticipation.results.forEach(result => {
+            result.participation = combinedParticipation;
+        });
+        combinedParticipation.submissions.forEach(submission => {
+            submission.participation = combinedParticipation;
+        });
     }
 
     mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation {
