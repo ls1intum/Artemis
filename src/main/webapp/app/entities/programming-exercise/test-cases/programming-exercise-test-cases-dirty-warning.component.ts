@@ -12,7 +12,13 @@ import { Subscription } from 'rxjs';
     selector: 'jhi-programming-exercise-test-cases-dirty-warning',
     template: `
         <ng-container *ngIf="hasUpdatedTestCases">
-            <fa-icon icon="exclamation-triangle" class="text-warning" size="2x" ngbTooltip="'test'"> </fa-icon>
+            <fa-icon
+                icon="exclamation-triangle"
+                class="text-warning"
+                size="2x"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate }}"
+            >
+            </fa-icon>
         </ng-container>
     `,
 })
@@ -20,7 +26,7 @@ export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChan
     @Input() programmingExerciseId: number;
     @Input() hasUpdatedTestCasesInitialValue: boolean;
 
-    hasUpdatedTestCases: boolean;
+    hasUpdatedTestCases?: boolean;
     testCaseStateSubscription: Subscription;
 
     constructor(private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService) {}
@@ -32,14 +38,9 @@ export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChan
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges) {
-        if (
-            changes.hasUpdatedTestCasesInitialValue &&
-            changes.hasUpdatedTestCasesInitialValue.currentValue !== undefined &&
-            changes.hasUpdatedTestCasesInitialValue.isFirstChange()
-        ) {
-            this.hasUpdatedTestCases = this.hasUpdatedTestCasesInitialValue;
-        }
+        // When the programming exercise changes, both set the hasUpdatedTestCases property to undefined and set up a subscription.
         if (this.programmingExerciseId && changes.programmingExerciseId.previousValue !== this.programmingExerciseId) {
+            this.hasUpdatedTestCases = undefined;
             this.unsubscribeSubscriptions();
             this.testCaseStateSubscription = this.programmingExerciseWebsocketService
                 .getTestCaseState(this.programmingExerciseId)
@@ -49,6 +50,14 @@ export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChan
                     }),
                 )
                 .subscribe();
+        }
+        // On the first change of the updatedTestCasesInitialValue property, use it to initialize hasUpdatedTestCases.
+        if (
+            changes.hasUpdatedTestCasesInitialValue &&
+            changes.hasUpdatedTestCasesInitialValue.currentValue !== undefined &&
+            changes.hasUpdatedTestCasesInitialValue.isFirstChange()
+        ) {
+            this.hasUpdatedTestCases = this.hasUpdatedTestCasesInitialValue;
         }
     }
 
