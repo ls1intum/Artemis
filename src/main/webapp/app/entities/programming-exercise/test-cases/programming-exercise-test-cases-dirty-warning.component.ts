@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 })
 export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChanges, OnDestroy {
     @Input() programmingExerciseId: number;
+    @Input() hasUpdatedTestCasesInitialValue: boolean;
 
     hasUpdatedTestCases: boolean;
     testCaseStateSubscription: Subscription;
@@ -25,11 +26,19 @@ export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChan
     constructor(private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService) {}
 
     /**
+     * Set the initial updated test case value on the first change of the property.
      * Subscribe for the test case state. This component is only visible if the programming exercise has updated (= dirty) test cases.
      *
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges) {
+        if (
+            changes.hasUpdatedTestCasesInitialValue &&
+            changes.hasUpdatedTestCasesInitialValue.currentValue !== undefined &&
+            changes.hasUpdatedTestCasesInitialValue.isFirstChange()
+        ) {
+            this.hasUpdatedTestCases = this.hasUpdatedTestCasesInitialValue;
+        }
         if (this.programmingExerciseId && changes.programmingExerciseId.previousValue !== this.programmingExerciseId) {
             this.unsubscribeSubscriptions();
             this.testCaseStateSubscription = this.programmingExerciseWebsocketService
