@@ -388,7 +388,7 @@ public class ProgrammingSubmissionService {
 
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
-        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);

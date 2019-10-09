@@ -149,14 +149,14 @@ public class ProgrammingExerciseTestCaseServiceTest {
         database.addParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
 
-        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
+        assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
-        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
+        assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
 
@@ -183,14 +183,14 @@ public class ProgrammingExerciseTestCaseServiceTest {
         programmingExerciseTestCaseDTO.setWeight(400);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
-        assertThat(programmingExercise.haveTestCasesChanged()).isFalse();
+        assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
-        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isTrue();
+        assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
 
