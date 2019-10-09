@@ -1,5 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { isModelingOrTextOrFileUpload, ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { initializedResultWithScore } from 'app/entities/result/result-utils';
+import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -10,6 +12,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
+
+enum ResultTemplateStatus {
+    IS_BUILDING = 'IS_BUILDING',
+    HAS_RESULT = 'HAS_RESULT',
+    NO_RESULT = 'NO_RESULT',
+    SUBMITTED = 'SUBMITTED', // submitted, not yet graded
+    LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK', // started, submitted too late, not graded
+    LATE = 'LATE', // submitted too late, graded
+}
 
 @Component({
     selector: 'jhi-result',
@@ -26,6 +37,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly ResultTemplateStatus = ResultTemplateStatus;
 
     @Input() participation: StudentParticipation;
     @Input() isBuilding: boolean;
@@ -39,6 +51,7 @@ export class ResultComponent implements OnInit, OnChanges {
     hasFeedback: boolean;
     resultIconClass: string[];
     resultString: string;
+    templateStatus: ResultTemplateStatus;
 
     resultTooltip: string;
 
@@ -53,9 +66,7 @@ export class ResultComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit(): void {
-        if (this.result) {
-            this.init();
-        } else if (this.participation && this.participation.id) {
+        if (!this.result && this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
@@ -77,13 +88,23 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.result = this.participation.results[0];
                 this.result.participation = this.participation;
             }
+        }
+        this.evaluate();
+    }
 
-            this.init();
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.participation || changes.result) {
+            this.ngOnInit();
         }
     }
 
-    init() {
-        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
+    evaluate() {
+        this.evaluateTemplateStatus();
+
+        if (this.templateStatus === ResultTemplateStatus.LATE) {
+            this.textColorClass = this.getTextColorClass();
+            this.resultIconClass = this.getResultIconClass();
+        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -95,10 +116,65 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation || changes.result) {
-            this.ngOnInit();
+    private evaluateTemplateStatus() {
+        if (this.participation && this.participation.exercise && isModelingOrTextOrFileUpload(this.participation)) {
+            // Evaluate the template status for modeling, text and file upload exercise.
+            this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
+        } else {
+            // Evaluate the template status for quiz and programming exercise.
+            this.templateStatus = this.evaluateTemplateStatusForQuizProgrammingExercises();
         }
+    }
+
+    /**
+     * Evaluates the template status modeling, text and file upload exercises
+     *
+     * @return {ResultTemplateStatus}
+     */
+    private evaluateTemplateStatusForModelingTextFileUploadExercises() {
+        const submissionInDueTime =
+            !this.participation.exercise.dueDate ||
+            (this.participation.submissions != null &&
+                this.participation.submissions.length > 0 &&
+                isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise));
+        const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
+
+        // Submission is in due time of exercise and has a result with score.
+        if (submissionInDueTime && initializedResultWithScore(this.result)) {
+            // Prevent that the result is shown before assessment due date
+            return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
+        } else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
+            // Submission is in due time of exercise and doesn't have a result with score.
+            return ResultTemplateStatus.SUBMITTED;
+        } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+            // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
+            return ResultTemplateStatus.LATE;
+        } else {
+            // Submission is not in due time of exercise and tThere is actually no feedback for the submission or the feedback should not be displayed yet.
+            return ResultTemplateStatus.LATE_NO_FEEDBACK;
+        }
+    }
+
+    /**
+     * Evaluates the template status quiz and programming exercises
+     *
+     * @return {ResultTemplateStatus}
+     */
+    private evaluateTemplateStatusForQuizProgrammingExercises() {
+        if (this.isBuilding) {
+            return ResultTemplateStatus.IS_BUILDING;
+        } else if (initializedResultWithScore(this.result)) {
+            return ResultTemplateStatus.HAS_RESULT;
+        } else {
+            return ResultTemplateStatus.NO_RESULT;
+        }
+    }
+
+    private dateAsMoment(date: any) {
+        if (date == null) {
+            return null;
+        }
+        return moment.isMoment(date) ? date : moment(date);
     }
 
     buildResultString() {
@@ -130,6 +206,10 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.result!.hasFeedback;
     }
 
+    private hasParticipationResults(): boolean {
+        return this.participation && this.participation.results && this.participation.results.length > 0;
+    }
+
     showDetails(result: Result) {
         if (!result.participation) {
             result.participation = this.participation;
@@ -157,6 +237,9 @@ export class ResultComponent implements OnInit, OnChanges {
      * @return {string} the css class
      */
     getTextColorClass() {
+        if (this.templateStatus === ResultTemplateStatus.LATE) {
+            return 'result--late';
+        }
         const result = this.result!;
         if (result.score == null) {
             if (result.successful) {

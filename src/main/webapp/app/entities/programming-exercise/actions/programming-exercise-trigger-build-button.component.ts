@@ -2,7 +2,7 @@ import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasParticipationChanged, InitializationState, StudentParticipation } from 'app/entities/participation';
+import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 
@@ -16,7 +16,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     abstract triggerBuild: (event: any) => void;
 
     @Input() exercise: ProgrammingExercise;
-    @Input() participation: StudentParticipation;
+    @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
     participationIsActive: boolean;

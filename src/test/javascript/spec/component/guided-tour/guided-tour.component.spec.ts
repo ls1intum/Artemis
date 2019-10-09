@@ -41,6 +41,8 @@ describe('GuidedTourComponent', () => {
     });
 
     const courseOverviewTour: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         steps: [{ ...tourStep, ...tourStepWithHighlightPadding }],
     };
@@ -105,9 +107,11 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
 
@@ -160,12 +164,35 @@ describe('GuidedTourComponent', () => {
 
         it('should skip the tour with the escape key', () => {
             const skipTour = spyOn(guidedTourService, 'skipTour');
+            spyOn<any>(guidedTourComponent, 'isCancelTour').and.returnValue(false);
             const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
 
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(skipTour.calls.count()).to.equal(1);
 
+            // Reset component
             skipTour.calls.reset();
+            guidedTourComponent.currentTourStep = null;
+
+            // Skip tour with ESC key should not be possible when the component is not active
+            guidedTourComponent.handleKeyboardEvent(eventMock);
+            expect(skipTour.calls.count()).to.equal(0);
+        });
+
+        it('should not skip but finish the cancel tour with the escape key', () => {
+            const skipTour = spyOn(guidedTourService, 'skipTour');
+            const finishTour = spyOn(guidedTourService, 'finishGuidedTour');
+            spyOn<any>(guidedTourComponent, 'isCancelTour').and.returnValue(true);
+            const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
+
+            guidedTourComponent.handleKeyboardEvent(eventMock);
+            expect(skipTour.calls.count()).to.equal(0);
+            expect(finishTour.calls.count()).to.equal(1);
+
+            // Reset component
+            skipTour.calls.reset();
+            finishTour.calls.reset();
+            guidedTourComponent.currentTourStep = null;
         });
     });
 

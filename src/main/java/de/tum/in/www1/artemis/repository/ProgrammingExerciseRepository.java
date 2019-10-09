@@ -46,17 +46,16 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(attributePaths = { "templateParticipation.results.feedbacks", "solutionParticipation.results.feedbacks", "templateParticipation.results.submission",
-            "solutionParticipation.results.submission", "templateParticipation.submissions", "solutionParticipation.submissions" })
-    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(@Param("exerciseId") Long exerciseId);
-
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
     @EntityGraph(attributePaths = "studentParticipations")
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
+
+    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.submissions" })
+    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerParticipationsAndSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
     List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
