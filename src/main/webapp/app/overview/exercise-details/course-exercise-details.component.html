@@ -12,7 +12,47 @@
         <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult">
         </jhi-exercise-details-student-actions>
-        <jhi-updating-result class="mr-2" [participation]="currentResult?.participation" [exercise]="exercise" [showGradedBadge]="true"> </jhi-updating-result>
+
+        <!-- TODO: this is quite some duplicated code from course-exercise-row.component.html that we should unify in one component -->
+        <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+            <div class="d-none d-sm-inline">
+                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
+            </div>
+            <div class="d-sm-none">
+                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
+            </div>
+            <span *ngSwitchCase="'initialized'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="currentResult?.participation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'inactive'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="currentResult?.participation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'quiz-finished'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="currentResult?.participation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'exercise-submitted'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="currentResult?.participation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+                <jhi-programming-exercise-student-trigger-build-button
+                    [exercise]="exercise"
+                    [participation]="exercise.studentParticipations[0]"
+                ></jhi-programming-exercise-student-trigger-build-button>
+            </ng-container>
+        </div>
+
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -46,40 +86,6 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row mb-2 align-items-baseline" *ngIf="showResults">
-                <div class="col-auto">
-                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.yourGradedResult' | translate }}</h3>
-                </div>
-            </div>
-            <div class="row mb-2" *ngIf="showResults && currentResult?.rated">
-                <div class="col-12 col-md-12">
-                    <div class="row justify-content-between">
-                        <div class="col">
-                            <h4>
-                                <span class="badge w-100 badge-success">
-                                    {{ 'artemisApp.courseOverview.exerciseDetails.graded' | translate | uppercase }}
-                                </span>
-                            </h4>
-                        </div>
-                        <div class="col text-left">
-                            <jhi-updating-result [participation]="currentResult?.participation" [exercise]="exercise" short="true"></jhi-updating-result>
-                            <jhi-programming-exercise-student-trigger-build-button
-                                *ngIf="exercise.type === PROGRAMMING"
-                                [exercise]="exercise"
-                                [participation]="currentResult?.participation"
-                            ></jhi-programming-exercise-student-trigger-build-button>
-                        </div>
-                        <div class="col text-left d-none d-md-flex">
-                            <h6 [ngbTooltip]="currentResult?.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult?.completionDate! | amTimeAgo }})</h6>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row mb-2" *ngIf="showResults && !currentResult?.rated">
-                <div class="col-auto">
-                    <h6>{{ 'artemisApp.courseOverview.exerciseDetails.noGradedResult' | translate }}</h6>
-                </div>
-            </div>
             <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !currentResult?.rated)">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
@@ -90,7 +96,7 @@
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxScore"></jhi-result-history>
                 </div>
             </div>
-            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && sortedResults?.length === 1">
+            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && combinedParticipation.results?.length === 1">
                 <div class="col">
                     <h4>
                         <span class="badge w-100 badge-info">
@@ -99,10 +105,12 @@
                     </h4>
                 </div>
                 <div class="col text-left">
-                    <jhi-result [result]="sortedResults[0]" [participation]="combinedParticipation" showUngradedResults="true" short="true"></jhi-result>
+                    <jhi-result [result]="combinedParticipation.results[0]" [participation]="combinedParticipation" showUngradedResults="true" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h6 [ngbTooltip]="sortedResults[0]!.completionDate | date: 'dd/MM/yy HH:mm'">({{ sortedResults[0]!.completionDate! | amTimeAgo }})</h6>
+                    <h6 [ngbTooltip]="combinedParticipation.results[0]!.completionDate | date: 'dd/MM/yy HH:mm'">
+                        ({{ combinedParticipation.results[0]!.completionDate! | amTimeAgo }})
+                    </h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
@@ -112,7 +120,7 @@
             </div>
             <div class="row" *ngIf="showMoreResults && showResults">
                 <div class="col-12 col-md-12">
-                    <div *ngFor="let result of sortedResults">
+                    <div *ngFor="let result of combinedParticipation.results">
                         <div class="row justify-content-between">
                             <div class="col">
                                 <h4>

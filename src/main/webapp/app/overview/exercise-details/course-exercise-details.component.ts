@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, participationStatus } from 'app/entities/exercise';
 import { CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -40,8 +40,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public exercise: Exercise | null;
     public showMoreResults = false;
-    public sortedResults: Result[] = [];
-    public sortedHistoryResult: Result[];
+    public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     combinedParticipation: StudentParticipation;
@@ -92,23 +91,23 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body!;
-                this.exercise.studentParticipations = this.filterParticipations(cachedParticipations)!;
-                this.mergeResultsAndSubmissionsForParticipations();
-                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.subscribeForNewResults();
+                this.handleNewExercise(exerciseResponse.body!);
             });
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body!;
-                this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
-                this.mergeResultsAndSubmissionsForParticipations();
-                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.subscribeForNewResults();
+                this.handleNewExercise(exerciseResponse.body!);
             });
         }
+    }
+
+    handleNewExercise(newExercise: Exercise) {
+        this.exercise = newExercise;
+        this.exercise.participationStatus = participationStatus(this.exercise);
+        this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
+        this.mergeResultsAndSubmissionsForParticipations();
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.subscribeForNewResults();
     }
 
     /**
@@ -148,14 +147,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     sortResults() {
         if (this.hasResults) {
-            this.sortedResults = this.combinedParticipation.results.sort((a, b) => {
+            this.combinedParticipation.results = this.combinedParticipation.results.sort((a, b) => {
                 const aValue = moment(a.completionDate!).valueOf();
                 const bValue = moment(b.completionDate!).valueOf();
                 return aValue - bValue;
             });
-            const sortedResultLength = this.sortedResults.length;
+            const sortedResultLength = this.combinedParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
-            this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
+            this.sortedHistoryResult = this.combinedParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
 
@@ -212,7 +211,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        return this.sortedResults.length > MAX_RESULT_HISTORY_LENGTH;
+        return this.combinedParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get exerciseRouterLink(): string | null {
@@ -251,10 +250,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.sortedResults.find((result: Result) => !!result.completionDate) || null;
+            return this.combinedParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.sortedResults.filter((result: Result) => result.rated);
+        const ratedResults = this.combinedParticipation.results.filter((result: Result) => result.rated);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
             latestResult.participation = this.combinedParticipation;
