@@ -246,7 +246,7 @@ public class ParticipationService {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
 
-            if (participation.getId() == null || !submissionRepository.existsByParticipationId(participation.getId())) {
+            if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
                 initializeSubmission(participation, exercise);
             }
@@ -684,15 +684,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise and student with eager results.
+     * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
      * @param exerciseId the id of exercise
      * @param studentId the id of student
      * @return the list of programming exercise participations belonging to exercise and student
      */
     @Transactional(readOnly = true)
-    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
+    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(Long exerciseId, Long studentId) {
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exerciseId, studentId);
     }
 
     /**
@@ -967,5 +967,16 @@ public class ParticipationService {
      */
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
         return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    }
+
+    /**
+     * Get all participations for the given student and exercises combined with their submissions with a result
+     *
+     * @param studentId the id of the student for which the participations should be found
+     * @param exercises the exercises for which participations should be found
+     * @return student's participations
+     */
+    public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsAndResults(studentId, exercises);
     }
 }

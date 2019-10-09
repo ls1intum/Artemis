@@ -5,7 +5,6 @@ import java.net.URL;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -113,6 +112,7 @@ public interface VersionControlService {
      * @param targetProjectKey The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
+     * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
     VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
 
@@ -131,7 +131,7 @@ public interface VersionControlService {
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The repository slug
-     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
+     * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
     // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle
     // this in the future
