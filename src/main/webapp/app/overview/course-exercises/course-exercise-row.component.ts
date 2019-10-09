@@ -2,7 +2,8 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { participationStatus } from 'app/entities/exercise';
+import { ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
@@ -62,11 +63,11 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
-                this.participationStatus(this.exercise);
+                this.exercise.participationStatus = participationStatus(this.exercise);
             }
         });
-        this.exercise.participationStatus = this.participationStatus(this.exercise);
-        if (this.exercise.studentParticipations.length > 0) {
+        this.exercise.participationStatus = participationStatus(this.exercise);
+        if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
@@ -114,48 +115,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
             exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
         );
-    }
-
-    participationStatus(exercise: Exercise): ParticipationStatus {
-        if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (!this.hasParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_UNINITIALIZED;
-            } else if (!this.hasParticipations(exercise)) {
-                return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
-                return ParticipationStatus.QUIZ_SUBMITTED;
-            } else {
-                if (!this.hasResults(exercise.studentParticipations[0])) {
-                    return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-                }
-                return ParticipationStatus.QUIZ_FINISHED;
-            }
-        } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
-            const participation = exercise.studentParticipations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
-                return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
-            }
-        }
-
-        if (!this.hasParticipations(exercise)) {
-            return ParticipationStatus.UNINITIALIZED;
-        } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
-        }
-        return ParticipationStatus.INACTIVE;
-    }
-
-    hasParticipations(exercise: Exercise): boolean {
-        return exercise.studentParticipations && exercise.studentParticipations.length > 0;
-    }
-
-    hasResults(participation: Participation): boolean {
-        return participation.results && participation.results.length > 0;
     }
 
     showDetails(event: any) {

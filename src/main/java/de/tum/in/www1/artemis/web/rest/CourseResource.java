@@ -291,11 +291,10 @@ public class CourseResource {
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
         Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
-        // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
-        List<StudentParticipation> participations = participationService.findWithResultsByStudentId(user.getId(), activeExercises);
-        log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
+
+        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeExercises);
+        log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentIdAndExercise in " + (System.currentTimeMillis() - start) + "ms");
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -310,6 +309,7 @@ public class CourseResource {
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
                 + " exercises for user " + user.getLogin());
+
         return courses;
     }
 
