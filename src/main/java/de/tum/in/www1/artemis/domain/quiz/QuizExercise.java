@@ -10,8 +10,6 @@ import javax.persistence.*;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.LazyToOne;
-import org.hibernate.annotations.LazyToOneOption;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -63,7 +61,6 @@ public class QuizExercise extends Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer duration;
 
-    @LazyToOne(LazyToOneOption.NO_PROXY)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(unique = true)
     @JsonView(QuizView.After.class)

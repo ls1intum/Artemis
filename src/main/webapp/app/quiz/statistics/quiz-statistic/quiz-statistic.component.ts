@@ -243,9 +243,13 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.quizQuestions.forEach(function(question) {
-            result = result + question.score;
-        });
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach(function(question) {
+                result = result + question.score;
+            });
+        } else {
+            result = this.quizExercise.maxScore;
+        }
         return result;
     }
 
