@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ParticipationService, StudentParticipation, isModelingOrTextOrFileUpload } from 'app/entities/participation';
+import { isModelingOrTextOrFileUpload, ParticipationService, ParticipationType, StudentParticipation } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
@@ -180,7 +180,8 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
-        } else if (this.participation.exercise && this.participation.exercise.type === ExerciseType.PROGRAMMING) {
+            // Only show the 'preliminary' string for programming student participation results.
+        } else if (this.participation.exercise && this.participation.exercise.type === ExerciseType.PROGRAMMING && this.participation.type === ParticipationType.PROGRAMMING) {
             const programmingExercise = this.participation.exercise as ProgrammingExercise;
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
             // If the buildAndTestAfterDueDate is set for a programming exercise and the date has not yet passed, we add (preliminary) to the result string.
