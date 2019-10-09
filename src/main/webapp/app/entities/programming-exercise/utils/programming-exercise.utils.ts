@@ -15,7 +15,7 @@ export const isLegacyResult = (result: Result) => {
 };
 
 export const hasBuildAndTestAfterDueDatePassed = (programmingExercise: ProgrammingExercise) => {
-    return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
+    return !programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
