@@ -76,6 +76,10 @@
                     </td>
                     <td>
                         <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.title }}</a>
+                        <jhi-programming-exercise-test-cases-dirty-warning
+                            class="ml-2"
+                            [programmingExerciseId]="programmingExercise.id"
+                        ></jhi-programming-exercise-test-cases-dirty-warning>
                     </td>
                     <td>{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
