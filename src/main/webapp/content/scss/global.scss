@@ -419,6 +419,14 @@ a.result-orange:hover {
     color: orange;
 }
 
+.result--late {
+    color: gray;
+}
+
+a.result--late:hover {
+    color: gray;
+}
+
 span.result {
     text-decoration: underline;
     font-weight: normal;

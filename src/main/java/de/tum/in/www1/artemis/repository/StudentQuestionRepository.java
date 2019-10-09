@@ -16,8 +16,8 @@ import de.tum.in.www1.artemis.domain.StudentQuestion;
 @Repository
 public interface StudentQuestionRepository extends JpaRepository<StudentQuestion, Long> {
 
-    @Query("select student_question from StudentQuestion student_question where student_question.author.login = ?#{principal.username}")
-    List<StudentQuestion> findByAuthorIsCurrentUser();
+    @Query("select student_question from StudentQuestion student_question where student_question.author.login = :#{#login}")
+    List<StudentQuestion> findByAuthorWithLogin(@Param("login") String login);
 
     @Query("select student_question from StudentQuestion student_question where student_question.exercise.id = :#{#exerciseId}")
     List<StudentQuestion> findStudentQuestionsForExercise(@Param("exerciseId") Long exerciseId);

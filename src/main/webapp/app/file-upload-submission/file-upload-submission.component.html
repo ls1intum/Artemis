@@ -63,20 +63,22 @@
                 </div>
             </div>
         </div>
-
-        <div class="card-body">
-            <div *ngIf="submission?.submitted && submittedFileName && submission?.filePath" class="card-text">
-                <h5>
-                    {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
-                </h5>
-                <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-                <span class="ml-1 badge badge-info" *ngIf="submittedFileExtension">
-                    {{ submittedFileExtension | uppercase }}
-                </span>
-            </div>
-        </div>
     </div>
 
+    <div *ngIf="submission?.submitted && submittedFileName && submission?.filePath" class="card-text">
+        <h5>
+            {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
+        </h5>
+        <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
+        <span class="ml-1 badge badge-info" *ngIf="submittedFileExtension">
+            {{ submittedFileExtension | uppercase }}
+        </span>
+    </div>
+    <div *ngIf="result?.feedbacks && result.feedbacks.length > 0">
+        <br />
+        <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
+        <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
+    </div>
     <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"

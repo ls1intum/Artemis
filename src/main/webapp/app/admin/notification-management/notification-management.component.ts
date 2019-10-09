@@ -9,7 +9,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
-import { NotificationMgmtDeleteDialogComponent } from 'app/admin';
 import * as moment from 'moment';
 
 @Component({
@@ -77,19 +76,15 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
 
     /**
      * Deletes notification
-     * @param notification that we want to delete
+     * @param notificationId the id of the notification that we want to delete
      */
-    deleteNotification(notification: SystemNotification) {
-        const modalRef = this.modalService.open(NotificationMgmtDeleteDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.notification = notification;
-        modalRef.result.then(
-            result => {
-                // Left blank intentionally, nothing to do here
-            },
-            reason => {
-                // Left blank intentionally, nothing to do here
-            },
-        );
+    deleteNotification(notificationId: number) {
+        this.systemNotificationService.delete(notificationId).subscribe(() => {
+            this.eventManager.broadcast({
+                name: 'notificationListModification',
+                content: 'Deleted a system notification',
+            });
+        });
     }
 
     /**

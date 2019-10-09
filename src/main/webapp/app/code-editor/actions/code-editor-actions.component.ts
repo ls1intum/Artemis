@@ -22,6 +22,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     buildable = true;
     @Input()
     unsavedFiles: { [fileName: string]: string };
+    @Input() disableActions = false;
     @Input()
     get editorState() {
         return this.editorStateValue;

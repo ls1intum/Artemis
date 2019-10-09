@@ -1,0 +1,86 @@
+.timeline-box {
+    padding: 10px 15px;
+}
+
+.test-schedule-date p {
+    margin-top: 10px;
+}
+
+.test-schedule-date .fa {
+    vertical-align: initial;
+}
+
+.test-schedule-row {
+    display: table-row;
+}
+
+.test-schedule {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.test-schedule-date .btn {
+    cursor: default;
+}
+
+.test-schedule-row:before {
+    top: 42px;
+    bottom: 0;
+    position: absolute;
+    content: ' ';
+    width: 100%;
+    height: 4px;
+    background-color: #3e8acc;
+    z-index: 0;
+}
+
+.test-schedule-date {
+    display: table-cell;
+    text-align: center;
+    position: relative;
+}
+
+.btn-lifecycle.btn-lifecycle {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+    line-height: 1.428571429;
+    border-radius: 20px;
+    background-color: mediumseagreen;
+
+    &--deactivated {
+        background-color: orange;
+    }
+
+    &.btn-light {
+        border-color: #3e8acc;
+        border-width: 2px;
+
+        &.scheduled-test {
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+
+            &--can-toggle {
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.invisible-date-time-picker {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+}
+
+.calendar-event-toggle:hover .icon-static,
+.calendar-event-toggle .icon-remove {
+    display: none;
+}
+.calendar-event-toggle:hover .icon-remove {
+    display: inline;
+}
