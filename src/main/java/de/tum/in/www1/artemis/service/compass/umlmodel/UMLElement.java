@@ -111,8 +111,11 @@ public abstract class UMLElement implements Similarity<UMLElement> {
         }
         UMLElement otherElement = (UMLElement) obj;
 
-        return Objects.equals(otherElement.similarityID, similarityID) && Objects.equals(otherElement.jsonElementID, jsonElementID) && Objects.equals(otherElement.context, context)
-                && Objects.equals(otherElement.getName(), getName()) && Objects.equals(otherElement.getType(), getType());
+        if (otherElement.context == null || this.context == null) {
+            return otherElement.similarityID == this.similarityID && otherElement.jsonElementID.equals(this.jsonElementID) && otherElement.context == this.context;
+        }
+
+        return otherElement.similarityID == this.similarityID && otherElement.jsonElementID.equals(this.jsonElementID) && otherElement.context.equals(this.context);
     }
 
     @Override

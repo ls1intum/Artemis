@@ -30,8 +30,6 @@ export interface CourseStatisticsDataSet {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
-    readonly QUIZ = ExerciseType.QUIZ;
-
     private courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
@@ -53,7 +51,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     // presentation score
     totalPresentationScore = 0;
     presentationScores = {};
-    presentationScoreEnabled = false;
 
     // this is not an actual exercise, it contains more entries
     groupedExercises: any[][] = [];
@@ -261,7 +258,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         totalMaxScore: 0,
                         absoluteScore: 0,
                         presentationScore: 0,
-                        presentationScoreEnabled: exercise.presentationScoreEnabled,
                         names: [],
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
@@ -324,8 +320,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
-                // check if presentation score is enabled for at least one exercise
-                groupedExercises[index].presentationScoreEnabled = groupedExercises[index].presentationScoreEnabled || exercise.presentationScoreEnabled;
                 groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores, groupedExercises[index].notGraded];
             }
         });
@@ -431,12 +425,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     calculatePresentationScores(): void {
+        const quizzesPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, PRESENTATION_SCORE);
         const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
         const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
         const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
         const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, PRESENTATION_SCORE);
         const presentationScores = {};
-        presentationScores[ExerciseType.QUIZ] = 0;
+        presentationScores[ExerciseType.QUIZ] = quizzesPresentationScore;
         presentationScores[ExerciseType.PROGRAMMING] = programmingExercisePresentationScore;
         presentationScores[ExerciseType.MODELING] = modelingExercisePresentationScore;
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;

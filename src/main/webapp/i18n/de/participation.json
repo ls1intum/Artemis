@@ -10,7 +10,7 @@
             "updated": "Teilnahme von {{ param }} aktualisiert",
             "deleted": "Teilnahme von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll die Teilnahme von <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Teilnahme von {{ student }} wirklich dauerhaft gelöscht werden?"
             },
             "cleanupBuildPlan": {
                 "question": "Soll der Build Plan der Teilnahme von {{ student }} wirklich gelöscht werden?"

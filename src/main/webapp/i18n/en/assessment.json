@@ -3,7 +3,6 @@
         "assessment": {
             "assessment": "Assessment",
             "generalFeedback": "General Feedback",
-            "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
@@ -14,38 +13,6 @@
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
                 "resolveConflict": "Resolve Conflicts"
-            },
-            "detail": {
-                "feedback": "Feedback",
-                "scoreFor": "Assessment for"
-            },
-            "messages": {
-                "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
-                "loadSubmissionFailed": "Retrieving requested submission failed.",
-                "submitSuccessful": "Your assessment was submitted successfully!",
-                "saveSuccessful": "Your assessment was saved successfully!",
-                "saveFailed": "Saving your assessment failed!",
-                "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
-                "updateAfterComplaintFailed": "Updating the assessment failed."
-            },
-            "dashboard": {
-                "empty": "No Submissions for this exercise!",
-                "loading": "Loading..",
-                "columns": {
-                    "submissionDate": "Submission date",
-                    "result": "Result",
-                    "submissionCount": "Submission count",
-                    "score": "Score",
-                    "duration": "Duration",
-                    "assessmentType": "Assessment Type",
-                    "assessor": "Reviewer",
-                    "action": "Action"
-                },
-                "minutes": "minutes",
-                "actions": {
-                    "open": "Open assessment",
-                    "assess": "Assess Submission"
-                }
             }
         }
     }

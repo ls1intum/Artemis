@@ -19,11 +19,6 @@
         <dd>
             <span>{{ modelingExercise.maxScore }}</span>
         </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-        <dd>
-            <span *ngIf="modelingExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-            <span *ngIf="!modelingExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-        </dd>
         <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
         <dd>
             <span jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
@@ -41,6 +36,10 @@
         <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
         <dd class="editor-outline-background">
             <span [innerHTML]="gradingInstructions"></span>
+        </dd>
+        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
+        <dd>
+            <span>{{ modelingExercise.maxScore }}</span>
         </dd>
     </dl>
 

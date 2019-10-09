@@ -6,7 +6,6 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 
 @Component({
@@ -17,9 +16,6 @@ import { CourseScoreCalculationService } from 'app/overview';
 export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    public guidedTourCourse: Course | null;
-
-    readonly compareCourseShortName = compareCourseShortName;
 
     constructor(
         private courseService: CourseService,
@@ -28,21 +24,22 @@ export class OverviewComponent implements OnInit {
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
-    ) {}
+    ) {
+        this.loadAndFilterCourses();
+    }
 
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.guidedTourCourse = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );
     }
 
     ngOnInit(): void {
-        this.loadAndFilterCourses();
+        this.guidedTourService.enableTour(courseOverviewTour);
     }
 
     private onError(error: string) {

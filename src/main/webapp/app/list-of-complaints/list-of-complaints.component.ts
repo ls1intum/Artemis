@@ -96,8 +96,6 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/text/${exercise.id}/assessment/${submissionId}`;
         } else if (exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
-        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
         }
         this.router.navigate([route!]);
     }

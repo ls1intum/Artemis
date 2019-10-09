@@ -24,9 +24,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.translateSubscription) {
-            this.translateSubscription.unsubscribe();
-        }
+        this.translateSubscription.unsubscribe();
     }
 
     private setBadgeAttributes() {

@@ -22,12 +22,4 @@ public interface ModelAssessmentConflictRepository extends JpaRepository<ModelAs
     List<ModelAssessmentConflict> findAllConflictsOfExercise(@Param("exerciseId") Long exerciseId);
 
     Optional<ModelAssessmentConflict> findById(Long id);
-
-    /**
-     * Return all modeling assessment conflicts for which the given conflicting result ID is referenced as the causing conflicting result ID.
-     *
-     * @param causingConflictingResultId the ID of the conflicting result that the returned conflicts should reference
-     * @return all modeling assessment conflicts that reference the given conflicting result ID
-     */
-    List<ModelAssessmentConflict> findAllConflictsByCausingConflictingResult_Id(Long causingConflictingResultId);
 }

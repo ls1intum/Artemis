@@ -178,23 +178,5 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
-    /**
-     * Deletes quiz exercise
-     * @param quizExerciseId id of the quiz exercise that will be deleted
-     */
-    deleteQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.delete(quizExerciseId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted an quizExercise',
-                });
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-        );
-    }
-
     callback() {}
 }

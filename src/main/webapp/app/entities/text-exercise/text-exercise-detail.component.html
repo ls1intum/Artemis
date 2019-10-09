@@ -21,11 +21,6 @@
         <dd>
             <span>{{ textExercise.maxScore }}</span>
         </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-        <dd>
-            <span *ngIf="textExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-            <span *ngIf="!textExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-        </dd>
         <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
         <dd>
             <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
@@ -38,6 +33,10 @@
         </dd>
         <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
         <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
+        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
+        <dd>
+            <span>{{ textExercise.maxScore }}</span>
+        </dd>
         <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
         <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
     </dl>

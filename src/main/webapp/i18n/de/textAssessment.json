@@ -22,11 +22,13 @@
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
             "automatic": "Automatisch",
+            "automaticGenerated": "Automatisch erstelles Feedback",
             "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest.",
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "detail": {
+                "scoreFor": "Bewertung für",
                 "feedback": "Feedback",
                 "credits": {
                     "one": "{{credits}} Punkt",
@@ -37,7 +39,24 @@
                 "assess": "Bewerten"
             },
             "dashboard": {
-                "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\""
+                "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\"",
+                "empty": "Keine Abgabe für diese Aufgabe!",
+                "loading": "Laden..",
+                "columns": {
+                    "submissionDate": "Einreichungsdatum",
+                    "result": "Ergebnis",
+                    "submissionCount": "Anzahl der Einreichungen",
+                    "score": "Punkte",
+                    "duration": "Dauer",
+                    "assessmentType": "Bewertungsart",
+                    "assessor": "Prüfer/in",
+                    "action": "Aktion"
+                },
+                "minutes": "Minuten",
+                "actions": {
+                    "open": "Bewertung öffnen",
+                    "assess": "Abgabe bewerten"
+                }
             },
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",

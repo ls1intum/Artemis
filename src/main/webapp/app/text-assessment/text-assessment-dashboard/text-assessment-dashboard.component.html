@@ -9,23 +9,25 @@
                         <a class="th-link">#</a>
                     </th>
                     <th jhiSortBy="submissionDate">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="successful"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="successful"><a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.result">Result</a> <fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="submissionCount">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.score">Score</a> <fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="language"><a class="th-link" jhiTranslate="artemisApp.tutorExerciseDashboard.language">Language</a> <fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="duration"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="duration">
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.duration">Duration</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th jhiSortBy="assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="assessor.firstName">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.assessor">Reviewer</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
+                        <a class="th-link" jhiTranslate="artemisApp.textAssessment.dashboard.columns.action">Action</a>
                     </th>
                     <th></th>
                 </tr>
@@ -53,7 +55,7 @@
                                 submission.participation.initializationDate ? submission.participation.initializationDate : exercise.releaseDate
                             )
                         }}
-                        {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
+                        {{ 'artemisApp.textAssessment.dashboard.minutes' | translate }}
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.result) | translate }}</td>
                     <td>
@@ -67,7 +69,7 @@
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm"
                             >
-                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.textAssessment.dashboard.actions.assess' | translate }}
                             </button>
                         </span>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
@@ -77,7 +79,7 @@
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm"
                             >
-                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.textAssessment.dashboard.actions.open' | translate }}
                             </button>
                         </span>
                     </td>
@@ -88,11 +90,11 @@
 </div>
 
 <ng-template #emptyTable>
-    <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
+    <p jhiTranslate="artemisApp.textAssessment.dashboard.empty">No Submissions for this exercise!</p>
 </ng-template>
 
 <ng-template #loading>
     <h2>
-        <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.dashboard.loading">Loading..</span></span>
+        <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.dashboard.loading">Loading..</span></span>
     </h2>
 </ng-template>

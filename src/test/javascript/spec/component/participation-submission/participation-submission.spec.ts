@@ -17,7 +17,7 @@ import { of } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
-import { AssessmentDetailComponent } from 'app/assessment-shared/assessment-detail/assessment-detail.component';
+import { TextAssessmentDetailComponent } from 'app/text-assessment/text-assessment-detail/text-assessment-detail.component';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -60,7 +60,7 @@ describe('ParticipationSubmissionComponent', () => {
                 MockComponent(UpdatingResultComponent),
                 MockComponent(TextAssessmentEditorComponent),
                 MockComponent(ResizableInstructionsComponent),
-                MockComponent(AssessmentDetailComponent),
+                MockComponent(TextAssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [

@@ -1,4 +1,4 @@
-<div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
+<div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
             <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
@@ -15,8 +15,6 @@
             <div class="col-auto" [ngSwitch]="exercise.participationStatus">
                 <div class="d-none d-sm-inline">
                     <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
@@ -40,8 +38,19 @@
                 <span *ngSwitchCase="'quiz-finished'">
                     <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
                 </span>
-                <span *ngSwitchCase="'exercise-submitted'">
-                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
+                <span *ngSwitchCase="'modeling-exercise'">
+                    <jhi-updating-result
+                        [exercise]="exercise"
+                        [participation]="isAfterAssessmentDueDate ? exercise.studentParticipations[0] : null"
+                        short="true"
+                    ></jhi-updating-result>
+                </span>
+                <span *ngSwitchCase="'text-exercise'">
+                    <jhi-updating-result
+                        [exercise]="exercise"
+                        [participation]="isAfterAssessmentDueDate ? exercise.studentParticipations[0] : null"
+                        short="true"
+                    ></jhi-updating-result>
                 </span>
                 <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
                     <jhi-programming-exercise-student-trigger-build-button

@@ -10,7 +10,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -29,7 +28,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
@@ -39,8 +37,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
-            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
 
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;

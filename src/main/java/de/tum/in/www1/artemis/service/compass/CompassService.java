@@ -80,7 +80,7 @@ public class CompassService {
      * @return true if the given diagram type is supported by Compass, false otherwise
      */
     public boolean isSupported(DiagramType diagramType) {
-        return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
+        return diagramType == DiagramType.ClassDiagram;
     }
 
     /**

@@ -70,7 +70,7 @@ public abstract class RepositoryResource {
      * @throws InterruptedException if the repository can't be checked out.
      * @throws GitAPIException if the repository can't be checked out.
      */
-    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
+    abstract Repository getRepository(Long domainId, boolean pullOnCheckout)
             throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException;
 
     /**
@@ -99,7 +99,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to files for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, true);
             HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -116,7 +116,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, true);
             byte[] out = repositoryService.getFile(repository, filename);
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
@@ -136,7 +136,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, true);
             InputStream inputStream = request.getInputStream();
             repositoryService.createFile(repository, filename, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -155,7 +155,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, true);
             InputStream inputStream = request.getInputStream();
             repositoryService.createFolder(repository, folderName, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -173,7 +173,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, true);
             repositoryService.renameFile(repository, fileMove);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -190,7 +190,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, true);
             repositoryService.deleteFile(repository, filename);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -206,7 +206,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, true);
             repositoryService.pullChanges(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -222,7 +222,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, true);
             repositoryService.commitChanges(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -236,7 +236,7 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, false);
+            Repository repository = getRepository(domainId, false);
             gitService.get().resetToOriginMaster(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });

@@ -12,10 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -46,6 +49,8 @@ public class ExerciseResource {
 
     private final UserService userService;
 
+    private final CourseService courseService;
+
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
@@ -54,33 +59,34 @@ public class ExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final ObjectMapper objectMapper;
+
     private final ComplaintRepository complaintRepository;
 
     private final TextSubmissionService textSubmissionService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final FileUploadSubmissionService fileUploadSubmissionService;
-
     private final ResultService resultService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ObjectMapper objectMapper, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
+            ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
+        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.objectMapper = objectMapper;
         this.complaintRepository = complaintRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
@@ -174,7 +180,7 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
@@ -302,6 +308,43 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zipped
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
+        studentIds = studentIds.replaceAll(" ", "");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        // TODO: allow multiple options:
+        // - one boolean flag per stager task (see exportParticipations)
+        // - one boolean flag that all student submissions should be downloaded
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+            return forbidden();
+
+        List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+        if (studentList.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
+                    .build();
+        }
+
+        File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
+        if (zipFile == null) {
+            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
+                    .build();
+        }
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
      * GET /exercises/:exerciseId/results : sends all results for a exercise and the logged in user
      *
      * @param exerciseId the id of the exercise to get the repos from
@@ -321,7 +364,7 @@ public class ExerciseResource {
         }
 
         if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
             exercise.setStudentParticipations(new HashSet<>());
 

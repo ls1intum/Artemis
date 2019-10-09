@@ -8,6 +8,7 @@ import { ExerciseHintService } from './exercise-hint.service';
 import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
+import { ExerciseHintDeletePopupComponent } from './exercise-hint-delete-dialog.component';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
@@ -71,5 +72,21 @@ export const exerciseHintRoute: Routes = [
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+];
+
+export const exerciseHintPopupRoute: Routes = [
+    {
+        path: 'exercise/:exerciseId/hints/:id/delete',
+        component: ExerciseHintDeletePopupComponent,
+        resolve: {
+            exerciseHint: ExerciseHintResolve,
+        },
+        data: {
+            authorities: ['ROLE_ADMIN'],
+            pageTitle: 'artemisApp.exerciseHint.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
     },
 ];

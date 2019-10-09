@@ -85,6 +85,7 @@ jhi-guided-tour {
         display: block;
         height: 100%;
         width: 100%;
+        max-height: 100vh;
         top: 0;
         left: 0;
         position: fixed;
@@ -114,25 +115,11 @@ jhi-guided-tour {
         }
 
         &.page-tour-step {
+            max-width: 800px;
             width: 50%;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-
-            &.video-tour {
-                @media (max-width: 992px) {
-                    width: 100%;
-                    left: 0;
-                    top: 0;
-                    transform: none;
-                }
-                @media (min-width: 993px) and (max-width: 1200px) {
-                    width: 80%;
-                    left: 10%;
-                    top: 10%;
-                    transform: translate(0%, 0%);
-                }
-            }
         }
 
         .tour-block {
@@ -190,8 +177,7 @@ jhi-guided-tour {
 
                 div > .btn,
                 iframe,
-                img,
-                a {
+                img {
                     display: block;
                     margin-top: 10px;
                     margin-left: auto;
@@ -199,16 +185,13 @@ jhi-guided-tour {
                 }
 
                 .step-hint {
+                    background: #f0f0f0;
                     border-radius: 3px;
                     display: flex;
-                    margin: 15px 0 0 0;
+                    margin-top: 15px;
                     padding: 8px;
 
-                    &:not(.interaction) {
-                        background: #f0f0f0;
-                    }
-
-                    &.interaction:not(.alert-success) {
+                    &.interaction {
                         background: rgb(23, 162, 184, 0.3);
                     }
 
@@ -234,8 +217,8 @@ jhi-guided-tour {
                 }
 
                 iframe {
-                    width: 100%;
-                    min-height: 400px;
+                    width: 560px;
+                    height: 315px;
                 }
             }
 
@@ -252,7 +235,6 @@ jhi-guided-tour {
                     border: none;
                     outline: none;
                     padding: 8px 15px;
-                    white-space: nowrap;
 
                     &:disabled {
                         color: $tour-button-text-disabled !important;

@@ -202,7 +202,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
-
+        // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
             // SK: deactivate conflict handling for now, because it is not fully implemented yet.
             // List<ModelAssessmentConflict> conflicts = new ArrayList<>();

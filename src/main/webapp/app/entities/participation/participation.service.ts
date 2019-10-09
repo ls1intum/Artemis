@@ -175,9 +175,6 @@ export class ParticipationService {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations && participations.length > 0) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
-            combinedParticipation.initializationState = participations[0].initializationState;
-            combinedParticipation.initializationDate = participations[0].initializationDate;
-            combinedParticipation.presentationScore = participations[0].presentationScore;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }

@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -41,7 +39,6 @@ import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 @Service
@@ -101,25 +98,25 @@ public class BambooBuildPlanService {
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
         VcsCheckoutTask checkoutTask = createCheckoutTask(ASSIGNMENT_REPO_PATH, "");
         Stage defaultStage = new Stage("Default Stage");
-        Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
         if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
-            return defaultStage
-                    .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
+                    new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
                     new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests").hasTests(true),
                     new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else if ((programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) && !sequentialBuildRuns) {
-            return defaultStage.jobs(defaultJob
-                    .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                    .requirements(new Requirement("Python3")).cleanWorkingDirectory(true));
+            return defaultStage
+                    .jobs(new Job("Default Job", new BambooKey("JOB1"))
+                            .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
+                            .requirements(new Requirement("Python3")));
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+            return defaultStage.jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(checkoutTask,
                     new ScriptTask().description("Builds and tests the structural tests").inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
                     new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
@@ -129,19 +126,11 @@ public class BambooBuildPlanService {
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
-        List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
-        // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
-        vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
-        // Trigger the build when a commit is pushed to the TEST_REPO only for the solution repository!
-        if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
-            vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
-        }
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
                 .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),
                         createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug))
-                .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
-                .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {

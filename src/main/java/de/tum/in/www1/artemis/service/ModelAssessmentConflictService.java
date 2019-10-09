@@ -91,11 +91,22 @@ public class ModelAssessmentConflictService {
     }
 
     /**
+     * Deletes all conflicts related to the given Participation. Needs to be called before a Participation gets deleted to prevent foreign key constraint violations.
+     *
+     * @param participation The participation for which all conflicts should get deleted
+     */
+    void deleteAllConflictsForParticipation(Participation participation) {
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
+                .filter(conflict -> conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())).collect(Collectors.toList());
+        modelAssessmentConflictRepository.deleteAll(existingConflicts);
+    }
+
+    /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
      * 
      * @param conflicts The conflicts for which properties should be loaded
      */
-    public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
+    private void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(conflict -> {
             conflict.getCausingConflictingResult()
                     .setResult(resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(conflict.getCausingConflictingResult().getResult().getId()).get());

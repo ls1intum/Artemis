@@ -16,8 +16,6 @@ import {
     ProgrammingExerciseStudentParticipation,
     StudentParticipation,
 } from 'app/entities/participation';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 
@@ -61,7 +59,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -176,13 +173,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
-            if (this.currentResult) {
-                if (this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
-                } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
-                }
-            }
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
@@ -220,8 +210,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return `/course/${this.courseId}/exercise/${this.exercise!.id}/assessment`;
         } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return `/file-upload-exercise/${this.exercise.id}/assessment`;
         } else {
             return null;
         }

@@ -15,8 +15,6 @@ import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { filter } from 'rxjs/operators';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -60,7 +58,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
-        private fileUploadAssessmentService: FileUploadAssessmentsService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
@@ -74,14 +71,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return this.jhiAlertService.error('artemisApp.fileUploadExercise.error', null, undefined);
         }
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
-            (submission: FileUploadSubmission) => {
-                // reconnect participation <--> result
-                if (submission.result) {
-                    submission.participation.results = [submission.result];
-                }
-                this.participation = <StudentParticipation>submission.participation;
-                this.submission = submission;
-                this.result = submission.result;
+            (data: StudentParticipation) => {
+                this.participation = data;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
@@ -94,25 +85,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.numberOfAllowedComplaints = allowedComplaints;
                     });
                 }
-                if (this.submission.submitted) {
-                    this.setSubmittedFile();
+
+                if (data.submissions && data.submissions.length > 0) {
+                    this.submission = data.submissions[0] as FileUploadSubmission;
+                    if (this.submission && this.submission.submitted) {
+                        this.setSubmittedFile();
+                    }
                 }
-                if (this.submission.submitted && this.result && this.result.completionDate) {
-                    this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
-                    this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                        this.result = assessmentResult;
-                    });
-                    this.complaintService
-                        .findByResultId(this.result.id)
-                        .pipe(filter(res => !!res.body))
-                        .subscribe(res => {
-                            if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                this.hasRequestMoreFeedback = true;
-                            } else {
-                                this.hasComplaint = true;
-                            }
-                        });
-                }
+
                 this.isActive =
                     this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
             },

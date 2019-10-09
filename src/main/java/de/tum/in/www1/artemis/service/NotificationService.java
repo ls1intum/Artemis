@@ -38,13 +38,13 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
-        return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), pageable, currentUser.getLogin());
+        return notificationRepository.findAllNotificationsForCurrentUser(currentUser.getGroups(), pageable);
     }
 
     @Transactional(readOnly = true)
     public List<Notification> findAllRecentExceptSystem(User currentUser) {
         List<Notification> groupNotifications = groupNotificationService.findAllRecentNewNotificationsForCurrentUser(currentUser);
-        List<Notification> userNotifications = singleUserNotificationService.findAllRecentNewNotificationsForRecipientWithLogin(currentUser.getLogin());
+        List<Notification> userNotifications = singleUserNotificationService.findAllRecentNewNotificationsForCurrentUser();
         groupNotifications.addAll(userNotifications);
         return groupNotifications;
     }

@@ -7,7 +7,6 @@ import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
 import { Lecture } from 'app/entities/lecture';
-import { AccountService } from 'app/core';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -16,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 export class LectureService {
     public resourceUrl = SERVER_API_URL + 'api/lectures';
 
-    constructor(protected http: HttpClient, private accountService: AccountService) {}
+    constructor(protected http: HttpClient) {}
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
@@ -40,10 +39,9 @@ export class LectureService {
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Lecture[]>(`api/courses/${courseId}/lectures`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.checkPermission(res)),
-        );
+        return this.http
+            .get<Lecture[]>(`api/courses/${courseId}/lectures`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     delete(lectureId: number): Observable<HttpResponse<any>> {
@@ -74,17 +72,6 @@ export class LectureService {
         if (res.body) {
             res.body.map((lecture: Lecture) => {
                 return this.convertDatesForLectureFromServer(lecture);
-            });
-        }
-        return res;
-    }
-
-    private checkPermission<ERT extends EntityArrayResponseType>(res: ERT): ERT {
-        if (res.body) {
-            res.body.forEach((lecture: Lecture) => {
-                if (lecture.course) {
-                    lecture.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(lecture.course);
-                }
             });
         }
         return res;

@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.naming.NoPermissionException;
+
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
@@ -52,14 +54,11 @@ public class RepositoryWebsocketResource {
 
     private final ExerciseService exerciseService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             SimpMessageSendingOperations messagingTemplate, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ExerciseService exerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -67,7 +66,6 @@ public class RepositoryWebsocketResource {
         this.repositoryService = repositoryService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
-        this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
@@ -99,11 +97,8 @@ public class RepositoryWebsocketResource {
             return;
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-
-        // User must have the necessary permissions to update a file.
-        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-        boolean repositoryIsLocked = programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation);
-        if (repositoryIsLocked || !programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
+        // User must have the necessary permissions to update a file
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
@@ -196,13 +191,15 @@ public class RepositoryWebsocketResource {
      *
      * @param submission information about file update
      * @param repository repository in which to fetch and update the file
+     * @throws InterruptedException
      * @throws IOException
+     * @throws NoPermissionException
      */
     private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
         Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
 
-        if (file.isEmpty()) {
-            throw new IOException("File could not be found.");
+        if (!file.isPresent()) {
+            FileSubmissionError error = new FileSubmissionError(submission.getFileName(), "File could not be found.");
         }
 
         InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));

@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.collect.Sets;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -47,7 +51,6 @@ public class ModelFactory {
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setCategories(new HashSet<>());
-        exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
     }
 
@@ -55,9 +58,7 @@ public class ModelFactory {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
-            if (groups != null) {
-                student.setGroups(Set.of(groups));
-            }
+            student.setGroups(Sets.newHashSet(groups));
             generatedUsers.add(student);
         }
         return generatedUsers;
@@ -134,22 +135,7 @@ public class ModelFactory {
         course.setMaxComplaints(5);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
-        course.setPresentationScore(2);
         return course;
-    }
-
-    public static List<Feedback> generateFeedback() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        Feedback positiveFeedback = new Feedback();
-        positiveFeedback.setCredits(2D);
-        positiveFeedback.setReference("theory");
-        feedbacks.add(positiveFeedback);
-        Feedback negativeFeedback = new Feedback();
-        negativeFeedback.setCredits(-1D);
-        negativeFeedback.setDetailText("Bad solution");
-        negativeFeedback.setReference("practice");
-        feedbacks.add(negativeFeedback);
-        return feedbacks;
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
@@ -191,21 +177,5 @@ public class ModelFactory {
         toBeImported.generateAndSetProjectKey();
 
         return toBeImported;
-    }
-
-    public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
-        StudentParticipation studentParticipation = new StudentParticipation();
-        studentParticipation.setInitializationState(initializationState);
-        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
-        studentParticipation.setExercise(exercise);
-        studentParticipation.setStudent(user);
-        return studentParticipation;
-    }
-
-    public static Result generateResult(boolean rated, long score) {
-        Result result = new Result();
-        result.setRated(rated);
-        result.setScore(score);
-        return result;
     }
 }

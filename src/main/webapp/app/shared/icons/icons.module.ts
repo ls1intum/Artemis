@@ -110,7 +110,6 @@ import {
     faWrench,
     faHandPointUp,
     faICursor,
-    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -264,6 +263,5 @@ export class ArtemisIconsModule {
         library.addIcons(faEquals);
         library.addIcons(faHandPointUp);
         library.addIcons(faICursor);
-        library.addIcons(faVideo);
     }
 }

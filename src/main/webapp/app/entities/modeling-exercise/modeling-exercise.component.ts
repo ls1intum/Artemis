@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -23,6 +24,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        private deleteDialogService: DeleteDialogService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -58,18 +60,31 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Deletes modeling exercise
-     * @param modelingExerciseId id of the exercise that will be deleted
+     * Opens delete modeling exercise dialog
+     * @param modelingExercise exercise that will be deleted
      */
-    deleteModelingExercise(modelingExerciseId: number) {
-        this.modelingExerciseService.delete(modelingExerciseId).subscribe(
-            response => {
-                this.eventManager.broadcast({
-                    name: 'modelingExerciseListModification',
-                    content: 'Deleted an modelingExercise',
-                });
+    openDeleteModelingExerciseDialog(modelingExercise: ModelingExercise) {
+        if (!modelingExercise) {
+            return;
+        }
+        const deleteDialogData: DeleteDialogData = {
+            entityTitle: modelingExercise.title,
+            deleteQuestion: 'artemisApp.exercise.delete.question',
+            deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+        };
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(
+            () => {
+                this.modelingExerciseService.delete(modelingExercise.id).subscribe(
+                    response => {
+                        this.eventManager.broadcast({
+                            name: 'modelingExerciseListModification',
+                            content: 'Deleted an modelingExercise',
+                        });
+                    },
+                    error => this.onError(error),
+                );
             },
-            error => this.onError(error),
+            () => {},
         );
     }
 

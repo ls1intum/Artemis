@@ -27,7 +27,7 @@ export class AssessmentLayoutComponent {
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
-    @Input() conflicts: Conflict[] | null = null;
+    @Input() conflicts: Conflict[] | null;
     @Input() assessmentsAreValid: boolean;
     ComplaintType = ComplaintType;
     @Input() complaint: Complaint | null;

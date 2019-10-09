@@ -14,8 +14,5 @@ export class Lecture implements BaseEntity {
     studentQuestions: StudentQuestion[];
     course: Course;
 
-    // helper attribute
-    isAtLeastInstructor: boolean;
-
     constructor() {}
 }

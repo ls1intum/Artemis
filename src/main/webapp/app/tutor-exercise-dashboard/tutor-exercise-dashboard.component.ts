@@ -342,7 +342,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
                 break;
             case ExerciseType.FILE_UPLOAD:
-                route = `/file-upload-exercise/${this.exercise.id}/submission/${submission}/assessment`;
+                route = `/file-upload-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
                 break;
         }
         this.router.navigate([route]);

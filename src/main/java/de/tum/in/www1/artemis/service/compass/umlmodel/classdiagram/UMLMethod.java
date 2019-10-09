@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -22,22 +21,13 @@ public class UMLMethod extends UMLElement {
 
     private List<String> parameters;
 
-    public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
+    public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
         super(jsonElementID);
 
         this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
-        this.parameters = parameters;
-    }
-
-    /**
-     * Get the parent class of this method, i.e. the UML class that contains it.
-     *
-     * @return  the UML class that contains this method
-     */
-    public UMLClass getParentClass() {
-        return parentClass;
+        this.parameters = parameter;
     }
 
     /**
@@ -106,21 +96,5 @@ public class UMLMethod extends UMLElement {
     @Override
     public String getType() {
         return UML_METHOD_TYPE;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj)) {
-            return false;
-        }
-
-        UMLMethod otherMethod = (UMLMethod) obj;
-
-        if (otherMethod.getParameters().size() != parameters.size() || !otherMethod.getParameters().containsAll(parameters)
-                || !parameters.containsAll(otherMethod.getParameters())) {
-            return false;
-        }
-
-        return Objects.equals(otherMethod.getReturnType(), returnType) && Objects.equals(otherMethod.getParentClass().getName(), parentClass.getName());
     }
 }

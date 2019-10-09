@@ -16,7 +16,7 @@
                 "title": "File Upload Submission"
             },
             "filePath": "File Path",
-            "feedbackResult": "Du hast {{ credits }} Punkt(e)",
+            "feedbackResult": "Du hast {{ credits }} Credits für {{ part }} Teil erhalten",
             "feedbackResultDetail": "mit folgendem Feedback: {{ detailText }}",
             "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",
             "file": "Datei",

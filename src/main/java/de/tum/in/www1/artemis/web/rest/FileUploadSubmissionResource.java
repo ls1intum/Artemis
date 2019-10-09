@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing FileUploadSubmission.
@@ -122,7 +126,7 @@ public class FileUploadSubmissionResource {
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        this.fileUploadSubmissionService.hideDetails(submission);
+        hideDetails(submission);
         return ResponseEntity.ok(submission);
     }
 
@@ -145,7 +149,7 @@ public class FileUploadSubmissionResource {
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -185,48 +189,37 @@ public class FileUploadSubmissionResource {
      * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
      *
      * @param exerciseId the id of the exercise
-     * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+    @Transactional(readOnly = true)
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a file upload submission without assessment");
-        Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        Exercise exercise = fileUploadExerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
-        }
-        if (!(fileUploadExercise instanceof FileUploadExercise)) {
-            return badRequest();
         }
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
             return notFound();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
-        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
+        fileUploadSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        FileUploadSubmission fileUploadSubmission;
-        if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
-        }
-        else {
-            Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
-            if (!optionalFileUploadSubmission.isPresent()) {
-                return notFound();
-            }
-            fileUploadSubmission = optionalFileUploadSubmission.get();
+        Optional<FileUploadSubmission> fileUploadSubmissionWithoutAssessment = this.fileUploadSubmissionService
+                .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) exercise);
+
+        // tutors should not see information about the student of a submission
+        if (fileUploadSubmissionWithoutAssessment.isPresent() && fileUploadSubmissionWithoutAssessment.get().getParticipation() != null
+                && fileUploadSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) fileUploadSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
         }
 
-        // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-        studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
-        return ResponseEntity.ok(fileUploadSubmission);
+        return ResponseUtil.wrapOrNotFound(fileUploadSubmissionWithoutAssessment);
     }
 
     /**
@@ -236,13 +229,13 @@ public class FileUploadSubmissionResource {
      * @param participationId the participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the participation as body
      */
-    @GetMapping("/participations/{participationId}/file-upload-editor")
+    @GetMapping("/file-upload-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+    public ResponseEntity<StudentParticipation> getDataForFileUpload(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneStudentParticipationWithEagerSubmissionsResultsExerciseAndCourse(participationId);
         if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
@@ -253,47 +246,50 @@ public class FileUploadSubmissionResource {
                                 HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
                         .body(null);
             }
-
-            // make sure sensitive information are not sent to the client
-            fileUploadExercise.filterSensitiveInformation();
         }
         else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "wrongExerciseType",
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
-            return forbidden();
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins
+        // can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation)
+                && !authCheckService.isAtLeastTeachingAssistantInCourse(fileUploadExercise.getCourse(), userService.getUserWithGroupsAndAuthorities())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // if no results, check if there are really no results or the relation to results was not
+        // updated yet
+        if (participation.getResults().size() <= 0) {
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            participation.setResults(new HashSet<>(results));
         }
 
         Optional<FileUploadSubmission> optionalFileUploadSubmission = participation.findLatestFileUploadSubmission();
-        FileUploadSubmission fileUploadSubmission;
-        if (!optionalFileUploadSubmission.isPresent()) {
-            // this should never happen as the submission is initialized along with the participation when the exercise is started
-            fileUploadSubmission = new FileUploadSubmission();
-            fileUploadSubmission.setParticipation(participation);
-        }
-        else {
-            // only try to get and set the file upload if the fileUploadSubmission existed before
-            fileUploadSubmission = optionalFileUploadSubmission.get();
-        }
+        participation.setSubmissions(new HashSet<>());
 
-        // make sure only the latest submission and latest result is sent to the client
-        participation.setSubmissions(null);
-        participation.setResults(null);
+        participation.getExercise().filterSensitiveInformation();
 
-        // do not send the result to the client if the assessment is not finished
-        if (fileUploadSubmission.getResult() != null && (fileUploadSubmission.getResult().getCompletionDate() == null || fileUploadSubmission.getResult().getAssessor() == null)) {
-            fileUploadSubmission.setResult(null);
+        if (optionalFileUploadSubmission.isPresent()) {
+            FileUploadSubmission fileUploadSubmission = optionalFileUploadSubmission.get();
+
+            // set reference to participation to null, since we are already inside a participation
+            fileUploadSubmission.setParticipation(null);
+
+            Result result = fileUploadSubmission.getResult();
+            if (result != null && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+                result.setAssessor(null);
+            }
+
+            participation.addSubmissions(fileUploadSubmission);
         }
 
-        // do not send the assessor information to students
-        if (fileUploadSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getResult().setAssessor(null);
+        if (!authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+            participation.setStudent(null);
         }
 
-        return ResponseEntity.ok(fileUploadSubmission);
+        return ResponseEntity.ok(participation);
     }
 
     private ResponseEntity<FileUploadSubmission> checkExerciseValidity(FileUploadExercise fileUploadExercise) {
@@ -315,5 +311,37 @@ public class FileUploadSubmissionResource {
         }
 
         return null;
+    }
+
+    /**
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
+     */
+    private void hideDetails(FileUploadSubmission fileUploadSubmission) {
+        // do not send old submissions or old results to the client
+        if (fileUploadSubmission.getParticipation() != null) {
+            fileUploadSubmission.getParticipation().setSubmissions(null);
+            fileUploadSubmission.getParticipation().setResults(null);
+            StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+            Exercise exercise = studentParticipation.getExercise();
+            if (exercise != null) {
+                // make sure that sensitive information is not sent to the client for students
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    exercise.filterSensitiveInformation();
+                    fileUploadSubmission.setResult(null);
+                }
+                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                    studentParticipation.setStudent(null);
+                }
+            }
+        }
+    }
+
+    private void checkAuthorization(FileUploadExercise exercise) throws AccessForbiddenException {
+        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
+        }
     }
 }

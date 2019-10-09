@@ -5,7 +5,9 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from './file-upload-exercise.model';
+import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
+import { FileUploadExerciseDeleteDialogComponent } from './file-upload-exercise-delete-dialog.component';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
@@ -22,6 +24,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        private fileUploadExercisePopupService: FileUploadExercisePopupService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -59,19 +62,11 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Deletes file upload exercise
-     * @param fileUploadExerciseId id of the exercise that will be deleted
+     * Opens delete file upload exercise popup
+     * @param exerciseId the id of exercise
      */
-    deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted an fileUploadExercise',
-                });
-            },
-            error => this.onError(error),
-        );
+    openDeleteFileUploadExercisePopup(exerciseId: string) {
+        this.fileUploadExercisePopupService.open(FileUploadExerciseDeleteDialogComponent as Component, exerciseId);
     }
 
     protected getChangeEventName(): string {

@@ -1,14 +1,6 @@
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export interface GuidedTour {
-    /** Title of the course for which the tour should be displayed,
-     * if the tour display is not limited to any course then leave an empty string
-     * */
-    courseShortName: string;
-    /** Name of the exercise for which the tour should be displayed
-     *  if the tour display is not limited to any exercise then leave an empty string
-     *  */
-    exerciseShortName: string;
     /** Identifier for tour */
     settingsKey: string;
     /** Steps fo the tour */

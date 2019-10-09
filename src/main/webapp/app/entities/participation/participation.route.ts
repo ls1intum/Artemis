@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core';
 import { ParticipationComponent } from './participation.component';
+import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
 import { ExerciseScoresResultResultPopupComponent } from 'app/scores/exercise-scores-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
 
@@ -27,6 +28,16 @@ export const participationRoute: Routes = [
 ];
 
 export const participationPopupRoute: Routes = [
+    {
+        path: 'participation/:id/delete',
+        component: ParticipationDeletePopupComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.participation.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
     {
         path: 'participation/:id/cleanupBuildPlan',
         component: ParticipationCleanupBuildPlanPopupComponent,

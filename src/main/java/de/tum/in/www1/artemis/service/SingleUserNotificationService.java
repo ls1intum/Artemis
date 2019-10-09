@@ -50,8 +50,8 @@ public class SingleUserNotificationService {
         messagingTemplate.convertAndSend(userNotification.getTopic(), userNotification);
     }
 
-    public List<Notification> findAllRecentNewNotificationsForRecipientWithLogin(String login) {
-        return this.singleUserNotificationRepository.findAllRecentNewNotificationsForRecipientWithLogin(login);
+    public List<Notification> findAllRecentNewNotificationsForCurrentUser() {
+        return this.singleUserNotificationRepository.findAllRecentNewNotificationsForCurrentUser();
     }
 
 }

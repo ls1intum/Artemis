@@ -8,9 +8,6 @@ import * as moment from 'moment';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { sum } from 'lodash';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 
 enum ExerciseFilter {
@@ -42,7 +39,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public weeklyExercisesGrouped: object;
     public upcomingExercises: Exercise[];
     public exerciseCountMap: Map<string, number>;
-    public guidedTourExercise: Exercise | null;
 
     readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
     readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
@@ -50,8 +46,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
-
-    readonly compareExerciseShortName = compareExerciseShortName;
 
     constructor(
         private courseService: CourseService,
@@ -61,7 +55,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -95,8 +88,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.applyFiltersAndOrder();
         });
-
-        this.guidedTourExercise = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
     }
 
     ngOnDestroy(): void {

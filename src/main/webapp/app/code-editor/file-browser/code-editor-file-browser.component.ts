@@ -32,7 +32,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
-    @Input() disableActions = false;
     @Input()
     unsavedFiles: string[];
     @Input()

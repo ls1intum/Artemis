@@ -3,7 +3,6 @@
         id="resolve_conflict_button"
         type="button"
         class="btn btn-danger navbar-btn mr-3"
-        [disabled]="disableActions"
         (click)="resetRepository()"
         data-toggle="tooltip"
         data-placement="left"
@@ -19,7 +18,6 @@
         type="button"
         class="btn btn-primary navbar-btn mr-3"
         [disabled]="
-            disableActions ||
             editorState !== EditorState.UNSAVED_CHANGES ||
             commitState === CommitState.COMMITTING ||
             commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
@@ -37,7 +35,7 @@
         id="submit_button"
         type="button"
         class="btn btn-success navbar-btn"
-        [disabled]="disableActions || editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)"
+        [disabled]="editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)"
         (click)="commit()"
         data-toggle="tooltip"
         data-placement="left"

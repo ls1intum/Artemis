@@ -33,30 +33,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
+            ProgrammingExerciseParticipationService participationService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
-        this.programmingExerciseService = programmingExerciseService;
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet)
-            throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationService.findParticipation(participationId);
-        // Error case 1: The participation is not from a programming exercise.
         if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new IllegalArgumentException();
-        // Error case 2: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        // Error case 3: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
@@ -121,13 +111,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.pullChanges(participationId);
     }
 
-    /**
-     * Commit and push the changes to the remote VCS repo.
-     * Won't allow a commit if the repository is locked!
-     *
-     * @param participationId identifier for the repository.
-     * @return ok (200) if the push was successful, notFound (404) if the participation does not exist and forbidden (403) if the user does not have permissions to access the participation OR the buildAndTestAfterDueDate is set and the repository is now locked.
-     */
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {

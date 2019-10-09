@@ -67,7 +67,7 @@ public class ExampleSubmissionIntegrationTest {
         database.addUsers(1, 1, 1);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
+        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-model.json");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 

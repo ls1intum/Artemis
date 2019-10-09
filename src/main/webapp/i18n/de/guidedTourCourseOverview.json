@@ -1,46 +1,42 @@
 {
     "tour": {
-        "courseOverview": {
+        "course-overview": {
             "welcome": {
                 "headline": "Willkommen in Artemis",
                 "subHeadline": "(Automatic Assessment Management System for Interactive Learning)",
                 "content": "Artemis ist eine Lernplattform die dir ermöglicht, Programmierübungen in interaktiven Lernsessions zu lösen."
             },
-            "overviewMenu": {
+            "overview-menu": {
                 "headline": "Kursübersicht",
                 "content": "Auf dieser Seite bekommst du eine Übersicht über alle deine Kurse."
             },
-            "courseAdminMenu": {
+            "course-admin-menu": {
                 "headline": "Kursadministration",
                 "content": "Hier kannst du deine Kurse und Übungen administrieren und verwalten."
             },
-            "adminMenu": {
+            "admin-menu": {
                 "headline": "Server-Administration",
                 "content": "Hier bekommst du einen Einblick in die Anwendungsadministration."
             },
-            "notificationMenu": {
+            "notification-menu": {
                 "headline": "Deine Benachrichtigungen",
                 "content": "In diesem Dropdown kannst du die Benachrichtungen über neue Übungen einsehen."
             },
-            "accountMenuClick": {
+            "account-menu": {
                 "headline": "Persönliche Einstellungen",
                 "content": "Klicke auf deinen Benutzernamen um das Menü für deine persönlichen Einstellungen anzuzeigen."
             },
-            "accountMenu": {
+            "startTourOption": {
                 "headline": "Persönliche Einstellungen",
                 "content": "In diesem Menü kannst du die Anzeigesprache einstellen, die aktuelle Tour nochmals wiederholen oder dich aus Artemis ausloggen."
             },
             "course": {
                 "headline": "Deine aktuellen Kurse",
-                "content": "Du bist für diesen Kurs angemeldet. Später kannst du dir die Kursdetailseite genauer anschauen, indem du auf diesen Kachel klickst."
+                "content": "Du bist für diesen Kurs angemeldet. Schau dir die Kursdetailseite nach der Tour genauer an, indem du auf diese Kachel klickst."
             },
-            "courseFooter": {
+            "course-footer": {
                 "headline": "Nächste fällige Übungsabgabe",
                 "content": "Hier siehst du welche Übung in den nächsten Tagen abgeschlossen werden soll."
-            },
-            "courseClick": {
-                "headline": "Kursdetail einsehen",
-                "content": "Klicke nun diese Kachel an, um auf die Kursdetailseite zu gelangen."
             },
             "register": {
                 "headline": "Melde dich für andere Kurse an",

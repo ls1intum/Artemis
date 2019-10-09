@@ -74,6 +74,23 @@ public class CompassResult implements Grade {
     }
 
     /**
+     * Process a list of results to build a new result out of it
+     *
+     * @param compassResultList a list of results to be contained in the new result
+     * @param coverage          the coverage is directly reused for the returned result
+     * @return the calculated result
+     */
+    public static CompassResult buildResultFromResultList(List<CompassResult> compassResultList, double coverage) {
+        Map<UMLElement, Score> newScoreMapping = new ConcurrentHashMap<>();
+
+        for (CompassResult compassResult : compassResultList) {
+            newScoreMapping.putAll(compassResult.elementScoreMapping);
+        }
+
+        return new CompassResult(newScoreMapping, coverage);
+    }
+
+    /**
      * @return number of elements for which a score exists
      */
     public int entitiesCovered() {

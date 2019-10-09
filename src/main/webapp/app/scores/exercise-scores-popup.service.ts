@@ -6,7 +6,7 @@ import { DatePipe } from '@angular/common';
 import { Exercise } from '../entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
 import { Participation, ParticipationService } from 'app/entities/participation';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result';
 
 import * as moment from 'moment';
 

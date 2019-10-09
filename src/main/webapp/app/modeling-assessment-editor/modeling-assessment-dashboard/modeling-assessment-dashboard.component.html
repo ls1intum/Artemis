@@ -1,6 +1,6 @@
 <div *ngIf="modelingExercise">
     <h4>
-        {{ 'modelingAssessment.dashboard.heading' | translate: { title: modelingExercise.title } }}
+        Assessment dashboard for modeling exercise <strong>{{ modelingExercise.title }}</strong>
     </h4>
     <div>
         <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
@@ -40,13 +40,13 @@
                         <a class="th-link">#</a>
                     </th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <a class="th-link">Student name</a>
                     </th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a class="th-link">Reviewer</a>
                     </th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
+                        <a class="th-link">Action</a>
                     </th>
                     <th></th>
                 </tr>
@@ -100,26 +100,16 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
-                    <th jhiSortBy="participation.student.firstName">
-                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="submissionDate">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="successful" jhiTranslate="artemisApp.assessment.dashboard.columns.result"><a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="duration"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="assessor.firstName">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="participation.student.firstName"><a class="th-link">Student name</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="submissionDate"><a class="th-link">Submission date</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="successful"><a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="submissionCount"><a class="th-link">Submission count</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="score"><a class="th-link">Score</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="duration"><a class="th-link">Duration</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="assessmentType"><a class="th-link">Assessment Type</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="assessor.firstName"><a class="th-link">Reviewer</a> <fa-icon icon="sort"></fa-icon></th>
                     <th>
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
+                        <a class="th-link">Action</a>
                     </th>
                     <th></th>
                 </tr>
@@ -158,7 +148,7 @@
                                 [queryParams]="{ optimal: false, hideBackButton: true }"
                                 class="btn btn-outline-secondary btn-sm"
                             >
-                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
+                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
                             </button>
                         </span>
                         <button
@@ -168,7 +158,7 @@
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-secondary btn-sm"
                         >
-                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Open assessment
                         </button>
                     </td>
                 </tr>

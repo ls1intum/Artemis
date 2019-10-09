@@ -98,8 +98,7 @@
             },
             "language": "Language",
             "guidedTour": "Guided tour",
-            "startTutorial": "Start tutorial",
-            "continueTutorial": "Continue tutorial",
+            "startTour": "Start tour",
             "noNotifications": "No notifications available",
             "showAllNotifications": "Show all notifications"
         },
@@ -191,7 +190,7 @@
             "close": "Close",
             "import": "Import",
             "export": "Export",
-            "lecture": "Lectures",
+            "lecture": "Lecture",
             "attachments": "Attachments",
             "saveAttachment": "Save attachment",
             "addAttachment": "Add attachment",
@@ -200,7 +199,7 @@
             "newResult": "New Result",
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
-            "exercise": "Exercises",
+            "exercise": "Exercise",
             "scores": "Scores",
             "manageHints": "Manage Hints"
         },

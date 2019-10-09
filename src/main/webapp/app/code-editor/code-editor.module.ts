@@ -24,7 +24,6 @@ import {
     CodeEditorInstructionsComponent,
     CodeEditorInstructorContainerComponent,
     CodeEditorRepositoryFileService,
-    CodeEditorRepositoryIsLockedComponent,
     CodeEditorRepositoryService,
     CodeEditorResolveConflictModalComponent,
     CodeEditorSessionService,
@@ -57,7 +56,6 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     declarations: [
         CodeEditorGridComponent,
-        CodeEditorRepositoryIsLockedComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserComponent,

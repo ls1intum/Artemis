@@ -45,12 +45,14 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
-                                jhiDeleteButton
-                                [entityTitle]="exerciseHint.title"
-                                deleteQuestion="artemisApp.exerciseHint.delete.question"
-                                (delete)="deleteExerciseHint(exerciseHint.id)"
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: ['exercise', exerciseId, 'hints', exerciseHint.id, 'delete'] } }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                         </div>
                     </td>

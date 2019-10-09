@@ -26,8 +26,7 @@
         "exportRepos": {
             "warning": "Confirm Export",
             "title": "Download Repos",
-            "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut)  of students you want to download the repository from",
-            "timeWarning": "(This action can take several minutes depending on number and size of repositories.)"
+            "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut)  of students you want to download the repository from"
         },
         "exportCSV": "Export as CSV",
         "loadingStudents": "Loading the results of all students..."

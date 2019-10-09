@@ -11,7 +11,7 @@
     <div class="card-second-header">
         <button
             id="create_file_root"
-            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+            [disabled]="isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light"
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
@@ -21,7 +21,7 @@
         </button>
         <button
             id="create_folder_root"
-            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+            [disabled]="isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
@@ -72,7 +72,7 @@
         [hasError]="errorFiles && errorFiles.includes(item.value)"
         [onCollapseExpand]="onCollapseExpand"
         [isCompressed]="compressFolders"
-        [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+        [disableActions]="commitState === CommitState.CONFLICT"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"
@@ -87,7 +87,7 @@
         [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
-        [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+        [disableActions]="commitState === CommitState.CONFLICT"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"

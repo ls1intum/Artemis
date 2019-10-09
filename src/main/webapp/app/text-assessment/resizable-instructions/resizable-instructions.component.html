@@ -11,23 +11,23 @@
     </div>
 
     <div class="card-body">
-        <div *ngIf="problemStatement">
+        <div *ngIf="formattedProblemStatement">
             <h4 jhiTranslate="artemisApp.exercise.problemStatement">Problem statement</h4>
-            <p class="markdown-preview" [innerHTML]="problemStatement | htmlForMarkdown"></p>
+            <p class="markdown-preview" [innerHTML]="formattedProblemStatement"></p>
 
             <hr />
         </div>
 
-        <div *ngIf="sampleSolution">
+        <div *ngIf="formattedSampleSolution">
             <h4 jhiTranslate="artemisApp.exercise.sampleSolution">Sample solution</h4>
-            <p class="markdown-preview" [innerHTML]="sampleSolution | htmlForMarkdown"></p>
+            <p class="markdown-preview" [innerHTML]="formattedSampleSolution"></p>
 
             <hr />
         </div>
 
-        <div *ngIf="gradingInstructions">
+        <div *ngIf="formattedGradingInstructions">
             <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
-            <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
+            <p class="markdown-preview" [innerHTML]="formattedGradingInstructions"></p>
         </div>
     </div>
 </div>

@@ -28,6 +28,8 @@
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
+                "scoreFor": "Assessment for",
+                "feedback": "Feedback",
                 "credits": {
                     "one": "{{credits}} credit",
                     "many": "{{credits}} credits"
@@ -37,7 +39,24 @@
                 "assess": "Assess"
             },
             "dashboard": {
-                "heading": "Tutor Assessment dashboard for text exercise \"{{exerciseTitle}}\""
+                "heading": "Tutor Assessment dashboard for text exercise \"{{exerciseTitle}}\"",
+                "empty": "No Submissions for this exercise!",
+                "loading": "Loading..",
+                "columns": {
+                    "submissionDate": "Submission date",
+                    "result": "Result",
+                    "submissionCount": "Submission count",
+                    "score": "Score",
+                    "duration": "Duration",
+                    "assessmentType": "Assessment Type",
+                    "assessor": "Reviewer",
+                    "action": "Action"
+                },
+                "minutes": "minutes",
+                "actions": {
+                    "open": "Open assessment",
+                    "assess": "Assess Submission"
+                }
             },
             "notFound": "We haven't found any new text submission without an assessment, please go back.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",

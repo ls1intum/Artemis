@@ -683,8 +683,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param jobs   the jobs list of the requestBody
      * @return a list of feedbacks itemsstored in a result
      */
-    @SuppressWarnings("unchecked")
-    private Result addFeedbackToResultNew(Result result, List<Object> jobs) {
+    public Result addFeedbackToResultNew(Result result, List<Object> jobs) {
         if (jobs == null) {
             return null;
         }

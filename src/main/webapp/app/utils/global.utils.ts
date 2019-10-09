@@ -69,21 +69,3 @@ export const matchRegexWithLineNumbers = (multiLineText: string, regex: RegExp):
     }
     return result;
 };
-
-/**
- * Builds url with an array of parameters passed to it
- * @param url original url
- * @param params array of parameters that will be added to original url
- */
-export const buildUrlWithParams = (url: string, params: string[]): string => {
-    if (!params || params.length < 1) {
-        return url;
-    }
-    let urlWithParams = `${url}?${params}`;
-    if (params.length > 1) {
-        for (let i = 1; i < params.length; ++i) {
-            urlWithParams += `&${params}`;
-        }
-    }
-    return urlWithParams;
-};

@@ -27,18 +27,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return the list of first level model elements of the diagram
      */
-    protected abstract List<UMLElement> getModelElements();
-
-    /**
-     * Get the list of model elements of the diagram including child elements (e.g. classes, relationships and packages of UML class diagrams, including attributes and methods of
-     * classes). The default behavior is to return the elements returned by getModelElements(). If the specific diagram type has elements with child elements (i.e. that are not
-     * returned by getModelElements()) that need to be handled separately, the diagram type has to implement this method.
-     *
-     * @return the list of all model elements of the diagram including child elements
-     */
-    public List<UMLElement> getAllModelElements() {
-        return getModelElements();
-    }
+    protected abstract List<Similarity<UMLElement>> getModelElements();
 
     /**
      * Compares this with another diagram to calculate the similarity. It iterates over all model elements and calculates the max. similarity to elements of the reference diagram.

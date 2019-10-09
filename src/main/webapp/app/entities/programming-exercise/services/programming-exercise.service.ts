@@ -82,7 +82,7 @@ export class ProgrammingExerciseService {
 
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${programmingExerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

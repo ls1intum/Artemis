@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.util.Tuple;
 
 @Service
 public class ScheduleService {
@@ -20,20 +19,18 @@ public class ScheduleService {
 
     private ExerciseLifecycleService exerciseLifecycleService;
 
-    private final Map<Tuple<Long, ExerciseLifecycle>, ScheduledFuture> scheduledTasks = new HashMap<>();
+    private final Map<Long, ScheduledFuture> scheduledTasks = new HashMap<>();
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
     }
 
-    private void addScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle, ScheduledFuture future) {
-        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
-        scheduledTasks.put(taskId, future);
+    private void addScheduledTask(Exercise exercise, ScheduledFuture future) {
+        scheduledTasks.put(exercise.getId(), future);
     }
 
-    private void removeScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle) {
-        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
-        scheduledTasks.remove(taskId);
+    private void removeScheduledTask(Exercise exercise) {
+        scheduledTasks.remove(exercise.getId());
     }
 
     /**
@@ -46,22 +43,22 @@ public class ScheduleService {
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled for clustering more than once.
-        cancelScheduledTaskForLifecycle(exercise, lifecycle);
+        cancelScheduledTask(exercise);
         ScheduledFuture scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
-        addScheduledTask(exercise, lifecycle, scheduledTask);
+        addScheduledTask(exercise, scheduledTask);
     }
 
     /**
      * Cancel possible schedules tasks for a provided exercise.
      * @param exercise exercise for which a potential clustering task is canceled
      */
-    void cancelScheduledTaskForLifecycle(Exercise exercise, ExerciseLifecycle lifecycle) {
-        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
-        ScheduledFuture future = scheduledTasks.get(taskId);
+    void cancelScheduledTask(Exercise exercise) {
+        ScheduledFuture future = scheduledTasks.get(exercise.getId());
         if (future != null) {
-            log.debug("Cancelling scheduled task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+            log.debug("Cancelling scheduled task for build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#"
+                    + exercise.getId() + ").");
             future.cancel(false);
-            removeScheduledTask(exercise, lifecycle);
+            removeScheduledTask(exercise);
         }
     }
 }

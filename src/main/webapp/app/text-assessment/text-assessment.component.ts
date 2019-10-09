@@ -58,6 +58,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     paramSub: Subscription;
 
+    formattedProblemStatement: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
+
     /** Resizable constants **/
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
@@ -352,6 +356,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.participation = participation;
         this.submission = <TextSubmission>this.participation.submissions[0];
         this.exercise = <TextExercise>this.participation.exercise;
+
+        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
         if (this.result.hasComplaint) {

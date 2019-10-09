@@ -14,7 +14,7 @@ public class NameSimilarity {
      * @return the Levenshtein simple ratio between the two input strings
      */
     public static double levenshteinSimilarity(String string1, String string2) {
-        if (Objects.equals(string1, string2)) {
+        if (string1 == null && string2 == null) {
             return 1;
         }
         if (string1 == null || string2 == null) {

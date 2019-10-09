@@ -62,7 +62,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Nullable
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
-    private Boolean testCasesChanged = false;   // default value
+    private Boolean testCasesChanged = false;
 
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;

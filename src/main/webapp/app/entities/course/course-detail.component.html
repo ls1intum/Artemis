@@ -42,17 +42,6 @@
                     <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                     <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
-                <dd>
-                    <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
-                </dd>
-                <ng-container *ngIf="course.presentationScore !== 0">
-                    <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                    <dd>
-                        <span>{{ course.presentationScore }}</span>
-                    </dd>
-                </ng-container>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info mr-1">

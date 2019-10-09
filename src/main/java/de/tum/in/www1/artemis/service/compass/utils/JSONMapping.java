@@ -9,8 +9,6 @@ public class JSONMapping {
     public static final String elementID = "id";
 
     // model base structure
-    public static final String diagramType = "type";
-
     public static final String elements = "elements";
 
     public static final String relationships = "relationships";

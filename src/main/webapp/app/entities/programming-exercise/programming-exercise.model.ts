@@ -11,7 +11,6 @@ export const enum ProgrammingLanguage {
 }
 
 export class ProgrammingExercise extends Exercise {
-    public projectKey: string | null;
     public templateParticipation: TemplateProgrammingExerciseParticipation;
     public solutionParticipation: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl: string;

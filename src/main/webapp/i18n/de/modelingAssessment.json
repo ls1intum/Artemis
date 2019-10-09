@@ -4,15 +4,6 @@
         "conflicts": "Konflikte",
         "assessor": "Bewertet von: {{firstName}} {{lastName}}",
         "noModel": "Kein Modell zum Darstellen gefunden.",
-        "messages": {
-            "noConflicts": "Konflikte konnten nicht geladen werden",
-            "conflictsResolved": "Alle Konflikte wurden bearbeitet."
-        },
-        "dashboard": {
-            "heading": "Tutor Dashboard zur Bewertung der Modellierungsaufgabe \"{{ title }}\"",
-            "actions": {
-                "open": "Modell bewerten"
-            }
-        }
+        "messages": {}
     }
 }

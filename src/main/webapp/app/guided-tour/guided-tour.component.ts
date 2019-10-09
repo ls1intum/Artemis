@@ -1,11 +1,10 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { from, fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 
 import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -19,8 +18,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     // Used to adjust values to determine scroll. This is a blanket value to adjust for elements like nav bars.
     public topOfPageAdjustment = 0;
     // Sets the width of all tour step elements.
-    // TODO automatically determine optimal width of tourstep
-    public tourStepWidth = 550;
+    public tourStepWidth = 500;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .
@@ -33,7 +31,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public currentTourStep: any;
     public selectedElementRect: DOMRect | null;
     public startFade = false;
-    public userInteractionFinished = false;
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
@@ -50,9 +47,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (this.guidedTourService.isOnResizeMessage) {
-            return;
-        }
         switch (event.code) {
             case 'ArrowRight': {
                 /**
@@ -69,18 +63,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'ArrowLeft': {
-                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
+                if (this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
                     this.guidedTourService.backStep();
                 }
                 break;
             }
             case 'Escape': {
-                if (this.currentTourStep && !this.isCancelTour()) {
-                    this.guidedTourService.skipTour();
-                } else if (this.currentTourStep && (this.isCancelTour() || this.guidedTourService.isOnLastStep)) {
-                    // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
-                    this.guidedTourService.finishGuidedTour();
-                }
+                this.guidedTourService.skipTour();
                 break;
             }
         }
@@ -92,7 +81,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public ngAfterViewInit(): void {
         this.guidedTourService.init();
         this.subscribeToGuidedTourCurrentStepStream();
-        this.subscribeToUserInteractionState();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
     }
@@ -128,21 +116,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Subscribe to userInteractionFinished to determine if the user interaction has been done
-     */
-    public subscribeToUserInteractionState(): void {
-        // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.userInteractionFinishedState().subscribe(isFinished => {
-            this.userInteractionFinished = isFinished;
-        });
-    }
-
-    /**
      * Subscribe to resize event and update step location of the selected element in the tour step
      */
     public subscribeToResizeEvent() {
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
         });
     }
 
@@ -151,13 +129,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
         });
     }
 
     /**
      * Check if the current user has the permission to view the tour step
-     * @return true if the current user has the permission to view the tour step, otherwise false
+     * @return {boolean} if the current user has the permission to view the tour step
      */
     public hasUserPermissionForCurrentTourStep(): boolean {
         if (!this.currentTourStep) {
@@ -170,7 +148,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     public scrollToAndSetElement(): void {
-        this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
+        this.selectedElementRect = this.updateStepLocation(this.getSelectedElement());
 
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
@@ -196,20 +174,22 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Check if the tour step element would be visible on screen
-     * @return true if tour step is visible on screen, otherwise false
+     * @return {boolean} if tour step is visible on screen
      */
     public isTourOnScreen(): boolean {
         if (!this.currentTourStep) {
             return false;
         }
-        return !this.currentTourStep.highlightSelector || (this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
+        return (
+            !this.currentTourStep.highlightSelector || (this.tourStep && this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement))
+        );
     }
 
     /**
      * Define if HTMLElement is visible in current viewport
      * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
-     * @param element that should be checked
-     * @return true if element is in viewport, otherwise false
+     * @param element: HTMLElement
+     * @return {boolean} if element is in viewport
      */
     public elementInViewport(element: HTMLElement | null): boolean {
         if (!element) {
@@ -227,19 +207,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const stepScreenAdjustment = this.getStepScreenAdjustment();
 
         if (this.isBottom()) {
-            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.pageYOffset + window.innerHeight;
         } else {
-            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.pageYOffset + window.innerHeight;
         }
-    }
-
-    public isVideoTourStep(): boolean {
-        return this.currentTourStep instanceof VideoTourStep;
     }
 
     /**
      * Handle backdrop clicking event of the user
-     * @param event: event payload
+     * @param {event} event payload
      */
     public backdropClick(event: Event): void {
         if (this.guidedTourService.preventBackdropFromAdvancing) {
@@ -247,22 +223,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         } else {
             this.guidedTourService.nextStep();
         }
-        // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
-        if (this.isCancelTour()) {
-            this.guidedTourService.finishGuidedTour();
-        }
-    }
-
-    /**
-     * Determines if the cancel tour is currently displayed
-     */
-    private isCancelTour() {
-        return this.currentTourStep ? this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline' : false;
     }
 
     /**
      * Check if the current tour step has a bottom orientation
-     * @return true if the current tour step orientation is bottom, otherwise false
+     * @return {boolean} if the current tour step orientation is bottom
      */
     public isBottom(): boolean {
         if (this.currentTourStep && this.currentTourStep.orientation) {
@@ -289,7 +254,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * @return top position for current tour step
+     * @return {number} top position for current tour step
      */
     public get topPosition(): number | null {
         if (!this.currentTourStep || !this.selectedElementRect) {
@@ -303,7 +268,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * @return left position for current tour step
+     * @return {number} left position for current tour step
      */
     public get leftPosition(): number | null {
         if (!this.currentTourStep || !this.selectedElementRect) {
@@ -331,14 +296,14 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
+            topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
         }
         return topPosition;
     }
 
     /**
      * Gets defined padding around the highlighted rectangle
-     * @return highlight padding for current tour step
+     * @return {number} highlight padding
      */
     public getHighlightPadding(): number {
         if (this.currentTourStep) {
@@ -366,7 +331,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
             switch (position) {
                 case OverlayPosition.TOP: {
-                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
+                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop };
                     break;
                 }
                 case OverlayPosition.LEFT: {
@@ -378,7 +343,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case OverlayPosition.BOTTOM: {
-                    style = { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
+                    style = { 'top.px': selectedElementTop + selectedElementHeight };
                     break;
                 }
                 case OverlayPosition.ELEMENT: {
@@ -407,7 +372,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get Element for the current tour step hightlight selector
+     * Get Element for the current tour step selector
      * @return current selected element for the tour step or null
      */
     public getSelectedElement(): HTMLElement | null {
@@ -417,19 +382,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const selectedElement = document.querySelector(this.currentTourStep.highlightSelector) as HTMLElement;
 
         // Workaround for instruction elements in the code-editor view, since the element can be in the viewport but hidden by the build output div
-        const instructions = selectedElement ? selectedElement.closest('.instructions__content__markdown') : null;
+        const instructions = selectedElement.closest('.instructions__content__markdown');
         if (instructions && instructions.scrollHeight > window.innerHeight && instructions.querySelector(this.currentTourStep.highlightSelector)) {
             selectedElement.scrollIntoView({ block: 'center' });
         }
         return selectedElement;
     }
 
-    /**
-     * Get Element for the current tour step event listener selector
-     * @return selected element for the event listener or null
-     */
     public getEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.eventListenerSelector) {
+        if (!this.currentTourStep || !this.currentTourStep.highlightSelector) {
             return null;
         }
         return document.querySelector(this.currentTourStep.eventListenerSelector);
@@ -512,14 +473,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Update tour step location and return selected element as DOMRect
      * @param selectedElement: selected element in DOM
-     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener: this method should not listen to user interactions when it is called through resizing or scrolling events
      * @return selected element as DOMRect or null
      */
-    public updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
+    public updateStepLocation(selectedElement: HTMLElement | null): DOMRect | null {
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
-            if (this.currentTourStep && this.currentTourStep.userInteractionEvent && !isResizeOrScroll) {
+            if (this.currentTourStep && this.currentTourStep.userInteractionEvent) {
                 const eventListenerElement = this.getEventListenerSelector();
                 if (eventListenerElement) {
                     selectedElement = eventListenerElement;

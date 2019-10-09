@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
-import java.util.Objects;
-
 import com.google.common.base.CaseFormat;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -158,16 +156,4 @@ public class UMLRelationship extends UMLElement {
         return target;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj)) {
-            return false;
-        }
-
-        UMLRelationship otherRelationship = (UMLRelationship) obj;
-
-        return Objects.equals(otherRelationship.getSource(), source) && Objects.equals(otherRelationship.getTarget(), target)
-                && Objects.equals(otherRelationship.sourceRole, sourceRole) && Objects.equals(otherRelationship.targetRole, targetRole)
-                && Objects.equals(otherRelationship.sourceMultiplicity, sourceMultiplicity) && Objects.equals(otherRelationship.targetMultiplicity, targetMultiplicity);
-    }
 }

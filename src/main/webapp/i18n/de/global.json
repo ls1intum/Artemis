@@ -22,7 +22,7 @@
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
-                "lecture": "Vorlesungen",
+                "lecture": "Vorlesung",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -93,8 +93,7 @@
             },
             "language": "Sprache",
             "guidedTour": "Guided Tour",
-            "startTutorial": "Tutorial starten",
-            "continueTutorial": "Tutorial fortsetzen",
+            "startTour": "Tour starten",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
@@ -213,9 +212,6 @@
         },
         "archive": {
             "title": "Archivieren bestätigen"
-        },
-        "exportRepos": {
-            "title": "Herunterladen bestätigen"
         },
         "validation": {
             "required": "Dieses Feld wird benötigt.",

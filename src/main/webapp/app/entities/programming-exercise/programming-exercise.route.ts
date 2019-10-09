@@ -12,6 +12,7 @@ import { ProgrammingExerciseService } from './services/programming-exercise.serv
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
+import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
@@ -137,6 +138,19 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+    {
+        path: 'course/:courseId/programming-exercise/:id/delete',
+        component: ProgrammingExerciseDeletePopupComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

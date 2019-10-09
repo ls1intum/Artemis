@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule, PendingChangesGuard } from '../../shared';
 import {
     QuizExerciseComponent,
+    QuizExerciseDeleteDialogComponent,
+    QuizExerciseDeletePopupComponent,
     QuizExerciseDetailComponent,
     quizExercisePopupRoute,
     QuizExercisePopupService,
@@ -33,8 +35,22 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         ArtemisDifficultyPickerModule,
     ],
     exports: [QuizExerciseComponent],
-    declarations: [QuizExerciseComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
-    entryComponents: [QuizExerciseComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
+    declarations: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseResetDialogComponent,
+        QuizExerciseResetPopupComponent,
+        QuizExerciseDetailComponent,
+    ],
+    entryComponents: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseResetDialogComponent,
+        QuizExerciseResetPopupComponent,
+        QuizExerciseDetailComponent,
+    ],
     providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
 })
 export class ArtemisQuizExerciseModule {}

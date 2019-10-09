@@ -2,16 +2,18 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +22,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,7 +30,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -39,7 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -341,8 +343,6 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseService.importRepositories(template, imported);
         try {
-            // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
-            // an import as the source exercise might still have this trigger.
             programmingExerciseService.importBuildPlans(template, imported);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
         }
@@ -484,7 +484,7 @@ public class ProgrammingExerciseResource {
      * @param id the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/programming-exercises/{id}/with-participations")
+    @GetMapping("/programming-exercises-with-participations/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
@@ -524,10 +524,9 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
-        log.info("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        log.debug("REST request to delete ProgrammingExercise : {}", id);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAllResultsAndSubmissions(id);
         if (programmingExercise.isPresent()) {
-            log.info("Found ProgrammingExercise to delete with title: {}", programmingExercise.get().getTitle());
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
@@ -538,7 +537,6 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
         }
         else {
-            log.warn("ProgrammingExercise with id {} not found for delete request", id);
             return ResponseEntity.notFound().build();
         }
     }
@@ -555,7 +553,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
-        if (programmingExerciseOptional.isEmpty()) {
+        if (!programmingExerciseOptional.isPresent()) {
             return notFound();
         }
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
@@ -577,65 +575,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
-     *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
-     * @param repositoryExportOptions the options that should be used for the export
-     * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zippedRequestBody
-     */
-    @PostMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
-
-        if (Optional.ofNullable(programmingExercise).isEmpty()) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return badRequest();
-        }
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise))
-            return forbidden();
-
-        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
-            repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
-        }
-
-        List<String> studentList = new ArrayList<>();
-        if (!repositoryExportOptions.isExportAllStudents()) {
-            studentIds = studentIds.replaceAll(" ", "");
-            studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        }
-
-        // Select the participations that should be exported
-        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
-        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getStudent() != null
-                    && studentList.contains(studentParticipation.getStudent().getLogin()))) {
-                exportedStudentParticipations.add(programmingStudentParticipation);
-            }
-        }
-
-        if (exportedStudentParticipations.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                    .body(null);
-        }
-
-        File zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
-        if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
-    }
-
-    /**
      * PUT /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
      *
      * @param id The ID of the programming exercise for which the structure oracle should get generated
@@ -651,7 +590,7 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
-        if (programmingExerciseOptional.isEmpty()) {
+        if (!programmingExerciseOptional.isPresent()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "programmingExerciseNotFound", "The programming exercise does not exist"))
                     .body(null);
         }

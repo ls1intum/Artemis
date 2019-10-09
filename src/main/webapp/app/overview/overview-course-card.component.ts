@@ -13,7 +13,6 @@ import { CourseScoreCalculationService } from 'app/overview';
 export class OverviewCourseCardComponent implements OnInit {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
-    @Input() hasGuidedTour: boolean;
 
     constructor(
         private router: Router,

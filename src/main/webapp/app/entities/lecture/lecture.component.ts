@@ -63,22 +63,6 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.loadAll());
     }
 
-    /**
-     * Deletes Lecture
-     * @param lectureId the id of the lecture
-     */
-    deleteLecture(lectureId: number) {
-        this.lectureService.delete(lectureId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'lectureListModification',
-                    content: 'Deleted an lecture',
-                });
-            },
-            error => this.onError(error),
-        );
-    }
-
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, undefined);
     }

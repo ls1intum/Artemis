@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -46,8 +47,8 @@ public class UMLActivityDiagram extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
-        List<UMLElement> modelElements = new ArrayList<>();
+    protected List<Similarity<UMLElement>> getModelElements() {
+        List<Similarity<UMLElement>> modelElements = new ArrayList<>();
         modelElements.addAll(activityNodeList);
         modelElements.addAll(activityList);
         modelElements.addAll(controlFlowList);

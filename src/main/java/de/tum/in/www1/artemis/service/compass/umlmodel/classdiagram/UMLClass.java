@@ -242,27 +242,4 @@ public class UMLClass extends UMLElement {
     public int getElementCount() {
         return attributes.size() + methods.size() + 1;
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj)) {
-            return false;
-        }
-
-        UMLClass otherClass = (UMLClass) obj;
-
-        if (otherClass.getAttributes().size() != attributes.size() || otherClass.getMethods().size() != methods.size()) {
-            return false;
-        }
-
-        if (!otherClass.getAttributes().containsAll(attributes) || !attributes.containsAll(otherClass.getAttributes())) {
-            return false;
-        }
-
-        if (!otherClass.getMethods().containsAll(methods) || !methods.containsAll(otherClass.getMethods())) {
-            return false;
-        }
-
-        return true;
-    }
 }
