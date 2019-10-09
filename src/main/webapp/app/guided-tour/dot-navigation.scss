@@ -1,7 +1,11 @@
 /* Style for the navigation bubbles in the guided tour */
 
 .dotstyle {
-    display: inline-block;
+    width: 125px;
+    overflow: hidden;
+    display: block;
+    padding: 0;
+    position: relative;
 
     &.dotstyle--scaleup {
         li {
@@ -10,11 +14,19 @@
                 transition: transform 0.3s ease, background-color 0.3s ease;
             }
 
+            &.p-small,
+            &.n-small {
+                span {
+                    -webkit-transform: scale(0.8);
+                    transform: scale(0.8);
+                }
+            }
+
             &.current {
                 span {
                     background-color: #17a2b8;
-                    -webkit-transform: scale(1.5);
-                    transform: scale(1.5);
+                    -webkit-transform: scale(1.3);
+                    transform: scale(1.3);
                 }
             }
         }
@@ -22,26 +34,25 @@
 
     ul {
         position: relative;
-        display: inline-block;
+        display: inline-flex;
         margin: 0;
-        padding: 0 20px;
+        padding: 0;
         list-style: none;
         cursor: default;
         vertical-align: bottom;
-        -webkit-touch-callout: none;
         -webkit-user-select: none;
-        -khtml-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+        transform: translateX(0);
 
         li {
-            position: relative;
             display: block;
+            position: relative;
             float: left;
             margin: 8px;
-            width: 6px;
-            height: 6px;
+            width: 10px;
+            height: 10px;
             cursor: default;
 
             span {
