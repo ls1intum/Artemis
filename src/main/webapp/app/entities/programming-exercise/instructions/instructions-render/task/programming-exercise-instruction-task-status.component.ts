@@ -1,13 +1,13 @@
 import { ApplicationRef, Component, ComponentFactoryResolver, Injector, Input } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from 'app/entities/result';
+import { Result, ResultDetailComponent } from 'app/entities/result';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
 } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -65,9 +65,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         if (!this.latestResult) {
             return;
         }
-        const modalRef = this.modalService.open(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.tests = this.tests;
+        modalRef.componentInstance.feedbackFilter = this.tests;
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
     }
 
     public openHintsModal() {

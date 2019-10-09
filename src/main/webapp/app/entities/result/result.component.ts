@@ -209,6 +209,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.showTestNames = this.showTestNames;
+        modalRef.componentInstance.exerciseType = this.participation.exercise.type;
     }
 
     downloadBuildResult(participationId: number) {
