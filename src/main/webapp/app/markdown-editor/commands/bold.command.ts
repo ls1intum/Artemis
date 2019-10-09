@@ -21,18 +21,18 @@ export class BoldCommand extends Command {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
-            if (selectedText.charAt(0) == ' ' && selectedText.charAt(selectedText.length - 1) == ' ') {
-                //eliminates white space at the beginning and end of selected text
+            if (selectedText.charAt(0) === ' ' && selectedText.charAt(selectedText.length - 1) === ' ') {
+                // eliminates white space at the beginning and end of selected text
                 updatedTxt = selectedText.slice(1, selectedText.length - 1);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(' ' + textToAdd + ' ');
-            } else if (selectedText.charAt(selectedText.length - 1) == ' ') {
-                //eliminates white space at end of selected text
+            } else if (selectedText.charAt(selectedText.length - 1) === ' ') {
+                // eliminates white space at end of selected text
                 updatedTxt = selectedText.slice(0, selectedText.length - 1);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(textToAdd + ' ');
-            } else if (selectedText.charAt(0) == ' ') {
-                //eliminates white space at the beginning of selected text
+            } else if (selectedText.charAt(0) === ' ') {
+                // eliminates white space at the beginning of selected text
                 updatedTxt = selectedText.slice(1, selectedText.length);
                 textToAdd = `**${updatedTxt}**`;
                 this.insertText(' ' + textToAdd);
