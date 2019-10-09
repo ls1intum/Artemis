@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
@@ -26,7 +26,6 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionResultDetailComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instructions-result-detail.component';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
@@ -314,7 +313,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -363,6 +362,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
 
         expect(openModalStub).to.have.been.calledOnce;
-        expect(openModalStub).to.have.been.calledOnceWithExactly(ProgrammingExerciseInstructionResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
     }));
 });
