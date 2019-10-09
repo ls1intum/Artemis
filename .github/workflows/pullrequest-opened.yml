@@ -20,4 +20,4 @@ jobs:
         with:
           project: Artemis Development
           column: In progress
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
