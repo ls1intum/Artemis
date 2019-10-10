@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.Hibernate;
@@ -444,6 +445,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
+    @Nullable
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
@@ -452,6 +454,9 @@ public class QuizExercise extends Exercise implements Serializable {
         else {
             // only rated results are considered relevant
             Result latestRatedResult = null;
+            if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+                return null;
+            }
             // we get the results over the submissions
             var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
             for (Result result : results) {
