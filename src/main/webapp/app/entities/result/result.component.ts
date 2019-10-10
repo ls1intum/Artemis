@@ -181,7 +181,7 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
-            // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has passed.
+            // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         } else if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
             return `${this.result!.resultString} ${preliminary}`;
@@ -190,7 +190,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     buildResultTooltip() {
-        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has passed.
+        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
