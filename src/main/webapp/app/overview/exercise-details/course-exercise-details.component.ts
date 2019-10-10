@@ -253,8 +253,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return null;
         }
 
-        // TODO: this is sometimes different than the one shown in the overview
-
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }

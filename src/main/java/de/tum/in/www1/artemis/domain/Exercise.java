@@ -492,7 +492,9 @@ public abstract class Exercise implements Serializable {
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
-        for (Result result : participation.getResults()) {
+        // we get the results over the submissions
+        var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
+        for (Result result : results) {
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {

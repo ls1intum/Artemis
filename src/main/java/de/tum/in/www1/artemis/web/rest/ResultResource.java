@@ -399,7 +399,7 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
 
         for (StudentParticipation participation : participations) {
             // Filter out participations without Students
@@ -413,7 +413,7 @@ public class ResultResource {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
             }
             else {
-                relevantResult = participation.findLatestResult();
+                relevantResult = participation.findLatestResultUsingSubmissions();
             }
             if (relevantResult == null) {
                 continue;
@@ -426,6 +426,7 @@ public class ResultResource {
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
         if (withSubmissions) {
+            // TODO adapt this, we already have the submissions above
             results.forEach(result -> {
                 Hibernate.initialize(result.getSubmission()); // eagerly load the association
             });
