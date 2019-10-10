@@ -76,7 +76,7 @@ public class Course implements Serializable {
 
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
-    private Boolean onlineCourse;
+    private Boolean onlineCourse = false;
 
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
