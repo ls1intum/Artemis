@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -61,7 +62,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer duration;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(unique = true)
     @JsonView(QuizView.After.class)
     private QuizPointStatistic quizPointStatistic;
@@ -451,7 +452,9 @@ public class QuizExercise extends Exercise implements Serializable {
         else {
             // only rated results are considered relevant
             Result latestRatedResult = null;
-            for (Result result : participation.getResults()) {
+            // we get the results over the submissions
+            var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
+            for (Result result : results) {
                 if (result.isRated() == Boolean.TRUE && result.getCompletionDate() != null) {
                     // take the first found result that fulfills the above requirements
                     if (latestRatedResult == null) {
