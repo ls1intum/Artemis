@@ -489,10 +489,14 @@ public abstract class Exercise implements Serializable {
      * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
+    @Nullable
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         // we get the results over the submissions
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+            return null;
+        }
         var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
         for (Result result : results) {
             // NOTE: for the dashboard we only use rated results with completion date
