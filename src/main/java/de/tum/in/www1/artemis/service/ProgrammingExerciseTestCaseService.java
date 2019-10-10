@@ -177,7 +177,9 @@ public class ProgrammingExerciseTestCaseService {
             updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null);
+            final var afterDueDateActiveAndResultBeforeAfterDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                    && exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now());
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, afterDueDateActiveAndResultBeforeAfterDueDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {

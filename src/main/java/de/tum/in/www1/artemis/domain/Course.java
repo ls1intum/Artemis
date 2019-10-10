@@ -222,7 +222,7 @@ public class Course implements Serializable {
     }
 
     public Boolean isOnlineCourse() {
-        return onlineCourse;
+        return onlineCourse == null ? false : onlineCourse;
     }
 
     public Course onlineCourse(Boolean onlineCourse) {
