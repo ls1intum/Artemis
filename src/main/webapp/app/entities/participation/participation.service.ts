@@ -10,6 +10,7 @@ import { Submission } from 'app/entities/submission';
 import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -171,13 +172,23 @@ export class ParticipationService {
         return convertedSubmissions;
     }
 
-    mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
+    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | null {
+        if (participations && participations.length > 0) {
+            if (participations[0].type === ParticipationType.STUDENT) {
+                const combinedParticipation = new StudentParticipation();
+                this.mergeResultsAndSubmissions(combinedParticipation, participations);
+                return combinedParticipation;
+            } else if (participations[0].type === ParticipationType.PROGRAMMING) {
+                return this.mergeProgrammingParticipations(participations as ProgrammingExerciseStudentParticipation[]);
+            }
+        }
+        return null;
+    }
+
+    private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations && participations.length > 0) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
-            combinedParticipation.initializationState = participations[0].initializationState;
-            combinedParticipation.initializationDate = participations[0].initializationDate;
-            combinedParticipation.presentationScore = participations[0].presentationScore;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
@@ -204,19 +215,15 @@ export class ParticipationService {
         });
 
         // make sure that results and submissions are connected with the participation because some components need this
-        combinedParticipation.results.forEach(result => {
-            result.participation = combinedParticipation;
-        });
-        combinedParticipation.submissions.forEach(submission => {
-            submission.participation = combinedParticipation;
-        });
-    }
-
-    mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation {
-        const combinedParticipation = new StudentParticipation();
-        if (participations && participations.length > 0) {
-            this.mergeResultsAndSubmissions(combinedParticipation, participations);
+        if (combinedParticipation.results && combinedParticipation.results.length > 0) {
+            combinedParticipation.results.forEach(result => {
+                result.participation = combinedParticipation;
+            });
         }
-        return combinedParticipation;
+        if (combinedParticipation.submissions && combinedParticipation.submissions.length > 0) {
+            combinedParticipation.submissions.forEach(submission => {
+                submission.participation = combinedParticipation;
+            });
+        }
     }
 }

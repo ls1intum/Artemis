@@ -451,11 +451,17 @@ public class QuizExercise extends Exercise implements Serializable {
         else {
             // only rated results are considered relevant
             Result latestRatedResult = null;
-            Boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             for (Result result : participation.getResults()) {
-                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))
-                        || isAssessmentOver) {
-                    latestRatedResult = result;
+                if (result.isRated() == Boolean.TRUE && result.getCompletionDate() != null) {
+                    // take the first found result that fulfills the above requirements
+                    if (latestRatedResult == null) {
+                        latestRatedResult = result;
+                    }
+                    // take newer results and thus disregard older ones
+                    // this should actually not be the case for quiz exercises, because they only should have one rated result
+                    else if (latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                        latestRatedResult = result;
+                    }
                 }
             }
             return latestRatedResult;

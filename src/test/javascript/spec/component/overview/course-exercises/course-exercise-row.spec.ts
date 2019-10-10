@@ -58,7 +58,7 @@ describe('CourseExerciseRowComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                getAllParticipationsStub = stub(participationWebsocketService, 'getAllParticipationsForExercise');
+                getAllParticipationsStub = stub(participationWebsocketService, 'getParticipationForExercise');
             });
     });
 
@@ -67,17 +67,17 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(false, moment(), moment().subtract(3, 'days'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(false, moment(), moment().subtract(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment().add(3, 'days'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment().add(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_UNINITIALIZED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_UNINITIALIZED);
     });
 
@@ -87,22 +87,22 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_ACTIVE', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, true, InitializationState.INITIALIZED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, true, InitializationState.INITIALIZED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_ACTIVE);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_SUBMITTED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), true, true, InitializationState.FINISHED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, true, InitializationState.FINISHED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_SUBMITTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), false, true, InitializationState.UNINITIALIZED, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), false, true, InitializationState.UNINITIALIZED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'days'), moment(), false, true, InitializationState.UNINITIALIZED, true);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), false, true, InitializationState.UNINITIALIZED, true);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_FINISHED);
     });
 
@@ -137,15 +137,13 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        let studentParticipations = [
-            {
-                id: 1,
-                initializationState: InitializationState.INITIALIZED,
-            } as StudentParticipation,
-        ];
-        comp.exercise.studentParticipations = studentParticipations;
+        const studentParticipation = {
+            id: 1,
+            initializationState: InitializationState.INITIALIZED,
+        } as StudentParticipation;
+        comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(of(studentParticipations));
+        getAllParticipationsStub.returns(studentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INITIALIZED);
@@ -154,15 +152,13 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INACTIVE', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        let studentParticipations = [
-            {
-                id: 1,
-                initializationState: InitializationState.UNINITIALIZED,
-            } as StudentParticipation,
-        ];
-        comp.exercise.studentParticipations = studentParticipations;
+        const studentParticipation = {
+            id: 1,
+            initializationState: InitializationState.UNINITIALIZED,
+        } as StudentParticipation;
+        comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(of(studentParticipations));
+        getAllParticipationsStub.returns(of(studentParticipation));
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INACTIVE);
@@ -179,46 +175,42 @@ describe('CourseExerciseRowComponent', () => {
     ) => {
         comp.exercise = {
             id: 1,
-            dueDate: dueDate,
-            isPlannedToStart: isPlannedToStart,
-            releaseDate: releaseDate,
+            dueDate,
+            isPlannedToStart,
+            releaseDate,
             type: ExerciseType.QUIZ,
-            visibleToStudents: visibleToStudents,
+            visibleToStudents,
         } as QuizExercise;
 
         if (hasParticipations) {
-            let studentParticipations = [
-                {
-                    id: 1,
-                    initializationState: initializationState,
-                } as StudentParticipation,
-            ];
+            const studentParticipation = {
+                id: 1,
+                initializationState,
+            } as StudentParticipation;
 
             if (hasResults) {
-                studentParticipations[0].results = [{ id: 1 } as Result];
+                studentParticipation.results = [{ id: 1 } as Result];
             }
 
-            comp.exercise.studentParticipations = studentParticipations;
+            comp.exercise.studentParticipations = [studentParticipation];
 
-            getAllParticipationsStub.returns(of(studentParticipations));
+            getAllParticipationsStub.returns(studentParticipation);
         }
 
         comp.ngOnInit();
     };
 
     const setupForTestingParticipationStatusExerciseTypeText = (exerciseType: ExerciseType, initializationState: InitializationState, inDueDate: boolean) => {
-        let dueDate = inDueDate ? moment().add(3, 'days') : moment().subtract(3, 'days');
+        const dueDate = inDueDate ? moment().add(3, 'days') : moment().subtract(3, 'days');
         setupExercise(exerciseType, dueDate);
 
-        let studentParticipations = [
-            {
-                id: 1,
-                initializationState: initializationState,
-            } as StudentParticipation,
-        ];
-        comp.exercise.studentParticipations = studentParticipations;
+        const studentParticipation = {
+            id: 1,
+            initializationState,
+        } as StudentParticipation;
+        comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(of(studentParticipations));
+        getAllParticipationsStub.returns(studentParticipation);
         comp.ngOnInit();
     };
 
@@ -226,7 +218,7 @@ describe('CourseExerciseRowComponent', () => {
         comp.exercise = {
             id: 1,
             type: exerciseType,
-            dueDate: dueDate,
+            dueDate,
         } as Exercise;
     };
 });

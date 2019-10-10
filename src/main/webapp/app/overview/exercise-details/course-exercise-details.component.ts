@@ -43,7 +43,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
-    combinedParticipation: StudentParticipation;
+    studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
 
     showWelcomeAlert = false;
@@ -88,12 +88,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         this.exercise = null;
-        const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
-        if (cachedParticipations && cachedParticipations.length > 0) {
+        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        if (this.studentParticipation) {
+            // we only need to update the exercise itself, because we have already have the latest participation
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.handleNewExercise(exerciseResponse.body!);
             });
         } else {
+            // we do not have a participation, so we need to load it with the exercise
+            // TODO: also include submissions
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.handleNewExercise(exerciseResponse.body!);
             });
@@ -102,9 +105,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
-        this.exercise.participationStatus = participationStatus(this.exercise);
         this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
         this.mergeResultsAndSubmissionsForParticipations();
+        this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
         this.subscribeForNewResults();
@@ -146,27 +149,28 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     sortResults() {
-        if (this.hasResults) {
-            this.combinedParticipation.results = this.combinedParticipation.results.sort((a, b) => {
+        if (this.studentParticipation && this.hasResults) {
+            this.studentParticipation.results = this.studentParticipation.results.sort((a, b) => {
                 const aValue = moment(a.completionDate!).valueOf();
                 const bValue = moment(b.completionDate!).valueOf();
                 return aValue - bValue;
             });
-            const sortedResultLength = this.combinedParticipation.results.length;
+            const sortedResultLength = this.studentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
-            this.sortedHistoryResult = this.combinedParticipation.results.slice(startingElement, sortedResultLength);
+            this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
 
     mergeResultsAndSubmissionsForParticipations() {
-        if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                this.combinedParticipation = this.participationService.mergeProgrammingParticipations(this.exercise
-                    .studentParticipations as ProgrammingExerciseStudentParticipation[]);
-            } else {
-                this.combinedParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+        // if there are new student participation(s) from the server, we need to update this.studentParticipation
+        if (this.exercise) {
+            if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+                this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+                this.sortResults();
+            } else if (this.studentParticipation) {
+                // otherwise we make sure that the student participation in exercise is correct
+                this.exercise.studentParticipations = [this.studentParticipation];
             }
-            this.sortResults();
         }
     }
 
@@ -211,7 +215,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        return this.combinedParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
+        return this.studentParticipation !== null && this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get exerciseRouterLink(): string | null {
@@ -234,10 +238,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.exercise || !this.exercise.studentParticipations || this.exercise.studentParticipations.length === 0) {
+        if (!this.studentParticipation) {
             return false;
         }
-        return this.exercise.studentParticipations.some((participation: Participation) => participation.results && participation.results.length > 0);
+        return this.studentParticipation.results && this.studentParticipation.results.length > 0;
     }
 
     /**
@@ -245,18 +249,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     get currentResult(): Result | null {
-        if (!this.hasResults) {
+        if (!this.studentParticipation || !this.hasResults) {
             return null;
         }
 
+        // TODO: this is sometimes different than the one shown in the overview
+
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.combinedParticipation.results.find((result: Result) => !!result.completionDate) || null;
+            return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.combinedParticipation.results.filter((result: Result) => result.rated);
+        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
-            latestResult.participation = this.combinedParticipation;
+            latestResult.participation = this.studentParticipation;
         }
         return latestResult;
     }

@@ -301,10 +301,10 @@ public class ParticipationService {
 
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
-            // try getting participation from database first
-            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
+            // try getting participation from database
+            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
 
-            if (!optionalParticipation.isPresent()) {
+            if (optionalParticipation.isEmpty()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
                 // TODO properly handle this case
                 return null;

@@ -98,8 +98,9 @@ public class ExerciseResource {
         User student = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student))
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
             return forbidden();
+        }
 
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
         if (isStudent) {
