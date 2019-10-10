@@ -720,7 +720,7 @@ public class ProgrammingExerciseResource {
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise.get());
         boolean isReleased = programmingExercise.get().isReleased();
         ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.get().haveTestCasesChanged())
+                .testCasesChanged(programmingExercise.get().getTestCasesChanged())
                 .buildAndTestStudentSubmissionsAfterDueDate(programmingExercise.get().getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }

@@ -396,7 +396,7 @@ public class ProgrammingExercise extends Exercise {
         this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
-    public boolean haveTestCasesChanged() {
+    public boolean getTestCasesChanged() {
         if (testCasesChanged == null) {
             return false;
         }

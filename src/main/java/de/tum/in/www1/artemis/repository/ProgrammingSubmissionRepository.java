@@ -30,4 +30,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(attributePaths = "result")
     @Query("select distinct s from Submission s where s.id = :#{#submissionId}")
     ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+
+    Optional<ProgrammingSubmission> findByResultId(long resultId);
 }

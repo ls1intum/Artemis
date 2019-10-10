@@ -301,10 +301,10 @@ public class ParticipationService {
 
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
-            // try getting participation from database first
-            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
+            // try getting participation from database
+            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
 
-            if (!optionalParticipation.isPresent()) {
+            if (optionalParticipation.isEmpty()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
                 // TODO properly handle this case
                 return null;
@@ -684,6 +684,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all programming exercise participations belonging to exercise with eager results.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    @Transactional(readOnly = true)
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
      * @param exerciseId the id of exercise
@@ -977,6 +988,6 @@ public class ParticipationService {
      * @return student's participations
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsAndResults(studentId, exercises);
+        return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
     }
 }
