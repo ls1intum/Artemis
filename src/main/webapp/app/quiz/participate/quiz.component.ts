@@ -291,8 +291,14 @@ export class QuizComponent implements OnInit, OnDestroy {
             // submission channel => react to new submissions
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
-                submission => {
-                    this.onSaveSuccess(submission);
+                payload => {
+                    if (payload === 'the quiz is not active') {
+                        this.onSaveSuccess(null, payload);
+                    } else if (payload === 'you have already submitted the quiz') {
+                        this.onSaveSuccess(null, payload);
+                    } else {
+                        this.onSaveSuccess(payload as QuizSubmission, null);
+                    }
                 },
                 error => {
                     this.onSubmitError(error);
@@ -799,11 +805,11 @@ export class QuizComponent implements OnInit, OnDestroy {
     /**
      * Callback function for handling quiz submission after saving submission to server
      * @param quizSubmission The quiz submission data from the server
+     * @param error a potential error during save
      */
-    onSaveSuccess(quizSubmission: QuizSubmission) {
-        if (!quizSubmission) {
-            // TODO: Include reason why saving failed
-            alert('Saving Answers failed.');
+    onSaveSuccess(quizSubmission: QuizSubmission | null, error: string | null) {
+        if (!quizSubmission || error) {
+            alert('Saving Answers failed: ' + error);
             this.unsavedChanges = true;
             this.isSubmitting = false;
             if (this.outstandingWebsocketResponses > 0) {
@@ -875,7 +881,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.applySelection();
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 15 && this.areAllQuestionsAnswered() === false) {
+        if (this.remainingTimeSeconds > 15 && !this.areAllQuestionsAnswered()) {
             const warningText = this.translateService.instant(translationBasePath + 'submissionWarning');
             confirmSubmit = window.confirm(warningText);
         }
@@ -923,7 +929,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     /**
      * Callback function for handling response after submitting for practice or preview
-     * @param response
+     * @param result
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
         this.isSubmitting = false;

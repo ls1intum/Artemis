@@ -6,6 +6,7 @@ import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
@@ -13,7 +14,7 @@ const PARTICIPATION_WEBSOCKET = 'participation_';
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     addExerciseForNewParticipation: (exerciseId: number) => void;
-    getAllParticipationsForExercise: (exerciseId: number) => Participation[];
+    getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
 }
@@ -25,7 +26,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation | null> | null;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
     public resetLocalCache() {
         const participations = this.getAllParticipations();
@@ -107,15 +108,22 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     }
 
     /**
-     * Returns all participation for the given exercise. The participation objects include the exercise data and all results.
+     * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return array of Participations
+     * @return the cached student participation for the exercise or null
      */
-    public getAllParticipationsForExercise(exerciseId: number): StudentParticipation[] {
-        return [...this.cachedParticipations.values()].filter(participation => {
+    public getParticipationForExercise(exerciseId: number): StudentParticipation | null {
+        const participationsForExercise = [...this.cachedParticipations.values()].filter(participation => {
             return participation.exercise.id === exerciseId;
         });
+        if (participationsForExercise && participationsForExercise.length === 1) {
+            return participationsForExercise[0];
+        }
+        if (participationsForExercise && participationsForExercise.length > 1) {
+            return this.participationService.mergeStudentParticipations(participationsForExercise);
+        }
+        return null;
     }
 
     /**

@@ -494,9 +494,8 @@ public abstract class Exercise implements Serializable {
         Result latestResult = null;
         for (Result result : participation.getResults()) {
             // NOTE: for the dashboard we only use rated results with completion date
-            Boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            // TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
-            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE) && isAssessmentOver) {
+            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestResult == null) {
                     latestResult = result;
