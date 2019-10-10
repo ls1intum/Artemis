@@ -33,7 +33,7 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.24.3"
+    id "com.diffplug.gradle.spotless" version "3.25.0"
 }
 
 sourceCompatibility=12
@@ -102,7 +102,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks "bootRun"
 
 group = "de.tum.in.www1.artemis"
-version = "3.8.0"
+version = "3.8.1"
 description = "Interactive Learning with Individual Feedback"
 
 springBoot {

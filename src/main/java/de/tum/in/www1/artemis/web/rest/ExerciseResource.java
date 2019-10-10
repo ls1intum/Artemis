@@ -98,8 +98,9 @@ public class ExerciseResource {
         User student = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student))
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
             return forbidden();
+        }
 
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
         if (isStudent) {
@@ -334,6 +335,8 @@ public class ExerciseResource {
                 }
                 exercise.addParticipation(participation);
             }
+
+            // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);

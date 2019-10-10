@@ -41,7 +41,8 @@
             "graded": "Bewertet",
             "notGraded": "Nicht bewertet",
             "preliminary": "(vorläufig)",
-            "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt."
+            "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt.",
+            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis."
         }
     }
 }

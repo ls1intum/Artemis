@@ -41,7 +41,8 @@
             "graded": "Graded",
             "notGraded": "Not graded",
             "preliminary": "(preliminary)",
-            "preliminaryTooltip": "Your result is not final. More tests will be executed after the exercise's due date."
+            "preliminaryTooltip": "Your result is not final. More tests will be executed after the exercise's due date.",
+            "noResultDetails": "No result details available."
         }
     }
 }
