@@ -15,31 +15,36 @@ export class BoldCommand extends Command {
     execute(): void {
         const selectedText = this.getSelectedText();
         let textToAdd = '';
-        let updatedTxt = '';
+        let startSpace = '';
+        let endSpace = '';
+        let startIndx = 0;
+        let endIndx = 0;
+        const selectedTextLength = selectedText.length;
 
         if (selectedText.includes('**')) {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
-            if (selectedText.charAt(0) === ' ' && selectedText.charAt(selectedText.length - 1) === ' ') {
-                // eliminates white space at the beginning and end of selected text
-                updatedTxt = selectedText.slice(1, selectedText.length - 1);
-                textToAdd = `**${updatedTxt}**`;
-                this.insertText(' ' + textToAdd + ' ');
-            } else if (selectedText.charAt(selectedText.length - 1) === ' ') {
-                // eliminates white space at end of selected text
-                updatedTxt = selectedText.slice(0, selectedText.length - 1);
-                textToAdd = `**${updatedTxt}**`;
-                this.insertText(textToAdd + ' ');
-            } else if (selectedText.charAt(0) === ' ') {
-                // eliminates white space at the beginning of selected text
-                updatedTxt = selectedText.slice(1, selectedText.length);
-                textToAdd = `**${updatedTxt}**`;
-                this.insertText(' ' + textToAdd);
-            } else {
-                textToAdd = `**${selectedText}**`;
-                this.insertText(textToAdd);
+            for (let i = 0; i < selectedTextLength; i++) {
+                if (selectedText.charAt(i) === ' ') {
+                    startSpace = startSpace + ' ';
+                } else {
+                    startIndx = i;
+                    break;
+                }
             }
+
+            for (let j = selectedTextLength; j >= 0; j--) {
+                if (selectedText.charAt(j - 1) === ' ') {
+                    endSpace = endSpace + ' ';
+                } else {
+                    endIndx = j;
+                    break;
+                }
+            }
+            const newTxt = selectedText.slice(startIndx, endIndx);
+            textToAdd = `**${newTxt}**`;
+            this.insertText(startSpace + textToAdd + endSpace);
         }
     }
 }
