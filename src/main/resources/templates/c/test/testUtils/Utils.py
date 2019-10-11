@@ -7,6 +7,7 @@ from typing import List, Optional
 from datetime import datetime
 from io import TextIOWrapper
 from threading import Thread
+from datetime import datetime
 
 
 def studSaveStrComp(ref: str, other: str):
@@ -41,13 +42,19 @@ def getTesterOutput():
     """
     return "\n".join(testerOutputCache)
 
+def __getCurDateTimeStr():
+    """
+    Returns the current date and time string (e.g. 11.10.2019_17:02:33)
+    """
+    return datetime.now().strftime("%d.%m.%Y_%H:%M:%S")
+
 def printTester(text: str):
     """
     Prints the given string with the '[TESTER]: ' tag in front.
     Should be used instead of print() to make it easier for students
     to determin what came from the tester and what from their programm.
     """
-    msg: str = "[TESTER]: {}".format(text)
+    msg: str = "[{}][TESTER]: {}".format(__getCurDateTimeStr(), text)
     print(msg)
     testerOutputCache.append(msg)
 
@@ -58,7 +65,7 @@ def printProg(text: str):
     Should be used instead of print() to make it easier for students
     to determin what came from the tester and what from their programm.
     """
-    msg: str = "[PROG]: {}".format(text)
+    msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text)
     print(msg)
     testerOutputCache.append(msg)
 

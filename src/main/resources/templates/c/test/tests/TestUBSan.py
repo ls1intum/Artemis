@@ -13,17 +13,17 @@ class TestUBSan(AbstractTest):
     """
 
     makefileLocation: str
-    makeRule: str
+    makeTarget: str
     pWrap: PWrap
 
-    def __init__(self, makefileLocation: str, makeRule: str = "ubsan", requirements: List[str] = list(), name: str = "TestCompileUBSan"):
+    def __init__(self, makefileLocation: str, makeTarget: str = "ubsan", requirements: List[str] = list(), name: str = "TestCompileUBSan"):
         super(TestUBSan, self).__init__(name, requirements, timeoutSec=5)
         self.makefileLocation = makefileLocation
-        self.makeRule = makeRule
+        self.makeTarget = makeTarget
 
     def _run(self):
         # Start the program:
-        self.pWrap = self._createPWrap(["make", "-C", self.makefileLocation, self.makeRule])
+        self.pWrap = self._createPWrap(["make", "-C", self.makefileLocation, self.makeTarget])
         self._startPWrap(self.pWrap)
 
         self.pWrap.waitUntilTerminationReading()
