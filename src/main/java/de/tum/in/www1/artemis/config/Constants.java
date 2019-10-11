@@ -71,8 +71,6 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
-    public static final String ASSIGNMENT_REPO_PATH = "assignment";
-
     public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;

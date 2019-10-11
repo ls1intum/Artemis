@@ -7,6 +7,7 @@ import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -185,4 +186,52 @@ public interface ContinuousIntegrationService {
      * @return                      a message that indicates the result of the plan repository update.
      */
     String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
+
+    /**
+     * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
+     * to a subdirectory called "assignment" for the Python programming language.
+     */
+    enum RepositoryCheckoutPath implements CustomizableCheckoutPath {
+        ASSIGNMENT {
+
+            @Override
+            public String forProgrammingLanguage(ProgrammingLanguage language) {
+                switch (language) {
+                case JAVA:
+                case PYTHON:
+                case C:
+                    return "assignment";
+                default:
+                    throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
+                }
+            }
+        },
+        TEST {
+
+            @Override
+            public String forProgrammingLanguage(ProgrammingLanguage language) {
+                switch (language) {
+                case JAVA:
+                case PYTHON:
+                    return "";
+                case C:
+                    return "tests";
+                default:
+                    throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
+                }
+            }
+        };
+    }
+
+    interface CustomizableCheckoutPath {
+
+        /**
+         * Path of the subdirectory to which a repository should get checked out to depending on the programming language.
+         * E.g. for the language {@link ProgrammingLanguage#C} always check the repo out to "tests"
+         *
+         * @param language The programming language for which there should be a custom checkout path
+         * @return The path to the subdirectory as a String to which some repository should get checked out to.
+         */
+        String forProgrammingLanguage(ProgrammingLanguage language);
+    }
 }

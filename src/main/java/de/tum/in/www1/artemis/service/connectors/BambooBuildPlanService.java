@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 import java.net.URL;
 import java.util.LinkedList;
@@ -99,33 +100,53 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
-        VcsCheckoutTask checkoutTask = createCheckoutTask(ASSIGNMENT_REPO_PATH, "");
+        final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
-        if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
-            return defaultStage
-                    .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        switch (programmingLanguage) {
+        case JAVA: {
+            if (!sequentialBuildRuns) {
+                return defaultStage
+                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+            }
+            else {
+                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests")
+                                .hasTests(true),
+                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+            }
         }
-        else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+        case PYTHON: {
+            if (!sequentialBuildRuns) {
+                return defaultStage.jobs(defaultJob
+                        .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
+                        .requirements(new Requirement("Python3")).cleanWorkingDirectory(true));
+            }
+            else {
+                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                        new ScriptTask().description("Builds and tests the structural tests")
+                                .inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
+                        new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                        new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
+            }
         }
-        else if ((programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) && !sequentialBuildRuns) {
-            return defaultStage.jobs(defaultJob
-                    .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                    .requirements(new Requirement("Python3")).cleanWorkingDirectory(true));
+        case C: {
+            // TODO read scripts from some resources folder instead of having them inline here
+            final var installScript = new ScriptTask().description("Setup the build environment")
+                    .inlineBody("echo \"--------------------tests--------------------\"\n" + "ls -la tests\n" + "echo \"--------------------tests--------------------\"\n"
+                            + "echo \"--------------------assignment--------------------\"\n" + "ls -la assignment\n"
+                            + "echo \"--------------------assignment--------------------\"\n" + "\n" + "cd tests\n" + "pip install --user -r requirements.txt\n" + "exit 0");
+            final var runScript = new ScriptTask().description("Builds and runs all tests").inlineBody("cd tests\n" + "python3 Tests.py\n" + "exit 0");
+            final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, installScript, runScript, testParserTask).requirements(new Requirement("Python3")));
         }
-        else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                    new ScriptTask().description("Builds and tests the structural tests").inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
-                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
-                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
+        default:
+            throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
-
-        return null;
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
