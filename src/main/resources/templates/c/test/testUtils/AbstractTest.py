@@ -61,8 +61,9 @@ class AbstractTest(ABC):
 
         self.suite = suite
         self.case = TestCase(self.name)
+        self.suite.addCase(self.case)
 
-        # Check if all test requirements (other tests) are fulfilled:
+    # Check if all test requirements (other tests) are fulfilled:
         if not self.__checkTestRequirements(testResults):
             printTester("Skipping test case '{}' not all requirements ({}) are fulfilled".format(self.name, str(self.requirements)))
             self.case.message = "Test requires other test cases to succeed first ({})".format(str(self.requirements))
@@ -101,7 +102,6 @@ class AbstractTest(ABC):
                 self._onFailed()
 
         self.case.time = datetime.now() - startTime
-        self.suite.addCase(self.case)
 
     def __checkTestRequirements(self, testResults: Dict[str, Result]):
         """
