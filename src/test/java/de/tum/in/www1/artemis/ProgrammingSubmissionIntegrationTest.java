@@ -171,7 +171,7 @@ public class ProgrammingSubmissionIntegrationTest {
 
         SecurityUtils.setAuthorizationObject();
         ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
-        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isFalse();
+        assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }

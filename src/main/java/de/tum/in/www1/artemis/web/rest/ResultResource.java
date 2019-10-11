@@ -399,7 +399,7 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
 
         for (StudentParticipation participation : participations) {
             // Filter out participations without Students
@@ -413,7 +413,7 @@ public class ResultResource {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
             }
             else {
-                relevantResult = participation.findLatestResult();
+                relevantResult = participation.findLatestResultUsingSubmissions();
             }
             if (relevantResult == null) {
                 continue;
@@ -426,6 +426,7 @@ public class ResultResource {
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
         if (withSubmissions) {
+            // TODO adapt this, we already have the submissions above
             results.forEach(result -> {
                 Hibernate.initialize(result.getSubmission()); // eagerly load the association
             });
@@ -526,7 +527,7 @@ public class ResultResource {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
             // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
             // (= e.g. build error in programming exercises) is different from there being an empty feedback list
-            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(notFound());
+            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(ResponseEntity.notFound().build());
         }
         catch (Exception e) {
             log.error("REST request to get Result failed : {}", resultId, e);

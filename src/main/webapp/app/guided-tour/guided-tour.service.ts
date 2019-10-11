@@ -25,6 +25,7 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
+    public maxDots = 5;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -33,6 +34,7 @@ export class GuidedTourService {
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
     private availableTourForComponent: GuidedTour | null;
+    private transformCount = 0;
 
     constructor(
         private http: HttpClient,
@@ -55,7 +57,7 @@ export class GuidedTourService {
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (event instanceof NavigationStart) {
+            if (this.currentTour && event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
@@ -134,6 +136,8 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -159,6 +163,8 @@ export class GuidedTourService {
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -181,7 +187,7 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    private finishGuidedTour() {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -212,7 +218,7 @@ export class GuidedTourService {
      * Show the cancel hint every time a user skips a tour
      */
     private showCancelHint(): void {
-        clickOnElement('#account-menu');
+        clickOnElement('#account-menu[aria-expanded="false"]');
         setTimeout(() => {
             this.currentTour = cloneDeep(cancelTour);
             // Proceed with tour if it has tour steps and the tour display is allowed for current window size
@@ -387,6 +393,8 @@ export class GuidedTourService {
         }
         // Keep current tour null until start tour is triggered, else it could be somehow accessed through nextStep() calls
         this.currentTour = this.availableTourForComponent;
+
+        this.transformCount = 0;
 
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
@@ -642,6 +650,59 @@ export class GuidedTourService {
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
         if (exercise.shortName === guidedTour.exerciseShortName) {
             this.enableTour(guidedTour);
+        }
+    }
+
+    /**
+     * Display only as many dots as defined in GuidedTourComponent.maxDots
+     * @param currentIndex index of the current step
+     * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
+     */
+    public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
+        if (this.currentTour!.steps.length < this.maxDots) {
+            return;
+        }
+
+        const transformXIntervalNext = -26;
+        const transformXIntervalPrev = 26;
+
+        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
+        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
+        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
+        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
+        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
+
+        // Handles forward navigation
+        if (currentIndex < nextIndex) {
+            // Moves the n-small and p-small class one dot further
+            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+                this.transformCount += transformXIntervalNext;
+                nextDot.classList.remove('n-small');
+                nextPlusOneDot.classList.add('n-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex - 4) {
+                        node.classList.remove('p-small');
+                    } else if (index === nextIndex - 3) {
+                        node.classList.add('p-small');
+                    }
+                });
+            }
+        } else {
+            // Handles backwards navigation
+            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+                this.transformCount += transformXIntervalPrev;
+                nextDot.classList.remove('p-small');
+                nextPlusOneDot.classList.add('p-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex + 4) {
+                        node.classList.remove('n-small');
+                    } else if (index === nextIndex + 3) {
+                        node.classList.add('n-small');
+                    }
+                });
+            }
         }
     }
 }

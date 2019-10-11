@@ -40,7 +40,8 @@
             "positive": "Positiv",
             "graded": "Bewertet",
             "notGraded": "Nicht bewertet",
-            "preliminary": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt."
+            "preliminary": "Dein Ergebnis ist nicht endgültig. Nach dem Abgabedatum werden weitere Tests durchgeführt.",
+            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis."
         }
     }
 }
