@@ -3,12 +3,20 @@ package de.tum.in.www1.artemis.service.connectors;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
@@ -30,6 +38,7 @@ import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
+import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
@@ -44,6 +53,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
 
 @Service
 @Profile("bamboo")
@@ -66,6 +76,12 @@ public class BambooBuildPlanService {
 
     @Value("${artemis.bamboo.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
+
+    private final ResourceLoader resourceLoader;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
 
     /**
      * Creates a Build Plan for a Programming Exercise
@@ -119,30 +135,14 @@ public class BambooBuildPlanService {
                         new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
             }
         }
-        case PYTHON: {
-            if (!sequentialBuildRuns) {
-                return defaultStage.jobs(defaultJob
-                        .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                        .requirements(new Requirement("Python3")).cleanWorkingDirectory(true));
-            }
-            else {
-                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                        new ScriptTask().description("Builds and tests the structural tests")
-                                .inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
-                        new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
-                        new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
-            }
-        }
+        case PYTHON:
         case C: {
-            // TODO read scripts from some resources folder instead of having them inline here
-            final var installScript = new ScriptTask().description("Setup the build environment")
-                    .inlineBody("echo \"--------------------tests--------------------\"\n" + "ls -la tests\n" + "echo \"--------------------tests--------------------\"\n"
-                            + "echo \"--------------------assignment--------------------\"\n" + "ls -la assignment\n"
-                            + "echo \"--------------------assignment--------------------\"\n" + "\n" + "cd tests\n" + "pip install --user -r requirements.txt\n" + "exit 0");
-            final var runScript = new ScriptTask().description("Builds and runs all tests").inlineBody("cd tests\n" + "python3 Tests.py\n" + "exit 0");
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask, installScript, runScript, testParserTask).requirements(new Requirement("Python3")));
+            var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+            tasks.add(0, checkoutTask);
+            tasks.add(tasks.size(), testParserTask);
+
+            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")));
         }
         default:
             throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
@@ -198,4 +198,28 @@ public class BambooBuildPlanService {
                         .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
     }
 
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
+        final var directoryPattern = "classpath:buildscripts/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        try {
+            final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
+            // Have to use foreach because of possible IOException
+            // script name -> file contents
+            final var scriptContents = new HashMap<String, String>();
+            for (final var resource : scriptResources) {
+                final var file = resource.getFile();
+
+                // 1_some_description.sh --> "some description"
+                final var descriptionElements = Arrays.stream((file.getName().split("\\.")[0] // cut .sh suffix
+                        .split("_"))).collect(Collectors.toList());
+                descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
+                final var scriptDescription = String.join(" ", descriptionElements);
+                scriptContents.put(scriptDescription, Files.readString(Paths.get(file.getPath())));
+            }
+
+            return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
+        }
+        catch (IOException e) {
+            throw new ContinousIntegrationBuildPlanException("Unable to load template build plans", e);
+        }
+    }
 }
