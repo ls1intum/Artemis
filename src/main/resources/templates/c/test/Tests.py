@@ -5,6 +5,7 @@ from tests.TestUBSan import TestUBSan
 from tests.TestLSan import TestLSan
 from tests.TestInput import TestInput
 from random import randint
+from sys import argv
 
 def main():
     # Makefile location:
@@ -54,7 +55,12 @@ def main():
     # Run the actual tests:
     tester.run()
     # Export the results into the JUnit XML format:
-    tester.exportResult("../test-reports/tests-results.xml")
+    # Test run name
+    if len(argv) is 1:
+        run = ""
+    else:
+        run = argv[1] + "-"
+    tester.exportResult(f"../test-reports/{run}results.xml")
 
 if __name__ == '__main__':
     main()
