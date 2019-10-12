@@ -19,7 +19,9 @@
         <div *ngIf="currentTourStep.highlightSelector" class="tour-arrow"></div>
         <div class="tour-block">
             <div class="tour-block__header">
-                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
+                <h3 class="headline" *ngIf="currentTourStep.headlineTranslateKey">
+                    {{ 'tour.step' | translate: { string: guidedTourService.getCurrentStepString() } }} {{ currentTourStep.headlineTranslateKey | translate }}
+                </h3>
                 <div *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">

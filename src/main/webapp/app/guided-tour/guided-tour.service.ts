@@ -127,6 +127,18 @@ export class GuidedTourService {
     }
 
     /**
+     * Get the current step string for the headline, that shows which step is currently displayed, `currentStep / totalStep`
+     */
+    public getCurrentStepString() {
+        if (!this.currentTour) {
+            return;
+        }
+        const currentStep = this.currentTourStepIndex + 1;
+        const totalSteps = this.currentTour.steps.length;
+        return `${currentStep} / ${totalSteps}`;
+    }
+
+    /**
      * Navigate to previous tour step
      */
     public backStep(): void {
@@ -247,7 +259,6 @@ export class GuidedTourService {
             .subscribe(guidedTourSettings => {
                 this.guidedTourSettings = guidedTourSettings.body!;
             });
-
         this.resetTour();
     }
 
