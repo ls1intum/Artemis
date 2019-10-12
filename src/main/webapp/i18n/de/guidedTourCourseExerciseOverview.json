@@ -5,17 +5,14 @@
                 "headline": "Installiere die notwendigen Tools",
                 "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
                 "java": {
-                    "content": "Installiere das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red'>nicht</span> JRE auswählst.",
-                    "linkText": "Lade Java JDK herunter"
+                    "content": "<a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>Installiere</a> das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red'>nicht</span> JRE auswählst."
                 },
                 "eclipse": {
-                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐09 oder neuer)",
-                    "linkText": "Lade Eclipse IDE herunter"
+                    "content": "<a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Installiere</a> Eclipse IDE für Java Entwickler (2019‐09 oder neuer)"
                 },
                 "sourceTree": {
-                    "content": "Installiere die neueste Version von SourceTree mit git (3.2.1 oder neuer für macOS oder Windows)",
-                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
-                    "linkText": "Lade SourceTree herunter"
+                    "content": "<a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>Installiere</a> die neueste Version von SourceTree mit git (3.2.1 oder neuer für macOS oder Windows)",
+                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden."
                 },
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",

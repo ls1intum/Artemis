@@ -156,6 +156,25 @@ export class ArtemisMarkdown {
     }
 
     /**
+     * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
+     *
+     * @param {string} markdownText the original markdown text
+     * @returns {string} the resulting html as a string
+     */
+    htmlForGuidedTourMarkdown(markdownText: string | null) {
+        if (markdownText == null || markdownText === '') {
+            return '';
+        }
+        const converter = new showdown.Converter({
+            backslashEscapesHTMLTags: true,
+            excludeTrailingPunctuationFromURLs: true,
+        });
+        const html = converter.makeHtml(markdownText);
+        const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: ['a', 'p', 'tt', 'span'], ALLOWED_ATTR: ['href', 'rel', 'target'] });
+        return this.sanitizer.bypassSecurityTrustHtml(sanitized);
+    }
+
+    /**
      * This method is used to return sanitized html for markdown, that is not trusted by angular.
      * Angular might strip away styles or html tags!
      *
