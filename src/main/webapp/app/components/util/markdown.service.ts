@@ -165,7 +165,7 @@ export class ArtemisMarkdown {
         if (markdownText == null || markdownText === '') {
             return '';
         }
-        const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'li', 'tt', 'span'], ALLOWED_ATTR: ['href', 'rel', 'target'] });
+        const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'li', 'tt', 'span'], ALLOWED_ATTR: ['class', 'href', 'rel', 'target'] });
         return this.sanitizer.bypassSecurityTrustHtml(sanitized);
     }
 

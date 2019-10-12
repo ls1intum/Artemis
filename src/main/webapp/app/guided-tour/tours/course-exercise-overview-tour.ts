@@ -92,27 +92,27 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.cloneRepository.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.cloneRepository.content',
-            videoUrl: 'https://www.youtube.com/embed/pDBl-vSCveM',
+            videoUrl: 'tour.courseExerciseOverview.cloneRepository.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.content',
-            videoUrl: 'https://www.youtube.com/embed/7ugt0k0Qa7Y',
+            videoUrl: 'tour.courseExerciseOverview.inspectSourceTree.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.importEclipse.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.importEclipse.content',
-            videoUrl: 'https://www.youtube.com/embed/xl0lyV_IHzY',
+            videoUrl: 'tour.courseExerciseOverview.importEclipse.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.inspectProject.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.inspectProject.content',
-            videoUrl: 'https://www.youtube.com/embed/qW9Tc-AYBH8',
+            videoUrl: 'tour.courseExerciseOverview.inspectProject.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.commitAndPush.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.commitAndPush.content',
-            videoUrl: 'https://www.youtube.com/embed/iFRHdp8ozh4',
+            videoUrl: 'tour.courseExerciseOverview.commitAndPush.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.row.guided-tour',
