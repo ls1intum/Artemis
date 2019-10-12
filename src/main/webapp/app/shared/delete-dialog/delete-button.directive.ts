@@ -63,16 +63,6 @@ export class DeleteButtonDirective implements OnInit {
     }
 
     private setTextContent() {
-        switch (this.actionType) {
-            case ActionType.Delete:
-                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
-                break;
-            case ActionType.Reset:
-                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.reset'));
-                break;
-            case ActionType.Cleanup:
-                this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.archive'));
-                break;
-        }
+        this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant(`entity.action.${this.actionType}`));
     }
 }

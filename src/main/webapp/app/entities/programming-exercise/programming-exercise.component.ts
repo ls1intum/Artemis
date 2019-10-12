@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -23,6 +24,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private exerciseService: ExerciseService,
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
@@ -72,6 +74,21 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             },
             error => this.onError(error),
             () => (this.isDeleting = false),
+        );
+    }
+
+    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+            () => {
+                if ($event.deleteRepositories) {
+                    this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
+                } else {
+                    this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
+                }
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
+            },
         );
     }
 
