@@ -29,7 +29,7 @@ main: FORCE
 asan: FORCE
 	gcc -Wall $(SOURCE) -o main -O0 -Wall -Wextra -Wpedantic -Werror -fsanitize=address
 
-# Compile with undefined behaviour sanitizer enabled
+# Compile with undefined behavior sanitizer enabled
 # For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
 # -Wall:				Print warnings
 # $(SOURCE): 			Input file(s)
