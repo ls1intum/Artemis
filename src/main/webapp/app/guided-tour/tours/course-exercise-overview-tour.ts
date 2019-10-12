@@ -1,6 +1,6 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { LinkType, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -11,27 +11,18 @@ export const courseExerciseOverviewTour: GuidedTour = {
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.content',
         }),
-        new TextLinkTourStep({
+        new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.content',
-            externalUrl: 'https://www.oracle.com/technetwork/java/javase/downloads/index.html',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.linkText',
-            linkType: LinkType.LINK,
         }),
-        new TextLinkTourStep({
+        new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.eclipse.content',
-            externalUrl: 'https://www.eclipse.org/downloads/packages/',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.eclipse.linkText',
-            linkType: LinkType.LINK,
         }),
-        new TextLinkTourStep({
+        new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.content',
             hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.hint',
-            externalUrl: 'https://www.sourcetreeapp.com',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.linkText',
-            linkType: LinkType.LINK,
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',
