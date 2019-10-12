@@ -10,19 +10,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.content',
-        }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.content',
-        }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.eclipse.content',
-        }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.hint',
+            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.hint',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',

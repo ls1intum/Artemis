@@ -165,12 +165,7 @@ export class ArtemisMarkdown {
         if (markdownText == null || markdownText === '') {
             return '';
         }
-        const converter = new showdown.Converter({
-            backslashEscapesHTMLTags: true,
-            excludeTrailingPunctuationFromURLs: true,
-        });
-        const html = converter.makeHtml(markdownText);
-        const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: ['a', 'p', 'tt', 'span'], ALLOWED_ATTR: ['href', 'rel', 'target'] });
+        const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'li', 'tt', 'span'], ALLOWED_ATTR: ['href', 'rel', 'target'] });
         return this.sanitizer.bypassSecurityTrustHtml(sanitized);
     }
 

@@ -413,6 +413,10 @@ export class GuidedTourService {
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+            if (!this.currentTour.steps[this.currentTourStepIndex]) {
+                // Set current tour step index to 0 if the current tour step cannot be found
+                this.currentTourStepIndex = 0;
+            }
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();

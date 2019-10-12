@@ -3,17 +3,8 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Install required tools",
-                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
-                "java": {
-                    "content": "Please <a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>download</a> and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and <span class='red'>NOT</span> JRE."
-                },
-                "eclipse": {
-                    "content": "Please <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>download</a> and install Eclipse IDE for Java Developers (2019‐09 or later)"
-                },
-                "sourceTree": {
-                    "content": "Please <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>download</a> and install SourceTree with git (3.2.1 or later for macOS or Windows).",
-                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> or the <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>command line</a>."
-                },
+                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools.<ul><li>Please <a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>download</a> and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and <span class='red'>NOT</span> JRE.</li><li>Please <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>download</a> and install Eclipse IDE for Java Developers (2019‐09 or later)</li><li>Please <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>download</a> and install SourceTree with git (3.2.1 or later for macOS or Windows).</li></ul>",
+                "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> or the <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>command line</a>.",
                 "sourceTreeSetup": {
                     "headline": "Setup SourceTree",
                     "content": "Watch the following video and follow the steps to setup SourceTree. Afterwards we are done with the setup and can have a look at the course page and its content.",
