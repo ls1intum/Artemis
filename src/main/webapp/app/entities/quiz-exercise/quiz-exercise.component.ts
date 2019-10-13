@@ -10,12 +10,15 @@ import * as moment from 'moment';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
 })
 export class QuizExerciseComponent extends ExerciseComponent {
+    ActionType = ActionType;
+
     QuizStatus = {
         HIDDEN: 'Hidden',
         VISIBLE: 'Visible',
@@ -190,9 +193,23 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an quizExercise',
                 });
             },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+            (error: HttpErrorResponse) => this.onError(error),
+        );
+    }
+
+    /**
+     * Resets quiz exercise
+     * @param quizExerciseId id of the quiz exercise that will be deleted
+     */
+    resetQuizExercise(quizExerciseId: number) {
+        this.quizExerciseService.reset(quizExerciseId).subscribe(
+            response => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Reset an quizExercise',
+                });
             },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
