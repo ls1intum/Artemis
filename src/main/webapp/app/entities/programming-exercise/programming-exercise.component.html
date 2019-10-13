@@ -140,7 +140,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -150,7 +150,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/exercise', programmingExercise.id, 'participation']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -162,7 +162,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -172,7 +172,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     routerLink="/exercise/{{ programmingExercise.id }}/hints"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -182,7 +182,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     routerLink="programming-exercise/{{ programmingExercise.id }}/manage-test-cases"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -194,7 +194,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -204,7 +204,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName != null && programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -214,7 +214,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName == null && programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -225,7 +225,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     class="btn btn-info btn-sm mr-1"
-                                    [disabled]="isDeleting"
+                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/exportRepos' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -235,14 +235,14 @@
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="instructorDashboard.cleanup.question"
                                     (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
-                                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentReposBuildPlans'
                                     }"
                                     class="mb-1"
                                 >
@@ -252,21 +252,22 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isDeleting || isCleaning"
-                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/reset' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                    jhiDeleteButton
+                                    [disabled]="isButtonDisabled()"
+                                    [entityTitle]="programmingExercise.title"
+                                    deleteQuestion="artemisApp.exercise.reset.question"
+                                    (delete)="resetProgrammingExercise(programmingExercise.id)"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    class="mb-1"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
+                                    <span *ngIf="isResetting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <fa-icon *ngIf="!isResetting" [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [disabled]="isDeleting || isCleaning"
+                                    [disabled]="isButtonDisabled()"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                                     (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"

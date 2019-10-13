@@ -14,6 +14,9 @@
                 "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exercise to confirm."
             },
+            "reset": {
+                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
+            },
             "detail": {
                 "title": "Exercise"
             },

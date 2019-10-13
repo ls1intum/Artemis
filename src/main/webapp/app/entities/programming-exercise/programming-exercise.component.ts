@@ -12,6 +12,7 @@ import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { ExerciseService } from 'app/entities/exercise';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -21,6 +22,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     @Input() programmingExercises: ProgrammingExercise[];
     isDeleting: boolean;
     isCleaning: boolean;
+    isResetting: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -98,6 +100,22 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             },
             () => (this.isCleaning = false),
         );
+    }
+
+    /**
+     * Resets programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     */
+    resetProgrammingExercise(programmingExerciseId: number) {
+        this.isResetting = true;
+        this.exerciseService.reset(programmingExerciseId).pipe(finalize(() => (this.isResetting = false)));
+    }
+
+    /**
+     * Check if we are performing any critical operations, so the user can click on the buttons
+     */
+    isButtonDisabled() {
+        return this.isDeleting || this.isResetting || this.isCleaning;
     }
 
     protected getChangeEventName(): string {
