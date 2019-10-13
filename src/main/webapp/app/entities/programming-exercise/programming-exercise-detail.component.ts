@@ -9,8 +9,10 @@ import { Result, ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -18,7 +20,8 @@ import { AccountService } from 'app/core';
     styleUrls: ['./programming-exercise-detail.component.scss'],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit {
-    ParticipationType = ParticipationType;
+    readonly ActionType = ActionType;
+    readonly ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -32,6 +35,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
@@ -103,6 +107,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;
+            },
+        );
+    }
+
+    /**
+     * Cleans up programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     * @param $event passed from delete dialog to represent if checkboxes were checked
+     */
+    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+            () => {
+                if ($event.deleteRepositories) {
+                    this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
+                } else {
+                    this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
+                }
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
             },
         );
     }
