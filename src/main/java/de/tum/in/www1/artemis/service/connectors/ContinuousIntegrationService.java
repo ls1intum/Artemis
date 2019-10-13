@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
@@ -200,7 +201,7 @@ public interface ContinuousIntegrationService {
                 case JAVA:
                 case PYTHON:
                 case C:
-                    return "assignment";
+                    return Constants.ASSIGNMENT_CHECKOUT_PATH;
                 default:
                     throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
                 }
@@ -215,12 +216,12 @@ public interface ContinuousIntegrationService {
                 case PYTHON:
                     return "";
                 case C:
-                    return "tests";
+                    return Constants.TESTS_CHECKOUT_PATH;
                 default:
                     throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
                 }
             }
-        };
+        }
     }
 
     interface CustomizableCheckoutPath {
