@@ -36,11 +36,6 @@
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
-            "buildAndTestStudentSubmissionsAfterDueDate": {
-                "title": "Build & Test Student Submissions After Due Date",
-                "description": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
-                "invalid": "Please insert a valid date after the due date."
-            },
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
@@ -124,6 +119,25 @@
             "failedSubmissions": "Failed submissions: {{number}}",
             "resultETA": "Result ETA: {{eta}}",
             "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system.",
+            "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
+            "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
+            "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
+            "timeline": {
+                "manualReview": "Manual Review",
+                "automaticTests": "Automatic Tests",
+                "afterDueDate": "Run Tests once after Due Date",
+                "timelineLabel": "Timeline of the whole programming exercise",
+                "timelineTooltip": "The whole lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
+                "automaticTestsMandatoryTooltip": "Every commit of a participant triggers all in the test repository committed tests. Exempt are tests, which are specified to be run after the due date.",
+                "automaticTestsAfterDueDateTooltip": "As soon as the specified after due date passes, all submissions will get tested again using ALL in the test repository committed tests (Including tests specified to be run after the due date)",
+                "manualReviewTooltip": "After all tests have been run, the tutors and instructors have to review all submissions manually one last time",
+                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting from the specified date",
+                "dueDateTooltip": "The deadline on which submitting and committing new code will be deactivated for all students",
+                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
+                "alertNewDueDate": "The due date has been set to the release date!",
+                "alertNewAfterDueDate": "The after due date has been set to the release date!",
+                "notSet": "not set"
+            },
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
@@ -138,6 +152,17 @@
             "repositoryIsLocked": {
                 "title": "Your Repository is locked.",
                 "tooltip": "The due date has passed, your repository is locked. You can still read the code but not make any changes to it."
+            },
+            "preview": {
+                "label": "Preview",
+                "tooltip": "For every programming exercises, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
+                "repositories": "Repositories",
+                "buildPlans": "Build Plans",
+                "templateRepoTooltip": "The repository, which contains the template of the exercise",
+                "solutionRepoTooltip": "The repository, which contains the solution of the exercise",
+                "testRepoTooltip": "The repository, which contains all tests",
+                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the template of the exercise. Used as a reference, for which all tests have to fail",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the solution of the exercise. Used as a reference, for which all tests have to succeed"
             }
         },
         "error": {

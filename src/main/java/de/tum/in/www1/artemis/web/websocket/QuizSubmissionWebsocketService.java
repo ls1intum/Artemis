@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
@@ -33,14 +32,10 @@ public class QuizSubmissionWebsocketService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            AuthorizationCheckService authCheckService) {
+    public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate) {
         this.quizExerciseService = quizExerciseService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
-        this.authCheckService = authCheckService;
     }
 
     // TODO it would be nice to have some kind of startQuiz call that creates the participation with an initialization date. This should happen when the quiz is first shown
@@ -60,12 +55,12 @@ public class QuizSubmissionWebsocketService {
         String username = principal.getName();
         // check if submission is still allowed
         Optional<QuizExercise> quizExercise = quizExerciseService.findById(exerciseId);
-        if (!quizExercise.isPresent()) {
+        if (quizExercise.isEmpty()) {
             return;
         }
         if (!quizExercise.get().isSubmissionAllowed()) {
-            // TODO: notify user that submission was not saved because quiz is not active over payload and handle this case in the client
-            messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
+            // notify the user that submission was not saved because quiz is not active over payload and handle this case in the client
+            messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", "the quiz is not active");
             return;
         }
 
@@ -76,8 +71,8 @@ public class QuizSubmissionWebsocketService {
             // if the quiz is active, so there is no way the student could have already practiced
             Result result = (Result) participation.getResults().toArray()[0];
             if (result.getSubmission().isSubmitted()) {
-                // TODO: notify user that submission was not saved because they already submitted over payload and handle this case in the client
-                messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
+                // notify the user that submission was not saved because they already submitted over payload and handle this case in the client
+                messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", "you have already submitted the quiz");
                 return;
             }
         }

@@ -12,15 +12,15 @@
                 },
                 "aceEditor": {
                     "headline": "Code editor",
-                    "content": "The source code is now displayed in the code editor. You can read through the TODO and try to solve it. Or alternatively you can enter any code for this test round. If you are done with the implementation, just click on the 'Next' button to proceed."
+                    "content": "The source code is now displayed in the code editor. You can read through the <tt>TODO</tt> and try to solve it. Or alternatively you can enter any code for this test round. If you are done with the implementation, just click on the <tt>Next</tt> button to proceed."
                 },
                 "saveChanges": {
                     "headline": "Save changes",
-                    "content": "You can save your changes in the code editor by clicking on 'Save'."
+                    "content": "You can save your changes in the code editor by clicking on <tt>Save</tt>."
                 },
                 "submitChanges": {
                     "headline": "Submit changes",
-                    "content": "If you are satisfied with your implementation, then you can submit your current code by clicking 'Submit'.",
+                    "content": "If you are satisfied with your implementation, then you can submit your current code by clicking <tt>Submit</tt>.",
                     "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
                 }
             },

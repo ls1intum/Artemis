@@ -33,8 +33,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.google.common.collect.Sets;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -215,7 +213,9 @@ public class ParticipationResource {
         participation = participationService.findOneWithEagerResults(participation.getId());
 
         Result result = participation.findLatestResult();
-        participation.setResults(Sets.newHashSet(result));
+        if (result != null) {
+            participation.setResults(Set.of(result));
+        }
     }
 
     /**

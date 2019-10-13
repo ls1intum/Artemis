@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -50,9 +52,14 @@ public class ResultService {
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService) {
+            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -61,6 +68,8 @@ public class ResultService {
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -142,6 +151,7 @@ public class ResultService {
         notifyUser(participation, result);
     }
 
+    // TODO: We should think about moving this method to a separate ProgrammingResultService as it can be confusing that this functionality is exclusive for programming exercises.
     /**
      * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
@@ -181,8 +191,51 @@ public class ResultService {
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
             resultRepository.save(result);
+
+            // If the solution participation was updated, also trigger the template participation build.
+            if (isSolutionParticipation) {
+                // This method will return without triggering the build if the submission is not of type TEST.
+                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), result.getId());
+            }
         }
         return Optional.ofNullable(result);
+    }
+
+    /**
+     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
+     * Will use the commitHash of the submission for triggering the template build.
+     *
+     * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
+     *
+     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
+     * @param resultId              Result id.
+     */
+    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, long resultId) {
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.findByResultId(resultId);
+        }
+        catch (EntityNotFoundException ex) {
+            // This is an unlikely error that would mean that no submission could be created for the result. In this case we can only log and abort.
+            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
+                    + " because no submission could be found for the provided result id " + resultId);
+            return;
+        }
+        // We only trigger the template build when the test repository was changed.
+        if (!submission.getType().equals(SubmissionType.TEST)) {
+            return;
+        }
+        // We use the last commitHash of the test repository.
+        ObjectId testCommitHash = ObjectId.fromString(submission.getCommitHash());
+        try {
+            programmingSubmissionService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, testCommitHash, SubmissionType.TEST);
+        }
+        catch (EntityNotFoundException ex) {
+            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
+                    + " because no template participation could be found for the given exercise");
+            return;
+        }
     }
 
     /**

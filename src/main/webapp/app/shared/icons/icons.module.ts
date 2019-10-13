@@ -111,6 +111,12 @@ import {
     faHandPointUp,
     faICursor,
     faVideo,
+    faCalendarPlus,
+    faCalendarMinus,
+    faCalendarCheck,
+    faCogs,
+    faUserCheck,
+    faUserMinus,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -142,6 +148,12 @@ export class ArtemisIconsModule {
     }
     constructor(private library: FaIconLibrary) {
         // Adds the SVG icon to the library so you can use it in your page
+        library.addIcons(faUserMinus);
+        library.addIcons(faUserCheck);
+        library.addIcons(faCogs);
+        library.addIcons(faCalendarCheck);
+        library.addIcons(faCalendarMinus);
+        library.addIcons(faCalendarPlus);
         library.addIcons(faUser);
         library.addIcons(faSort);
         library.addIcons(faSortUp);
