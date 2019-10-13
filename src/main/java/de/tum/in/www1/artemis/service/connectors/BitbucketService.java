@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @Profile("bitbucket")
 public class BitbucketService implements VersionControlService {
 
+    private static final int MAX_FORK_RETRIES = 5;
+
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
     @Value("${artemis.jira.admin-group-name}")
@@ -207,7 +209,7 @@ public class BitbucketService implements VersionControlService {
              * repository, or the maximum amount of retries has been exceeded. There is no direct other solution as of now since this is a default Bitbucket behavior we cannot
              * control
              */
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
                     final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
