@@ -245,7 +245,7 @@
                             <td>{{ i + 1 }}</td>
                             <td>{{ complaint.submittedTime | date: 'MMM d, y HH:mm:ss' }}</td>
                             <td>
-                                <jhi-result [result]="complaint.result"></jhi-result>
+                                <jhi-result [result]="complaint.result" [participation]="complaint.result.participation"></jhi-result>
                             </td>
                             <td>
                                 <span *ngIf="complaint.accepted !== undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintEvaluated' | translate }}</span>

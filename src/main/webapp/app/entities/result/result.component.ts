@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { isModelingOrTextOrFileUpload, ParticipationService, ParticipationType, StudentParticipation } from 'app/entities/participation';
+import { isModelingOrTextOrFileUpload, ParticipationService, Participation, getExercise } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
@@ -40,7 +40,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly MODELING = ExerciseType.MODELING;
     readonly ResultTemplateStatus = ResultTemplateStatus;
 
-    @Input() participation: StudentParticipation;
+    @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result | null;
@@ -68,7 +68,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         if (!this.result && this.participation && this.participation.id) {
-            const exercise = this.participation.exercise;
+            const exercise = getExercise(this.participation);
 
             if (this.participation.results && this.participation.results.length > 0) {
                 if (exercise && exercise.type === ExerciseType.MODELING) {
@@ -89,6 +89,10 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.result = this.participation.results[0];
                 this.result.participation = this.participation;
             }
+        }
+        // make sure this.participation is initialized in case it was not passed
+        if (!this.participation && this.result && this.result.participation) {
+            this.participation = this.result.participation;
         }
         this.evaluate();
     }
@@ -124,7 +128,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     private evaluateTemplateStatus() {
-        if (this.participation && this.participation.exercise && isModelingOrTextOrFileUpload(this.participation)) {
+        if (this.participation && getExercise(this.participation) && isModelingOrTextOrFileUpload(this.participation)) {
             // Evaluate the template status for modeling, text and file upload exercise.
             this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
         } else {
@@ -139,12 +143,20 @@ export class ResultComponent implements OnInit, OnChanges {
      * @return {ResultTemplateStatus}
      */
     private evaluateTemplateStatusForModelingTextFileUploadExercises() {
+        if (!this.participation) {
+            // this should NOT happen, but we provide a fallback case
+            if (!this.result) {
+                return ResultTemplateStatus.NO_RESULT;
+            } else {
+                return ResultTemplateStatus.HAS_RESULT;
+            }
+        }
         const submissionInDueTime =
-            !this.participation.exercise.dueDate ||
+            !getExercise(this.participation).dueDate ||
             (this.participation.submissions != null &&
                 this.participation.submissions.length > 0 &&
-                isSubmissionInDueTime(this.participation.submissions[0], this.participation.exercise));
-        const assessmentDueDate = this.dateAsMoment(this.participation.exercise!.assessmentDueDate!);
+                isSubmissionInDueTime(this.participation.submissions[0], getExercise(this.participation)));
+        const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate!);
 
         // Submission is in due time of exercise and has a result with score.
         if (submissionInDueTime && initializedResultWithScore(this.result)) {
@@ -188,7 +200,11 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        } else if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
+        } else if (
+            this.participation &&
+            isProgrammingExerciseStudentParticipation(this.participation) &&
+            !hasBuildAndTestAfterDueDatePassed(getExercise(this.participation) as ProgrammingExercise)
+        ) {
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
             return `${this.result!.resultString} ${preliminary}`;
         }
@@ -197,7 +213,11 @@ export class ResultComponent implements OnInit, OnChanges {
 
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
+        if (
+            this.participation &&
+            isProgrammingExerciseStudentParticipation(this.participation) &&
+            !hasBuildAndTestAfterDueDatePassed(getExercise(this.participation) as ProgrammingExercise)
+        ) {
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
     }
@@ -222,7 +242,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.showTestNames = this.showTestNames;
-        modalRef.componentInstance.exerciseType = this.participation.exercise.type;
+        modalRef.componentInstance.exerciseType = getExercise(this.participation).type;
     }
 
     downloadBuildResult(participationId: number) {
