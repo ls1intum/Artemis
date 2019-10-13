@@ -260,7 +260,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
