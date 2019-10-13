@@ -5,14 +5,13 @@ import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationSer
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
@@ -206,14 +205,15 @@ public class BambooBuildPlanService {
             // script name -> file contents
             final var scriptContents = new HashMap<String, String>();
             for (final var resource : scriptResources) {
-                final var file = resource.getFile();
 
                 // 1_some_description.sh --> "some description"
-                final var descriptionElements = Arrays.stream((file.getName().split("\\.")[0] // cut .sh suffix
+                final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
                         .split("_"))).collect(Collectors.toList());
                 descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
                 final var scriptDescription = String.join(" ", descriptionElements);
-                scriptContents.put(scriptDescription, Files.readString(Paths.get(file.getPath())));
+                try (final var is = resource.getInputStream()) {
+                    scriptContents.put(scriptDescription, IOUtils.toString(is));
+                }
             }
 
             return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
