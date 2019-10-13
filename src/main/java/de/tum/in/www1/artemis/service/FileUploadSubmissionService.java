@@ -288,8 +288,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    public FileUploadSubmission findOneWithEagerResult(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResult(submissionId)
+    public FileUploadSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
+        return fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 

@@ -158,7 +158,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResult(submissionId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
         if (fileUploadSubmission.getResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();

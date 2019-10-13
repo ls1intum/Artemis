@@ -95,7 +95,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     // submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        ModelingSubmission submission = modelingSubmissionService.findByIdWithEagerResultAndAssessor(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise, user);
@@ -312,7 +312,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findByIdWithEagerResultAndAssessor(submissionId);
         if (modelingSubmission.getResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();

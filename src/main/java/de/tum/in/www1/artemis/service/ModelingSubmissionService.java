@@ -315,8 +315,8 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the modeling submission with the given id
      */
-    public ModelingSubmission findOneWithEagerResult(Long submissionId) {
-        return modelingSubmissionRepository.findByIdWithEagerResult(submissionId)
+    public ModelingSubmission findByIdWithEagerResultAndAssessor(Long submissionId) {
+        return modelingSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 
