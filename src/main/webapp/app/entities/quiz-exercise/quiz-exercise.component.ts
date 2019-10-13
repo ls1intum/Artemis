@@ -17,7 +17,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
     templateUrl: './quiz-exercise.component.html',
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-    ActionType = ActionType;
+    readonly ActionType = ActionType;
 
     QuizStatus = {
         HIDDEN: 'Hidden',

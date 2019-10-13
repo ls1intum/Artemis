@@ -13,6 +13,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { ExerciseService } from 'app/entities/exercise';
 import { finalize } from 'rxjs/operators';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -20,6 +21,7 @@ import { finalize } from 'rxjs/operators';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    readonly ActionType = ActionType;
     isDeleting: boolean;
     isCleaning: boolean;
     isResetting: boolean;
