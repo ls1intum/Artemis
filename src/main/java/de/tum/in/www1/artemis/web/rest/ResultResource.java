@@ -108,7 +108,7 @@ public class ResultResource {
         final var participation = result.getParticipation();
         final var course = participation.getExercise().getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
-        final var exercise = exerciseService.findOne(participation.getExercise().getId());
+        final var exercise = participation.getExercise();
         if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
             return forbidden();
 
@@ -285,7 +285,7 @@ public class ResultResource {
         log.debug("REST request to update Result : {}", result);
         final var participation = result.getParticipation();
         final var course = participation.getExercise().getCourse();
-        final var exercise = exerciseService.findOne(participation.getExercise().getId());
+        final var exercise = participation.getExercise();
         if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
         }
